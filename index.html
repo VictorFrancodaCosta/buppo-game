@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUPPO - 63.0 NEW DEAL LOGIC</title>
+    <title>BUPPO - 64.0 TRUE RESTORE</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <style>
@@ -28,147 +28,117 @@
             margin: 0; padding: 0; height: 100vh; overflow: hidden; user-select: none;
         }
 
-        /* CANVAS DE EFEITOS */
-        #fx-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99999; }
-
-        /* BACKGROUND */
+        /* --- ESTRUTURA BÁSICA --- */
         #game-background {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: var(--bg-image-url); background-size: cover; background-position: center; 
-            z-index: -5; transition: filter 0.4s ease;
+            background-image: var(--bg-image-url);
+            background-size: cover; background-position: center; z-index: -5;
+            transition: filter 0.4s ease;
         }
 
-        /* LOADING SCREEN */
+        #fx-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99999; }
+
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 50000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 0.5s; opacity: 1; pointer-events: auto;
+            transition: opacity 0.5s;
         }
         .loader-title { font-family: 'Russo One', sans-serif; color: #fff; font-size: 60px; margin-bottom: 20px; text-shadow: 0 0 20px var(--gold); }
         .loader-bar-bg { width: 300px; height: 10px; background: #333; border-radius: 10px; overflow: hidden; border: 1px solid #555; }
         .loader-bar-fill { width: 0%; height: 100%; background: var(--gold); transition: width 0.2s; box-shadow: 0 0 10px var(--gold); }
-        .loader-txt { color: #777; margin-top: 10px; font-size: 12px; font-family: 'Montserrat', sans-serif; }
 
-        /* SCREENS */
+        #game-container { max-width: 1600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; opacity: 1 !important; }
+
         .screen { display: none; height: 100%; width: 100%; flex-direction: column; justify-content: space-between; }
         .screen.active { display: flex !important; }
 
-        /* START SCREEN */
+        /* --- LOGIN --- */
         #start-screen { justify-content: center !important; align-items: center; gap: 20px; z-index: 10000; }
         .start-bg-layer {
             position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
             background-image: var(--bg-image-url); background-size: cover; background-position: center;
-            filter: blur(6px) brightness(0.3); z-index: -1;
-            animation: bgZoomFast 3s infinite alternate ease-in-out; 
+            filter: blur(6px) brightness(0.3); z-index: -1; animation: bgZoomFast 3s infinite alternate ease-in-out;
         }
         @keyframes bgZoomFast { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
 
-        .game-logo {
-            max-width: 450px; width: 80%; height: auto;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); z-index: 2; position: relative;
-            animation: logoFloat 3s ease-in-out infinite; 
-        }
+        .game-logo { max-width: 450px; width: 80%; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); animation: logoFloat 3s ease-in-out infinite; }
         @keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 
-        #btn-login { 
-            padding: 15px 40px; font-size: 18px; font-family: 'Russo One', sans-serif; 
-            background: var(--purple-btn); color: #fff; border: 2px solid #fff; 
-            border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(142, 68, 173, 0.6); 
-            transition: 0.2s; text-transform: uppercase; z-index: 2; position: relative; letter-spacing: 1px; min-width: 280px;
-        }
-        #btn-login:hover { transform: scale(1.05); box-shadow: 0 0 30px #9b59b6; background: #9b59b6; }
+        #btn-login { padding: 15px 40px; font-size: 18px; font-family: 'Russo One'; background: var(--purple-btn); color: #fff; border: 2px solid #fff; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(142,68,173,0.6); transition: 0.2s; text-transform: uppercase; }
+        #btn-login:hover { transform: scale(1.05); background: #9b59b6; }
 
-        /* LOBBY SCREEN */
-        #lobby-screen { justify-content: center !important; align-items: flex-start !important; padding-left: 5%; z-index: 10000; position: relative; }
+        /* --- LOBBY --- */
+        #lobby-screen { justify-content: center !important; align-items: flex-start !important; padding-left: 5%; z-index: 10000; }
         .lobby-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: var(--lobby-bg-url); background-size: cover; background-position: center;
             filter: blur(8px) brightness(0.6); z-index: -1;
         }
-        .lobby-frame-container {
-            position: relative; z-index: 5; width: auto; height: 85vh; 
-            display: flex; justify-content: center; align-items: center;
-            animation: frameFloat 4s ease-in-out infinite;
-        }
+        .lobby-frame-container { position: relative; z-index: 5; width: auto; height: 85vh; display: flex; justify-content: center; align-items: center; animation: frameFloat 4s ease-in-out infinite; }
         @keyframes frameFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         .lobby-frame-img { height: 100%; width: auto; filter: drop-shadow(0 20px 50px rgba(0,0,0,0.8)); display: block; }
-        .lobby-ui-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; align-items: center;
-            padding: 22% 14% 14% 14%; box-sizing: border-box; text-align: center;
-            color: #fff; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000;
-        }
-        .user-welcome { font-family: 'Russo One'; font-size: 26px; margin-bottom: 5px; text-transform: uppercase; color: #fff; }
-        .user-stats { color: #ffd700; font-size: 15px; font-weight: 700; margin-bottom: 15px; font-family: 'Russo One'; }
+        .lobby-ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; padding: 22% 14% 14% 14%; box-sizing: border-box; text-align: center; color: #fff; text-shadow: 2px 2px 0 #000; }
+        .user-welcome { font-family: 'Russo One'; font-size: 26px; margin-bottom: 5px; text-transform: uppercase; }
         .ranking-scroll { flex-grow: 1; width: 100%; overflow-y: auto; margin-bottom: 15px; scrollbar-width: thin; scrollbar-color: var(--wood-dark) transparent; }
         #ranking-table { width: 100%; border-collapse: collapse; font-size: 14px; color: #fff; }
         #ranking-table th { text-align: left; padding: 5px; border-bottom: 2px solid #fff; font-family: 'Russo One'; color: var(--gold); }
         #ranking-table td { padding: 8px 5px; border-bottom: 1px solid rgba(255,255,255,0.3); font-weight: 700; }
-        
-        #btn-play-match {
-            padding: 15px 40px; font-size: 22px; font-family: 'Russo One';
-            background: #8e44ad; color: #fff; border: 2px solid #fff; border-radius: 50px; cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: 0.2s; text-transform: uppercase;
-            margin-bottom: 10px; width: 100%;
-        }
+        #btn-play-match { padding: 15px 40px; font-size: 22px; font-family: 'Russo One'; background: #8e44ad; color: #fff; border: 2px solid #fff; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); margin-bottom: 10px; width: 100%; }
         #btn-play-match:hover { transform: scale(1.05); background: #9b59b6; }
-        #btn-logout {
-            background: rgba(0,0,0,0.4); border: 1px solid #fff; color: #ccc;
-            padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 12px; font-family: 'Russo One'; text-transform: uppercase;
-        }
+        #btn-logout { background: rgba(0,0,0,0.4); border: 1px solid #fff; color: #ccc; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 12px; font-family: 'Russo One'; }
         #btn-logout:hover { background: rgba(255,0,0,0.4); color: #fff; }
-        
-        .lobby-logo-right {
-            position: absolute; right: 0; left: 50%; top: 50%; transform: translate(-10%, -50%); 
-            max-width: 500px; width: 40%; height: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9));
-            z-index: 5; display: block;
-        }
+        .lobby-logo-right { position: absolute; right: 0; left: 50%; top: 50%; transform: translate(-10%, -50%); max-width: 500px; width: 40%; height: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9)); z-index: 5; display: block; }
 
-        /* CONTROLS */
+        /* --- MENU --- */
         #top-left-controls { position: fixed; top: 20px; left: 20px; z-index: 20000; display: flex; gap: 15px; align-items: center; }
         .minimal-btn { font-size: 24px; cursor: pointer; color: rgba(255,255,255,0.5); transition: 0.3s; background: transparent; border: none; padding: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
         .minimal-btn:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 10px var(--gold); }
-        #btn-config { display: none; } /* Show only in game */
-        #btn-fullscreen { position: fixed; bottom: 20px; right: 20px; z-index: 20000; font-size: 24px; cursor: pointer; color: rgba(255, 255, 255, 0.4); transition: 0.3s; background: transparent; border: none; width: auto; height: auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+        #btn-config { display: none; }
+        #btn-fullscreen { position: fixed; bottom: 20px; right: 20px; z-index: 20000; font-size: 24px; cursor: pointer; color: rgba(255,255,255,0.4); background: transparent; border: none; text-shadow: 0 2px 5px rgba(0,0,0,0.8); transition: 0.3s; }
         #btn-fullscreen:hover { color: var(--gold); transform: scale(1.2); }
-
-        #config-panel { 
-            position: fixed; top: 60px; left: 20px; z-index: 20000; 
-            background: var(--wood-light); border: 3px solid var(--wood-dark); border-radius: 12px; 
-            padding: 15px; width: 220px; display: none; flex-direction: column; gap: 10px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); color: var(--txt-primary); 
-        }
+        #config-panel { position: fixed; top: 60px; left: 20px; z-index: 20000; background: var(--wood-light); border: 3px solid var(--wood-dark); border-radius: 12px; padding: 15px; width: 220px; display: none; flex-direction: column; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); color: var(--txt-primary); }
         #config-panel.active { display: flex; animation: slideDown 0.2s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         #btn-surrender { background: #c0392b; color: #fff; border: 1px solid #e74c3c; padding: 10px; font-family: 'Russo One'; cursor: pointer; border-radius: 5px; text-transform: uppercase; font-size: 12px; width: 100%; display: none; }
         #btn-surrender:hover { background: #e74c3c; }
+        .cfg-row { display: flex; flex-direction: column; gap: 5px; } .cfg-label { color: var(--gold); font-size: 10px; text-transform: uppercase; font-weight: 700; font-family: 'Russo One'; } .cfg-slider { width: 100%; cursor: pointer; accent-color: var(--gold); }
 
-        /* GAME ELEMENTS */
-        #game-container { max-width: 1600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; opacity: 1 !important; }
-        
+        /* --- GAME VISUALS --- */
         .deck-area { position: absolute; z-index: 30; width: 120px; height: 170px; border-radius: 12px; display: flex; justify-content: center; align-items: center; background-image: var(--cardback-url); background-size: cover; border: 3px solid var(--wood-dark); box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
         .deck-count { position: absolute; bottom: -30px; left: 0; width: 100%; text-align: center; font-size: 14px; color: var(--gold); font-family: 'Russo One'; font-weight: 600; text-shadow: 1px 1px 3px #000; }
         #m-deck { top: 30px; left: 30px; display: none; }
         #p-deck-container { position: absolute; bottom: 30px; right: 50px; z-index: 30; display: flex; flex-direction: column; align-items: center; }
         #p-deck-img { height: 260px; width: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.8)); transition: transform 0.2s; }
         #p-deck-img:hover { transform: scale(1.05); }
-
         .avatar-cluster { position: absolute; z-index: 30; background: var(--wood-light); border: 4px solid var(--wood-dark); border-radius: 16px; padding: 12px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); min-width: 270px; animation: hudFloat 4s ease-in-out infinite; }
+        @keyframes hudFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
         #m-stats-cluster { top: 30px; right: 30px; flex-direction: row-reverse; text-align: right; }
         #p-stats-cluster { bottom: 30px; left: 30px; }
-        
         .lvl-circle { position: relative; width: 60px; height: 60px; flex-shrink: 0; background: linear-gradient(135deg, var(--gold), #cfaa00); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-family: 'Russo One'; font-size: 26px; border: 3px solid #8c7200; color: #4a3b2a; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .level-up-anim { animation: levelPulse 0.4s ease-out; color: #fff !important; background: var(--gold) !important; box-shadow: 0 0 50px var(--gold); }
+        @keyframes levelPulse { 0% { transform: scale(1); } 50% { transform: scale(1.6); } 100% { transform: scale(1); } }
         .unit-name { font-family: 'Russo One'; font-size: 16px; margin-bottom: 8px; display: block; text-transform: uppercase; text-shadow: 2px 2px 0 #000; letter-spacing: 1px; }
         .hp-tube { width: 100%; height: 22px; background: #222; border-radius: 12px; overflow: hidden; position: relative; border: 3px solid var(--wood-dark); box-shadow: inset 0 5px 10px rgba(0,0,0,0.8); }
         .hp-liquid { height: 100%; width: 100%; border-radius: 12px; transition: width 0.4s ease-out, background 0.4s ease; position: relative; }
         .hp-txt { position: absolute; width: 100%; top:0; left:0; height: 100%; display: flex; justify-content: center; align-items: center; font-family: 'Russo One'; font-size: 12px; color: #fff; text-shadow: 0 1px 3px #000; z-index: 5; }
+        .mastery-row { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-start; }
+        .mastery-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--wood-dark); border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; font-size: 16px; position: relative; cursor: help; box-shadow: 0 3px 6px rgba(0,0,0,0.5); transition: transform 0.2s; }
+        .mastery-icon:hover { transform: scale(1.2); z-index: 10; border-color: #fff !important; }
+        .mastery-lvl { position: absolute; bottom: -5px; right: -5px; background: var(--gold); color: #000; font-family: 'Russo One'; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid #000; }
+        .xp-area { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; height: 70px; min-width: 200px; padding: 0 15px; background: var(--wood-light); border-radius: 16px; border: 4px solid var(--wood-dark); box-shadow: 0 15px 35px rgba(0,0,0,0.6); z-index: 50; }
+        .xp-glow { box-shadow: 0 0 40px rgba(255, 215, 0, 0.6) !important; border-color: var(--gold) !important; }
+        #m-xp { top: 30px; } #p-xp { bottom: 170px; }
+        .xp-mini { width: 30px; height: 42px; margin: 0 4px; position: relative; border: 1px solid #111; border-radius: 2px; box-shadow: 0 4px 8px rgba(0,0,0,0.6); cursor: help; transition: transform 0.2s; background-size: cover; background-position: center; }
+        #m-xp .xp-mini:hover { transform: scale(3.0) translateY(15px); z-index: 3000; } #p-xp .xp-mini:hover { transform: scale(3.0) translateY(-15px); z-index: 3000; }
 
         .middle-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; gap: 80px; perspective: 1200px; pointer-events: none; z-index: 10; padding-bottom: 120px; box-sizing: border-box; }
         .turn-display { position: absolute; top: 50%; left: 20px; transform: translateY(-50%) rotate(-90deg); transform-origin: left center; font-family: 'Russo One'; font-size: 24px; color: var(--gold); opacity: 0.9; letter-spacing: 6px; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
         .slot { width: 170px; height: 250px; border: none; display: flex; justify-content: center; align-items: center; background: transparent; transform: rotateX(25deg); transform-style: preserve-3d; perspective: 1000px; pointer-events: auto; }
         .slot .card { width: 100% !important; height: 100% !important; margin: 0; border-radius: 16px !important; box-shadow: none; cursor: default; transform: translateZ(0px); border-width: 2px; }
+        .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
 
-        /* HAND & CARDS */
+        /* --- CARDS & HAND (ORIGINAL 51.6 STYLE) --- */
         .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
         
         .card { 
@@ -177,58 +147,73 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
             transform-style: preserve-3d; background-color: #111; 
             transition: margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s; 
-            opacity: 1; /* Visivel por padrao */
-            visibility: visible;
+            opacity: 1 !important; visibility: visible !important;
         }
         .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
         
-        /* HOVER ZOOM */
+        /* HOVER CINEMATIC */
         .hand-card:not(.disabled-card):hover { z-index: 10000 !important; margin: 0 30px; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), 0 50px 100px rgba(0,0,0,1); transform: scale(1.5) translateY(-50px) !important; }
+        .disabled-card { filter: grayscale(100%) brightness(0.5) !important; cursor: not-allowed; border-color: #555; }
         
-        /* CINEMATIC EFFECTS */
+        /* CINEMATIC BLUR */
         body.cinematic-active #game-background, body.cinematic-active .middle-area, body.cinematic-active .avatar-cluster, body.cinematic-active .deck-area, body.cinematic-active #p-deck-container, body.cinematic-active .xp-area { filter: blur(8px); }
 
-        .flying-card { position: fixed; z-index: 9999; pointer-events: none; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), width 0.25s, height 0.25s; box-shadow: 0 20px 50px rgba(0,0,0,0.8); border-radius: 10px; border: 2px solid #111; }
-        
-        /* END SCREEN (HIDDEN BY DEFAULT) */
+        .flying-card { position: fixed; z-index: 9999; pointer-events: none; transition: top 0.25s ease-in-out, left 0.25s ease-in-out, width 0.25s, height 0.25s; box-shadow: 0 20px 50px rgba(0,0,0,0.8); border-radius: 10px; border: 2px solid #111; }
+        .card-bounce { animation: cardPlayBounce 0.3s ease-out; }
+        @keyframes cardPlayBounce { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .flares-container { position: absolute; top: 50%; left: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
+        .flare-spark { position: absolute; background: var(--flare-col, white); border-radius: 50%; box-shadow: 0 0 10px var(--flare-col, white); opacity: 0; }
+        .card:not(.disabled-card):hover .flare-spark { animation: sparklePop 0.8s infinite; }
+        @keyframes sparklePop { 0% { transform: scale(0); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5) translateY(-20px); opacity: 0; } }
+
+        /* FIM DE JOGO */
         #end-screen { display: none; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 50000; background: rgba(0,0,0,0.95); backdrop-filter: blur(20px); opacity: 0; pointer-events: none; transition: opacity 0.8s ease-in-out; }
         #end-screen.visible { display: flex; opacity: 1; pointer-events: auto; }
-        .end-content { text-align: center; transform: scale(0.5); transition: transform 0.6s; opacity: 0; }
+        .end-content { text-align: center; transform: scale(0.5); transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); opacity: 0; }
         #end-screen.visible .end-content { transform: scale(1); opacity: 1; }
-        #end-title { font-family: 'Russo One'; font-size: 100px; color: transparent; margin-bottom: 30px; text-transform: uppercase; background-clip: text; -webkit-background-clip: text; }
+        #end-title { font-family: 'Russo One'; font-size: 100px; letter-spacing: -2px; margin-bottom: 30px; text-transform: uppercase; background-clip: text; -webkit-background-clip: text; color: transparent; }
         .win-theme { background-image: linear-gradient(to bottom, #fff6b3, #ffd700, #ffb900); text-shadow: 0 0 30px rgba(255, 215, 0, 0.5); animation: gloryPulse 2s infinite alternate; }
-        .lose-theme { background-image: linear-gradient(to bottom, #ff9ca1, #ff7675, #d63031); text-shadow: 0 0 30px rgba(255, 0, 0, 0.5); }
-        @keyframes gloryPulse { 0% { transform: scale(1); filter: brightness(1); } 100% { transform: scale(1.05); filter: brightness(1.2); } }
-
-        /* AUXILIARY STYLES OMITTED FOR BREVITY BUT KEPT IN MIND (Tooltips, FX, etc) */
-        .flares-container { position: absolute; width:0; height:0; top:50%; left:50%; }
-        .flare-spark { position:absolute; background:white; border-radius:50%; width:3px; height:3px; opacity:0; }
-        .card:hover .flare-spark { animation: sparklePop 0.8s infinite; }
-        @keyframes sparklePop { 0% {transform:scale(0); opacity:0;} 50% {opacity:1;} 100% {transform:scale(1.5) translateY(-20px); opacity:0;} }
+        .lose-theme { background-image: linear-gradient(to bottom, #ff9ca1, #ff7675, #d63031); text-shadow: 0 0 30px rgba(255, 0, 0, 0.5); animation: horrorShake 3s infinite; }
+        .tie-theme { background-image: linear-gradient(to bottom, #bdc3c7, #95a5a6, #7f8c8d); text-shadow: 0 0 30px rgba(255, 255, 255, 0.5); animation: gloryPulse 3s infinite alternate; }
+        .end-btn-row { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
         
-        #tooltip-box { position:fixed; background:#222; color:#fff; padding:10px; border-radius:5px; border:1px solid #444; z-index:99999; display:none; pointer-events:none; }
-        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:60000; display:none; justify-content:center; align-items:center; }
-        .modal-box { background:#333; padding:20px; border-radius:10px; text-align:center; color:white; border:2px solid gold; }
-        .floating-text { position: absolute; font-family: 'Russo One'; font-size: 32px; color:white; pointer-events:none; animation: floatUp 1s forwards; z-index:200; }
-        @keyframes floatUp { 0% {opacity:0; transform:translateY(0);} 20% {opacity:1;} 100% {opacity:0; transform:translateY(-50px);} }
+        #tooltip-box { position: fixed; pointer-events: none; z-index: 99999; background: var(--wood-light); border: 3px solid var(--wood-dark); color: var(--gold); padding: 15px 18px; border-radius: 12px; width: 180px; display: none; text-align: left; box-shadow: 0 15px 40px rgba(0,0,0,0.6); font-size: 12px; line-height: 1.5; transform: translateX(-50%); }
+        .tooltip-anim-up { animation: tooltipSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .tooltip-anim-down { animation: tooltipSlideDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes tooltipSlideUp { 0% { opacity: 0; transform: translate(-50%, 20px); } 100% { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes tooltipSlideDown { 0% { opacity: 0; transform: translate(-50%, -20px); } 100% { opacity: 1; transform: translate(-50%, 0); } }
         
-        /* MASTERIES & XP */
-        .mastery-row { display: flex; gap: 5px; margin-top: 5px; }
-        .mastery-icon { width: 25px; height: 25px; border-radius: 50%; background: #333; border: 1px solid #777; display: flex; justify-content: center; align-items: center; font-size: 14px; position: relative; }
-        .mastery-lvl { position: absolute; bottom: -2px; right: -2px; background: gold; color: black; font-size: 8px; width: 12px; height: 12px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
-        .xp-area { position: absolute; left: 50%; transform: translateX(-50%); display: flex; justify-content: center; height: 50px; min-width: 150px; background: rgba(0,0,0,0.5); border-radius: 10px; border: 2px solid #555; }
-        #m-xp { top: 30px; } #p-xp { bottom: 170px; }
-        .xp-mini { width: 25px; height: 35px; margin: 5px; border: 1px solid #000; border-radius: 2px; background-size: cover; background-position: center; }
+        .floating-text { position: absolute; font-family: 'Russo One', sans-serif; font-size: 36px; text-shadow: 0 4px 10px rgba(0,0,0,0.9); pointer-events: none; animation: floatUp 1.5s forwards; z-index: 200; width: 300px; text-align: center; left: 50%; transform: translateX(-50%); }
+        @keyframes floatUp { 0% { opacity: 0; top: 20px; transform: translateX(-50%) scale(0.5); } 20% { opacity: 1; top: -30px; transform: translateX(-50%) scale(1.2); } 100% { opacity: 0; top: -80px; transform: translateX(-50%) scale(0.8); } }
+        
+        .center-text { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); font-family: 'Russo One', sans-serif; font-size: 32px; color: #ff7675; text-transform: uppercase; text-shadow: 0 4px 20px rgba(0,0,0,1); z-index: 99999; pointer-events: none; animation: popSubtle 0.8s forwards; background: rgba(0,0,0,0.85); padding: 15px 40px; border-radius: 50px; border: 2px solid rgba(255, 118, 117, 0.5); }
+        @keyframes popSubtle { 0% { opacity: 0; transform: translate(-50%, -40%) scale(0.8); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -60%) scale(0.9); } }
 
         @media (max-width: 768px) {
-            #btn-login { padding: 15px 30px; }
+            .game-logo { max-width: 80%; }
+            #btn-login { padding: 15px 40px; font-size: 20px; }
+            #end-title { font-size: 50px; }
             #lobby-screen { align-items: center !important; padding-left: 0; }
-            .lobby-logo-right { display: none; }
             .lobby-frame-container { height: 70vh; }
-            .lobby-ui-overlay { padding: 30% 15% 15% 15%; }
-            .hand-wrapper { height: 130px; bottom: 0; }
-            .card { width: 80px; height: 110px; }
-            .hand-card:not(.disabled-card):hover { margin: 0 10px; transform: scale(1.2) translateY(-40px) !important; }
+            .lobby-ui-overlay { padding: 25% 15% 15% 15%; }
+            .lobby-logo-right { display: none; }
+            .middle-area { gap: 20px; flex-direction: column; top: 5%; height: 60%; padding-bottom: 0; } 
+            .turn-display { top: 2%; font-size: 12px; left: 5px; transform: none; writing-mode: vertical-rl; }
+            .slot { width: 120px; height: 170px; transform: rotateX(15deg); border-width: 0; }
+            #m-stats-cluster { top: 10px; right: 10px; }
+            #p-stats-cluster { bottom: 190px; left: 10px; }
+            .avatar-cluster { min-width: 180px; padding: 8px 15px; transform: scale(0.9); transform-origin: center; border-width: 3px; }
+            .lvl-circle { width: 50px; height: 50px; font-size: 20px; top: auto !important; left: auto !important; border-width: 2px; }
+            .unit-name { font-size: 14px; width: auto; top: auto !important; left: auto !important; }
+            .hp-tube { height: 20px; width: 100%; top: auto !important; left: auto !important; border-width: 2px; }
+            .mastery-row { top: auto !important; left: auto !important; margin-top: 6px; }
+            .xp-area { min-width: 160px; height: 55px; border-width: 3px; }
+            #m-xp { top: 120px; } #p-xp { bottom: 260px; } .xp-mini { width: 26px; height: 36px; border-width: 1px; }
+            .deck-area { transform: scale(0.7); border-width: 2px; } #m-deck { top: 10px; left: -10px; }
+            #p-deck-container { bottom: 170px; right: 0; transform: scale(0.7); transform-origin: bottom right; }
+            .hand-wrapper { height: 140px; bottom: 0; }
+            .card { width: 90px; height: 130px; margin: 0 -6px; border-width: 2px; }
+            .hand-card:not(.disabled-card):hover { margin: 0 15px; transform: scale(1.15) translateY(-50px); }
         }
     </style>
 </head>
@@ -237,7 +222,11 @@
     <div id="loading-screen"><div class="loader-title">BUPPO</div><div class="loader-bar-bg"><div class="loader-bar-fill" id="loader-fill"></div></div><div class="loader-txt">CARREGANDO...</div></div>
     <div id="game-background"></div>
     <div id="ambient-particles"></div>
-    
+    <div class="overlay-fx dmg-fx" id="dmg-overlay"></div>
+    <div class="overlay-fx heal-fx" id="heal-overlay"></div>
+    <div class="overlay-fx block-fx" id="block-overlay"></div>
+    <div class="overlay-fx crit-flash" id="crit-overlay"></div>
+
     <div id="game-container">
         <div id="top-left-controls">
             <button class="minimal-btn" onclick="toggleConfig()" id="btn-config" onmouseenter="playHoverSound()">⚙️</button>
@@ -246,8 +235,8 @@
         <div id="btn-fullscreen" onclick="toggleFullScreen()" onmouseenter="playHoverSound()">⛶</div>
 
         <div id="config-panel">
-            <div class="cfg-row"><span class="cfg-label">Geral</span><input type="range" class="cfg-slider" min="0" max="1" step="0.1" value="1" oninput="updateVol('master', this.value)"></div>
-            <div class="cfg-row"><span class="cfg-label">Música</span><input type="range" class="cfg-slider" min="0" max="1" step="0.1" value="1" oninput="updateVol('music', this.value)"></div>
+            <div class="cfg-row"><span class="cfg-label">Volume Geral</span><input type="range" class="cfg-slider" min="0" max="1" step="0.1" value="1" oninput="updateVol('master', this.value)"></div>
+            <div class="cfg-row"><span class="cfg-label">Música de Fundo</span><input type="range" class="cfg-slider" min="0" max="1" step="0.1" value="1" oninput="updateVol('music', this.value)"></div>
             <hr style="border:1px solid #555; width:100%">
             <button id="btn-surrender" onclick="abandonMatch()" onmouseenter="playHoverSound()">ABANDONAR PARTIDA</button>
         </div>
@@ -256,18 +245,18 @@
             <div class="start-bg-layer"></div>
             <img src="https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png" alt="BUPPO LOGO" class="game-logo">
             <button id="btn-login" onclick="googleLogin()" onmouseenter="playHoverSound()"><span id="btn-text">LOGIN COM GOOGLE</span></button>
-            <p id="login-status" style="color:#888; font-size:12px; margin-top:-20px;"></p>
+            <p id="login-status" style="color: #888; font-family: 'Montserrat'; font-size: 12px; margin-top:-20px;"></p>
         </div>
 
         <div id="lobby-screen" class="screen">
-            <div class="lobby-bg"></div>
+            <div class="lobby-bg"></div> 
             <img src="https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png" class="lobby-logo-right">
             <div class="lobby-frame-container">
                 <img src="https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png" class="lobby-frame-img">
                 <div class="lobby-ui-overlay">
                     <div class="user-welcome" id="lobby-username">BEM-VINDO</div>
                     <div class="user-stats" id="lobby-stats">...</div>
-                    <div class="ranking-scroll" id="ranking-content"><p style="text-align:center;color:#ccc;">Carregando...</p></div>
+                    <div class="ranking-scroll" id="ranking-content"><p style="text-align:center; color:#ccc; margin-top:20px;">Carregando Ranking...</p></div>
                     <button id="btn-play-match" onclick="playNavSound(); transitionToGame()" onmouseenter="playHoverSound()">INICIAR PARTIDA</button>
                     <button id="btn-logout" onclick="handleLogout()" onmouseenter="playHoverSound()">TROCAR DE CONTA</button>
                 </div>
@@ -292,7 +281,7 @@
                 <div class="lvl-circle" id="m-lvl">1</div>
                 <div class="unit-info">
                     <span class="unit-name" style="color:var(--accent-red)">INIMIGO</span>
-                    <div class="hp-tube"><div class="hp-liquid" id="m-hp-fill" style="background:#ff7675;"></div><span class="hp-txt" id="m-hp-txt">6/6</span></div>
+                    <div class="hp-tube"><div class="hp-liquid" id="m-hp-fill" style="background: #ff7675;"></div><span class="hp-txt" id="m-hp-txt">6/6</span></div>
                     <div class="mastery-row" id="m-masteries" style="justify-content: flex-end;"></div>
                 </div>
             </div>
@@ -301,7 +290,7 @@
                 <div class="lvl-circle" id="p-lvl">1</div>
                 <div class="unit-info">
                     <span class="unit-name" style="color:var(--accent-blue)">VOCÊ</span>
-                    <div class="hp-tube"><div class="hp-liquid" id="p-hp-fill" style="background:#00cec9;"></div><span class="hp-txt" id="p-hp-txt">6/6</span></div>
+                    <div class="hp-tube"><div class="hp-liquid" id="p-hp-fill" style="background: #00cec9;"></div><span class="hp-txt" id="p-hp-txt">6/6</span></div>
                     <div class="mastery-row" id="p-masteries"></div>
                 </div>
             </div>
@@ -319,8 +308,7 @@
                 <div class="slot" id="m-slot"></div>
             </div>
 
-            <div class="hand-wrapper" id="player-hand">
-                </div>
+            <div class="hand-wrapper" id="player-hand"></div>
         </div>
     </div>
 
@@ -340,89 +328,160 @@
         let currentUser = null;
 
         onAuthStateChanged(auth, (user) => {
-            setTimeout(() => { document.getElementById('loading-screen').style.opacity='0'; setTimeout(()=>document.getElementById('loading-screen').style.display='none',500); }, 500);
-            if (user) {
-                currentUser = user;
-                window.goToLobby(true);
-            } else {
-                currentUser = null;
-                window.showScreen('start-screen');
-                document.getElementById('btn-text').innerText = "LOGIN COM GOOGLE";
-                window.switchMusic('none');
-            }
+            setTimeout(() => { document.getElementById('loading-screen').style.opacity = '0'; setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 500); }, 500);
+            if (user) { currentUser = user; window.goToLobby(true); } 
+            else { currentUser = null; window.showScreen('start-screen'); document.getElementById('btn-text').innerText = "LOGIN COM GOOGLE"; window.switchMusic('none'); }
         });
 
         window.googleLogin = async function() {
             playNavSound(); const btn = document.getElementById('btn-text'); btn.innerText = "CONECTANDO...";
-            try { await signInWithPopup(auth, provider); } catch (e) { console.error(e); btn.innerText = "ERRO"; setTimeout(()=>btn.innerText="LOGIN COM GOOGLE",3000); }
+            try { await signInWithPopup(auth, provider); } catch(e) { console.error(e); btn.innerText = "ERRO"; setTimeout(()=>btn.innerText="LOGIN COM GOOGLE",3000); }
         };
+
         window.handleLogout = function() { playNavSound(); signOut(auth).then(() => location.reload()); };
 
         window.goToLobby = async function(isAuto) {
             if(!currentUser) { window.showScreen('start-screen'); return; }
             window.switchMusic('lobby');
-            
             const userRef = doc(db, "players", currentUser.uid);
             const snap = await getDoc(userRef);
-            
             if(!snap.exists()) {
-                await setDoc(userRef, { name: currentUser.displayName, email: currentUser.email, photo: currentUser.photoURL, totalWins: 0, score: 0 });
+                await setDoc(userRef, { name: currentUser.displayName, email: currentUser.email, photo: currentUser.photoURL, totalWins: 0, totalMatches: 0, score: 0, joinedAt: new Date() });
                 document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
             } else {
                 const d = snap.data();
                 document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
                 document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins||0} | PONTOS: ${d.score||0}`;
+                await updateDoc(userRef, { lastLogin: new Date() });
             }
-            
-            // Ranking
             onSnapshot(query(collection(db, "players"), orderBy("score", "desc"), limit(10)), (snap) => {
                 let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
                 let pos = 1;
-                snap.forEach(d => {
-                    const p = d.data();
-                    let c = pos===1?'rank-1':(pos===2?'rank-2':(pos===3?'rank-3':''));
-                    html += `<tr class="${c}"><td>${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
-                    pos++;
-                });
+                snap.forEach(d => { const p = d.data(); let c=pos===1?'rank-1':(pos===2?'rank-2':(pos===3?'rank-3':'')); html+=`<tr class="${c}"><td>${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`; pos++; });
                 html += '</tbody></table>';
                 document.getElementById('ranking-content').innerHTML = html;
             });
-            
             window.showScreen('lobby-screen');
-            document.getElementById('end-screen').classList.remove('visible'); // Remove resquicio
+            document.getElementById('end-screen').classList.remove('visible');
         };
-        
-        window.registrarResultado = async function(win) {
+
+        window.registrarVitoriaOnline = async function() {
             if(!currentUser) return;
             const ref = doc(db, "players", currentUser.uid);
             const snap = await getDoc(ref);
-            if(snap.exists()) {
-                const d = snap.data();
-                if(win) await updateDoc(ref, { totalWins: (d.totalWins||0)+1, score: (d.score||0)+100 });
-                else await updateDoc(ref, { score: (d.score||0)+10 });
-            }
+            if(snap.exists()) { const d = snap.data(); await updateDoc(ref, { totalWins: (d.totalWins||0)+1, score: (d.score||0)+100, totalMatches: (d.totalMatches||0)+1 }); }
+        };
+        window.registrarDerrotaOnline = async function() {
+            if(!currentUser) return;
+            const ref = doc(db, "players", currentUser.uid);
+            const snap = await getDoc(ref);
+            if(snap.exists()) { const d = snap.data(); await updateDoc(ref, { totalMatches: (d.totalMatches||0)+1, score: (d.score||0)+10 }); }
         };
     </script>
 
     <script>
-        // --- GAME LOGIC REWRITTEN ---
-        
-        const CARDS_DB = {
-            'ATAQUE': { color: 'red', fCol: '#e74c3c', icon: '⚔️', img: 'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png', base: 'Dano = Nível.', bonus: 'Se inimigo DESCANSAR, ganhe XP.', mastery: '+1 dano acumulativo.' },
-            'BLOQUEIO': { color: 'blue', fCol: '#00cec9', icon: '🛡️', img: 'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png', base: 'Previne ATAQUE.', bonus: 'Reflete 1 dano.', mastery: 'Reflexão +1.' },
-            'DESCANSAR': { color: 'green', fCol: '#2ecc71', icon: '💚', img: 'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png', base: 'Cura 2 HP.', bonus: 'Se full HP/Sem dano, +1 cura.', mastery: 'Aumenta HP Maximo.' },
-            'TREINAR': { color: 'purple', fCol: '#9b59b6', icon: '🎓', img: 'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png', base: 'Compra carta p/ XP.', bonus: 'Nenhum.', mastery: 'Copia outra maestria.' },
-            'DESARMAR': { color: 'orange', fCol: '#f39c12', icon: '🔒', img: 'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png', base: 'Bloqueia ação.', bonus: 'Colisão anula.', mastery: 'Escolhe alvo.' }
-        };
-        const ACTION_KEYS = Object.keys(CARDS_DB);
-        const DECK_TEMPLATE = { 'ATAQUE': 8, 'BLOQUEIO': 8, 'DESARMAR': 5, 'DESCANSAR': 4, 'TREINAR': 5 };
-        
-        let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
-        let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
-        let isProcessing = false; let turnCount = 1;
+        const fxC = document.getElementById('fx-canvas'); const fxCtx = fxC.getContext('2d');
+        let parts = []; let animId; let isAnim = false; let tS = 0; let tA = 1; let tPh = 'idle'; let wT = 0; let fX=0, fY=0;
+        const CLRS = ['#FFD700', '#FFA500', '#FFFF00', '#FFFFFF'];
+        function resize() { fxC.width=window.innerWidth; fxC.height=window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
 
-        // AUDIO
-        const audios = {}; 
+        class Part {
+            constructor(x, y) { this.x=x+(Math.random()-0.5)*80; this.y=y; this.s=Math.random()*8+3; this.sy=Math.random()*4+2; this.sx=(Math.random()-0.5)*2; this.c=CLRS[Math.floor(Math.random()*CLRS.length)]; this.l=1.0; this.d=Math.random()*0.03+0.02; }
+            up() { this.x+=this.sx; this.y-=this.sy; this.l-=this.d; this.s*=0.9; }
+            dr(c) { c.fillStyle=this.c; c.globalAlpha=Math.max(0,this.l); c.beginPath(); c.arc(this.x,this.y,this.s,0,Math.PI*2); c.fill(); c.globalAlpha=1.0; }
+        }
+
+        window.triggerLevelUpFX = function(eid) {
+            let el = document.getElementById(eid); if(!el) return;
+            let r = el.getBoundingClientRect(); fX = r.left+r.width/2; fY = r.top+r.height/2;
+            parts=[]; tS=0; tA=1; tPh='pop'; wT=40; isAnim=true;
+            for(let i=0;i<40;i++) parts.push(new Part(fX, fY));
+            if(!animId) loopFX();
+        }
+
+        function loopFX() {
+            fxCtx.clearRect(0,0,fxC.width,fxC.height);
+            if(isAnim) {
+                if(tPh==='pop') { tS+=0.25; if(tS>=1.5) { tS=1.5; tPh='settle'; } }
+                else if(tPh==='settle') { tS-=0.1; if(tS<=1.0) { tS=1.0; tPh='wait'; } }
+                else if(tPh==='wait') { wT--; if(wT<=0) tPh='fade'; }
+                else if(tPh==='fade') { tA-=0.05; tS+=0.01; if(tA<=0) { tA=0; tPh='finished'; } }
+
+                if(tA>0) {
+                    fxCtx.save(); fxCtx.translate(fX, fY); fxCtx.scale(tS, tS); fxCtx.globalAlpha=tA;
+                    fxCtx.font="900 48px 'Russo One'"; fxCtx.textAlign="center"; fxCtx.textBaseline="middle";
+                    fxCtx.lineWidth=8; fxCtx.lineJoin="round"; fxCtx.strokeStyle="black"; fxCtx.strokeText("LEVEL UP!",0,0);
+                    let g=fxCtx.createLinearGradient(0,-25,0,25); g.addColorStop(0,"#FFFF00"); g.addColorStop(1,"#FFA500");
+                    fxCtx.fillStyle=g; fxCtx.fillText("LEVEL UP!",0,0); fxCtx.restore();
+                }
+
+                for(let i=0; i<parts.length; i++) { parts[i].up(); parts[i].dr(fxCtx); if(parts[i].l<=0) { parts.splice(i,1); i--; } }
+                if(parts.length===0 && tPh==='finished') isAnim=false;
+            }
+            if(isAnim) animId=requestAnimationFrame(loopFX); else animId=null;
+        }
+    </script>
+
+    <script>
+        window.showScreen = function(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('btn-config').style.display = (id === 'game-screen') ? 'block' : 'none';
+            document.getElementById('btn-surrender').style.display = (id === 'game-screen') ? 'block' : 'none';
+        }
+
+        window.transitionToGame = function() {
+            window.switchMusic('game'); window.showScreen('game-screen'); setTimeout(startGameFlow, 50);
+        }
+        window.restartMatch = function() {
+            document.getElementById('end-screen').classList.remove('visible'); setTimeout(startGameFlow, 50);
+        }
+        window.abandonMatch = function() {
+             toggleConfig(); 
+             if(confirm("Sair? Derrota será computada.")) {
+                 if(window.registrarDerrotaOnline) window.registrarDerrotaOnline();
+                 window.goToLobby(false);
+             }
+        }
+        
+        // AUDIO SYSTEM
+        window.isMuted = false;
+        let curTrack = 'none';
+        
+        window.switchMusic = function(type) {
+            if(curTrack === type) return;
+            curTrack = type;
+            // Fade out all
+            ['bgm-lobby','bgm-loop','bgm-menu'].forEach(k => {
+                let a = audios[k];
+                if(a) {
+                    let f = setInterval(() => { if(a.volume>0.05) a.volume-=0.05; else { a.pause(); a.currentTime=0; clearInterval(f); } }, 100);
+                }
+            });
+
+            if(window.isMuted || type === 'none') return;
+            
+            let tid = (type==='lobby'?'bgm-lobby':(type==='game'?'bgm-loop':null));
+            if(tid && audios[tid]) {
+                let a = audios[tid]; a.volume=0; a.play().catch(()=>{});
+                let f = setInterval(() => { if(a.volume<0.5) a.volume+=0.05; else clearInterval(f); }, 100);
+            }
+        }
+
+        window.toggleMute = function() {
+            window.isMuted = !window.isMuted;
+            const btn = document.getElementById('btn-sound');
+            if(window.isMuted) {
+                btn.innerText = "🔇";
+                ['bgm-lobby','bgm-loop','bgm-menu'].forEach(k => { if(audios[k]) audios[k].pause(); });
+            } else {
+                btn.innerText = "🎵";
+                if(document.getElementById('lobby-screen').classList.contains('active')) window.switchMusic('lobby');
+                else if(document.getElementById('game-screen').classList.contains('active')) window.switchMusic('game');
+            }
+        }
+
         const ASSETS = {
             images: [
                 'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png', 'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png', 
@@ -446,179 +505,123 @@
             ]
         };
 
-        let assetsLoaded = 0;
-        function preload() {
-            ASSETS.images.forEach(s => { let i = new Image(); i.src = s; i.onload=checkLoad; });
-            ASSETS.audio.forEach(a => { let s = new Audio(); s.src = a.src; s.preload='auto'; if(a.loop) s.loop=true; audios[a.id]=s; s.onloadedmetadata=checkLoad; });
+        const audios = {}; let assetsLoaded = 0;
+
+        function preloadGame() {
+            ASSETS.images.forEach(s => { let i = new Image(); i.src = s; i.onload=chk; });
+            ASSETS.audio.forEach(a => { let s = new Audio(); s.src = a.src; if(a.loop) s.loop=true; audios[a.id]=s; s.onloadedmetadata=chk; });
         }
-        function checkLoad() {
+        function chk() {
             assetsLoaded++;
-            let pct = (assetsLoaded / (ASSETS.images.length + ASSETS.audio.length)) * 100;
-            document.getElementById('loader-fill').style.width = pct + '%';
-        }
-        window.onload = preload;
-
-        // UI & AUDIO CONTROLS
-        window.isMuted = false;
-        let currentTrack = 'none';
-
-        window.switchMusic = function(track) {
-            if (currentTrack === track) return;
-            currentTrack = track;
-            
-            // Fade out current
-            Object.values(audios).forEach(a => {
-                if(a.loop && !a.paused) {
-                    let vol = a.volume;
-                    let fade = setInterval(() => {
-                        if(vol > 0.05) { vol -= 0.05; a.volume = vol; }
-                        else { a.pause(); a.currentTime = 0; clearInterval(fade); }
-                    }, 100);
-                }
-            });
-
-            if (window.isMuted || track === 'none') return;
-
-            // Fade in new
-            let id = (track === 'lobby' ? 'bgm-lobby' : (track === 'game' ? 'bgm-loop' : null));
-            if (id && audios[id]) {
-                let a = audios[id]; a.volume = 0; a.play().catch(()=>{});
-                let fade = setInterval(() => { if(a.volume < 0.5) a.volume += 0.05; else clearInterval(fade); }, 100);
+            let pct = (assetsLoaded/(ASSETS.images.length+ASSETS.audio.length))*100;
+            document.getElementById('loader-fill').style.width = pct+'%';
+            if(assetsLoaded >= (ASSETS.images.length+ASSETS.audio.length)) {
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.opacity='0';
+                    setTimeout(()=>document.getElementById('loading-screen').style.display='none',500);
+                }, 1000);
+                playMenuAudio();
+                document.body.addEventListener('click', () => { 
+                    if(audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) audios['bgm-menu'].play().catch(()=>{});
+                }, {once:true});
             }
         }
+        function toggleFullScreen() { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else if(document.exitFullscreen) document.exitFullscreen(); }
+        function playMenuAudio() { let s = audios['bgm-menu']; if(s) { s.volume=0; s.play().then(()=>{ let f=setInterval(()=>{ if(s.volume<0.5) s.volume+=0.05; else clearInterval(f); },200); }).catch(()=>{}); } }
+        function playNavSound() { let s = audios['sfx-nav']; if(s) { s.currentTime=0; s.play().catch(()=>{}); } }
+        function playHoverSound() { let s = audios['sfx-btn-hover']; if(s) { s.currentTime=0; s.play().catch(()=>{}); } }
+        
+        function toggleConfig() { let p = document.getElementById('config-panel'); if(p.style.display==='flex') p.style.display='none'; else p.style.display='flex'; }
+        document.addEventListener('click', (e) => { const p=document.getElementById('config-panel'); const b=document.getElementById('btn-config'); if(p.style.display==='flex' && !p.contains(e.target) && !b.contains(e.target)) toggleConfig(); });
+        function updateVol(t, v) { if(t==='master') Object.values(audios).forEach(a => a.volume = (a.loop?a.volume:v)); if(t==='music') ['bgm-menu','bgm-loop','bgm-lobby'].forEach(k => { if(audios[k]) audios[k].volume=v; }); }
+        function playSound(k) { if(audios[k]) { audios[k].currentTime=0; audios[k].play().catch(()=>{}); } }
 
-        window.toggleMute = function() {
-            window.isMuted = !window.isMuted;
-            const btn = document.getElementById('btn-sound');
-            if (window.isMuted) {
-                btn.innerText = "🔇";
-                Object.values(audios).forEach(a => { if(a.loop) a.pause(); });
-            } else {
-                btn.innerText = "🎵";
-                if(document.getElementById('lobby-screen').classList.contains('active')) window.switchMusic('lobby');
-                else if(document.getElementById('game-screen').classList.contains('active')) window.switchMusic('game');
-            }
-        }
+        window.onload = preloadGame;
+        
+        const CARDS_DB = {
+            'ATAQUE': { color: 'red', fCol: '#e74c3c', icon: '⚔️', img: 'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png', base: 'Dano = Nível.', bonus: 'Se inimigo DESCANSAR, ganhe XP.', mastery: '+1 dano acumulativo.' },
+            'BLOQUEIO': { color: 'blue', fCol: '#00cec9', icon: '🛡️', img: 'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png', base: 'Previne ATAQUE.', bonus: 'Reflete 1 dano.', mastery: 'Reflexão +1.' },
+            'DESCANSAR': { color: 'green', fCol: '#2ecc71', icon: '💚', img: 'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png', base: 'Cura 2 HP.', bonus: 'Se full HP/Sem dano, +1 cura.', mastery: 'Aumenta HP Maximo.' },
+            'TREINAR': { color: 'purple', fCol: '#9b59b6', icon: '🎓', img: 'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png', base: 'Compra carta p/ XP.', bonus: 'Nenhum.', mastery: 'Copia outra maestria.' },
+            'DESARMAR': { color: 'orange', fCol: '#f39c12', icon: '🔒', img: 'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png', base: 'Bloqueia ação.', bonus: 'Colisão anula.', mastery: 'Escolhe alvo.' }
+        };
+        const ACTION_KEYS = Object.keys(CARDS_DB);
+        const DECK_TEMPLATE = { 'ATAQUE': 8, 'BLOQUEIO': 8, 'DESARMAR': 5, 'DESCANSAR': 4, 'TREINAR': 5 };
+        let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+        let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+        let isProcessing = false; let turnCount = 1;
 
-        window.showScreen = function(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            
-            document.getElementById('btn-config').style.display = (id === 'game-screen') ? 'block' : 'none';
-            document.getElementById('btn-surrender').style.display = (id === 'game-screen') ? 'block' : 'none';
-        }
-
-        window.toggleConfig = function() {
-            let p = document.getElementById('config-panel');
-            if(p.style.display==='flex') p.style.display='none'; else p.style.display='flex';
-        }
-
-        window.playHoverSound = function() {
-            if(!window.isMuted && audios['sfx-btn-hover']) {
-                audios['sfx-btn-hover'].currentTime = 0;
-                audios['sfx-btn-hover'].play().catch(()=>{});
-            }
-        }
-        window.playNavSound = function() {
-            if(!window.isMuted && audios['sfx-nav']) {
-                audios['sfx-nav'].currentTime = 0;
-                audios['sfx-nav'].play().catch(()=>{});
-            }
-        }
-
-        // GAME LOGIC CORE
-        window.transitionToGame = function() {
-            window.switchMusic('game');
-            window.showScreen('game-screen');
-            setTimeout(startGameFlow, 50);
-        }
-
-        window.restartMatch = function() {
-            document.getElementById('end-screen').classList.remove('visible');
-            setTimeout(startGameFlow, 50);
-        }
-
-        window.abandonMatch = function() {
-             toggleConfig(); 
-             if(confirm("Sair? Contará como derrota.")) {
-                 if(window.registrarDerrotaOnline) window.registrarDerrotaOnline();
-                 window.goToLobby(false);
-             }
-        }
+        function startCinematicLoop() { const c = audios['sfx-cine']; c.volume = 0; c.play().catch(()=>{}); }
+        
+        function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
+        function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } }
+        function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
         function startGameFlow() {
             document.getElementById('end-screen').classList.remove('visible');
             isProcessing = false; 
+            startCinematicLoop(); audios['bgm-loop'].play().catch(e => console.log("BGM Blocked", e));
             resetUnit(player); resetUnit(monster); turnCount = 1;
             
-            // 1. FILL DECKS
-            // 2. DRAW 6 CARDS (DATA)
             drawCardLogic(monster, 6); 
             drawCardLogic(player, 6); 
             
-            // 3. RENDER UI (BUT INVISIBLE CARDS)
             updateUI();
             
-            // 4. ANIMATE DEAL
-            setTimeout(() => { dealAnimation(); }, 100);
+            // ANIMAÇÃO DE DISTRIBUIÇÃO
+            setTimeout(() => { dealAllInitialCards(); }, 100);
         }
 
-        function dealAnimation() {
-            if(!audios['sfx-deal'].paused) audios['sfx-deal'].currentTime = 0;
-            if(!window.isMuted) audios['sfx-deal'].play().catch(()=>{});
-
-            const handEl = document.getElementById('player-hand');
+        // --- LÓGICA DE DISTRIBUIÇÃO RESTAURADA ---
+        function dealAllInitialCards() {
+            isProcessing = true; 
+            playSound('sfx-deal'); 
+            const handEl = document.getElementById('player-hand'); 
             const cards = Array.from(handEl.children);
             
-            // Hide all real cards first
+            if(cards.length === 0) { isProcessing = false; return; }
+
+            // Primeiro: Esconde as cartas reais
             cards.forEach(c => c.style.opacity = '0');
 
             cards.forEach((cardEl, i) => {
                 setTimeout(() => {
                     const rect = cardEl.getBoundingClientRect();
-                    // Origin: Deck position
+                    // Origem: Deck
                     const deckRect = document.getElementById('p-deck-container').getBoundingClientRect();
                     
-                    // Create Flying Clone
+                    // Clone voador
                     const fly = document.createElement('div');
-                    fly.className = cardEl.className; // Copy classes (colors)
+                    fly.className = cardEl.className; // Pega as classes de cor
                     fly.classList.add('flying-card');
-                    fly.innerHTML = cardEl.innerHTML; // Copy art
+                    fly.innerHTML = cardEl.innerHTML; // Pega a arte
                     
-                    // Set start pos
+                    // Posição Inicial
                     fly.style.left = deckRect.left + 'px';
                     fly.style.top = deckRect.top + 'px';
-                    fly.style.width = '80px'; // Small at start
+                    fly.style.width = '80px'; 
                     fly.style.height = '120px';
                     document.body.appendChild(fly);
 
-                    // Force reflow
+                    // Força reflow
                     fly.offsetHeight;
 
-                    // Set end pos
+                    // Posição Final
                     fly.style.left = rect.left + 'px';
                     fly.style.top = rect.top + 'px';
                     fly.style.width = rect.width + 'px';
                     fly.style.height = rect.height + 'px';
 
-                    // On Finish
+                    // Ao chegar
                     setTimeout(() => {
                         fly.remove();
-                        cardEl.style.opacity = '1'; // Show real card
-                    }, 400); // Duration of flight
+                        cardEl.style.opacity = '1'; // Revela carta real
+                        if(i === cards.length - 1) isProcessing = false; 
+                    }, 400); 
 
-                }, i * 150); // Stagger
+                }, i * 150); 
             });
         }
-
-        function resetUnit(u) {
-            u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; 
-            u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; 
-            for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); 
-            shuffle(u.deck);
-        }
-        function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } }
-        function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
         function updateUI() {
             updateUnitStats(player); updateUnitStats(monster);
@@ -639,7 +642,6 @@
                     c.className = `card hand-card ${CARDS_DB[k].color}`;
                     if(u.disabled === k) c.classList.add('disabled-card');
                     
-                    // Cinematic & Zoom events
                     c.onmouseenter = () => { 
                         if(!window.isMuted) audios['sfx-hover'].play().catch(()=>{});
                         document.body.classList.add('cinematic-active');
@@ -661,19 +663,22 @@
                 });
             }
             
-            // XP & Masteries (Simplified refresh)
             let xpEl = document.getElementById(u.id+'-xp'); xpEl.innerHTML='';
             u.xp.forEach(k => {
                 let d = document.createElement('div'); d.className='xp-mini'; 
                 d.style.backgroundImage = `url('${CARDS_DB[k].img}')`;
                 xpEl.appendChild(d);
             });
+            
+            let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
+            if(u.bonusAtk>0) addMI(mc, 'ATAQUE', u.bonusAtk, '#e74c3c', u.id); 
+            if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
         }
 
         function playCard(index) {
             if(isProcessing) return;
             let cardKey = player.hand[index];
-            if(player.disabled === cardKey) return; // Can't play disabled
+            if(player.disabled === cardKey) return; 
 
             if(cardKey === 'DESARMAR') {
                 openModal('ALVO DO DESARME', 'Escolha:', ACTION_KEYS, (choice) => executeTurn(index, choice));
@@ -688,12 +693,10 @@
 
             let pCard = player.hand.splice(pIndex, 1)[0];
             
-            // AI Logic
             let mCard = 'ATAQUE';
             if(monster.hand.length > 0) mCard = monster.hand.pop();
             else if(monster.deck.length > 0) { monster.hand.push(monster.deck.pop()); mCard = monster.hand.pop(); }
 
-            // Visuals fly to center
             animateToCenter('player-hand', 'p-slot', pCard, () => {
                 renderSlot('p-slot', pCard);
                 updateUI();
@@ -707,15 +710,12 @@
         function animateToCenter(startId, endId, key, cb) {
             let startRect;
             if(startId === 'player-hand') {
-                 // Try to find the specific card element that was clicked (not perfect but close enough)
-                 // For simplicity, center of hand
                  let hand = document.getElementById('player-hand');
                  startRect = hand.getBoundingClientRect();
                  startRect.left += startRect.width/2; 
             } else {
                 startRect = document.getElementById(startId).getBoundingClientRect();
             }
-            
             let endRect = document.getElementById(endId).getBoundingClientRect();
 
             let fly = document.createElement('div');
@@ -738,7 +738,6 @@
         }
 
         function resolveCombat(pAct, mAct, pTarget) {
-            // Combat Logic (Simplified for stability)
             let pDmg = (pAct==='ATAQUE') ? player.lvl : 0;
             let mDmg = (mAct==='ATAQUE') ? monster.lvl : 0;
             
@@ -748,22 +747,18 @@
             if(pDmg > 0) { monster.hp -= pDmg; showFloatText('m-stats-cluster', `-${pDmg}`, 'red'); playSound('sfx-hit'); }
             if(mDmg > 0) { player.hp -= mDmg; showFloatText('p-stats-cluster', `-${mDmg}`, 'red'); playSound('sfx-hit'); }
 
-            // Healing
             if(pAct==='DESCANSAR') { player.hp = Math.min(player.maxHp, player.hp+2); showFloatText('p-stats-cluster', '+2 HP', 'green'); playSound('sfx-heal'); }
             if(mAct==='DESCANSAR') { monster.hp = Math.min(monster.maxHp, monster.hp+2); showFloatText('m-stats-cluster', '+2 HP', 'green'); }
 
             updateUI();
 
             setTimeout(() => {
-                // XP Logic
                 player.xp.push(pAct); monster.xp.push(mAct);
                 checkLevelUp(player); checkLevelUp(monster);
                 
-                // Clear table
                 document.getElementById('p-slot').innerHTML = '';
                 document.getElementById('m-slot').innerHTML = '';
 
-                // Draw new cards
                 drawCardLogic(player, 1);
                 drawCardLogic(monster, 1);
                 
@@ -772,7 +767,7 @@
                 } else {
                     turnCount++;
                     updateUI();
-                    dealAnimation(); // Animate new card
+                    dealAnimation(); // Anima nova carta
                     isProcessing = false;
                 }
             }, 1000);
@@ -781,18 +776,59 @@
         function checkLevelUp(u) {
             if(u.xp.length >= 5) {
                 u.lvl++; 
-                u.xp = []; // Reset XP
-                u.deck = []; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); // Reset Deck
+                u.xp = []; 
+                u.deck = []; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); 
                 
-                // FX
                 if(!window.isMuted) audios['sfx-levelup'].play().catch(()=>{});
                 const el = document.getElementById(u.id+'-lvl');
                 el.classList.add('level-up-anim');
+                window.triggerLevelUpFX(u.id+'-lvl'); // FX
                 setTimeout(()=>el.classList.remove('level-up-anim'), 1000);
-                
-                // PARTICLE FX
-                window.triggerLevelUpFX(u.id+'-stats-cluster');
             }
+        }
+
+        function dealAnimation() {
+            if(!audios['sfx-deal'].paused) audios['sfx-deal'].currentTime = 0;
+            if(!window.isMuted) audios['sfx-deal'].play().catch(()=>{});
+
+            const handEl = document.getElementById('player-hand');
+            const cards = Array.from(handEl.children);
+            
+            // Só anima a última carta se já tiver cartas na mão
+            let targetCards = (cards.length > 1 && turnCount > 1) ? [cards[cards.length-1]] : cards;
+            
+            targetCards.forEach(c => c.style.opacity = '0');
+
+            targetCards.forEach((cardEl, i) => {
+                setTimeout(() => {
+                    const rect = cardEl.getBoundingClientRect();
+                    const deckRect = document.getElementById('p-deck-container').getBoundingClientRect();
+                    
+                    const fly = document.createElement('div');
+                    fly.className = cardEl.className; 
+                    fly.classList.add('flying-card');
+                    fly.innerHTML = cardEl.innerHTML; 
+                    
+                    fly.style.left = deckRect.left + 'px';
+                    fly.style.top = deckRect.top + 'px';
+                    fly.style.width = '80px'; 
+                    fly.style.height = '120px';
+                    document.body.appendChild(fly);
+
+                    fly.offsetHeight;
+
+                    fly.style.left = rect.left + 'px';
+                    fly.style.top = rect.top + 'px';
+                    fly.style.width = rect.width + 'px';
+                    fly.style.height = rect.height + 'px';
+
+                    setTimeout(() => {
+                        fly.remove();
+                        cardEl.style.opacity = '1'; 
+                    }, 400); 
+
+                }, i * 150); 
+            });
         }
 
         function showFloatText(id, txt, col) {
@@ -803,8 +839,6 @@
             setTimeout(()=>el.remove(), 1000);
         }
 
-        function playSound(id) { if(!window.isMuted && audios[id]) { audios[id].currentTime=0; audios[id].play().catch(()=>{}); } }
-        
         function bindTooltip(el, k) {
             const db = CARDS_DB[k];
             const tt = document.getElementById('tooltip-box');
@@ -819,46 +853,47 @@
             el.onmousemove = update;
         }
 
-        // LEVEL UP FX
+        // FX
         const fxC = document.getElementById('fx-canvas');
         const fxCtx = fxC.getContext('2d');
-        let parts = []; let animId;
-        window.addEventListener('resize', () => { fxC.width=window.innerWidth; fxC.height=window.innerHeight; });
-        fxC.width=window.innerWidth; fxC.height=window.innerHeight;
+        let parts = []; let animId; let isAnim = false; let tS = 0; let tA = 1; let tPh = 'idle'; let wT = 0; let fX=0, fY=0;
+        const CLRS = ['#FFD700', '#FFA500', '#FFFF00', '#FFFFFF'];
+        function resize() { fxC.width=window.innerWidth; fxC.height=window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
 
-        window.triggerLevelUpFX = function(targetId) {
-            let rect = document.getElementById(targetId).getBoundingClientRect();
-            let x = rect.left + rect.width/2;
-            let y = rect.top + rect.height/2;
-            for(let i=0; i<30; i++) parts.push({x:x, y:y, sx:(Math.random()-0.5)*10, sy:(Math.random()-0.5)*10, l:1, c:'gold'});
-            if(!animId) animateFX();
+        class Part {
+            constructor(x, y) { this.x=x+(Math.random()-0.5)*80; this.y=y; this.s=Math.random()*8+3; this.sy=Math.random()*4+2; this.sx=(Math.random()-0.5)*2; this.c=CLRS[Math.floor(Math.random()*CLRS.length)]; this.l=1.0; this.d=Math.random()*0.03+0.02; }
+            up() { this.x+=this.sx; this.y-=this.sy; this.l-=this.d; this.s*=0.9; }
+            dr(c) { c.fillStyle=this.c; c.globalAlpha=Math.max(0,this.l); c.beginPath(); c.arc(this.x,this.y,this.s,0,Math.PI*2); c.fill(); c.globalAlpha=1.0; }
         }
 
-        function animateFX() {
+        window.triggerLevelUpFX = function(eid) {
+            let el = document.getElementById(eid); if(!el) return;
+            let r = el.getBoundingClientRect(); fX = r.left+r.width/2; fY = r.top+r.height/2;
+            parts=[]; tS=0; tA=1; tPh='pop'; wT=40; isAnim=true;
+            for(let i=0;i<40;i++) parts.push(new Part(fX, fY));
+            if(!animId) loopFX();
+        }
+
+        function loopFX() {
             fxCtx.clearRect(0,0,fxC.width,fxC.height);
-            parts.forEach((p, i) => {
-                p.x += p.sx; p.y += p.sy; p.l -= 0.02;
-                fxCtx.fillStyle = p.c; fxCtx.globalAlpha = p.l;
-                fxCtx.beginPath(); fxCtx.arc(p.x, p.y, 5, 0, Math.PI*2); fxCtx.fill();
-                if(p.l <= 0) parts.splice(i, 1);
-            });
-            if(parts.length > 0) animId = requestAnimationFrame(animateFX); else animId = null;
-        }
+            if(isAnim) {
+                if(tPh==='pop') { tS+=0.25; if(tS>=1.5) { tS=1.5; tPh='settle'; } }
+                else if(tPh==='settle') { tS-=0.1; if(tS<=1.0) { tS=1.0; tPh='wait'; } }
+                else if(tPh==='wait') { wT--; if(wT<=0) tPh='fade'; }
+                else if(tPh==='fade') { tA-=0.05; tS+=0.01; if(tA<=0) { tA=0; tPh='finished'; } }
 
-        // Fullscreen fix
-        window.toggleFullScreen = function() {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
-            else if (document.exitFullscreen) document.exitFullscreen();
-        }
-
-        // Vol control
-        window.updateVol = function(t, v) {
-            if(t==='master') { 
-                Object.values(audios).forEach(a => a.volume = (a.loop ? a.volume : v));
+                if(tA>0) {
+                    fxCtx.save(); fxCtx.translate(fX, fY); fxCtx.scale(tS, tS); fxCtx.globalAlpha=tA;
+                    fxCtx.font="900 48px 'Russo One'"; fxCtx.textAlign="center"; fxCtx.textBaseline="middle";
+                    fxCtx.lineWidth=8; fxCtx.lineJoin="round"; fxCtx.strokeStyle="black"; fxCtx.strokeText("LEVEL UP!",0,0);
+                    let g=fxCtx.createLinearGradient(0,-25,0,25); g.addColorStop(0,"#FFFF00"); g.addColorStop(1,"#FFA500");
+                    fxCtx.fillStyle=g; fxCtx.fillText("LEVEL UP!",0,0); fxCtx.restore();
+                }
+                for(let i=0; i<parts.length; i++) { parts[i].up(); parts[i].dr(fxCtx); if(parts[i].l<=0) { parts.splice(i,1); i--; } }
+                if(parts.length===0 && tPh==='finished') isAnim=false;
             }
-            if(t==='music') {
-                ['bgm-menu','bgm-loop','bgm-lobby'].forEach(k => { if(audios[k]) audios[k].volume = v; });
-            }
+            if(isAnim) animId=requestAnimationFrame(loopFX); else animId=null;
         }
     </script>
 </body>
