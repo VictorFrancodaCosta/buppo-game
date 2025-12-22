@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUPPO - 57.0 STABLE RESTORE</title>
+    <title>BUPPO - 58.0 FINAL FIX</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <style>
@@ -31,8 +31,7 @@
         /* CANVAS DE EFEITOS (LEVEL UP) */
         #fx-canvas {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; /* Permite clicar através */
-            z-index: 99999;
+            pointer-events: none; z-index: 99999;
         }
 
         /* BACKGROUND FIXO */
@@ -59,7 +58,7 @@
         #game-container { 
             max-width: 1600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; 
             padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; 
-            opacity: 1 !important; /* VISIBILIDADE FORÇADA */
+            opacity: 1 !important; 
         }
 
         .screen { display: none; height: 100%; width: 100%; flex-direction: column; justify-content: space-between; }
@@ -183,7 +182,6 @@
         }
         .minimal-btn:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 10px var(--gold); }
         
-        /* Botão Config escondido por padrão */
         #btn-config { display: none; }
 
         #btn-fullscreen { position: fixed; bottom: 20px; right: 20px; z-index: 20000; font-size: 24px; cursor: pointer; color: rgba(255, 255, 255, 0.4); transition: 0.3s; background: transparent; border: none; width: auto; height: auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
@@ -266,8 +264,8 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
             transform-style: preserve-3d; background-color: #111; 
             transition: margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s; 
-            /* SEGREDO: OPACITY 1 PARA GARANTIR QUE APAREÇA */
-            opacity: 1;
+            /* SEGREDO: OPACITY 1 !IMPORTANT PARA GARANTIR QUE APAREÇA */
+            opacity: 1 !important; visibility: visible !important;
         }
         
         .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
@@ -300,7 +298,32 @@
         .modal-btns { display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
         .mini-btn { padding: 15px 35px; background: var(--wood-dark); color: var(--gold); border: 2px solid var(--gold); cursor: pointer; border-radius: 50px; font-family: 'Russo One', sans-serif; text-transform: uppercase; transition: 0.2s; }
         .mini-btn:hover { background: var(--gold); color: var(--wood-dark); transform: translateY(-3px);}
+        body.cinematic-active #game-background, body.cinematic-active .middle-area, body.cinematic-active .avatar-cluster, body.cinematic-active .deck-area, body.cinematic-active #p-deck-container, body.cinematic-active .xp-area { filter: blur(8px); }
+        body.tension-active #game-background, body.tension-active .middle-area, body.tension-active .avatar-cluster, body.tension-active .deck-area, body.tension-active #p-deck-container, body.tension-active .xp-area { filter: blur(8px) grayscale(100%) brightness(0.2); }
+        body.focus-hand .hand-wrapper .card:not(:hover) { transform: scale(0.95); filter: brightness(0.8); }
+        body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-area, body.focus-xp #p-deck-container, body.focus-xp .hand-wrapper { filter: blur(5px) brightness(0.5); opacity: 0.6; }
+
+        /* CORREÇÃO DO "RESQUÍCIO DE JANELA DE VITÓRIA" */
+        #end-screen { 
+            display: none; /* Isso garante que a janela só ocupe espaço quando ativada */
+            justify-content: center; align-items: center; 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 50000; background: rgba(0,0,0,0.95); backdrop-filter: blur(20px); 
+            opacity: 0; pointer-events: none; transition: opacity 0.8s ease-in-out;
+        }
+        #end-screen.visible { display: flex; opacity: 1; pointer-events: auto; }
+        .end-content { text-align: center; transform: scale(0.5); transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); opacity: 0; }
+        #end-screen.visible .end-content { transform: scale(1); opacity: 1; }
+        #end-title { font-family: 'Russo One', sans-serif; font-size: 100px; letter-spacing: -2px; margin-bottom: 30px; text-transform: uppercase; background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .win-theme { background-image: linear-gradient(to bottom, #fff6b3, #ffd700, #ffb900); text-shadow: 0 0 30px rgba(255, 215, 0, 0.5); animation: gloryPulse 2s infinite alternate; }
+        .lose-theme { background-image: linear-gradient(to bottom, #ff9ca1, #ff7675, #d63031); text-shadow: 0 0 30px rgba(255, 0, 0, 0.5); animation: horrorShake 3s infinite; }
+        .tie-theme { background-image: linear-gradient(to bottom, #bdc3c7, #95a5a6, #7f8c8d); text-shadow: 0 0 30px rgba(255, 255, 255, 0.5); animation: gloryPulse 3s infinite alternate; }
         
+        .end-btn-row { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
+        .big-btn { padding: 25px 70px; font-size: 24px; font-family: 'Russo One', sans-serif; background: var(--wood-light); color: #fff; border: 3px solid var(--gold); border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: 0.2s; text-transform: uppercase; }
+        .big-btn:hover { background: var(--gold); box-shadow: 0 0 30px var(--gold); transform: scale(1.05); color: var(--wood-dark); border-color: var(--wood-dark); }
+        .secondary-btn { background: var(--wood-dark) !important; border-color: #95a5a6 !important; color: #ccc !important; }
+
         .center-text {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
             font-family: 'Russo One', sans-serif; font-size: 32px; color: #ff7675; text-transform: uppercase;
@@ -464,7 +487,6 @@
 
         let currentUser = null;
 
-        // GUARDIÃO DE ESTADO
         onAuthStateChanged(auth, (user) => {
             setTimeout(() => {
                 document.getElementById('loading-screen').style.opacity = '0';
@@ -478,7 +500,7 @@
                 currentUser = null;
                 window.showScreen('start-screen');
                 document.getElementById('btn-text').innerText = "LOGIN COM GOOGLE";
-                window.switchMusic('none'); // Toca silêncio
+                window.switchMusic('none');
             }
         });
 
@@ -498,7 +520,6 @@
         window.goToLobby = async function(isAutoLogin = false) {
             if(!currentUser) { window.showScreen('start-screen'); return; }
             
-            // TOCA MUSICA LOBBY
             window.switchMusic('lobby');
 
             const userRef = doc(db, "players", currentUser.uid);
@@ -685,7 +706,7 @@
         }
 
         window.transitionToGame = function() {
-            window.switchMusic('game'); // Troca a musica AQUI
+            window.switchMusic('game'); 
             window.showScreen('game-screen');
             setTimeout(startGameFlow, 50);
         }
@@ -705,7 +726,7 @@
              }
         }
         
-        // --- SISTEMA DE ÁUDIO CENTRAL ---
+        // --- SISTEMA DE ÁUDIO ---
         window.isMuted = false;
         let currentTrackId = 'none';
 
@@ -713,7 +734,6 @@
             if(currentTrackId === trackType) return;
             currentTrackId = trackType;
 
-            // Fade Out Todas as musicas
             ['bgm-lobby', 'bgm-loop', 'bgm-menu'].forEach(id => {
                 let audio = audios[id];
                 if(audio) {
@@ -726,12 +746,10 @@
 
             if(window.isMuted || trackType === 'none') return;
 
-            // Fade In na musica alvo
             let targetId = (trackType === 'lobby') ? 'bgm-lobby' : (trackType === 'game' ? 'bgm-loop' : null);
             if(targetId && audios[targetId]) {
                 let audio = audios[targetId];
                 audio.volume = 0;
-                // Tenta tocar (navegadores podem bloquear se nao houver interação antes)
                 audio.play().catch(()=>{});
                 let fadeIn = setInterval(() => {
                     if(audio.volume < 0.5) audio.volume += 0.05;
@@ -749,7 +767,6 @@
                 ['bgm-lobby', 'bgm-loop', 'bgm-menu'].forEach(id => { if(audios[id]) audios[id].pause(); });
             } else {
                 btn.innerText = "🎵";
-                // Retoma a música correta baseada na tela atual
                 if(document.getElementById('lobby-screen').classList.contains('active')) window.switchMusic('lobby');
                 else if(document.getElementById('game-screen').classList.contains('active')) window.switchMusic('game');
             }
@@ -787,12 +804,12 @@
         function updateLoader() {
             assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); document.getElementById('loader-fill').style.width = pct + '%';
             if(assetsLoaded >= totalAssets) {
-                // Remove loader
                 setTimeout(() => {
                     document.getElementById('loading-screen').style.opacity = '0';
                     setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 500);
                 }, 1000); 
-                // A música é controlada pelo AuthState
+                playMenuAudio();
+                document.body.addEventListener('click', () => { if (audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) { audios['bgm-menu'].volume = 0.5; audios['bgm-menu'].play().catch(()=>{}); } }, { once: true });
             }
         }
         
@@ -801,6 +818,7 @@
             else { if (document.exitFullscreen) { document.exitFullscreen(); } }
         }
 
+        function playMenuAudio() { let s = audios['bgm-menu']; if(s) { s.volume = 0; if(s.duration > 60) s.currentTime = 10 + Math.random() * 50; s.play().then(() => { let vol = 0; let fade = setInterval(() => { if(vol < 0.5) { vol += 0.05; s.volume = vol; } else clearInterval(fade); }, 200); }).catch(e => console.log("Autoplay blocked")); } }
         function playNavSound() { let s = audios['sfx-nav']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } }
         function playHoverSound() { let s = audios['sfx-btn-hover']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } }
         
@@ -841,8 +859,6 @@
             const cards = Array.from(handEl.children);
             if(cards.length === 0) { isProcessing = false; return; }
             cards.forEach((cardEl, i) => {
-                // FORÇA VISIBILIDADE IMEDIATA
-                cardEl.style.opacity = '1';
                 setTimeout(() => {
                     const rect = cardEl.getBoundingClientRect();
                     // Fallback to center if element is hidden/zero size
@@ -1033,7 +1049,7 @@
                     let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
                     c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
                     if(u.disabled===k) c.classList.add('disabled-card');
-                    c.style.opacity = '1';
+                    c.style.opacity = '1 !important'; /* GARANTIA DE VISIBILIDADE */
                     let lethalType = checkCardLethality(k); 
                     
                     let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
