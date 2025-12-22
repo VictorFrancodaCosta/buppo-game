@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUPPO - 56.0 Github Stable</title>
+    <title>BUPPO - 56.1 Audio & FX</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <style>
@@ -26,6 +26,13 @@
         body { 
             font-family: 'Montserrat', sans-serif; background-color: var(--bg-app); 
             margin: 0; padding: 0; height: 100vh; overflow: hidden; user-select: none;
+        }
+
+        /* CANVAS DE EFEITOS (LEVEL UP) */
+        #fx-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; /* Deixa clicar através dele */
+            z-index: 99999; /* Fica acima de tudo */
         }
 
         /* BACKGROUND FIXO */
@@ -176,7 +183,6 @@
         }
         .minimal-btn:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 10px var(--gold); }
         
-        /* Botão Config escondido por padrão */
         #btn-config { display: none; }
 
         #btn-fullscreen { position: fixed; bottom: 20px; right: 20px; z-index: 20000; font-size: 24px; cursor: pointer; color: rgba(255, 255, 255, 0.4); transition: 0.3s; background: transparent; border: none; width: auto; height: auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
@@ -247,7 +253,7 @@
         .slot .card { width: 100% !important; height: 100% !important; margin: 0; border-radius: 16px !important; box-shadow: none; cursor: default; transform: translateZ(0px); border-width: 2px; }
         .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
         
-        /* MÃO DO JOGADOR - CORREÇÃO DE VISIBILIDADE */
+        /* MÃO DO JOGADOR - VISIBILIDADE FORÇADA */
         .hand-wrapper { 
             position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; 
             display: flex; justify-content: center; align-items: flex-end; 
@@ -259,12 +265,8 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
             transform-style: preserve-3d; background-color: #111; 
             transition: margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s; 
-            /* REMOVIDO OPACITY !IMPORTANT PARA PERMITIR ANIMAÇÃO JS */
-            opacity: 0; 
+            opacity: 1 !important; visibility: visible !important;
         }
-        /* VISIBILIDADE APÓS CARREGAR */
-        .card.visible { opacity: 1; }
-
         .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
         
         .flares-container { position: absolute; top: 50%; left: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
@@ -295,31 +297,7 @@
         .modal-btns { display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
         .mini-btn { padding: 15px 35px; background: var(--wood-dark); color: var(--gold); border: 2px solid var(--gold); cursor: pointer; border-radius: 50px; font-family: 'Russo One', sans-serif; text-transform: uppercase; transition: 0.2s; }
         .mini-btn:hover { background: var(--gold); color: var(--wood-dark); transform: translateY(-3px);}
-        body.cinematic-active #game-background, body.cinematic-active .middle-area, body.cinematic-active .avatar-cluster, body.cinematic-active .deck-area, body.cinematic-active #p-deck-container, body.cinematic-active .xp-area { filter: blur(8px); }
-        body.tension-active #game-background, body.tension-active .middle-area, body.tension-active .avatar-cluster, body.tension-active .deck-area, body.tension-active #p-deck-container, body.tension-active .xp-area { filter: blur(8px) grayscale(100%) brightness(0.2); }
-        body.focus-hand .hand-wrapper .card:not(:hover) { transform: scale(0.95); filter: brightness(0.8); }
-        body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-area, body.focus-xp #p-deck-container, body.focus-xp .hand-wrapper { filter: blur(5px) brightness(0.5); opacity: 0.6; }
-
-        /* FIM DE JOGO */
-        #end-screen { 
-            display: none; justify-content: center; align-items: center; 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 50000; background: rgba(0,0,0,0.95); backdrop-filter: blur(20px); 
-            opacity: 0; pointer-events: none; transition: opacity 0.8s ease-in-out;
-        }
-        #end-screen.visible { display: flex; opacity: 1; pointer-events: auto; }
-        .end-content { text-align: center; transform: scale(0.5); transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); opacity: 0; }
-        #end-screen.visible .end-content { transform: scale(1); opacity: 1; }
-        #end-title { font-family: 'Russo One', sans-serif; font-size: 100px; letter-spacing: -2px; margin-bottom: 30px; text-transform: uppercase; background-clip: text; -webkit-background-clip: text; color: transparent; }
-        .win-theme { background-image: linear-gradient(to bottom, #fff6b3, #ffd700, #ffb900); text-shadow: 0 0 30px rgba(255, 215, 0, 0.5); animation: gloryPulse 2s infinite alternate; }
-        .lose-theme { background-image: linear-gradient(to bottom, #ff9ca1, #ff7675, #d63031); text-shadow: 0 0 30px rgba(255, 0, 0, 0.5); animation: horrorShake 3s infinite; }
-        .tie-theme { background-image: linear-gradient(to bottom, #bdc3c7, #95a5a6, #7f8c8d); text-shadow: 0 0 30px rgba(255, 255, 255, 0.5); animation: gloryPulse 3s infinite alternate; }
         
-        .end-btn-row { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
-        .big-btn { padding: 25px 70px; font-size: 24px; font-family: 'Russo One', sans-serif; background: var(--wood-light); color: #fff; border: 3px solid var(--gold); border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: 0.2s; text-transform: uppercase; }
-        .big-btn:hover { background: var(--gold); box-shadow: 0 0 30px var(--gold); transform: scale(1.05); color: var(--wood-dark); border-color: var(--wood-dark); }
-        .secondary-btn { background: var(--wood-dark) !important; border-color: #95a5a6 !important; color: #ccc !important; }
-
         .center-text {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
             font-family: 'Russo One', sans-serif; font-size: 32px; color: #ff7675; text-transform: uppercase;
@@ -359,6 +337,8 @@
     </style>
 </head>
 <body>
+    <canvas id="fx-canvas"></canvas>
+    
     <div id="loading-screen">
         <div class="loader-title">BUPPO</div>
         <div class="loader-bar-bg"><div class="loader-bar-fill" id="loader-fill"></div></div>
@@ -481,7 +461,6 @@
 
         let currentUser = null;
 
-        // GUARDIÃO DE ESTADO
         onAuthStateChanged(auth, (user) => {
             setTimeout(() => {
                 document.getElementById('loading-screen').style.opacity = '0';
@@ -495,6 +474,7 @@
                 currentUser = null;
                 window.showScreen('start-screen');
                 document.getElementById('btn-text').innerText = "LOGIN COM GOOGLE";
+                window.switchMusic('none');
             }
         });
 
@@ -502,47 +482,26 @@
             playNavSound(); 
             const btnText = document.getElementById('btn-text');
             btnText.innerText = "CONECTANDO...";
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                console.error(error);
-                btnText.innerText = "ERRO - TENTE NOVAMENTE";
-                setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000);
-            }
+            try { await signInWithPopup(auth, provider); } 
+            catch (error) { console.error(error); btnText.innerText = "ERRO - TENTE NOVAMENTE"; setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000); }
         };
 
         window.handleLogout = function() {
             playNavSound();
-            signOut(auth).then(() => {
-                location.reload(); 
-            });
+            signOut(auth).then(() => { location.reload(); });
         };
 
         window.goToLobby = async function(isAutoLogin = false) {
-            if(!currentUser) {
-                window.showScreen('start-screen');
-                return;
-            }
+            if(!currentUser) { window.showScreen('start-screen'); return; }
             
-            if(!isAutoLogin) {
-                let s = audios['bgm-menu'];
-                if(s && s.paused && !window.isMuted) s.play().catch(()=>{}); 
-            }
+            // TOCA MUSICA LOBBY
+            window.switchMusic('lobby');
 
-            // DADOS USUÁRIO
             const userRef = doc(db, "players", currentUser.uid);
             const userSnap = await getDoc(userRef);
             
             if (!userSnap.exists()) {
-                await setDoc(userRef, {
-                    name: currentUser.displayName,
-                    email: currentUser.email,
-                    photo: currentUser.photoURL,
-                    totalWins: 0,
-                    totalMatches: 0,
-                    score: 0, 
-                    joinedAt: new Date()
-                });
+                await setDoc(userRef, { name: currentUser.displayName, email: currentUser.email, photo: currentUser.photoURL, totalWins: 0, totalMatches: 0, score: 0, joinedAt: new Date() });
                 document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
                 document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
             } else {
@@ -552,7 +511,6 @@
                 await updateDoc(userRef, { lastLogin: new Date() });
             }
 
-            // RANKING LISTENER
             const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
             onSnapshot(q, (snapshot) => {
                 let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
@@ -578,11 +536,7 @@
                 const userSnap = await getDoc(userRef);
                 if(userSnap.exists()) {
                     const data = userSnap.data();
-                    await updateDoc(userRef, {
-                        totalWins: (data.totalWins || 0) + 1,
-                        score: (data.score || 0) + 100,
-                        totalMatches: (data.totalMatches || 0) + 1
-                    });
+                    await updateDoc(userRef, { totalWins: (data.totalWins || 0) + 1, score: (data.score || 0) + 100, totalMatches: (data.totalMatches || 0) + 1 });
                 }
             } catch(e) { console.error(e); }
         };
@@ -594,13 +548,125 @@
                 const userSnap = await getDoc(userRef);
                 if(userSnap.exists()) {
                     const data = userSnap.data();
-                    await updateDoc(userRef, {
-                        totalMatches: (data.totalMatches || 0) + 1,
-                        score: (data.score || 0) + 10 
-                    });
+                    await updateDoc(userRef, { totalMatches: (data.totalMatches || 0) + 1, score: (data.score || 0) + 10 });
                 }
             } catch(e) {}
         };
+    </script>
+
+    <script>
+        const fxCanvas = document.getElementById('fx-canvas');
+        const ctx = fxCanvas.getContext('2d');
+        let particles = [];
+        let animationId;
+        let isAnimating = false;
+        let textScale = 0;
+        let textAlpha = 1;
+        let textPhase = 'idle'; 
+        let waitTimer = 0;
+        let fxX = 0, fxY = 0; // Coordenadas do efeito
+
+        const COLORS = ['#FFD700', '#FFA500', '#FFFF00', '#FFFFFF'];
+
+        function resizeCanvas() {
+            fxCanvas.width = window.innerWidth;
+            fxCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x + (Math.random() - 0.5) * 80;
+                this.y = y;
+                this.size = Math.random() * 8 + 3;
+                this.speedY = Math.random() * 4 + 2; 
+                this.speedX = (Math.random() - 0.5) * 2;
+                this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+                this.life = 1.0;
+                this.decay = Math.random() * 0.03 + 0.02;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y -= this.speedY;
+                this.life -= this.decay;
+                this.size *= 0.9; 
+            }
+            draw(ctx) {
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        window.triggerLevelUpFX = function(elementId) {
+            let el = document.getElementById(elementId);
+            if(!el) return;
+            let rect = el.getBoundingClientRect();
+            fxX = rect.left + rect.width / 2;
+            fxY = rect.top + rect.height / 2;
+
+            particles = [];
+            textScale = 0;
+            textAlpha = 1;
+            textPhase = 'pop'; 
+            waitTimer = 40; 
+            isAnimating = true;
+
+            for (let i = 0; i < 40; i++) particles.push(new Particle(fxX, fxY));
+            if (!animationId) animateFX();
+        }
+
+        function animateFX() {
+            ctx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+            if (isAnimating) {
+                // Texto Physics
+                if (textPhase === 'pop') {
+                    textScale += 0.25; if (textScale >= 1.5) { textScale = 1.5; textPhase = 'settle'; }
+                } else if (textPhase === 'settle') {
+                    textScale -= 0.1; if (textScale <= 1.0) { textScale = 1.0; textPhase = 'wait'; }
+                } else if (textPhase === 'wait') {
+                    waitTimer--; if (waitTimer <= 0) textPhase = 'fade';
+                } else if (textPhase === 'fade') {
+                    textAlpha -= 0.05; textScale += 0.01; 
+                    if (textAlpha <= 0) { textAlpha = 0; textPhase = 'finished'; }
+                }
+
+                // Draw Text
+                if (textAlpha > 0) {
+                    ctx.save();
+                    ctx.translate(fxX, fxY);
+                    ctx.scale(textScale, textScale);
+                    ctx.globalAlpha = textAlpha;
+                    ctx.font = "900 48px 'Russo One'"; // Usando a fonte do jogo
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.lineWidth = 8;
+                    ctx.lineJoin = "round";
+                    ctx.strokeStyle = "black";
+                    ctx.strokeText("LEVEL UP!", 0, 0);
+                    let gradient = ctx.createLinearGradient(0, -25, 0, 25);
+                    gradient.addColorStop(0, "#FFFF00"); gradient.addColorStop(0.5, "#FFD700"); gradient.addColorStop(1, "#FFA500");
+                    ctx.fillStyle = gradient;
+                    ctx.fillText("LEVEL UP!", 0, 0);
+                    ctx.restore();
+                }
+
+                // Particles
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw(ctx);
+                    if (particles[i].life <= 0) { particles.splice(i, 1); i--; }
+                }
+
+                if (particles.length === 0 && textPhase === 'finished') isAnimating = false;
+            }
+            if(isAnimating) animationId = requestAnimationFrame(animateFX);
+            else animationId = null;
+        }
     </script>
 
     <script>
@@ -608,9 +674,8 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
             
-            // Controle botão Config (Só na partida)
             if(screenId === 'game-screen') {
-                document.getElementById('btn-config').style.display = 'flex';
+                document.getElementById('btn-config').style.display = 'block';
                 document.getElementById('btn-surrender').style.display = 'block';
             } else {
                 document.getElementById('btn-config').style.display = 'none';
@@ -619,19 +684,8 @@
         }
 
         window.transitionToGame = function() {
-            // Fade out Lobby Music
-            let lobbyBgm = audios['bgm-lobby'];
-            if(lobbyBgm) {
-                let vol = lobbyBgm.volume;
-                let fade = setInterval(() => {
-                     if(vol > 0.05) { vol -= 0.05; lobbyBgm.volume = vol; }
-                     else { lobbyBgm.pause(); clearInterval(fade); }
-                }, 100);
-            }
-
+            window.switchMusic('game');
             window.showScreen('game-screen');
-            let s = audios['bgm-loop'];
-            if(s && s.paused && !window.isMuted) { s.volume=0.5; s.play().catch(()=>{}); }
             setTimeout(startGameFlow, 50);
         }
         
@@ -642,7 +696,7 @@
         
         window.abandonMatch = function() {
              if(document.getElementById('game-screen').classList.contains('active')) {
-                 toggleConfig(); // fecha menu
+                 toggleConfig(); 
                  if(window.confirm("Tem certeza que deseja sair? Contará como derrota.")) {
                      window.registrarDerrotaOnline();
                      goToLobby(false);
@@ -650,25 +704,52 @@
              }
         }
         
+        // --- SISTEMA DE ÁUDIO CENTRAL ---
         window.isMuted = false;
+        let currentTrackId = 'none';
+
+        window.switchMusic = function(trackType) {
+            if(currentTrackId === trackType) return;
+            currentTrackId = trackType;
+
+            // Fade Out All
+            ['bgm-lobby', 'bgm-loop', 'bgm-menu'].forEach(id => {
+                let audio = audios[id];
+                if(audio) {
+                    let fadeOut = setInterval(() => {
+                        if(audio.volume > 0.05) audio.volume -= 0.05;
+                        else { audio.pause(); audio.currentTime = 0; clearInterval(fadeOut); }
+                    }, 100);
+                }
+            });
+
+            if(window.isMuted || trackType === 'none') return;
+
+            // Fade In Target
+            let targetId = (trackType === 'lobby') ? 'bgm-lobby' : (trackType === 'game' ? 'bgm-loop' : null);
+            if(targetId && audios[targetId]) {
+                let audio = audios[targetId];
+                audio.volume = 0;
+                audio.play().catch(()=>{});
+                let fadeIn = setInterval(() => {
+                    if(audio.volume < 0.5) audio.volume += 0.05;
+                    else clearInterval(fadeIn);
+                }, 100);
+            }
+        }
+
         window.toggleMute = function() {
             window.isMuted = !window.isMuted;
             const btn = document.getElementById('btn-sound');
-            const bgmLobby = audios['bgm-lobby'];
-            const bgmGame = audios['bgm-loop'];
             
             if(window.isMuted) {
                 btn.innerText = "🔇";
-                if(bgmLobby) bgmLobby.pause();
-                if(bgmGame) bgmGame.pause();
+                ['bgm-lobby', 'bgm-loop', 'bgm-menu'].forEach(id => { if(audios[id]) audios[id].pause(); });
             } else {
                 btn.innerText = "🎵";
-                // Toca a música da tela atual
-                if(document.getElementById('lobby-screen').classList.contains('active')) {
-                    if(bgmLobby) bgmLobby.play().catch(()=>{});
-                } else if (document.getElementById('game-screen').classList.contains('active')) {
-                    if(bgmGame) bgmGame.play().catch(()=>{});
-                }
+                // Retoma a música correta baseada na tela
+                if(document.getElementById('lobby-screen').classList.contains('active')) window.switchMusic('lobby');
+                else if(document.getElementById('game-screen').classList.contains('active')) window.switchMusic('game');
             }
         }
 
@@ -684,7 +765,7 @@
                 { id: 'bgm-menu', src: 'https://files.catbox.moe/g8a1ux.mp3', loop: true }, 
                 { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
                 { id: 'bgm-lobby', src: 'https://files.catbox.moe/km79s9.mp4', loop: true }, 
-                { id: 'sfx-btn-hover', src: 'https://limewire.com/d/oktWV#hj3Iucc4Su' }, /* NOVO SOM LIMEWIRE */
+                { id: 'sfx-btn-hover', src: 'https://limewire.com/d/oktWV#hj3Iucc4Su' },
                 { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
                 { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
                 { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
@@ -708,9 +789,7 @@
                     document.getElementById('loading-screen').style.opacity = '0';
                     setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 500);
                 }, 1000); 
-
-                playMenuAudio();
-                document.body.addEventListener('click', () => { if (audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) { audios['bgm-menu'].volume = 0.5; audios['bgm-menu'].play().catch(()=>{}); } }, { once: true });
+                // A música inicial é gerenciada pelo switchMusic no AuthState
             }
         }
         
@@ -719,7 +798,6 @@
             else { if (document.exitFullscreen) { document.exitFullscreen(); } }
         }
 
-        function playMenuAudio() { let s = audios['bgm-menu']; if(s) { s.volume = 0; if(s.duration > 60) s.currentTime = 10 + Math.random() * 50; s.play().then(() => { let vol = 0; let fade = setInterval(() => { if(vol < 0.5) { vol += 0.05; s.volume = vol; } else clearInterval(fade); }, 200); }).catch(e => console.log("Autoplay blocked")); } }
         function playNavSound() { let s = audios['sfx-nav']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } }
         function playHoverSound() { let s = audios['sfx-btn-hover']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } }
         
@@ -760,23 +838,18 @@
             const cards = Array.from(handEl.children);
             if(cards.length === 0) { isProcessing = false; return; }
             cards.forEach((cardEl, i) => {
-                // Força visibilidade antes de animar
-                cardEl.style.opacity = '1';
                 setTimeout(() => {
                     const rect = cardEl.getBoundingClientRect();
+                    // Fallback to center if element is hidden/zero size
                     let target = (rect.width > 0) ? rect : { top: window.innerHeight - 150, left: window.innerWidth/2 };
-                    // Simula vinda do deck
                     animateFly('p-deck-container', target, player.hand[i], () => { 
-                        cardEl.classList.add('visible'); // Garante que fique visível
+                        // Nada complexo aqui, o CSS já garante visibilidade
                         if(i === cards.length - 1) isProcessing = false; 
                     }, true);
                 }, i * 150); 
             });
-            setTimeout(() => { 
-                // Redundância para garantir visibilidade
-                Array.from(handEl.children).forEach(c => c.style.opacity = '1'); 
-                isProcessing = false; 
-            }, (cards.length * 150) + 500);
+            // Failsafe
+            setTimeout(() => { isProcessing = false; }, (cards.length * 150) + 500);
         }
 
         function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
@@ -880,7 +953,13 @@
                 setTimeout(() => {
                     let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = []; for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
                     processMasteries(u, triggers, () => {
-                        let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; lvlEl.classList.add('level-up-anim'); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
+                        let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; 
+                        lvlEl.classList.add('level-up-anim'); 
+                        playSound('sfx-levelup'); 
+                        // GATILHO DA ANIMAÇÃO DE FX
+                        window.triggerLevelUpFX(u.id+'-lvl');
+                        
+                        setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
                         u.xp.forEach(x => u.deck.push(x)); u.xp = []; shuffle(u.deck); 
                         let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
                         updateUI(); doneCb();
@@ -951,10 +1030,9 @@
                     let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
                     c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
                     if(u.disabled===k) c.classList.add('disabled-card');
-                    c.style.opacity = '1';
+                    c.style.opacity = '1'; /* GARANTIA DE VISIBILIDADE */
                     let lethalType = checkCardLethality(k); 
                     
-                    // MAIS FLARES E MAIS RANDÔMICOS
                     let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
                     
                     c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
@@ -1012,7 +1090,6 @@
             el.innerText=txt; 
             el.style.color=col; 
             
-            // CORREÇÃO: Usar body para posicionamento fixed garantido
             let parent = document.getElementById(eid);
             if(parent) {
                 let rect = parent.getBoundingClientRect();
@@ -1026,9 +1103,10 @@
         function checkEndGame(){ 
             if(player.hp<=0 || monster.hp<=0) { 
                 isProcessing = true; 
-                let bgm = audios['bgm-loop']; 
-                isLethalHover = false; 
-                let fadeOut = setInterval(() => { if(bgm.volume > 0.05) bgm.volume -= 0.05; else { bgm.pause(); clearInterval(fadeOut); } }, 50); 
+                
+                // Mute Game Music
+                window.switchMusic('none');
+
                 setTimeout(()=>{ 
                     let title = document.getElementById('end-title'); 
                     let isWin = player.hp > 0;
@@ -1045,7 +1123,6 @@
                     if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(); } 
                     else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
                     
-                    // IMPORTANTE: Só mostra o end-screen agora
                     document.getElementById('end-screen').classList.add('visible'); 
                 }, 1000); 
             } else { isProcessing = false; } 
