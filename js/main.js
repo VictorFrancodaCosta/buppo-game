@@ -1,0 +1,599 @@
+// ARQUIVO: js/main.js
+
+// 1. IMPORTAÇÕES (Isso conecta os arquivos)
+import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// 2. CONFIGURAÇÃO DO FIREBASE
+const firebaseConfig = {
+    apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
+    authDomain: "buppo-game.firebaseapp.com",
+    projectId: "buppo-game",
+    storageBucket: "buppo-game.firebasestorage.app",
+    messagingSenderId: "950871979140",
+    appId: "1:950871979140:web:f2dba12900500c52053ed1"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+// 3. VARIÁVEIS GLOBAIS
+let currentUser = null;
+const audios = {}; 
+let assetsLoaded = 0; 
+// Precisamos definir os assets aqui ou importar de um arquivo de config. 
+// Por enquanto vamos manter aqui para não quebrar.
+const ASSETS_TO_LOAD = {
+    images: [
+        'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png', 'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png', 
+        'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png', 'https://i.ibb.co/jdZmTHC/CARDBACK.png', 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
+        'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png', 'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png', 'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png',
+        'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png', 'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
+        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png'
+    ],
+    audio: [
+        { id: 'bgm-menu', src: 'https://files.catbox.moe/g8a1ux.mp3', loop: true }, { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
+        { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
+        { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
+        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
+        { id: 'sfx-heal', src: 'https://files.catbox.moe/uegibx.mp3' }, { id: 'sfx-levelup', src: 'https://files.catbox.moe/sm8cce.mp3' },
+        { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' },
+        { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, { id: 'sfx-lose', src: 'https://files.catbox.moe/n7nyck.mp3' },
+        { id: 'sfx-tie', src: 'https://files.catbox.moe/sb18ja.mp3' }
+    ]
+};
+let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
+
+// Variáveis de Estado do Jogo
+let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+let isProcessing = false; let turnCount = 1; let playerHistory = []; let masterVol = 1.0; let musicVolMult = 1.0; let isLethalHover = false; let mixerInterval = null;
+
+// =============================================================================
+// FUNÇÕES DE LÓGICA E UI (Copiadas e Adaptadas para Módulo)
+// =============================================================================
+
+// Precisamos anexar ao 'window' o que for usado pelo HTML (botões onclick)
+window.showScreen = function(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    
+    // Controle botão Abandono
+    if(screenId === 'game-screen') document.getElementById('btn-surrender').style.display = 'block';
+    else document.getElementById('btn-surrender').style.display = 'none';
+}
+
+// ... LOGIN E FIREBASE ...
+
+onAuthStateChanged(auth, (user) => {
+    setTimeout(() => {
+        const loading = document.getElementById('loading-screen');
+        if(loading) {
+            loading.style.opacity = '0';
+            setTimeout(() => loading.style.display = 'none', 500);
+        }
+    }, 500);
+
+    if (user) {
+        currentUser = user;
+        window.goToLobby(true); 
+    } else {
+        currentUser = null;
+        window.showScreen('start-screen');
+        const btnTxt = document.getElementById('btn-text');
+        if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
+    }
+});
+
+window.googleLogin = async function() {
+    playNavSound(); 
+    const btnText = document.getElementById('btn-text');
+    btnText.innerText = "CONECTANDO...";
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.error(error);
+        btnText.innerText = "ERRO - TENTE NOVAMENTE";
+        setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000);
+    }
+};
+
+window.handleLogout = function() {
+    playNavSound();
+    signOut(auth).then(() => {
+        location.reload(); 
+    });
+};
+
+window.goToLobby = async function(isAutoLogin = false) {
+    if(!currentUser) {
+        window.showScreen('start-screen');
+        return;
+    }
+    
+    if(!isAutoLogin) {
+        let s = audios['bgm-menu'];
+        if(s && s.paused && !window.isMuted) s.play().catch(()=>{}); 
+    }
+
+    // DADOS USUÁRIO
+    const userRef = doc(db, "players", currentUser.uid);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) {
+        await setDoc(userRef, {
+            name: currentUser.displayName,
+            email: currentUser.email,
+            photo: currentUser.photoURL,
+            totalWins: 0,
+            totalMatches: 0,
+            score: 0, 
+            joinedAt: new Date()
+        });
+        document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
+    } else {
+        const d = userSnap.data();
+        document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+        await updateDoc(userRef, { lastLogin: new Date() });
+    }
+
+    // RANKING LISTENER
+    const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
+    onSnapshot(q, (snapshot) => {
+        let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
+        let pos = 1;
+        snapshot.forEach((doc) => {
+            const p = doc.data();
+            let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : ""));
+            html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
+            pos++;
+        });
+        html += '</tbody></table>';
+        document.getElementById('ranking-content').innerHTML = html;
+    });
+
+    window.showScreen('lobby-screen');
+    document.getElementById('end-screen').classList.remove('visible'); 
+};
+
+window.registrarVitoriaOnline = async function() {
+    if(!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if(userSnap.exists()) {
+            const data = userSnap.data();
+            await updateDoc(userRef, {
+                totalWins: (data.totalWins || 0) + 1,
+                score: (data.score || 0) + 100,
+                totalMatches: (data.totalMatches || 0) + 1
+            });
+        }
+    } catch(e) { console.error(e); }
+};
+
+window.registrarDerrotaOnline = async function() {
+    if(!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if(userSnap.exists()) {
+            const data = userSnap.data();
+            await updateDoc(userRef, {
+                totalMatches: (data.totalMatches || 0) + 1,
+                score: (data.score || 0) + 10 
+            });
+        }
+    } catch(e) {}
+};
+
+// ... JOGO ...
+
+window.transitionToGame = function() {
+    window.showScreen('game-screen');
+    let s = audios['bgm-menu'];
+    if(s && s.paused && !window.isMuted) { s.volume=0.5; s.play().catch(()=>{}); }
+    setTimeout(startGameFlow, 50);
+}
+
+window.restartMatch = function() {
+    document.getElementById('end-screen').classList.remove('visible');
+    setTimeout(startGameFlow, 50);
+}
+
+window.abandonMatch = function() {
+     if(document.getElementById('game-screen').classList.contains('active')) {
+         toggleConfig(); 
+         if(window.confirm("Tem certeza que deseja sair? Contará como derrota.")) {
+             window.registrarDerrotaOnline();
+             window.goToLobby(false);
+         }
+     }
+}
+
+window.isMuted = false;
+window.toggleMute = function() {
+    window.isMuted = !window.isMuted;
+    const btn = document.getElementById('btn-sound');
+    const bgm = audios['bgm-menu'];
+    if(window.isMuted) {
+        btn.innerText = "🔇";
+        if(bgm) bgm.pause();
+    } else {
+        btn.innerText = "🎵";
+        if(bgm) bgm.play().catch(()=>{});
+    }
+}
+
+function preloadGame() {
+    ASSETS_TO_LOAD.images.forEach(src => { let img = new Image(); img.src = src; img.onload = () => updateLoader(); img.onerror = () => updateLoader(); });
+    ASSETS_TO_LOAD.audio.forEach(a => { let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; audios[a.id] = s; s.onloadedmetadata = () => updateLoader(); s.onerror = () => updateLoader(); setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); });
+}
+
+function updateLoader() {
+    assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
+    const fill = document.getElementById('loader-fill');
+    if(fill) fill.style.width = pct + '%';
+    
+    if(assetsLoaded >= totalAssets) {
+        setTimeout(() => {
+            const loading = document.getElementById('loading-screen');
+            if(loading) {
+                loading.style.opacity = '0';
+                setTimeout(() => loading.style.display = 'none', 500);
+            }
+        }, 1000); 
+
+        playMenuAudio();
+        document.body.addEventListener('click', () => { if (audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) { audios['bgm-menu'].volume = 0.5; audios['bgm-menu'].play().catch(()=>{}); } }, { once: true });
+    }
+}
+
+window.toggleFullScreen = function() {
+    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
+    else { if (document.exitFullscreen) { document.exitFullscreen(); } }
+}
+
+function playMenuAudio() { let s = audios['bgm-menu']; if(s) { s.volume = 0; if(s.duration > 60) s.currentTime = 10 + Math.random() * 50; s.play().then(() => { let vol = 0; let fade = setInterval(() => { if(vol < 0.5) { vol += 0.05; s.volume = vol; } else clearInterval(fade); }, 200); }).catch(e => console.log("Autoplay blocked")); } }
+function playNavSound() { let s = audios['sfx-nav']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } }
+
+// INICIALIZADOR
+window.onload = preloadGame;
+
+function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
+function updateAudioMixer() { const cineAudio = audios['sfx-cine']; const bgmAudio = audios['bgm-loop']; if(!cineAudio || !bgmAudio) return; const maxCine = 0.6 * masterVol; const maxBgm = 0.5 * musicVolMult * masterVol; const dimmedBgm = 0.1 * musicVolMult * masterVol; let targetCine = isLethalHover ? maxCine : 0; let targetBgm = isLethalHover ? dimmedBgm : maxBgm; if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); if(bgmAudio.volume < targetBgm) bgmAudio.volume = Math.min(targetBgm, bgmAudio.volume + 0.02); else if(bgmAudio.volume > targetBgm) bgmAudio.volume = Math.max(targetBgm, bgmAudio.volume - 0.02); }
+
+window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
+document.addEventListener('click', function(e) { const panel = document.getElementById('config-panel'); const btn = document.getElementById('btn-config'); if (panel && panel.classList.contains('active') && !panel.contains(e.target) && (btn && !btn.contains(e.target))) toggleConfig(); });
+
+window.updateVol = function(type, val) { if(type==='master') masterVol = parseFloat(val); if(type==='music') musicVolMult = parseFloat(val); ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-block', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { if(audios[k]) audios[k].volume = 0.8 * masterVol; }); }
+function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[key].play().catch(e => console.log("Audio prevented:", e)); } }
+
+function startGameFlow() {
+    document.getElementById('end-screen').classList.remove('visible');
+    isProcessing = false; 
+    startCinematicLoop(); 
+    if(audios['bgm-loop']) audios['bgm-loop'].play().catch(e => console.log("BGM Blocked", e));
+    resetUnit(player); resetUnit(monster); turnCount = 1; playerHistory = [];
+    
+    drawCardLogic(monster, 6); 
+    drawCardLogic(player, 6); 
+    
+    updateUI();
+    const handEl = document.getElementById('player-hand'); 
+    Array.from(handEl.children).forEach(c => c.style.opacity = '0');
+    setTimeout(() => { dealAllInitialCards(); }, 50);
+}
+
+function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
+initAmbientParticles();
+
+function apply3DTilt(element, isHand = false) { if(window.innerWidth < 768) return; element.addEventListener('mousemove', (e) => { const rect = element.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; let lift = isHand ? 'translateY(-100px) scale(1.8)' : 'scale(1.1)'; let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; element.style.transform = `${lift} ${rotate}`; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; }); element.addEventListener('mouseleave', () => { element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; }); }
+function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
+
+function triggerDamageEffect(isPlayer, playAudio = true) { try { if(playAudio) playSound('sfx-hit'); let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); let ov = document.getElementById('dmg-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } } catch(e) {} }
+function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
+function triggerHealEffect(isPlayer) { try { let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } let ov = document.getElementById('heal-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } } catch(e) {} }
+function triggerBlockEffect() { try { playSound('sfx-block'); let ov = document.getElementById('block-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); } catch(e) {} }
+function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
+function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
+function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
+function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
+
+function dealAllInitialCards() {
+    isProcessing = true; playSound('sfx-deal'); 
+    const handEl = document.getElementById('player-hand'); 
+    const cards = Array.from(handEl.children);
+    if(cards.length === 0) { isProcessing = false; return; }
+    cards.forEach((cardEl, i) => {
+        setTimeout(() => {
+            const rect = cardEl.getBoundingClientRect();
+            let target = (rect.width > 0) ? rect : { top: window.innerHeight - 150, left: window.innerWidth/2 };
+            animateFly('p-deck-container', target, player.hand[i], () => { 
+                cardEl.style.opacity = '1'; 
+                if(i === cards.length - 1) isProcessing = false; 
+            }, true);
+        }, i * 150); 
+    });
+    setTimeout(() => { cards.forEach(c => c.style.opacity = '1'); isProcessing = false; }, (cards.length * 150) + 500);
+}
+
+function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
+
+function onCardClick(index) {
+    if(isProcessing) return; if (!player.hand[index]) return;
+    playSound('sfx-play'); document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active');
+    document.getElementById('tooltip-box').style.display = 'none'; isLethalHover = false; 
+    let cardKey = player.hand[index];
+    if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
+    if(cardKey === 'DESARMAR') { openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => playCardFlow(index, choice)); } 
+    else { playCardFlow(index, null); }
+}
+
+function getBestAIMove() {
+    let moves = []; monster.hand.forEach((card, index) => { if(card !== monster.disabled) moves.push({ card: card, index: index, score: 0 }); });
+    if(moves.length === 0) return null;
+    if (turnCount === 1) { let randomPick = moves[Math.floor(Math.random() * moves.length)]; if(randomPick.card === 'ATAQUE' || randomPick.card === 'TREINAR') return randomPick; return moves[Math.floor(Math.random() * moves.length)]; }
+    let playerAggro = 0; if(playerHistory.length > 0) { playerAggro = playerHistory.filter(c => c === 'ATAQUE').length / playerHistory.length; }
+    let myDanger = monster.hp <= 3; let canKill = (monster.lvl + monster.bonusAtk) >= player.hp; let playerLowHp = player.hp <= (monster.lvl + monster.bonusAtk + 1);
+    let denyTarget = null; let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1); for(let k in pCounts) if(pCounts[k] >= 3) denyTarget = k;
+    moves.forEach(m => {
+        let score = Math.random() * 20; 
+        if (m.card === 'ATAQUE' && canKill) score += 1000;
+        if (playerLowHp && m.card === 'DESARMAR') score += 200; 
+        if (denyTarget && m.card === 'DESARMAR') score += 150;
+        if (myDanger) { if (m.card === 'BLOQUEIO') score += 50; if (m.card === 'DESCANSAR') score += 45; if (m.card === 'DESARMAR') score += 40; }
+        let myCopies = monster.xp.filter(x => x === m.card).length; if (myCopies >= 2) score += 35; 
+        if (playerAggro > 0.5 && m.card === 'BLOQUEIO') score += 20; 
+        m.score = score;
+    });
+    moves.sort((a, b) => b.score - a.score); return moves[0];
+}
+
+function playCardFlow(index, pDisarmChoice) {
+    isProcessing = true; let cardKey = player.hand.splice(index, 1)[0]; playerHistory.push(cardKey);
+    let aiMove = getBestAIMove(); let mCardKey = 'ATAQUE'; let mDisarmTarget = null; 
+    if(aiMove) { mCardKey = aiMove.card; monster.hand.splice(aiMove.index, 1); if(mCardKey === 'DESARMAR') { if(player.hp <= (monster.lvl + monster.bonusAtk + 2)) { mDisarmTarget = 'BLOQUEIO'; } else { let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1); let bestTarget = null; for(let k in pCounts) if(pCounts[k] >= 3) bestTarget = k; if(bestTarget) mDisarmTarget = bestTarget; else mDisarmTarget = 'ATAQUE'; } } } 
+    else { if(monster.hand.length > 0) mCardKey = monster.hand.pop(); else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } }
+
+    let handContainer = document.getElementById('player-hand'); 
+    let realCardEl = handContainer.children[index]; 
+    
+    let startRect = null;
+    if(realCardEl) { 
+        startRect = realCardEl.getBoundingClientRect(); 
+        realCardEl.style.opacity = '0'; 
+    }
+    
+    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { renderTable(cardKey, 'p-slot'); updateUI(); }, false, true);
+    const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
+    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { renderTable(mCardKey, 'm-slot'); setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); }, false, true);
+}
+
+function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
+    let pDmg = 0, mDmg = 0;
+    if(mAct === 'ATAQUE') pDmg += monster.lvl; if(pAct === 'ATAQUE') mDmg += player.lvl;
+    if(pAct === 'BLOQUEIO') { pDmg = 0; if(mAct === 'ATAQUE') mDmg += (1 + player.bonusBlock); }
+    if(mAct === 'BLOQUEIO') { mDmg = 0; if(pAct === 'ATAQUE') pDmg += (1 + monster.bonusBlock); }
+
+    let clash = false;
+    let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
+    if(pBlocks || mBlocks) { clash = true; triggerBlockEffect(); }
+
+    let nextPlayerDisabled = null; let nextMonsterDisabled = null;
+    if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
+    if(pAct === 'DESARMAR') { nextMonsterDisabled = pDisarmChoice; }
+    if(pAct === 'DESARMAR' && mAct === 'DESARMAR') { nextPlayerDisabled = null; nextMonsterDisabled = null; showCenterText("ANULADO", "#aaa"); }
+
+    player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
+    if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
+
+    if(pDmg > 0) { player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); let soundOn = !(clash && mAct === 'BLOQUEIO'); triggerDamageEffect(true, soundOn); }
+    if(mDmg > 0) { monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn); }
+    
+    updateUI();
+    let pDead = player.hp <= 0, mDead = monster.hp <= 0;
+    if(!pDead && pAct === 'DESCANSAR') { let h = pDmg===0?3:2; player.hp=Math.min(player.maxHp, player.hp+h); showFloatingText('p-lvl', `+${h} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
+    if(!mDead && mAct === 'DESCANSAR') { monster.hp=Math.min(monster.maxHp, monster.hp+(mDmg===0?3:2)); triggerHealEffect(false); playSound('sfx-heal'); }
+    function handleExtraXP(u) { if(u.deck.length > 0) { let card = u.deck.pop(); animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }); } }
+    if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
+    if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
+
+    setTimeout(() => {
+        animateFly('p-slot', 'p-xp', pAct, () => { if(!pDead) { player.xp.push(pAct); triggerXPGlow('p'); updateUI(); } checkLevelUp(player, () => { if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); }); });
+        animateFly('m-slot', 'm-xp', mAct, () => { if(!mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); } checkLevelUp(monster, () => { if(!mDead) drawCardLogic(monster, 1); checkEndGame(); }); });
+        document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
+    }, 700);
+}
+
+function checkLevelUp(u, doneCb) {
+    if(u.xp.length >= 5) {
+        let xpContainer = document.getElementById(u.id + '-xp'); let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
+        minis.forEach(realCard => {
+            let rect = realCard.getBoundingClientRect(); let clone = document.createElement('div'); clone.className = 'xp-anim-clone';
+            clone.style.left = rect.left + 'px'; clone.style.top = rect.top + 'px'; clone.style.width = rect.width + 'px'; clone.style.height = rect.height + 'px'; clone.style.backgroundImage = realCard.style.backgroundImage;
+            if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down');
+            document.body.appendChild(clone);
+        });
+        minis.forEach(m => m.style.opacity = '0');
+        setTimeout(() => {
+            let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = []; for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
+            processMasteries(u, triggers, () => {
+                let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; lvlEl.classList.add('level-up-anim'); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
+                u.xp.forEach(x => u.deck.push(x)); u.xp = []; shuffle(u.deck); 
+                let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
+                updateUI(); doneCb();
+            });
+        }, 1000); 
+    } else { doneCb(); }
+}
+
+function processMasteries(u, triggers, cb) {
+    if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
+    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); } 
+    else if(type === 'DESARMAR' && u.id === 'p') { openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } 
+    else { applyMastery(u, type); processMasteries(u, triggers, cb); }
+}
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
+function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
+
+function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false) {
+    let s;
+    if (typeof startId === 'string') {
+        let el = document.getElementById(startId);
+        if (!el) s = { top: 0, left: 0, width: 0, height: 0 };
+        else s = el.getBoundingClientRect();
+    } else { s = startId; }
+
+    let e = { top: 0, left: 0 };
+    if (initialDeal && (endId === 'player-hand' || startId === 'p-deck-container')) {
+        let deckEl = document.getElementById('p-deck-container');
+        if(deckEl) { let r = deckEl.getBoundingClientRect(); e.top = window.innerHeight - 150; e.left = window.innerWidth / 2 - 50; if(startId === 'p-deck-container') s = r; }
+    } else {
+        let destEl = document.getElementById(endId);
+        if(destEl) e = destEl.getBoundingClientRect();
+    }
+
+    const fly = document.createElement('div');
+    fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
+    fly.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[cardKey].img}')"></div>`;
+    if (isToTable) fly.classList.add('card-bounce');
+
+    if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; } 
+    else { let w = window.innerWidth < 768 ? '84px' : '105px'; let h = window.innerWidth < 768 ? '120px' : '150px'; fly.style.width=w; fly.style.height=h; }
+
+    let tableW = window.innerWidth < 768 ? '110px' : '180px';
+    let tableH = window.innerWidth < 768 ? '170px' : '260px';
+
+    fly.style.top=s.top+'px'; fly.style.left=s.left+'px';
+    if(endId.includes('xp')) fly.style.transform='scale(0.3)';
+    document.body.appendChild(fly); fly.offsetHeight;
+    
+    if(isToTable) { fly.style.width=tableW; fly.style.height=tableH; }
+    fly.style.top=e.top+'px'; fly.style.left=e.left+'px';
+    setTimeout(() => { fly.remove(); if(cb) cb(); }, 250);
+}
+function drawCardAnimated(unit, deckId, handId, cb) { if(unit.deck.length===0) { cb(); return; } animateFly(deckId, handId, unit.deck[unit.deck.length-1], cb); }
+function renderTable(key, slotId) { let el = document.getElementById(slotId); el.innerHTML = ''; let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`; card.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[key].img}')"></div>`; el.appendChild(card); }
+function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
+
+function updateUnit(u) {
+    document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
+    document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
+    let hpPct = (Math.max(0,u.hp)/u.maxHp)*100;
+    let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
+    if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
+    document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
+    if(u===player) {
+        let hc=document.getElementById('player-hand'); hc.innerHTML='';
+        u.hand.forEach((k,i)=>{
+            let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
+            c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
+            if(u.disabled===k) c.classList.add('disabled-card');
+            c.style.opacity = '1';
+            let lethalType = checkCardLethality(k); 
+            let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
+            c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
+            c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
+            c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
+            c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
+            hc.appendChild(c); apply3DTilt(c, true);
+        });
+    }
+    let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
+    u.xp.forEach(k=>{ let d=document.createElement('div'); d.className='xp-mini'; d.style.backgroundImage = `url('${CARDS_DB[k].img}')`; d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; xc.appendChild(d); });
+    let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
+    if(u.bonusAtk>0) addMI(mc, 'ATAQUE', u.bonusAtk, '#e74c3c', u.id); 
+    if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
+}
+
+function bindMasteryTooltip(el, key, value, ownerId) {
+    return {
+        onmouseenter: (e) => {
+            let db=CARDS_DB[key];
+            document.getElementById('tt-title').innerHTML = key; 
+            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
+            tt.style.display = 'block';
+            tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); 
+            void tt.offsetWidth; 
+            let rect = el.getBoundingClientRect();
+            if(ownerId === 'p') {
+                tt.classList.add('tooltip-anim-up');
+                tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+                tt.style.top = 'auto';
+            } else {
+                tt.classList.add('tooltip-anim-down');
+                tt.style.top = (rect.bottom + 10) + 'px';
+                tt.style.bottom = 'auto';
+            }
+            tt.style.left = (rect.left + rect.width/2) + 'px';
+            tt.style.transform = "translateX(-50%)"; 
+        }
+    };
+}
+
+function addMI(parent, key, value, col, ownerId){ 
+    let d = document.createElement('div'); d.className = 'mastery-icon'; 
+    d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`;
+    d.style.borderColor = col; 
+    let handlers = bindMasteryTooltip(d, key, value, ownerId);
+    d.onmouseenter = handlers.onmouseenter;
+    d.onmouseleave = () => { tt.style.display = 'none'; }; 
+    parent.appendChild(d); 
+}
+
+function showFloatingText(eid, txt, col) { 
+    let el = document.createElement('div'); 
+    el.className='floating-text'; 
+    el.innerText=txt; 
+    el.style.color=col; 
+    let parent = document.getElementById(eid);
+    if(parent) {
+        let rect = parent.getBoundingClientRect();
+        el.style.left = (rect.left + rect.width/2) + 'px';
+        el.style.top = (rect.top) + 'px';
+        document.body.appendChild(el); 
+    } else {
+         document.body.appendChild(el);
+    }
+    setTimeout(()=>el.remove(), 2000); 
+}
+
+function checkEndGame(){ 
+    if(player.hp<=0 || monster.hp<=0) { 
+        isProcessing = true; 
+        let bgm = audios['bgm-loop']; 
+        isLethalHover = false; 
+        let fadeOut = setInterval(() => { if(bgm.volume > 0.05) bgm.volume -= 0.05; else { bgm.pause(); clearInterval(fadeOut); } }, 50); 
+        setTimeout(()=>{ 
+            let title = document.getElementById('end-title'); 
+            let isWin = player.hp > 0;
+            let isTie = player.hp <= 0 && monster.hp <= 0;
+
+            if(isTie) { 
+                title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); 
+            } else if(isWin) { 
+                title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); 
+            } else { 
+                title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); 
+            } 
+            
+            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(); } 
+            else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
+            
+            document.getElementById('end-screen').classList.add('visible'); 
+        }, 1000); 
+    } else { isProcessing = false; } 
+}
+
+window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
+window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
+const tt=document.getElementById('tooltip-box');
+function bindFixedTooltip(el,k) { const updatePos = () => { let rect = el.getBoundingClientRect(); tt.style.left = (rect.left + rect.width / 2) + 'px'; }; return { onmouseenter: (e) => { showTT(k); tt.style.bottom = (window.innerWidth < 768 ? '160px' : '320px'); tt.style.top = 'auto'; tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); tt.classList.add('tooltip-anim-up'); updatePos(); el.addEventListener('mousemove', updatePos); } }; }
+function showTT(k) { let db=CARDS_DB[k]; document.getElementById('tt-title').innerHTML = k; document.getElementById('tt-content').innerHTML=`<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; tt.style.display='block'; }
