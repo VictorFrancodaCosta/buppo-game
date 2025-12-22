@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUPPO - 55.4 Final Polish</title>
+    <title>BUPPO - 56.0 Github Stable</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <style>
@@ -28,7 +28,7 @@
             margin: 0; padding: 0; height: 100vh; overflow: hidden; user-select: none;
         }
 
-        /* BACKGROUND FIXO (NÃO MUDA COM ZOOM) */
+        /* BACKGROUND FIXO */
         #game-background {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: var(--bg-image-url);
@@ -48,7 +48,7 @@
         .loader-bar-fill { width: 0%; height: 100%; background: var(--gold); transition: width 0.2s; box-shadow: 0 0 10px var(--gold); }
         .loader-txt { color: #777; margin-top: 10px; font-size: 12px; font-family: 'Montserrat', sans-serif; }
 
-        /* JOGO VISÍVEL */
+        /* GAME CONTAINER */
         #game-container { 
             max-width: 1600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; 
             padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; 
@@ -64,12 +64,13 @@
             z-index: 10000; background: transparent; overflow: hidden;
         }
         .start-bg-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
             background-image: var(--bg-image-url); background-size: cover; background-position: center;
-            filter: blur(6px) brightness(0.3); z-index: -1;
-            /* Zoom animation removed to fix zoom issue request, or keep distinct from lobby? Keeping fixed as requested for lobby */
+            filter: blur(6px) brightness(0.3); z-index: 0;
+            animation: bgZoomFast 3s infinite alternate ease-in-out; 
         }
-        
+        @keyframes bgZoomFast { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
+
         .game-logo {
             max-width: 450px; width: 80%; height: auto;
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
@@ -87,32 +88,22 @@
         }
         #btn-login:hover { transform: scale(1.05); box-shadow: 0 0 30px #9b59b6; background: #9b59b6; }
 
-        #btn-ranking-open {
-            padding: 10px 30px; font-size: 14px; font-family: 'Russo One', sans-serif; 
-            background: rgba(0,0,0,0.5); color: #ccc; border: 1px solid #555; 
-            border-radius: 50px; cursor: pointer; transition: 0.2s; text-transform: uppercase; z-index: 2;
-        }
-        #btn-ranking-open:hover { border-color: var(--gold); color: var(--gold); }
-
-        /* --- TELA 2: SAGUÃO (LOBBY FIXO & LOGO ALINHADA) --- */
+        /* --- TELA 2: SAGUÃO --- */
         #lobby-screen {
-            flex-direction: row !important; /* Layout Horizontal */
-            justify-content: flex-start !important; 
-            align-items: center !important; 
+            justify-content: center !important; 
+            align-items: flex-start !important; 
             padding-left: 5%; 
             z-index: 10000; position: relative;
         }
 
-        /* Background Fixo do Saguão */
         .lobby-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: var(--lobby-bg-url);
             background-size: cover; background-position: center; background-repeat: no-repeat;
             filter: blur(8px) brightness(0.6);
-            z-index: -1;
+            z-index: 0;
         }
 
-        /* Container do Quadro (Esquerda) */
         .lobby-frame-container {
             position: relative; z-index: 5;
             width: auto; height: 85vh; 
@@ -135,22 +126,13 @@
             color: #fff; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
         }
 
-        /* Logo do Saguão (Direita Centralizada) */
-        .lobby-logo-right {
-            position: absolute; 
-            right: 0; left: 50%; /* Começa do meio */
-            top: 50%; 
-            transform: translate(-10%, -50%); /* Ajuste fino para centralizar na metade direita visualmente */
-            max-width: 500px; width: 40%; height: auto;
-            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9));
-            z-index: 5;
-            display: block;
-        }
-
         .user-welcome { font-family: 'Russo One'; font-size: 26px; margin-bottom: 5px; text-transform: uppercase; color: #fff; }
         .user-stats { color: #ffd700; font-size: 15px; font-weight: 700; margin-bottom: 15px; font-family: 'Russo One'; }
 
-        .ranking-scroll { flex-grow: 1; width: 100%; overflow-y: auto; margin-bottom: 15px; scrollbar-width: thin; scrollbar-color: var(--wood-dark) transparent; }
+        .ranking-scroll { 
+            flex-grow: 1; width: 100%; overflow-y: auto; margin-bottom: 15px;
+            scrollbar-width: thin; scrollbar-color: var(--wood-dark) transparent;
+        }
         
         #ranking-table { width: 100%; border-collapse: collapse; font-size: 14px; color: #fff; }
         #ranking-table th { text-align: left; padding: 5px; border-bottom: 2px solid #fff; font-family: 'Russo One'; color: var(--gold); text-shadow: 2px 2px 0 #000; }
@@ -173,6 +155,14 @@
         }
         #btn-logout:hover { background: rgba(255,0,0,0.4); color: #fff; }
 
+        .lobby-logo-right {
+            position: absolute; right: 0; left: 50%; top: 50%; 
+            transform: translate(-10%, -50%); 
+            max-width: 500px; width: 40%; height: auto;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9));
+            z-index: 5; display: block;
+        }
+
         /* --- CONTROLES MINIMALISTAS --- */
         #top-left-controls {
             position: fixed; top: 20px; left: 20px; z-index: 20000;
@@ -186,7 +176,9 @@
         }
         .minimal-btn:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 10px var(--gold); }
         
-        /* Botão Fullscreen tbm minimalista */
+        /* Botão Config escondido por padrão */
+        #btn-config { display: none; }
+
         #btn-fullscreen { position: fixed; bottom: 20px; right: 20px; z-index: 20000; font-size: 24px; cursor: pointer; color: rgba(255, 255, 255, 0.4); transition: 0.3s; background: transparent; border: none; width: auto; height: auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
         #btn-fullscreen:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 15px var(--gold); }
         
@@ -208,7 +200,7 @@
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .cfg-row { display: flex; flex-direction: column; gap: 5px; } .cfg-label { color: var(--gold); font-size: 10px; text-transform: uppercase; font-weight: 700; font-family: 'Russo One', sans-serif; } .cfg-slider { width: 100%; cursor: pointer; accent-color: var(--gold); }
 
-        /* --- GAME ELEMENTS (CORREÇÃO DE Z-INDEX E VISIBILIDADE) --- */
+        /* --- GAME ELEMENTS --- */
         .deck-area { position: absolute; z-index: 30; width: 120px; height: 170px; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-direction: column; font-family: 'Russo One', sans-serif; color: #fff; font-size: 10px; background-image: var(--cardback-url); background-size: cover; background-position: center; border: 3px solid var(--wood-dark); box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
         .deck-count { position: absolute; bottom: -30px; left: 0; width: 100%; text-align: center; font-size: 14px; color: var(--gold); font-family: 'Russo One', sans-serif; font-weight: 600; text-shadow: 1px 1px 3px #000; }
         #m-deck { top: 30px; left: 30px; display: none; } 
@@ -255,7 +247,7 @@
         .slot .card { width: 100% !important; height: 100% !important; margin: 0; border-radius: 16px !important; box-shadow: none; cursor: default; transform: translateZ(0px); border-width: 2px; }
         .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
         
-        /* CORREÇÃO MÃO DO JOGADOR */
+        /* MÃO DO JOGADOR - CORREÇÃO DE VISIBILIDADE */
         .hand-wrapper { 
             position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; 
             display: flex; justify-content: center; align-items: flex-end; 
@@ -267,8 +259,12 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
             transform-style: preserve-3d; background-color: #111; 
             transition: margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s; 
-            opacity: 1 !important; visibility: visible !important; /* VISIBILIDADE FORÇADA */
+            /* REMOVIDO OPACITY !IMPORTANT PARA PERMITIR ANIMAÇÃO JS */
+            opacity: 0; 
         }
+        /* VISIBILIDADE APÓS CARREGAR */
+        .card.visible { opacity: 1; }
+
         .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
         
         .flares-container { position: absolute; top: 50%; left: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
@@ -337,11 +333,10 @@
             .game-logo { max-width: 80%; }
             #btn-login { padding: 15px 40px; font-size: 20px; }
             #end-title { font-size: 50px; }
-            /* Ajuste Saguão Mobile */
             #lobby-screen { align-items: center !important; padding-left: 0; }
             .lobby-frame-container { height: 70vh; }
             .lobby-ui-overlay { padding: 25% 15% 15% 15%; }
-            .lobby-logo-right { display: none; } /* Oculta logo lateral no mobile */
+            .lobby-logo-right { display: none; }
 
             .middle-area { gap: 20px; flex-direction: column; top: 5%; height: 60%; padding-bottom: 0; } 
             .turn-display { top: 2%; font-size: 12px; left: 5px; transform: none; writing-mode: vertical-rl; }
@@ -379,22 +374,22 @@
     <div id="game-container">
         
         <div id="top-left-controls">
-            <button class="minimal-btn" onclick="toggleConfig()">⚙️</button>
-            <button class="minimal-btn" onclick="toggleMute()" id="btn-sound">🎵</button>
+            <button class="minimal-btn" onclick="toggleConfig()" id="btn-config" onmouseenter="playHoverSound()">⚙️</button>
+            <button class="minimal-btn" onclick="toggleMute()" id="btn-sound" onmouseenter="playHoverSound()">🎵</button>
         </div>
-        <div id="btn-fullscreen" onclick="toggleFullScreen()">⛶</div>
+        <div id="btn-fullscreen" onclick="toggleFullScreen()" onmouseenter="playHoverSound()">⛶</div>
 
         <div id="config-panel">
             <div class="cfg-row"><span class="cfg-label">Volume Geral</span><input type="range" class="cfg-slider" min="0" max="1" step="0.1" value="1" oninput="updateVol('master', this.value)"></div>
             <div class="cfg-row"><span class="cfg-label">Música de Fundo</span><input type="range" class="cfg-slider" min="0" max="1" step="0.1" value="1" oninput="updateVol('music', this.value)"></div>
             <hr style="border:1px solid #555; width:100%">
-            <button id="btn-surrender" onclick="abandonMatch()">ABANDONAR PARTIDA</button>
+            <button id="btn-surrender" onclick="abandonMatch()" onmouseenter="playHoverSound()">ABANDONAR PARTIDA</button>
         </div>
 
         <div id="start-screen" class="screen active">
             <div class="start-bg-layer"></div>
             <img src="https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png" alt="BUPPO LOGO" class="game-logo">
-            <button id="btn-login" onclick="googleLogin()"><span id="btn-text">LOGIN COM GOOGLE</span></button>
+            <button id="btn-login" onclick="googleLogin()" onmouseenter="playHoverSound()"><span id="btn-text">LOGIN COM GOOGLE</span></button>
             <p id="login-status" style="color: #888; font-family: 'Montserrat'; font-size: 12px; margin-top:-20px;"></p>
         </div>
 
@@ -413,8 +408,8 @@
                         <p style="text-align:center; color:#ccc; margin-top:20px;">Carregando Ranking...</p>
                     </div>
 
-                    <button id="btn-play-match" onclick="playNavSound(); transitionToGame()">INICIAR PARTIDA</button>
-                    <button id="btn-logout" onclick="handleLogout()">TROCAR DE CONTA</button>
+                    <button id="btn-play-match" onclick="playNavSound(); transitionToGame()" onmouseenter="playHoverSound()">INICIAR PARTIDA</button>
+                    <button id="btn-logout" onclick="handleLogout()" onmouseenter="playHoverSound()">TROCAR DE CONTA</button>
                 </div>
             </div>
         </div>
@@ -423,8 +418,8 @@
             <div class="end-content">
                 <h1 id="end-title" class="win-theme">VITÓRIA</h1>
                 <div class="end-btn-row">
-                    <button class="big-btn" onclick="playNavSound(); restartMatch()">JOGAR NOVAMENTE</button>
-                    <button class="big-btn secondary-btn" onclick="playNavSound(); goToLobby(false)">SAGUÃO</button>
+                    <button class="big-btn" onclick="playNavSound(); restartMatch()" onmouseenter="playHoverSound()">JOGAR NOVAMENTE</button>
+                    <button class="big-btn secondary-btn" onclick="playNavSound(); goToLobby(false)" onmouseenter="playHoverSound()">SAGUÃO</button>
                 </div>
             </div>
         </div>
@@ -529,27 +524,9 @@
                 return;
             }
             
-            // MUSICA LOBBY
-            let lobbyBgm = audios['bgm-lobby'];
-            let gameBgm = audios['bgm-loop'];
-            let menuBgm = audios['bgm-menu'];
-
-            // Para outras músicas
-            if(gameBgm) { gameBgm.pause(); gameBgm.currentTime=0; }
-            if(menuBgm) { menuBgm.pause(); menuBgm.currentTime=0; }
-
-            // Toca Lobby BGM
-            if(lobbyBgm && !window.isMuted) {
-                lobbyBgm.volume = 0;
-                lobbyBgm.currentTime = 0;
-                lobbyBgm.play().then(() => {
-                    // Fade In
-                    let vol = 0;
-                    let fade = setInterval(() => {
-                        if(vol < 0.5) { vol += 0.05; lobbyBgm.volume = vol; }
-                        else clearInterval(fade);
-                    }, 200);
-                }).catch(()=>{});
+            if(!isAutoLogin) {
+                let s = audios['bgm-menu'];
+                if(s && s.paused && !window.isMuted) s.play().catch(()=>{}); 
             }
 
             // DADOS USUÁRIO
@@ -606,7 +583,6 @@
                         score: (data.score || 0) + 100,
                         totalMatches: (data.totalMatches || 0) + 1
                     });
-                    console.log("Vitória salva!");
                 }
             } catch(e) { console.error(e); }
         };
@@ -632,9 +608,14 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
             
-            // Controle botão Abandono
-            if(screenId === 'game-screen') document.getElementById('btn-surrender').style.display = 'block';
-            else document.getElementById('btn-surrender').style.display = 'none';
+            // Controle botão Config (Só na partida)
+            if(screenId === 'game-screen') {
+                document.getElementById('btn-config').style.display = 'flex';
+                document.getElementById('btn-surrender').style.display = 'block';
+            } else {
+                document.getElementById('btn-config').style.display = 'none';
+                document.getElementById('btn-surrender').style.display = 'none';
+            }
         }
 
         window.transitionToGame = function() {
@@ -702,7 +683,8 @@
             audio: [
                 { id: 'bgm-menu', src: 'https://files.catbox.moe/g8a1ux.mp3', loop: true }, 
                 { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
-                { id: 'bgm-lobby', src: 'https://files.catbox.moe/km79s9.mp4', loop: true }, /* NOVA MUSICA */
+                { id: 'bgm-lobby', src: 'https://files.catbox.moe/km79s9.mp4', loop: true }, 
+                { id: 'sfx-btn-hover', src: 'https://limewire.com/d/oktWV#hj3Iucc4Su' }, /* NOVO SOM LIMEWIRE */
                 { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
                 { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
                 { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
@@ -727,8 +709,8 @@
                     setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 500);
                 }, 1000); 
 
-                // A música inicial toca no lobby ou no start, dependendo do estado
-                // Deixa o onAuthStateChanged controlar
+                playMenuAudio();
+                document.body.addEventListener('click', () => { if (audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) { audios['bgm-menu'].volume = 0.5; audios['bgm-menu'].play().catch(()=>{}); } }, { once: true });
             }
         }
         
@@ -739,15 +721,16 @@
 
         function playMenuAudio() { let s = audios['bgm-menu']; if(s) { s.volume = 0; if(s.duration > 60) s.currentTime = 10 + Math.random() * 50; s.play().then(() => { let vol = 0; let fade = setInterval(() => { if(vol < 0.5) { vol += 0.05; s.volume = vol; } else clearInterval(fade); }, 200); }).catch(e => console.log("Autoplay blocked")); } }
         function playNavSound() { let s = audios['sfx-nav']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } }
+        function playHoverSound() { let s = audios['sfx-btn-hover']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } }
         
         function toggleConfig() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
         document.addEventListener('click', function(e) { 
             const panel = document.getElementById('config-panel'); 
-            const btn = document.querySelector('[onclick="toggleConfig()"]'); // Seleciona o botão de config
+            const btn = document.getElementById('btn-config');
             if (panel.style.display === 'flex' && !panel.contains(e.target) && !btn.contains(e.target)) toggleConfig(); 
         });
         
-        function updateVol(type, val) { if(type==='master') masterVol = parseFloat(val); if(type==='music') musicVolMult = parseFloat(val); ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-block', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { if(audios[k]) audios[k].volume = 0.8 * masterVol; }); }
+        function updateVol(type, val) { if(type==='master') masterVol = parseFloat(val); if(type==='music') musicVolMult = parseFloat(val); ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-block', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav', 'sfx-btn-hover'].forEach(k => { if(audios[k]) audios[k].volume = 0.8 * masterVol; }); }
         function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[key].play().catch(e => console.log("Audio prevented:", e)); } }
 
         window.onload = preloadGame;
@@ -777,18 +760,23 @@
             const cards = Array.from(handEl.children);
             if(cards.length === 0) { isProcessing = false; return; }
             cards.forEach((cardEl, i) => {
+                // Força visibilidade antes de animar
+                cardEl.style.opacity = '1';
                 setTimeout(() => {
                     const rect = cardEl.getBoundingClientRect();
-                    // Fallback to center if element is hidden/zero size
                     let target = (rect.width > 0) ? rect : { top: window.innerHeight - 150, left: window.innerWidth/2 };
+                    // Simula vinda do deck
                     animateFly('p-deck-container', target, player.hand[i], () => { 
-                        cardEl.style.opacity = '1'; 
+                        cardEl.classList.add('visible'); // Garante que fique visível
                         if(i === cards.length - 1) isProcessing = false; 
                     }, true);
                 }, i * 150); 
             });
-            // Failsafe
-            setTimeout(() => { cards.forEach(c => c.style.opacity = '1'); isProcessing = false; }, (cards.length * 150) + 500);
+            setTimeout(() => { 
+                // Redundância para garantir visibilidade
+                Array.from(handEl.children).forEach(c => c.style.opacity = '1'); 
+                isProcessing = false; 
+            }, (cards.length * 150) + 500);
         }
 
         function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
@@ -1024,17 +1012,14 @@
             el.innerText=txt; 
             el.style.color=col; 
             
-            // CORREÇÃO: Attach to parent to fix positioning context if needed, but 'body' works with fixed position rects.
-            // Using ID allows specific placement near the element.
+            // CORREÇÃO: Usar body para posicionamento fixed garantido
             let parent = document.getElementById(eid);
             if(parent) {
                 let rect = parent.getBoundingClientRect();
                 el.style.left = (rect.left + rect.width/2) + 'px';
                 el.style.top = (rect.top) + 'px';
-                document.body.appendChild(el); 
-            } else {
-                 document.body.appendChild(el);
             }
+            document.body.appendChild(el); 
             setTimeout(()=>el.remove(), 2000); 
         }
         
@@ -1060,6 +1045,7 @@
                     if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(); } 
                     else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
                     
+                    // IMPORTANTE: Só mostra o end-screen agora
                     document.getElementById('end-screen').classList.add('visible'); 
                 }, 1000); 
             } else { isProcessing = false; } 
