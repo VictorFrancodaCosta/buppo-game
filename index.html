@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUPPO - 60.0 Animation Restore</title>
+    <title>BUPPO - 61.0 Classic Restore</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <style>
@@ -28,13 +28,13 @@
             margin: 0; padding: 0; height: 100vh; overflow: hidden; user-select: none;
         }
 
-        /* CANVAS DE EFEITOS (LEVEL UP) */
+        /* CANVAS DE EFEITOS (LEVEL UP) - ACIMA DE TUDO */
         #fx-canvas {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 99999;
         }
 
-        /* BACKGROUND FIXO */
+        /* BACKGROUND */
         #game-background {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: var(--bg-image-url);
@@ -252,7 +252,7 @@
         .slot .card { width: 100% !important; height: 100% !important; margin: 0; border-radius: 16px !important; box-shadow: none; cursor: default; transform: translateZ(0px); border-width: 2px; }
         .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
         
-        /* MÃO DO JOGADOR - VISIBILIDADE FORÇADA (CSS PURO) */
+        /* MÃO DO JOGADOR */
         .hand-wrapper { 
             position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; 
             display: flex; justify-content: center; align-items: flex-end; 
@@ -264,8 +264,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
             transform-style: preserve-3d; background-color: #111; 
             transition: margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s; 
-            /* GARANTIA DE VISIBILIDADE */
-            opacity: 1 !important; visibility: visible !important;
+            opacity: 1; /* FORÇA VISIBILIDADE DO OBJETO NO DOM */
         }
         
         .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
@@ -303,10 +302,9 @@
         body.focus-hand .hand-wrapper .card:not(:hover) { transform: scale(0.95); filter: brightness(0.8); }
         body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-area, body.focus-xp #p-deck-container, body.focus-xp .hand-wrapper { filter: blur(5px) brightness(0.5); opacity: 0.6; }
 
-        /* FIM DE JOGO (FIXED & HIDDEN) */
+        /* FIM DE JOGO */
         #end-screen { 
-            display: none; /* CORREÇÃO FANTASMA */
-            justify-content: center; align-items: center; 
+            display: none; justify-content: center; align-items: center; 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 50000; background: rgba(0,0,0,0.95); backdrop-filter: blur(20px); 
             opacity: 0; pointer-events: none; transition: opacity 0.8s ease-in-out;
@@ -813,7 +811,13 @@
                     setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 500);
                 }, 1000); 
                 playMenuAudio();
-                document.body.addEventListener('click', () => { if (audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) { audios['bgm-menu'].volume = 0.5; audios['bgm-menu'].play().catch(()=>{}); } }, { once: true });
+                // Destrava audio com clique
+                document.body.addEventListener('click', () => { 
+                    if (audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) {
+                         // Apenas "acorda" o contexto de áudio
+                         if(currentTrackId !== 'none' && audios[currentTrackId]) audios[currentTrackId].play().catch(()=>{});
+                    } 
+                }, { once: true });
             }
         }
         
@@ -865,9 +869,8 @@
             cards.forEach((cardEl, i) => {
                 setTimeout(() => {
                     const rect = cardEl.getBoundingClientRect();
-                    // Fallback to center if element is hidden/zero size
                     let target = (rect.width > 0) ? rect : { top: window.innerHeight - 150, left: window.innerWidth/2 };
-                    // Simulação visual apenas
+                    // A animação de fly cria um clone temporário. A carta real já está lá.
                     animateFly('p-deck-container', target, player.hand[i], () => { 
                         if(i === cards.length - 1) isProcessing = false; 
                     }, true);
