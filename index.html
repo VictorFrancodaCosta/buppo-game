@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUPPO - 58.0 FINAL FIX</title>
+    <title>BUPPO - 59.0 AUDIO & CARDS FIX</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <style>
@@ -54,7 +54,7 @@
         .loader-bar-fill { width: 0%; height: 100%; background: var(--gold); transition: width 0.2s; box-shadow: 0 0 10px var(--gold); }
         .loader-txt { color: #777; margin-top: 10px; font-size: 12px; font-family: 'Montserrat', sans-serif; }
 
-        /* GAME CONTAINER */
+        /* GAME CONTAINER - VISIBILIDADE GARANTIDA */
         #game-container { 
             max-width: 1600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; 
             padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; 
@@ -182,7 +182,7 @@
         }
         .minimal-btn:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 10px var(--gold); }
         
-        #btn-config { display: none; }
+        #btn-config { display: none; } /* Escondido por padrão */
 
         #btn-fullscreen { position: fixed; bottom: 20px; right: 20px; z-index: 20000; font-size: 24px; cursor: pointer; color: rgba(255, 255, 255, 0.4); transition: 0.3s; background: transparent; border: none; width: auto; height: auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
         #btn-fullscreen:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 15px var(--gold); }
@@ -303,9 +303,9 @@
         body.focus-hand .hand-wrapper .card:not(:hover) { transform: scale(0.95); filter: brightness(0.8); }
         body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-area, body.focus-xp #p-deck-container, body.focus-xp .hand-wrapper { filter: blur(5px) brightness(0.5); opacity: 0.6; }
 
-        /* CORREÇÃO DO "RESQUÍCIO DE JANELA DE VITÓRIA" */
+        /* FIM DE JOGO (FIXED & HIDDEN) */
         #end-screen { 
-            display: none; /* Isso garante que a janela só ocupe espaço quando ativada */
+            display: none; /* CORREÇÃO FANTASMA: INICIA INVISÍVEL */
             justify-content: center; align-items: center; 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 50000; background: rgba(0,0,0,0.95); backdrop-filter: blur(20px); 
@@ -487,6 +487,7 @@
 
         let currentUser = null;
 
+        // GUARDIÃO DE ESTADO
         onAuthStateChanged(auth, (user) => {
             setTimeout(() => {
                 document.getElementById('loading-screen').style.opacity = '0';
@@ -520,6 +521,7 @@
         window.goToLobby = async function(isAutoLogin = false) {
             if(!currentUser) { window.showScreen('start-screen'); return; }
             
+            // TOCA MUSICA LOBBY
             window.switchMusic('lobby');
 
             const userRef = doc(db, "players", currentUser.uid);
@@ -726,7 +728,7 @@
              }
         }
         
-        // --- SISTEMA DE ÁUDIO ---
+        // --- SISTEMA DE ÁUDIO CORRIGIDO ---
         window.isMuted = false;
         let currentTrackId = 'none';
 
@@ -734,6 +736,7 @@
             if(currentTrackId === trackType) return;
             currentTrackId = trackType;
 
+            // Fade Out Todas
             ['bgm-lobby', 'bgm-loop', 'bgm-menu'].forEach(id => {
                 let audio = audios[id];
                 if(audio) {
@@ -750,7 +753,7 @@
             if(targetId && audios[targetId]) {
                 let audio = audios[targetId];
                 audio.volume = 0;
-                audio.play().catch(()=>{});
+                audio.play().catch(e => console.log("Auto-play blocked:", e));
                 let fadeIn = setInterval(() => {
                     if(audio.volume < 0.5) audio.volume += 0.05;
                     else clearInterval(fadeIn);
@@ -767,8 +770,15 @@
                 ['bgm-lobby', 'bgm-loop', 'bgm-menu'].forEach(id => { if(audios[id]) audios[id].pause(); });
             } else {
                 btn.innerText = "🎵";
-                if(document.getElementById('lobby-screen').classList.contains('active')) window.switchMusic('lobby');
-                else if(document.getElementById('game-screen').classList.contains('active')) window.switchMusic('game');
+                // Tenta retomar forçadamente a música correta
+                let trackToPlay = 'none';
+                if(document.getElementById('lobby-screen').classList.contains('active')) trackToPlay = 'bgm-lobby';
+                else if(document.getElementById('game-screen').classList.contains('active')) trackToPlay = 'bgm-loop';
+                
+                if(trackToPlay !== 'none' && audios[trackToPlay]) {
+                    audios[trackToPlay].volume = 0.5;
+                    audios[trackToPlay].play().catch(()=>{});
+                }
             }
         }
 
@@ -809,7 +819,13 @@
                     setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 500);
                 }, 1000); 
                 playMenuAudio();
-                document.body.addEventListener('click', () => { if (audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) { audios['bgm-menu'].volume = 0.5; audios['bgm-menu'].play().catch(()=>{}); } }, { once: true });
+                // Destrava audio com clique
+                document.body.addEventListener('click', () => { 
+                    if (audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) {
+                         // Apenas "acorda" o contexto de áudio
+                         if(currentTrackId !== 'none' && audios[currentTrackId]) audios[currentTrackId].play().catch(()=>{});
+                    } 
+                }, { once: true });
             }
         }
         
@@ -861,9 +877,8 @@
             cards.forEach((cardEl, i) => {
                 setTimeout(() => {
                     const rect = cardEl.getBoundingClientRect();
-                    // Fallback to center if element is hidden/zero size
                     let target = (rect.width > 0) ? rect : { top: window.innerHeight - 150, left: window.innerWidth/2 };
-                    // Simulação visual apenas
+                    // A animação de fly cria um clone temporário. A carta real já está lá.
                     animateFly('p-deck-container', target, player.hand[i], () => { 
                         if(i === cards.length - 1) isProcessing = false; 
                     }, true);
@@ -975,9 +990,7 @@
                         let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; 
                         lvlEl.classList.add('level-up-anim'); 
                         playSound('sfx-levelup'); 
-                        // DISPARA EFEITO DE PARTICULAS NO CLUSTER
                         window.triggerLevelUpFX(u.id+'-lvl');
-                        
                         setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
                         u.xp.forEach(x => u.deck.push(x)); u.xp = []; shuffle(u.deck); 
                         let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
@@ -1049,7 +1062,7 @@
                     let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
                     c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
                     if(u.disabled===k) c.classList.add('disabled-card');
-                    c.style.opacity = '1 !important'; /* GARANTIA DE VISIBILIDADE */
+                    c.style.opacity = '1 !important';
                     let lethalType = checkCardLethality(k); 
                     
                     let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
