@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUPPO - 56.1 Audio & FX</title>
+    <title>BUPPO - 57.0 STABLE RESTORE</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <style>
@@ -31,8 +31,8 @@
         /* CANVAS DE EFEITOS (LEVEL UP) */
         #fx-canvas {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; /* Deixa clicar através dele */
-            z-index: 99999; /* Fica acima de tudo */
+            pointer-events: none; /* Permite clicar através */
+            z-index: 99999;
         }
 
         /* BACKGROUND FIXO */
@@ -59,7 +59,7 @@
         #game-container { 
             max-width: 1600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; 
             padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; 
-            opacity: 1 !important; 
+            opacity: 1 !important; /* VISIBILIDADE FORÇADA */
         }
 
         .screen { display: none; height: 100%; width: 100%; flex-direction: column; justify-content: space-between; }
@@ -183,6 +183,7 @@
         }
         .minimal-btn:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 10px var(--gold); }
         
+        /* Botão Config escondido por padrão */
         #btn-config { display: none; }
 
         #btn-fullscreen { position: fixed; bottom: 20px; right: 20px; z-index: 20000; font-size: 24px; cursor: pointer; color: rgba(255, 255, 255, 0.4); transition: 0.3s; background: transparent; border: none; width: auto; height: auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
@@ -253,7 +254,7 @@
         .slot .card { width: 100% !important; height: 100% !important; margin: 0; border-radius: 16px !important; box-shadow: none; cursor: default; transform: translateZ(0px); border-width: 2px; }
         .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
         
-        /* MÃO DO JOGADOR - VISIBILIDADE FORÇADA */
+        /* MÃO DO JOGADOR - VISIBILIDADE FORÇADA (CSS PURO) */
         .hand-wrapper { 
             position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; 
             display: flex; justify-content: center; align-items: flex-end; 
@@ -265,8 +266,10 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
             transform-style: preserve-3d; background-color: #111; 
             transition: margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s; 
-            opacity: 1 !important; visibility: visible !important;
+            /* SEGREDO: OPACITY 1 PARA GARANTIR QUE APAREÇA */
+            opacity: 1;
         }
+        
         .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
         
         .flares-container { position: absolute; top: 50%; left: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
@@ -461,6 +464,7 @@
 
         let currentUser = null;
 
+        // GUARDIÃO DE ESTADO
         onAuthStateChanged(auth, (user) => {
             setTimeout(() => {
                 document.getElementById('loading-screen').style.opacity = '0';
@@ -474,7 +478,7 @@
                 currentUser = null;
                 window.showScreen('start-screen');
                 document.getElementById('btn-text').innerText = "LOGIN COM GOOGLE";
-                window.switchMusic('none');
+                window.switchMusic('none'); // Toca silêncio
             }
         });
 
@@ -564,7 +568,7 @@
         let textAlpha = 1;
         let textPhase = 'idle'; 
         let waitTimer = 0;
-        let fxX = 0, fxY = 0; // Coordenadas do efeito
+        let fxX = 0, fxY = 0; 
 
         const COLORS = ['#FFD700', '#FFA500', '#FFFF00', '#FFFFFF'];
 
@@ -623,7 +627,6 @@
         function animateFX() {
             ctx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
             if (isAnimating) {
-                // Texto Physics
                 if (textPhase === 'pop') {
                     textScale += 0.25; if (textScale >= 1.5) { textScale = 1.5; textPhase = 'settle'; }
                 } else if (textPhase === 'settle') {
@@ -635,13 +638,12 @@
                     if (textAlpha <= 0) { textAlpha = 0; textPhase = 'finished'; }
                 }
 
-                // Draw Text
                 if (textAlpha > 0) {
                     ctx.save();
                     ctx.translate(fxX, fxY);
                     ctx.scale(textScale, textScale);
                     ctx.globalAlpha = textAlpha;
-                    ctx.font = "900 48px 'Russo One'"; // Usando a fonte do jogo
+                    ctx.font = "900 48px 'Russo One'";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
                     ctx.lineWidth = 8;
@@ -655,7 +657,6 @@
                     ctx.restore();
                 }
 
-                // Particles
                 for (let i = 0; i < particles.length; i++) {
                     particles[i].update();
                     particles[i].draw(ctx);
@@ -684,7 +685,7 @@
         }
 
         window.transitionToGame = function() {
-            window.switchMusic('game');
+            window.switchMusic('game'); // Troca a musica AQUI
             window.showScreen('game-screen');
             setTimeout(startGameFlow, 50);
         }
@@ -712,7 +713,7 @@
             if(currentTrackId === trackType) return;
             currentTrackId = trackType;
 
-            // Fade Out All
+            // Fade Out Todas as musicas
             ['bgm-lobby', 'bgm-loop', 'bgm-menu'].forEach(id => {
                 let audio = audios[id];
                 if(audio) {
@@ -725,11 +726,12 @@
 
             if(window.isMuted || trackType === 'none') return;
 
-            // Fade In Target
+            // Fade In na musica alvo
             let targetId = (trackType === 'lobby') ? 'bgm-lobby' : (trackType === 'game' ? 'bgm-loop' : null);
             if(targetId && audios[targetId]) {
                 let audio = audios[targetId];
                 audio.volume = 0;
+                // Tenta tocar (navegadores podem bloquear se nao houver interação antes)
                 audio.play().catch(()=>{});
                 let fadeIn = setInterval(() => {
                     if(audio.volume < 0.5) audio.volume += 0.05;
@@ -747,7 +749,7 @@
                 ['bgm-lobby', 'bgm-loop', 'bgm-menu'].forEach(id => { if(audios[id]) audios[id].pause(); });
             } else {
                 btn.innerText = "🎵";
-                // Retoma a música correta baseada na tela
+                // Retoma a música correta baseada na tela atual
                 if(document.getElementById('lobby-screen').classList.contains('active')) window.switchMusic('lobby');
                 else if(document.getElementById('game-screen').classList.contains('active')) window.switchMusic('game');
             }
@@ -785,11 +787,12 @@
         function updateLoader() {
             assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); document.getElementById('loader-fill').style.width = pct + '%';
             if(assetsLoaded >= totalAssets) {
+                // Remove loader
                 setTimeout(() => {
                     document.getElementById('loading-screen').style.opacity = '0';
                     setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 500);
                 }, 1000); 
-                // A música inicial é gerenciada pelo switchMusic no AuthState
+                // A música é controlada pelo AuthState
             }
         }
         
@@ -838,17 +841,18 @@
             const cards = Array.from(handEl.children);
             if(cards.length === 0) { isProcessing = false; return; }
             cards.forEach((cardEl, i) => {
+                // FORÇA VISIBILIDADE IMEDIATA
+                cardEl.style.opacity = '1';
                 setTimeout(() => {
                     const rect = cardEl.getBoundingClientRect();
                     // Fallback to center if element is hidden/zero size
                     let target = (rect.width > 0) ? rect : { top: window.innerHeight - 150, left: window.innerWidth/2 };
+                    // Simulação visual apenas
                     animateFly('p-deck-container', target, player.hand[i], () => { 
-                        // Nada complexo aqui, o CSS já garante visibilidade
                         if(i === cards.length - 1) isProcessing = false; 
                     }, true);
                 }, i * 150); 
             });
-            // Failsafe
             setTimeout(() => { isProcessing = false; }, (cards.length * 150) + 500);
         }
 
@@ -892,7 +896,6 @@
             let handContainer = document.getElementById('player-hand'); 
             let realCardEl = handContainer.children[index]; 
             
-            // ANIMATION FIX: Capture rect before hiding
             let startRect = null;
             if(realCardEl) { 
                 startRect = realCardEl.getBoundingClientRect(); 
@@ -956,7 +959,7 @@
                         let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; 
                         lvlEl.classList.add('level-up-anim'); 
                         playSound('sfx-levelup'); 
-                        // GATILHO DA ANIMAÇÃO DE FX
+                        // DISPARA EFEITO DE PARTICULAS NO CLUSTER
                         window.triggerLevelUpFX(u.id+'-lvl');
                         
                         setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
@@ -1030,7 +1033,7 @@
                     let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
                     c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
                     if(u.disabled===k) c.classList.add('disabled-card');
-                    c.style.opacity = '1'; /* GARANTIA DE VISIBILIDADE */
+                    c.style.opacity = '1';
                     let lethalType = checkCardLethality(k); 
                     
                     let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
@@ -1104,7 +1107,7 @@
             if(player.hp<=0 || monster.hp<=0) { 
                 isProcessing = true; 
                 
-                // Mute Game Music
+                // MUTE GAME MUSIC
                 window.switchMusic('none');
 
                 setTimeout(()=>{ 
