@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUPPO - 59.0 AUDIO & CARDS FIX</title>
+    <title>BUPPO - 60.0 Animation Restore</title>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <style>
@@ -54,7 +54,7 @@
         .loader-bar-fill { width: 0%; height: 100%; background: var(--gold); transition: width 0.2s; box-shadow: 0 0 10px var(--gold); }
         .loader-txt { color: #777; margin-top: 10px; font-size: 12px; font-family: 'Montserrat', sans-serif; }
 
-        /* GAME CONTAINER - VISIBILIDADE GARANTIDA */
+        /* GAME CONTAINER */
         #game-container { 
             max-width: 1600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; 
             padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; 
@@ -182,7 +182,7 @@
         }
         .minimal-btn:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 10px var(--gold); }
         
-        #btn-config { display: none; } /* Escondido por padrão */
+        #btn-config { display: none; }
 
         #btn-fullscreen { position: fixed; bottom: 20px; right: 20px; z-index: 20000; font-size: 24px; cursor: pointer; color: rgba(255, 255, 255, 0.4); transition: 0.3s; background: transparent; border: none; width: auto; height: auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
         #btn-fullscreen:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 15px var(--gold); }
@@ -264,7 +264,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
             transform-style: preserve-3d; background-color: #111; 
             transition: margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s; 
-            /* SEGREDO: OPACITY 1 !IMPORTANT PARA GARANTIR QUE APAREÇA */
+            /* GARANTIA DE VISIBILIDADE */
             opacity: 1 !important; visibility: visible !important;
         }
         
@@ -305,7 +305,7 @@
 
         /* FIM DE JOGO (FIXED & HIDDEN) */
         #end-screen { 
-            display: none; /* CORREÇÃO FANTASMA: INICIA INVISÍVEL */
+            display: none; /* CORREÇÃO FANTASMA */
             justify-content: center; align-items: center; 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 50000; background: rgba(0,0,0,0.95); backdrop-filter: blur(20px); 
@@ -487,7 +487,6 @@
 
         let currentUser = null;
 
-        // GUARDIÃO DE ESTADO
         onAuthStateChanged(auth, (user) => {
             setTimeout(() => {
                 document.getElementById('loading-screen').style.opacity = '0';
@@ -521,7 +520,6 @@
         window.goToLobby = async function(isAutoLogin = false) {
             if(!currentUser) { window.showScreen('start-screen'); return; }
             
-            // TOCA MUSICA LOBBY
             window.switchMusic('lobby');
 
             const userRef = doc(db, "players", currentUser.uid);
@@ -698,13 +696,9 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
             
-            if(screenId === 'game-screen') {
-                document.getElementById('btn-config').style.display = 'block';
-                document.getElementById('btn-surrender').style.display = 'block';
-            } else {
-                document.getElementById('btn-config').style.display = 'none';
-                document.getElementById('btn-surrender').style.display = 'none';
-            }
+            // Controle botão Abandono
+            if(screenId === 'game-screen') document.getElementById('btn-surrender').style.display = 'block';
+            else document.getElementById('btn-surrender').style.display = 'none';
         }
 
         window.transitionToGame = function() {
@@ -819,13 +813,7 @@
                     setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 500);
                 }, 1000); 
                 playMenuAudio();
-                // Destrava audio com clique
-                document.body.addEventListener('click', () => { 
-                    if (audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) {
-                         // Apenas "acorda" o contexto de áudio
-                         if(currentTrackId !== 'none' && audios[currentTrackId]) audios[currentTrackId].play().catch(()=>{});
-                    } 
-                }, { once: true });
+                document.body.addEventListener('click', () => { if (audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) { audios['bgm-menu'].volume = 0.5; audios['bgm-menu'].play().catch(()=>{}); } }, { once: true });
             }
         }
         
@@ -877,8 +865,9 @@
             cards.forEach((cardEl, i) => {
                 setTimeout(() => {
                     const rect = cardEl.getBoundingClientRect();
+                    // Fallback to center if element is hidden/zero size
                     let target = (rect.width > 0) ? rect : { top: window.innerHeight - 150, left: window.innerWidth/2 };
-                    // A animação de fly cria um clone temporário. A carta real já está lá.
+                    // Simulação visual apenas
                     animateFly('p-deck-container', target, player.hand[i], () => { 
                         if(i === cards.length - 1) isProcessing = false; 
                     }, true);
