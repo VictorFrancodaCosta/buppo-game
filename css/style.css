@@ -87,13 +87,21 @@
             z-index: 10000; position: relative;
         }
 
-        .lobby-bg {
-            position: absolute; top: -5%; left: -5%; width: 110%; height: 110%;
-            background-image: var(--lobby-bg-url);
-            background-size: cover; background-position: center;
-            filter: blur(8px) brightness(0.6);
-            z-index: 0;
-        }
+.lobby-bg {
+    position: fixed; /* Isso trava a imagem na janela do navegador */
+    top: 0;
+    left: 0;
+    width: 100vw; /* 100% da largura da JANELA */
+    height: 100vh; /* 100% da altura da JANELA */
+    
+    background-image: var(--lobby-bg-url);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    filter: blur(8px) brightness(0.6);
+    z-index: 0;
+}
 
         /* Container do Quadro */
         .lobby-frame-container {
@@ -168,13 +176,25 @@
         #btn-logout:hover { background: rgba(255,0,0,0.4); color: #fff; }
 
         /* LOGO DO SAGUÃO (DIREITA) */
-        .lobby-logo-right {
-            position: absolute; right: 10%; top: 50%; transform: translateY(-50%);
-            max-width: 400px; width: 40%; height: auto;
-            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9));
-            z-index: 5;
-            animation: logoFloat 4s ease-in-out infinite reverse;
-        }
+.lobby-logo-right {
+    position: absolute;
+    
+    /* CENTRALIZAÇÃO MATEMÁTICA NA DIREITA */
+    left: 75%; 
+    top: 50%; 
+    /* Puxa 50% do tamanho da própria imagem para trás, centralizando perfeitamente */
+    transform: translate(-50%, -50%); 
+
+    max-width: 450px; 
+    width: 35%; /* Ajustei levemente para não brigar com o quadro */
+    height: auto;
+    
+    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9));
+    z-index: 5;
+    
+    /* REMOVIDA A ANIMAÇÃO (animation: logoFloat...) */
+    animation: none; 
+}
 
         /* --- CONFIGS ATUALIZADAS --- */
         #top-left-controls {
