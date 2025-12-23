@@ -69,6 +69,41 @@ window.toggleMute = function() {
     });
 }
 
+// ARQUIVO: js/main.js (Adicione esta função nova)
+
+function switchBackgroundMusic(mode) {
+    const menuMusic = audios['bgm-menu']; // Música do Saguão/Login
+    const battleMusic = audios['bgm-loop']; // Música da Partida
+
+    if (!menuMusic || !battleMusic) return;
+
+    if (mode === 'MENU') {
+        // Para a batalha, toca o menu
+        battleMusic.pause();
+        battleMusic.currentTime = 0; // Reseta para o começo
+        
+        if (!window.isMuted && menuMusic.paused) {
+            menuMusic.volume = 0.5 * masterVol; // Volume padrão
+            menuMusic.play().catch(()=>{});
+        }
+    } 
+    else if (mode === 'BATTLE') {
+        // Para o menu, toca a batalha
+        menuMusic.pause();
+        menuMusic.currentTime = 0; // Reseta para o começo
+        
+        if (!window.isMuted && battleMusic.paused) {
+            battleMusic.volume = 0.5 * masterVol; // Volume padrão
+            battleMusic.play().catch(()=>{});
+        }
+    }
+    else if (mode === 'SILENCE') {
+        // Para tudo (usado na vitória/derrota)
+        menuMusic.pause();
+        battleMusic.pause();
+    }
+}
+
 // =======================
 // NAVEGAÇÃO DE TELAS
 // =======================
