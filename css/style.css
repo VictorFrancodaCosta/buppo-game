@@ -19,13 +19,34 @@
             margin: 0; padding: 0; height: 100vh; overflow: hidden; user-select: none;
         }
 
-        /* BACKGROUND PADRÃO */
-        #game-background {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: var(--bg-image-url);
-            background-size: cover; background-position: center; background-repeat: no-repeat;
-            z-index: -5; transition: filter 0.4s ease;
-        }
+/* ARQUIVO: css/style.css */
+
+/* O Fundo Padrão (Usado no Jogo e Login) */
+#game-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Imagem Padrão (Mesa de Jogo) */
+    background-image: var(--bg-image-url);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    z-index: -5;
+    
+    /* Adicionamos transição para o blur ser suave */
+    transition: filter 0.5s ease;
+}
+
+/* O Estado "Modo Saguão" */
+/* Quando adicionarmos essa classe via JS, ele muda a imagem e aplica blur */
+#game-background.lobby-mode {
+    background-image: var(--lobby-bg-url) !important;
+    filter: blur(3px); /* Blur sutil que você pediu */
+}
 
         /* LOADING SCREEN */
         #loading-screen {
@@ -86,42 +107,6 @@
             padding-left: 5%; 
             z-index: 10000; position: relative;
         }
-
-/* ARQUIVO: css/style.css */
-
-.lobby-bg {
-    /* 1. POSIÇÃO FIXA: Cola na tela */
-    position: fixed;
-    top: 0;
-    left: 0;
-    
-    /* 2. O SEGREDO DO SUCESSO: */
-    /* Em vez de 100% (que respeita o pai), usamos vw/vh */
-    /* vw = viewport width (largura da janela) */
-    /* vh = viewport height (altura da janela) */
-    width: 100vw; 
-    height: 100vh;
-    
-    /* 3. IMAGEM: */
-    background-image: var(--lobby-bg-url);
-    
-    /* Cover garante que preencha tudo sem distorcer a proporção */
-    background-size: cover; 
-    
-    /* Centraliza a imagem */
-    background-position: center;
-    background-repeat: no-repeat;
-    
-    /* 4. VISUAL: */
-    /* Blur sutil para destacar o menu, como você pediu */
-    filter: blur(3px);
-    
-    /* z-index ajustado para ficar NA FRENTE do #game-background (-5) */
-    /* mas ATRÁS do conteúdo do saguão */
-    z-index: -1; 
-    
-    pointer-events: none;
-}
 
 
         /* Container do Quadro */
