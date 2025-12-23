@@ -145,6 +145,8 @@ window.goToLobby = async function(isAutoLogin = false) {
 
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
+
+    createLobbyFlares();
     
     if(!isAutoLogin) {
         let s = audios['bgm-menu'];
