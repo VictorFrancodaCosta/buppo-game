@@ -89,11 +89,11 @@ function switchBackgroundMusic(mode) {
                 } else {
                     audio.volume = 0;
                     audio.pause();
-                    // Só reseta se NÃO for a música do menu (pois queremos que ela varie)
                     if(id !== 'bgm-menu') audio.currentTime = 0; 
                     clearInterval(fadeIntervals[id]); 
                 }
             }, 60); 
+            // Trava de segurança para parar áudio
             setTimeout(() => { if(audio) { audio.pause(); } }, 1500);
         } 
         else if (type === 'IN') {
@@ -101,14 +101,13 @@ function switchBackgroundMusic(mode) {
             
             audio.volume = 0;
             
-            // --- CORREÇÃO: START ALEATÓRIO PARA O MENU ---
+            // --- INÍCIO ALEATÓRIO DA MÚSICA DO MENU ---
             if(id === 'bgm-menu') {
-                // Começa entre 0 e 60 segundos
-                audio.currentTime = Math.random() * 60; 
+                audio.currentTime = Math.random() * 60; // Começa entre 0 e 60s
             } else {
-                audio.currentTime = 0; // Batalha sempre do começo
+                audio.currentTime = 0; 
             }
-            // ----------------------------------------------
+            // ------------------------------------------
 
             audio.play().catch(()=>{}); 
 
@@ -163,13 +162,16 @@ window.showScreen = function(screenId) {
     }
 }
 
+// --- TRANSIÇÃO PARA O JOGO ---
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
+    const transText = transScreen.querySelector('.trans-text');
     
-    // 1. Sobe a cortina
+    // Texto Dinâmico
+    if(transText) transText.innerText = "PREPARANDO BATALHA...";
+    
     if(transScreen) transScreen.classList.add('active');
 
-    // 2. Aguarda cobrir a tela (500ms)
     setTimeout(() => {
         try {
             switchBackgroundMusic('BATTLE');
@@ -179,26 +181,41 @@ window.transitionToGame = function() {
 
             window.showScreen('game-screen');
             
-            // AQUI ESTÁ A CORREÇÃO DAS CARTAS SUMIDAS
-            // Resetamos os status, mas NÃO desenhamos as cartas ainda.
-            // Deixamos isso para o 'startGameFlow' fazer limpo.
-            resetUnit(player); resetUnit(monster); 
-            turnCount = 1; playerHistory = [];
-            updateUI(); // Limpa a interface visualmente
+            // Limpa o visual anterior (mas não desenha as cartas ainda)
+            updateUI(); 
+            const handEl = document.getElementById('player-hand'); 
+            if(handEl) handEl.innerHTML = ''; // Garante mão vazia antes de começar
             
         } catch (error) {
             console.error("Erro na transição:", error);
         }
 
-        // 3. Abre a cortina
         setTimeout(() => {
             if(transScreen) transScreen.classList.remove('active');
-            
-            // Inicia o fluxo real (comprar cartas e animar)
-            setTimeout(() => { startGameFlow(); }, 500);
+            setTimeout(() => { startGameFlow(); }, 500); // Chama o fluxo principal
         }, 1500);
 
     }, 500); 
+}
+
+// --- TRANSIÇÃO PARA O SAGUÃO (NOVA) ---
+window.transitionToLobby = function() {
+    const transScreen = document.getElementById('transition-overlay');
+    const transText = transScreen.querySelector('.trans-text');
+    
+    // Texto Dinâmico
+    if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
+
+    if(transScreen) transScreen.classList.add('active');
+
+    setTimeout(() => {
+        window.goToLobby(false); // Já lida com música e firebase
+
+        setTimeout(() => {
+            if(transScreen) transScreen.classList.remove('active');
+        }, 1000); 
+
+    }, 500);
 }
 
 window.goToLobby = async function(isAutoLogin = false) {
@@ -257,27 +274,27 @@ function startGameFlow() {
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // --- CORREÇÃO: FLUXO UNIFICADO ---
-    // Reseta novamente (garantia)
+    // --- CORREÇÃO DAS CARTAS SUMIDAS ---
+    // Reseta tudo e desenha as cartas aqui
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
     playerHistory = [];
     
-    // Compra as cartas na lógica
+    // Compra as cartas (Preenche o array .hand)
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Cria os elementos HTML (cartas)
+    // Atualiza o HTML (Cria os elementos das cartas)
     updateUI();
     
-    // Esconde elas imediatamente para a animação de entrada
+    // Esconde elas imediatamente (opacity 0) para o efeito de entrada
     const handEl = document.getElementById('player-hand'); 
     if(handEl) {
         Array.from(handEl.children).forEach(c => c.style.opacity = '0');
     }
     
-    // Inicia a animação de voo das cartas
+    // Inicia a animação de distribuição
     setTimeout(() => { dealAllInitialCards(); }, 100);
 }
 
@@ -395,7 +412,8 @@ window.abandonMatch = function() {
          window.toggleConfig(); 
          if(window.confirm("Tem certeza que deseja sair? Contará como derrota.")) {
              window.registrarDerrotaOnline();
-             window.goToLobby(false);
+             // USA A TRANSIÇÃO PARA O SAGUÃO
+             window.transitionToLobby(); 
          }
      }
 }
@@ -426,8 +444,8 @@ function updateLoader() {
             const menuMusic = audios['bgm-menu'];
             if (menuMusic && menuMusic.paused && !window.isMuted) { 
                 const battleMusic = audios['bgm-loop'];
+                // Só começa o menu se a batalha não estiver tocando
                 if(battleMusic && battleMusic.paused) { 
-                    // Random start para o menu
                     menuMusic.currentTime = Math.random() * 60;
                     menuMusic.volume = 0.5 * (masterVol || 1.0);
                     menuMusic.play().catch(()=>{}); 
