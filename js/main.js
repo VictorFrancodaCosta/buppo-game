@@ -47,114 +47,104 @@ let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let isProcessing = false; let turnCount = 1; let playerHistory = []; 
-window.masterVol = 1.0; window.musicVolMult = 1.0; 
-let isLethalHover = false; let mixerInterval = null;
-const fadeIntervals = {}; 
+window.masterVol = 1.0; 
+let isLethalHover = false; 
+let mixerInterval = null;
 
 // =======================
-// SISTEMA DE ÁUDIO REFORMULADO
+// NOVO CONTROLADOR DE MÚSICA (MusicController)
 // =======================
+const MusicController = {
+    currentTrackId: null,
+    fadeTimer: null,
+
+    // Função única para trocar faixas
+    play(trackId) {
+        if (this.currentTrackId === trackId) return; // Se já está tocando a certa, não faz nada (Evita reinício)
+
+        console.log(`[Music] Trocando de ${this.currentTrackId} para ${trackId}`);
+        const maxVol = 0.5 * window.masterVol;
+
+        // 1. FADE OUT da música antiga (se houver)
+        if (this.currentTrackId && audios[this.currentTrackId]) {
+            const oldAudio = audios[this.currentTrackId];
+            this.fadeOut(oldAudio);
+        }
+
+        // 2. PREPARA a nova música (se houver)
+        if (trackId && audios[trackId]) {
+            const newAudio = audios[trackId];
+            
+            // --- LÓGICA DE INÍCIO ---
+            if (trackId === 'bgm-menu') {
+                // Saguão: Ponto Aleatório Seguro (entre 10s e 50s)
+                newAudio.currentTime = 10 + Math.random() * 40;
+            } else {
+                // Batalha: Início
+                newAudio.currentTime = 0;
+            }
+            
+            if (!window.isMuted) {
+                newAudio.volume = 0; // Começa mudo para o fade in
+                newAudio.play().catch(e => console.warn("Autoplay prevent", e));
+                this.fadeIn(newAudio, maxVol);
+            }
+        }
+
+        this.currentTrackId = trackId;
+    },
+
+    // Apenas para a música atual (Fade Out)
+    stopCurrent() {
+        if (this.currentTrackId && audios[this.currentTrackId]) {
+            this.fadeOut(audios[this.currentTrackId]);
+        }
+        this.currentTrackId = null;
+    },
+
+    fadeOut(audio) {
+        let vol = audio.volume;
+        const fadeOutInt = setInterval(() => {
+            if (vol > 0.05) {
+                vol -= 0.05;
+                audio.volume = vol;
+            } else {
+                audio.volume = 0;
+                audio.pause();
+                clearInterval(fadeOutInt);
+            }
+        }, 50);
+    },
+
+    fadeIn(audio, targetVol) {
+        let vol = 0;
+        audio.volume = 0;
+        const fadeInInt = setInterval(() => {
+            if (vol < targetVol - 0.05) {
+                vol += 0.05;
+                audio.volume = vol;
+            } else {
+                audio.volume = targetVol;
+                clearInterval(fadeInInt);
+            }
+        }, 50);
+    }
+};
+
 window.isMuted = false;
-
 window.toggleMute = function() {
     window.isMuted = !window.isMuted;
     const btn = document.getElementById('btn-sound');
-    
-    // Atualiza ícone
     const iconOn = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M3,9v6h4l5,5V4L7,9H3z M16.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C15.48,15.29,16.5,13.77,16.5,12z M14,3.23v2.06 c2.89,0.86,5,3.54,5,6.71s-2.11,5.85-5,6.71v2.06c4.01-0.91,7-4.49,7-8.77S18.01,4.14,14,3.23z"/></svg>`;
     const iconOff = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M16.5,12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45,2.45C16.42,12.5,16.5,12.26,16.5,12z M19,12c0,0.94-0.2,1.82-0.54,2.64l1.51,1.51C20.63,14.91,21,13.5,21,12c0-4.28-2.99-7.86-7-8.77v2.06C16.89,6.15,19,8.83,19,12z M4.27,3L3,4.27l4.56,4.56C7.39,8.91,7.2,8.96,7,9H3v6h4l5,5v-6.73l4.25,4.25c-0.67,0.52-1.42,0.93-2.25,1.18v2.06c1.38-0.31,2.63-0.95,3.69-1.81L19.73,21L21,19.73L9,7.73V4L4.27,3z M12,4L9.91,6.09L12,8.18V4z"/></svg>`;
     if(btn) btn.innerHTML = window.isMuted ? iconOff : iconOn;
 
-    // Aplica mute em tudo
     Object.values(audios).forEach(audio => { if(audio) audio.muted = window.isMuted; });
     
-    // Se desmutar, retoma a música correta
-    if(!window.isMuted) {
-        if(document.getElementById('game-screen').classList.contains('active')) {
-            manageMusicFlow('BATTLE_RESUME');
-        } else {
-            manageMusicFlow('MENU_RESUME');
-        }
-    }
-}
-
-// FUNÇÃO MESTRE DA "DANÇA DAS MÚSICAS"
-function manageMusicFlow(action) {
-    const menuMusic = audios['bgm-menu'];
-    const battleMusic = audios['bgm-loop'];
-    const volMax = 0.5 * (window.masterVol || 1.0); // Volume máximo padrão
-
-    // Auxiliar: Fade Out (Desaparecer)
-    const fadeOut = (audio) => {
-        if(!audio || audio.paused) return;
-        const id = audio.id;
-        if(fadeIntervals[id]) clearInterval(fadeIntervals[id]);
-        
-        fadeIntervals[id] = setInterval(() => {
-            if(audio.volume > 0.05) {
-                audio.volume -= 0.05;
-            } else {
-                audio.volume = 0;
-                audio.pause();
-                clearInterval(fadeIntervals[id]);
-            }
-        }, 50);
-    };
-
-    // Auxiliar: Fade In (Aparecer)
-    const fadeIn = (audio, randomStart = false) => {
-        if(!audio || window.isMuted) return;
-        const id = audio.id;
-        if(fadeIntervals[id]) clearInterval(fadeIntervals[id]);
-
-        audio.volume = 0; // Começa zerado
-        
-        // Ponto de início
-        if(randomStart) {
-            // Tenta pegar duração, se não der usa 60s como base
-            let maxTime = (audio.duration && isFinite(audio.duration)) ? audio.duration : 60;
-            // Sorteia um ponto entre 10% e 80% da música
-            audio.currentTime = (maxTime * 0.1) + Math.random() * (maxTime * 0.7);
-        } else {
-            audio.currentTime = 0; // Batalha sempre do início
-        }
-
-        audio.play().catch(e => console.log("Play failed", e));
-
-        fadeIntervals[id] = setInterval(() => {
-            if(audio.volume < volMax - 0.05) {
-                audio.volume += 0.05;
-            } else {
-                audio.volume = volMax;
-                clearInterval(fadeIntervals[id]);
-            }
-        }, 50); // Fade dura aprox 1 segundo
-    };
-
-    // --- ROTEIRO DA DANÇA ---
-    if (action === 'ENTER_LOBBY') {
-        fadeOut(battleMusic);
-        fadeIn(menuMusic, true); // TRUE = Começar aleatório
-    }
-    else if (action === 'ENTER_BATTLE') {
-        fadeOut(menuMusic);
-        fadeIn(battleMusic, false); // FALSE = Começar do zero
-    }
-    else if (action === 'GAME_OVER') {
-        fadeOut(battleMusic);
-        fadeOut(menuMusic);
-        // Vitória/Derrota tem som próprio que toca separado
-    }
-    else if (action === 'SILENCE_ALL') {
-        fadeOut(battleMusic);
-        fadeOut(menuMusic);
-    }
-    // Casos de desmutar
-    else if (action === 'MENU_RESUME') {
-        if(menuMusic.paused) fadeIn(menuMusic, true);
-    }
-    else if (action === 'BATTLE_RESUME') {
-        if(battleMusic.paused) fadeIn(battleMusic, false);
+    // Se desmutar, força o MusicController a tocar o que deveria estar tocando
+    if(!window.isMuted && MusicController.currentTrackId) {
+        const audio = audios[MusicController.currentTrackId];
+        if(audio && audio.paused) audio.play();
     }
 }
 
@@ -184,7 +174,7 @@ window.showScreen = function(screenId) {
     }
 }
 
-// 1. USUÁRIO SAI DO SAGUÃO (Transição Batalha)
+// 1. TRANSIÇÃO: SAGUÃO -> BATALHA
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
@@ -192,21 +182,19 @@ window.transitionToGame = function() {
     if(transText) transText.innerText = "PREPARANDO BATALHA...";
     if(transScreen) transScreen.classList.add('active');
 
-    // Durante a transição: Fade Out Saguão / Fade In Batalha
+    // Durante a transição: Toca Batalha (O Controller cuida do Fade Out do Menu)
     setTimeout(() => {
-        // --- TROCA DE MÚSICA AQUI ---
-        manageMusicFlow('ENTER_BATTLE');
+        MusicController.play('bgm-loop'); // Toca Batalha
 
         let bg = document.getElementById('game-background');
         if(bg) bg.classList.remove('lobby-mode');
 
         window.showScreen('game-screen');
         
-        // Limpa visual antigo por segurança
+        // Limpa visual
         const handEl = document.getElementById('player-hand'); 
         if(handEl) handEl.innerHTML = '';
         
-        // Abre a cortina e inicia o jogo
         setTimeout(() => {
             if(transScreen) transScreen.classList.remove('active');
             setTimeout(() => { startGameFlow(); }, 200); 
@@ -215,7 +203,7 @@ window.transitionToGame = function() {
     }, 500); 
 }
 
-// 2. USUÁRIO ABANDONA A PARTIDA (Transição Saguão)
+// 2. TRANSIÇÃO: BATALHA -> SAGUÃO
 window.transitionToLobby = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
@@ -223,8 +211,8 @@ window.transitionToLobby = function() {
     if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
     if(transScreen) transScreen.classList.add('active');
 
-    // Fade Out da Batalha acontece na chamada da função, ou aqui:
-    manageMusicFlow('SILENCE_ALL'); // Silencia batalha antes de trocar
+    // Fade Out da Batalha IMEDIATO
+    MusicController.stopCurrent(); 
 
     setTimeout(() => {
         window.goToLobby(false); 
@@ -234,38 +222,31 @@ window.transitionToLobby = function() {
     }, 500);
 }
 
-// 3. USUÁRIO ENTRA NO SAGUÃO
+// 3. ENTRADA NO SAGUÃO
 window.goToLobby = async function(isAutoLogin = false) {
     if(!currentUser) {
         window.showScreen('start-screen');
-        manageMusicFlow('ENTER_LOBBY'); // Toca menu
+        MusicController.play('bgm-menu'); // Toca Menu
         return;
     }
 
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
     
-    // --- TOCA MÚSICA DO SAGUÃO ---
-    manageMusicFlow('ENTER_LOBBY');
-    
+    MusicController.play('bgm-menu'); // Toca Menu (Com ponto aleatório automático)
     createLobbyFlares();
 
-    // Lógica Firebase (Mantida intacta)
+    // Firebase
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
-    
     if (!userSnap.exists()) {
-        await setDoc(userRef, {
-            name: currentUser.displayName, email: currentUser.email, photo: currentUser.photoURL,
-            totalWins: 0, totalMatches: 0, score: 0, joinedAt: new Date()
-        });
+        await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
         document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
     } else {
         const d = userSnap.data();
         document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
-        await updateDoc(userRef, { lastLogin: new Date() });
     }
 
     const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
@@ -292,41 +273,32 @@ window.goToLobby = async function(isAutoLogin = false) {
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
-    
-    // Inicia som ambiente (NÃO mexe mais na música)
     startCinematicLoop(); 
     
-    // --- GARANTIA DAS CARTAS ---
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
     playerHistory = [];
     
-    // 1. Compra Lógica
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // 2. Desenha Visual
     updateUI();
     
-    // 3. Prepara Animação
     const handEl = document.getElementById('player-hand'); 
-    if(handEl) {
-        Array.from(handEl.children).forEach(c => c.style.opacity = '0');
-    }
+    if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
     
-    // 4. Animação
     setTimeout(() => { dealAllInitialCards(); }, 100);
 }
 
-// 4. FIM DE JOGO (VITÓRIA/DERROTA)
+// 4. FIM DE JOGO
 function checkEndGame(){ 
     if(player.hp<=0 || monster.hp<=0) { 
         isProcessing = true; 
         isLethalHover = false; 
         
-        // Fade out da batalha
-        manageMusicFlow('GAME_OVER'); 
+        // Para a música de batalha
+        MusicController.stopCurrent();
 
         setTimeout(()=>{ 
             let title = document.getElementById('end-title'); 
@@ -372,8 +344,7 @@ onAuthStateChanged(auth, (user) => {
         const btnTxt = document.getElementById('btn-text');
         if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
         
-        // Garante música no login
-        manageMusicFlow('ENTER_LOBBY');
+        MusicController.play('bgm-menu'); // Toca Menu no Login
     }
 });
 
@@ -392,9 +363,7 @@ window.googleLogin = async function() {
 
 window.handleLogout = function() {
     window.playNavSound();
-    signOut(auth).then(() => {
-        location.reload(); 
-    });
+    signOut(auth).then(() => { location.reload(); });
 };
 
 window.registrarVitoriaOnline = async function() {
@@ -406,8 +375,7 @@ window.registrarVitoriaOnline = async function() {
             const data = userSnap.data();
             await updateDoc(userRef, {
                 totalWins: (data.totalWins || 0) + 1,
-                score: (data.score || 0) + 100,
-                totalMatches: (data.totalMatches || 0) + 1
+                score: (data.score || 0) + 100
             });
         }
     } catch(e) { console.error(e); }
@@ -421,7 +389,6 @@ window.registrarDerrotaOnline = async function() {
         if(userSnap.exists()) {
             const data = userSnap.data();
             await updateDoc(userRef, {
-                totalMatches: (data.totalMatches || 0) + 1,
                 score: (data.score || 0) + 10 
             });
         }
@@ -431,8 +398,7 @@ window.registrarDerrotaOnline = async function() {
 window.restartMatch = function() {
     document.getElementById('end-screen').classList.remove('visible');
     setTimeout(startGameFlow, 50);
-    // Reinicia música de batalha se for restart
-    manageMusicFlow('ENTER_BATTLE');
+    MusicController.play('bgm-loop'); // Reinicia a de batalha
 }
 
 window.abandonMatch = function() {
@@ -467,10 +433,11 @@ function updateLoader() {
             }
         }, 1000); 
 
-        // Primeiro clique inicia o áudio
+        // INICIALIZA O ÁUDIO NO PRIMEIRO CLIQUE (Evita erro de autoplay)
         document.body.addEventListener('click', () => { 
-            if(currentUser) {
-                manageMusicFlow('ENTER_LOBBY');
+            // Só tenta tocar se NENHUMA faixa estiver definida ainda
+            if (!MusicController.currentTrackId) {
+                MusicController.play('bgm-menu');
             }
         }, { once: true });
     }
@@ -513,17 +480,14 @@ function createLobbyFlares() {
 
 function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
 
-// CORRIGIDO: MIXER AGORA SÓ CONTROLA O EFEITO DE TENSÃO (CINE), NÃO A MÚSICA
+// MIXER AGORA SÓ CONTROLA EFEITO CINE (TENSÃO)
 function updateAudioMixer() { 
     const cineAudio = audios['sfx-cine']; 
     if(!cineAudio) return; 
-    
     const mVol = window.masterVol || 1.0;
     const maxCine = 0.6 * mVol; 
     let targetCine = isLethalHover ? maxCine : 0; 
-    
     if(window.isMuted) { cineAudio.volume = 0; return; }
-
     if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
     else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
 }
@@ -533,7 +497,6 @@ document.addEventListener('click', function(e) { const panel = document.getEleme
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
-    if(type==='music') window.musicVolMult = parseFloat(val); 
     ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-block', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) audios[k].volume = 0.8 * (window.masterVol || 1.0); 
     }); 
