@@ -551,26 +551,94 @@ function onCardClick(index) {
     else { playCardFlow(index, null); }
 }
 
+// --- NOVA INTELIGÊNCIA ARTIFICIAL ---
+
 function getBestAIMove() {
-    let moves = []; monster.hand.forEach((card, index) => { if(card !== monster.disabled) moves.push({ card: card, index: index, score: 0 }); });
-    if(moves.length === 0) return null;
-    if (turnCount === 1) { let randomPick = moves[Math.floor(Math.random() * moves.length)]; if(randomPick.card === 'ATAQUE' || randomPick.card === 'TREINAR') return randomPick; return moves[Math.floor(Math.random() * moves.length)]; }
-    let playerAggro = 0; if(playerHistory.length > 0) { playerAggro = playerHistory.filter(c => c === 'ATAQUE').length / playerHistory.length; }
-    let myDanger = monster.hp <= 3; let canKill = (monster.lvl + monster.bonusAtk) >= player.hp; let playerLowHp = player.hp <= (monster.lvl + monster.bonusAtk + 1);
-    let denyTarget = null; let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1); for(let k in pCounts) if(pCounts[k] >= 3) denyTarget = k;
-    moves.forEach(m => {
-        let score = Math.random() * 20; 
-        if (m.card === 'ATAQUE' && canKill) score += 1000;
-        if (playerLowHp && m.card === 'DESARMAR') score += 200; 
-        if (denyTarget && m.card === 'DESARMAR') score += 150;
-        if (myDanger) { if (m.card === 'BLOQUEIO') score += 50; if (m.card === 'DESCANSAR') score += 45; if (m.card === 'DESARMAR') score += 40; }
-        let myCopies = monster.xp.filter(x => x === m.card).length; if (myCopies >= 2) score += 35; 
-        if (playerAggro > 0.5 && m.card === 'BLOQUEIO') score += 20; 
-        m.score = score;
+    // 1. Coleta opções válidas (não desarmadas)
+    let moves = []; 
+    monster.hand.forEach((card, index) => { 
+        if(card !== monster.disabled) {
+            moves.push({ card: card, index: index, score: 0 }); 
+        }
     });
-    moves.sort((a, b) => b.score - a.score); return moves[0];
+
+    if(moves.length === 0) return null;
+
+    // 2. Analisa o Estado do Jogo
+    // Agressividade do Jogador (últimas 5 jogadas)
+    let recentHistory = playerHistory.slice(-5);
+    let attackCount = recentHistory.filter(c => c === 'ATAQUE').length;
+    let playerAggro = recentHistory.length > 0 ? (attackCount / recentHistory.length) : 0.5;
+
+    // Ameaça de Morte (Se o jogador atacar, o monstro morre?)
+    let threatLvl = player.lvl + player.bonusAtk;
+    let amIDying = monster.hp <= threatLvl;
+    
+    // Oportunidade de Matar (O monstro consegue matar o jogador agora?)
+    let myDmg = monster.lvl + monster.bonusAtk;
+    let canKill = player.hp <= myDmg;
+
+    // 3. Pontua cada carta baseada na situação
+    moves.forEach(m => {
+        m.score = calculateCardScore(m.card, playerAggro, amIDying, canKill, threatLvl);
+        
+        // Fator Caos: Adiciona pequena variação para não ficar 100% robótico
+        m.score += Math.random() * 15; 
+    });
+
+    // 4. Escolhe a melhor pontuação
+    moves.sort((a, b) => b.score - a.score);
+    return moves[0];
 }
 
+function calculateCardScore(card, aggroChance, amIDying, canKill, threatLvl) {
+    let score = 50; // Pontuação base
+
+    switch(card) {
+        case 'ATAQUE':
+            // Se posso matar, ATAQUE é prioridade máxima
+            if (canKill) score += 500;
+            // Se o jogador é passivo (pouco agro), puna ele!
+            if (aggroChance < 0.4) score += 40;
+            // Se estou morrendo, atacar é arriscado (melhor bloquear)
+            if (amIDying) score -= 30;
+            break;
+
+        case 'BLOQUEIO':
+            // Se estou morrendo, BLOQUEIO é vital
+            if (amIDying) score += 100;
+            // Se a chance de ataque é alta, BLOQUEIO é ótimo (Contra-Golpe)
+            if (aggroChance > 0.6) score += 60;
+            // Se o dano do jogador é muito alto, BLOQUEIO vale muito
+            if (threatLvl >= 3) score += 40;
+            break;
+
+        case 'DESCANSAR':
+            // Se estou cheio de vida, inútil
+            if (monster.hp === monster.maxHp) score -= 100;
+            // Se estou morrendo, preciso curar (mas é arriscado se não bloquear)
+            else if (monster.hp <= 3) score += 50;
+            // Se a chance de ataque é alta, DESCANSAR é ruim (perde bônus)
+            if (aggroChance > 0.7) score -= 40;
+            break;
+
+        case 'DESARMAR':
+            // Se estou morrendo, DESARMAR o ataque é a melhor defesa
+            if (amIDying) score += 120;
+            // Interromper combos do jogador
+            if (aggroChance > 0.8) score += 50;
+            break;
+
+        case 'TREINAR':
+            // Bom no começo do jogo (Turno baixo)
+            if (turnCount < 5) score += 30;
+            // Péssimo se estiver morrendo
+            if (amIDying || monster.hp <= 3) score -= 200;
+            break;
+    }
+
+    return score;
+}
 function playCardFlow(index, pDisarmChoice) {
     isProcessing = true; let cardKey = player.hand.splice(index, 1)[0]; playerHistory.push(cardKey);
     let aiMove = getBestAIMove(); let mCardKey = 'ATAQUE'; let mDisarmTarget = null; 
