@@ -47,15 +47,12 @@ let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let isProcessing = false; let turnCount = 1; let playerHistory = []; 
-// Definindo volumes iniciais explicitamente
-window.masterVol = 1.0; 
-window.musicVolMult = 1.0; 
-let isLethalHover = false; 
-let mixerInterval = null;
+window.masterVol = 1.0; window.musicVolMult = 1.0; 
+let isLethalHover = false; let mixerInterval = null;
 const fadeIntervals = {}; 
 
 // =======================
-// CONTROLES DE ÁUDIO & FADE
+// SISTEMA DE ÁUDIO REFORMULADO
 // =======================
 window.isMuted = false;
 
@@ -63,93 +60,101 @@ window.toggleMute = function() {
     window.isMuted = !window.isMuted;
     const btn = document.getElementById('btn-sound');
     
+    // Atualiza ícone
     const iconOn = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M3,9v6h4l5,5V4L7,9H3z M16.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C15.48,15.29,16.5,13.77,16.5,12z M14,3.23v2.06 c2.89,0.86,5,3.54,5,6.71s-2.11,5.85-5,6.71v2.06c4.01-0.91,7-4.49,7-8.77S18.01,4.14,14,3.23z"/></svg>`;
     const iconOff = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M16.5,12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45,2.45C16.42,12.5,16.5,12.26,16.5,12z M19,12c0,0.94-0.2,1.82-0.54,2.64l1.51,1.51C20.63,14.91,21,13.5,21,12c0-4.28-2.99-7.86-7-8.77v2.06C16.89,6.15,19,8.83,19,12z M4.27,3L3,4.27l4.56,4.56C7.39,8.91,7.2,8.96,7,9H3v6h4l5,5v-6.73l4.25,4.25c-0.67,0.52-1.42,0.93-2.25,1.18v2.06c1.38-0.31,2.63-0.95,3.69-1.81L19.73,21L21,19.73L9,7.73V4L4.27,3z M12,4L9.91,6.09L12,8.18V4z"/></svg>`;
+    if(btn) btn.innerHTML = window.isMuted ? iconOff : iconOn;
 
-    if(btn) {
-        btn.innerHTML = window.isMuted ? iconOff : iconOn;
+    // Aplica mute em tudo
+    Object.values(audios).forEach(audio => { if(audio) audio.muted = window.isMuted; });
+    
+    // Se desmutar, retoma a música correta
+    if(!window.isMuted) {
+        if(document.getElementById('game-screen').classList.contains('active')) {
+            manageMusicFlow('BATTLE_RESUME');
+        } else {
+            manageMusicFlow('MENU_RESUME');
+        }
     }
-
-    Object.values(audios).forEach(audio => {
-        if(audio) audio.muted = window.isMuted;
-    });
 }
 
-function switchBackgroundMusic(mode) {
+// FUNÇÃO MESTRE DA "DANÇA DAS MÚSICAS"
+function manageMusicFlow(action) {
     const menuMusic = audios['bgm-menu'];
     const battleMusic = audios['bgm-loop'];
-    const targetVolume = 0.5 * (window.masterVol || 1.0); 
+    const volMax = 0.5 * (window.masterVol || 1.0); // Volume máximo padrão
 
-    // Função Auxiliar de Fade
-    const fadeAudio = (audio, type) => {
-        if (!audio) return;
-        const id = audio.id; 
-
-        if (fadeIntervals[id]) clearInterval(fadeIntervals[id]);
-
-        if (type === 'OUT') {
-            // Fade Out
-            fadeIntervals[id] = setInterval(() => {
-                if (audio.volume > 0.05) {
-                    audio.volume = Math.max(0, audio.volume - 0.05); 
-                } else {
-                    audio.volume = 0;
-                    audio.pause();
-                    // Não reseta o tempo aqui para o menu não perder a posição
-                    clearInterval(fadeIntervals[id]); 
-                }
-            }, 50); 
-        } 
-        else if (type === 'IN') {
-            // Fade In
-            if (window.isMuted) return; 
-            audio.volume = 0;
-            
-            // --- CORREÇÃO DO START ALEATÓRIO (SAGUÃO) ---
-            if(id === 'bgm-menu') {
-                // Força um tempo aleatório entre 20s e 100s
-                // Ignora o duration por segurança
-                const randomTime = 20 + Math.random() * 80;
-                audio.currentTime = randomTime; 
-                console.log("Musica Saguão: Iniciando em " + parseInt(randomTime) + "s");
+    // Auxiliar: Fade Out (Desaparecer)
+    const fadeOut = (audio) => {
+        if(!audio || audio.paused) return;
+        const id = audio.id;
+        if(fadeIntervals[id]) clearInterval(fadeIntervals[id]);
+        
+        fadeIntervals[id] = setInterval(() => {
+            if(audio.volume > 0.05) {
+                audio.volume -= 0.05;
             } else {
-                audio.currentTime = 0; // Batalha do começo
+                audio.volume = 0;
+                audio.pause();
+                clearInterval(fadeIntervals[id]);
             }
-            // --------------------------------------------
-
-            audio.play().catch(()=>{}); 
-
-            fadeIntervals[id] = setInterval(() => {
-                if (audio.volume < targetVolume - 0.05) {
-                    audio.volume = Math.min(targetVolume, audio.volume + 0.05); 
-                } else {
-                    audio.volume = targetVolume;
-                    clearInterval(fadeIntervals[id]); 
-                }
-            }, 50);
-        }
+        }, 50);
     };
 
-    if (mode === 'MENU') {
-        fadeAudio(battleMusic, 'OUT'); 
-        if (menuMusic.paused) fadeAudio(menuMusic, 'IN'); 
-    } 
-    else if (mode === 'BATTLE') {
-        // --- CORREÇÃO DA MÚSICA DE BATALHA ---
-        fadeAudio(menuMusic, 'OUT'); 
+    // Auxiliar: Fade In (Aparecer)
+    const fadeIn = (audio, randomStart = false) => {
+        if(!audio || window.isMuted) return;
+        const id = audio.id;
+        if(fadeIntervals[id]) clearInterval(fadeIntervals[id]);
+
+        audio.volume = 0; // Começa zerado
         
-        // Para a batalha, NÃO usamos o fadeAudio('IN').
-        // Deixamos o 'updateAudioMixer' (que roda no jogo) cuidar do volume.
-        // Apenas damos o play no mudo.
-        if (battleMusic.paused) {
-            battleMusic.currentTime = 0;
-            battleMusic.volume = 0; // Começa mudo
-            if (!window.isMuted) battleMusic.play().catch(()=>{});
+        // Ponto de início
+        if(randomStart) {
+            // Tenta pegar duração, se não der usa 60s como base
+            let maxTime = (audio.duration && isFinite(audio.duration)) ? audio.duration : 60;
+            // Sorteia um ponto entre 10% e 80% da música
+            audio.currentTime = (maxTime * 0.1) + Math.random() * (maxTime * 0.7);
+        } else {
+            audio.currentTime = 0; // Batalha sempre do início
         }
+
+        audio.play().catch(e => console.log("Play failed", e));
+
+        fadeIntervals[id] = setInterval(() => {
+            if(audio.volume < volMax - 0.05) {
+                audio.volume += 0.05;
+            } else {
+                audio.volume = volMax;
+                clearInterval(fadeIntervals[id]);
+            }
+        }, 50); // Fade dura aprox 1 segundo
+    };
+
+    // --- ROTEIRO DA DANÇA ---
+    if (action === 'ENTER_LOBBY') {
+        fadeOut(battleMusic);
+        fadeIn(menuMusic, true); // TRUE = Começar aleatório
     }
-    else if (mode === 'SILENCE') {
-        fadeAudio(menuMusic, 'OUT');
-        fadeAudio(battleMusic, 'OUT');
+    else if (action === 'ENTER_BATTLE') {
+        fadeOut(menuMusic);
+        fadeIn(battleMusic, false); // FALSE = Começar do zero
+    }
+    else if (action === 'GAME_OVER') {
+        fadeOut(battleMusic);
+        fadeOut(menuMusic);
+        // Vitória/Derrota tem som próprio que toca separado
+    }
+    else if (action === 'SILENCE_ALL') {
+        fadeOut(battleMusic);
+        fadeOut(menuMusic);
+    }
+    // Casos de desmutar
+    else if (action === 'MENU_RESUME') {
+        if(menuMusic.paused) fadeIn(menuMusic, true);
+    }
+    else if (action === 'BATTLE_RESUME') {
+        if(battleMusic.paused) fadeIn(battleMusic, false);
     }
 }
 
@@ -179,6 +184,7 @@ window.showScreen = function(screenId) {
     }
 }
 
+// 1. USUÁRIO SAI DO SAGUÃO (Transição Batalha)
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
@@ -186,37 +192,39 @@ window.transitionToGame = function() {
     if(transText) transText.innerText = "PREPARANDO BATALHA...";
     if(transScreen) transScreen.classList.add('active');
 
+    // Durante a transição: Fade Out Saguão / Fade In Batalha
     setTimeout(() => {
-        try {
-            switchBackgroundMusic('BATTLE');
+        // --- TROCA DE MÚSICA AQUI ---
+        manageMusicFlow('ENTER_BATTLE');
 
-            let bg = document.getElementById('game-background');
-            if(bg) bg.classList.remove('lobby-mode');
+        let bg = document.getElementById('game-background');
+        if(bg) bg.classList.remove('lobby-mode');
 
-            window.showScreen('game-screen');
-            
-            updateUI(); 
-            const handEl = document.getElementById('player-hand'); 
-            if(handEl) handEl.innerHTML = ''; 
-            
-        } catch (error) {
-            console.error("Erro na transição:", error);
-        }
-
+        window.showScreen('game-screen');
+        
+        // Limpa visual antigo por segurança
+        const handEl = document.getElementById('player-hand'); 
+        if(handEl) handEl.innerHTML = '';
+        
+        // Abre a cortina e inicia o jogo
         setTimeout(() => {
             if(transScreen) transScreen.classList.remove('active');
-            setTimeout(() => { startGameFlow(); }, 500); 
+            setTimeout(() => { startGameFlow(); }, 200); 
         }, 1500);
 
     }, 500); 
 }
 
+// 2. USUÁRIO ABANDONA A PARTIDA (Transição Saguão)
 window.transitionToLobby = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
     
     if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
     if(transScreen) transScreen.classList.add('active');
+
+    // Fade Out da Batalha acontece na chamada da função, ou aqui:
+    manageMusicFlow('SILENCE_ALL'); // Silencia batalha antes de trocar
 
     setTimeout(() => {
         window.goToLobby(false); 
@@ -226,19 +234,23 @@ window.transitionToLobby = function() {
     }, 500);
 }
 
+// 3. USUÁRIO ENTRA NO SAGUÃO
 window.goToLobby = async function(isAutoLogin = false) {
     if(!currentUser) {
         window.showScreen('start-screen');
-        switchBackgroundMusic('MENU');
+        manageMusicFlow('ENTER_LOBBY'); // Toca menu
         return;
     }
 
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
     
-    switchBackgroundMusic('MENU');
+    // --- TOCA MÚSICA DO SAGUÃO ---
+    manageMusicFlow('ENTER_LOBBY');
+    
     createLobbyFlares();
 
+    // Lógica Firebase (Mantida intacta)
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
     
@@ -281,39 +293,40 @@ function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     
-    // Inicia o Loop de Mixer (que vai controlar o volume da música de batalha)
+    // Inicia som ambiente (NÃO mexe mais na música)
     startCinematicLoop(); 
     
-    // --- CORREÇÃO DAS CARTAS ---
-    // Reseta tudo e desenha as cartas aqui
+    // --- GARANTIA DAS CARTAS ---
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
     playerHistory = [];
     
-    // Compra as cartas (Preenche o array .hand)
+    // 1. Compra Lógica
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Atualiza o HTML (Cria os elementos das cartas)
+    // 2. Desenha Visual
     updateUI();
     
-    // Esconde elas imediatamente (opacity 0) para o efeito de entrada
+    // 3. Prepara Animação
     const handEl = document.getElementById('player-hand'); 
     if(handEl) {
         Array.from(handEl.children).forEach(c => c.style.opacity = '0');
     }
     
-    // Inicia a animação de distribuição
+    // 4. Animação
     setTimeout(() => { dealAllInitialCards(); }, 100);
 }
 
+// 4. FIM DE JOGO (VITÓRIA/DERROTA)
 function checkEndGame(){ 
     if(player.hp<=0 || monster.hp<=0) { 
         isProcessing = true; 
         isLethalHover = false; 
         
-        switchBackgroundMusic('SILENCE'); 
+        // Fade out da batalha
+        manageMusicFlow('GAME_OVER'); 
 
         setTimeout(()=>{ 
             let title = document.getElementById('end-title'); 
@@ -358,6 +371,9 @@ onAuthStateChanged(auth, (user) => {
         if(bg) bg.classList.remove('lobby-mode');
         const btnTxt = document.getElementById('btn-text');
         if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
+        
+        // Garante música no login
+        manageMusicFlow('ENTER_LOBBY');
     }
 });
 
@@ -415,6 +431,8 @@ window.registrarDerrotaOnline = async function() {
 window.restartMatch = function() {
     document.getElementById('end-screen').classList.remove('visible');
     setTimeout(startGameFlow, 50);
+    // Reinicia música de batalha se for restart
+    manageMusicFlow('ENTER_BATTLE');
 }
 
 window.abandonMatch = function() {
@@ -449,12 +467,10 @@ function updateLoader() {
             }
         }, 1000); 
 
-        // Ao clicar pela primeira vez, usa o gerenciador de áudio
+        // Primeiro clique inicia o áudio
         document.body.addEventListener('click', () => { 
-            const battleMusic = audios['bgm-loop'];
-            // Só ativa o menu se a batalha NÃO estiver tocando
-            if(!battleMusic || battleMusic.paused) {
-                switchBackgroundMusic('MENU'); 
+            if(currentUser) {
+                manageMusicFlow('ENTER_LOBBY');
             }
         }, { once: true });
     }
@@ -497,37 +513,19 @@ function createLobbyFlares() {
 
 function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
 
-// --- CORREÇÃO DO AUDIO MIXER ---
-// Agora ele respeita as variáveis globais de volume e faz o fade-in natural da batalha
+// CORRIGIDO: MIXER AGORA SÓ CONTROLA O EFEITO DE TENSÃO (CINE), NÃO A MÚSICA
 function updateAudioMixer() { 
     const cineAudio = audios['sfx-cine']; 
-    const bgmAudio = audios['bgm-loop']; 
-    if(!cineAudio || !bgmAudio) return; 
+    if(!cineAudio) return; 
     
-    // Garante que as variáveis existam
     const mVol = window.masterVol || 1.0;
-    const muVol = window.musicVolMult || 1.0;
-
     const maxCine = 0.6 * mVol; 
-    const maxBgm = 0.5 * muVol * mVol; 
-    const dimmedBgm = 0.1 * muVol * mVol; 
-    
     let targetCine = isLethalHover ? maxCine : 0; 
-    let targetBgm = isLethalHover ? dimmedBgm : maxBgm; 
     
-    // Mute override
-    if(window.isMuted) {
-        cineAudio.volume = 0;
-        bgmAudio.volume = 0;
-        return;
-    }
+    if(window.isMuted) { cineAudio.volume = 0; return; }
 
     if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
     else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
-    
-    // Aqui está a mágica: O mixer aumenta o volume da batalha suavemente (Fade In natural)
-    if(bgmAudio.volume < targetBgm) bgmAudio.volume = Math.min(targetBgm, bgmAudio.volume + 0.02); 
-    else if(bgmAudio.volume > targetBgm) bgmAudio.volume = Math.max(targetBgm, bgmAudio.volume - 0.02); 
 }
 
 window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
@@ -557,6 +555,267 @@ function triggerHealEffect(isPlayer) { try { let elId = isPlayer ? 'p-slot' : 'm
 function triggerBlockEffect() { try { playSound('sfx-block'); let ov = document.getElementById('block-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); } catch(e) {} }
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
+function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
+function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
+
+function dealAllInitialCards() {
+    isProcessing = true; playSound('sfx-deal'); 
+    const handEl = document.getElementById('player-hand'); 
+    const cards = Array.from(handEl.children);
+    if(cards.length === 0) { isProcessing = false; return; }
+    cards.forEach((cardEl, i) => {
+        setTimeout(() => {
+            const rect = cardEl.getBoundingClientRect();
+            let target = (rect.width > 0) ? rect : { top: window.innerHeight - 150, left: window.innerWidth/2 };
+            animateFly('p-deck-container', target, player.hand[i], () => { 
+                cardEl.style.opacity = '1'; 
+                if(i === cards.length - 1) isProcessing = false; 
+            }, true);
+        }, i * 150); 
+    });
+    setTimeout(() => { cards.forEach(c => c.style.opacity = '1'); isProcessing = false; }, (cards.length * 150) + 500);
+}
+
+function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
+
+function onCardClick(index) {
+    if(isProcessing) return; if (!player.hand[index]) return;
+    playSound('sfx-play'); document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active');
+    document.getElementById('tooltip-box').style.display = 'none'; isLethalHover = false; 
+    let cardKey = player.hand[index];
+    if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
+    if(cardKey === 'DESARMAR') { window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => playCardFlow(index, choice)); } 
+    else { playCardFlow(index, null); }
+}
+
+function getBestAIMove() {
+    let moves = []; monster.hand.forEach((card, index) => { if(card !== monster.disabled) moves.push({ card: card, index: index, score: 0 }); });
+    if(moves.length === 0) return null;
+    if (turnCount === 1) { let randomPick = moves[Math.floor(Math.random() * moves.length)]; if(randomPick.card === 'ATAQUE' || randomPick.card === 'TREINAR') return randomPick; return moves[Math.floor(Math.random() * moves.length)]; }
+    let playerAggro = 0; if(playerHistory.length > 0) { playerAggro = playerHistory.filter(c => c === 'ATAQUE').length / playerHistory.length; }
+    let myDanger = monster.hp <= 3; let canKill = (monster.lvl + monster.bonusAtk) >= player.hp; let playerLowHp = player.hp <= (monster.lvl + monster.bonusAtk + 1);
+    let denyTarget = null; let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1); for(let k in pCounts) if(pCounts[k] >= 3) denyTarget = k;
+    moves.forEach(m => {
+        let score = Math.random() * 20; 
+        if (m.card === 'ATAQUE' && canKill) score += 1000;
+        if (playerLowHp && m.card === 'DESARMAR') score += 200; 
+        if (denyTarget && m.card === 'DESARMAR') score += 150;
+        if (myDanger) { if (m.card === 'BLOQUEIO') score += 50; if (m.card === 'DESCANSAR') score += 45; if (m.card === 'DESARMAR') score += 40; }
+        let myCopies = monster.xp.filter(x => x === m.card).length; if (myCopies >= 2) score += 35; 
+        if (playerAggro > 0.5 && m.card === 'BLOQUEIO') score += 20; 
+        m.score = score;
+    });
+    moves.sort((a, b) => b.score - a.score); return moves[0];
+}
+
+function playCardFlow(index, pDisarmChoice) {
+    isProcessing = true; let cardKey = player.hand.splice(index, 1)[0]; playerHistory.push(cardKey);
+    let aiMove = getBestAIMove(); let mCardKey = 'ATAQUE'; let mDisarmTarget = null; 
+    if(aiMove) { mCardKey = aiMove.card; monster.hand.splice(aiMove.index, 1); if(mCardKey === 'DESARMAR') { if(player.hp <= (monster.lvl + monster.bonusAtk + 2)) { mDisarmTarget = 'BLOQUEIO'; } else { let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1); let bestTarget = null; for(let k in pCounts) if(pCounts[k] >= 3) bestTarget = k; if(bestTarget) mDisarmTarget = bestTarget; else mDisarmTarget = 'ATAQUE'; } } } 
+    else { if(monster.hand.length > 0) mCardKey = monster.hand.pop(); else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } }
+
+    let handContainer = document.getElementById('player-hand'); 
+    let realCardEl = handContainer.children[index]; 
+    
+    let startRect = null;
+    if(realCardEl) { 
+        startRect = realCardEl.getBoundingClientRect(); 
+        realCardEl.style.opacity = '0'; 
+    }
+    
+    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { renderTable(cardKey, 'p-slot'); updateUI(); }, false, true);
+    const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
+    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { renderTable(mCardKey, 'm-slot'); setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); }, false, true);
+}
+
+function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
+    let pDmg = 0, mDmg = 0;
+    if(mAct === 'ATAQUE') pDmg += monster.lvl; if(pAct === 'ATAQUE') mDmg += player.lvl;
+    if(pAct === 'BLOQUEIO') { pDmg = 0; if(mAct === 'ATAQUE') mDmg += (1 + player.bonusBlock); }
+    if(mAct === 'BLOQUEIO') { mDmg = 0; if(pAct === 'ATAQUE') pDmg += (1 + monster.bonusBlock); }
+
+    let clash = false;
+    let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
+    if(pBlocks || mBlocks) { clash = true; triggerBlockEffect(); }
+
+    let nextPlayerDisabled = null; let nextMonsterDisabled = null;
+    if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
+    if(pAct === 'DESARMAR') { nextMonsterDisabled = pDisarmChoice; }
+    if(pAct === 'DESARMAR' && mAct === 'DESARMAR') { nextPlayerDisabled = null; nextMonsterDisabled = null; showCenterText("ANULADO", "#aaa"); }
+
+    player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
+    if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
+
+    if(pDmg > 0) { player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); let soundOn = !(clash && mAct === 'BLOQUEIO'); triggerDamageEffect(true, soundOn); }
+    if(mDmg > 0) { monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn); }
+    
+    updateUI();
+    let pDead = player.hp <= 0, mDead = monster.hp <= 0;
+    if(!pDead && pAct === 'DESCANSAR') { let h = pDmg===0?3:2; player.hp=Math.min(player.maxHp, player.hp+h); showFloatingText('p-lvl', `+${h} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
+    if(!mDead && mAct === 'DESCANSAR') { monster.hp=Math.min(monster.maxHp, monster.hp+(mDmg===0?3:2)); triggerHealEffect(false); playSound('sfx-heal'); }
+    function handleExtraXP(u) { if(u.deck.length > 0) { let card = u.deck.pop(); animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }); } }
+    if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
+    if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
+
+    setTimeout(() => {
+        animateFly('p-slot', 'p-xp', pAct, () => { if(!pDead) { player.xp.push(pAct); triggerXPGlow('p'); updateUI(); } checkLevelUp(player, () => { if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); }); });
+        animateFly('m-slot', 'm-xp', mAct, () => { if(!mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); } checkLevelUp(monster, () => { if(!mDead) drawCardLogic(monster, 1); checkEndGame(); }); });
+        document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
+    }, 700);
+}
+
+function checkLevelUp(u, doneCb) {
+    if(u.xp.length >= 5) {
+        let xpContainer = document.getElementById(u.id + '-xp'); let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
+        minis.forEach(realCard => {
+            let rect = realCard.getBoundingClientRect(); let clone = document.createElement('div'); clone.className = 'xp-anim-clone';
+            clone.style.left = rect.left + 'px'; clone.style.top = rect.top + 'px'; clone.style.width = rect.width + 'px'; clone.style.height = rect.height + 'px'; clone.style.backgroundImage = realCard.style.backgroundImage;
+            if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down');
+            document.body.appendChild(clone);
+        });
+        minis.forEach(m => m.style.opacity = '0');
+        setTimeout(() => {
+            let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = []; for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
+            processMasteries(u, triggers, () => {
+                let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; lvlEl.classList.add('level-up-anim'); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
+                u.xp.forEach(x => u.deck.push(x)); u.xp = []; shuffle(u.deck); 
+                let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
+                updateUI(); doneCb();
+            });
+        }, 1000); 
+    } else { doneCb(); }
+}
+
+function processMasteries(u, triggers, cb) {
+    if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
+    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); } 
+    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } 
+    else { applyMastery(u, type); processMasteries(u, triggers, cb); }
+}
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
+function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
+
+function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false) {
+    let s;
+    if (typeof startId === 'string') {
+        let el = document.getElementById(startId);
+        if (!el) s = { top: 0, left: 0, width: 0, height: 0 };
+        else s = el.getBoundingClientRect();
+    } else { s = startId; }
+
+    let e = { top: 0, left: 0 };
+    if (initialDeal && (endId === 'player-hand' || startId === 'p-deck-container')) {
+        let deckEl = document.getElementById('p-deck-container');
+        if(deckEl) { let r = deckEl.getBoundingClientRect(); e.top = window.innerHeight - 150; e.left = window.innerWidth / 2 - 50; if(startId === 'p-deck-container') s = r; }
+    } else {
+        let destEl = document.getElementById(endId);
+        if(destEl) e = destEl.getBoundingClientRect();
+    }
+
+    const fly = document.createElement('div');
+    fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
+    fly.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[cardKey].img}')"></div>`;
+    if (isToTable) fly.classList.add('card-bounce');
+
+    if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; } 
+    else { let w = window.innerWidth < 768 ? '84px' : '105px'; let h = window.innerWidth < 768 ? '120px' : '150px'; fly.style.width=w; fly.style.height=h; }
+
+    let tableW = window.innerWidth < 768 ? '110px' : '180px';
+    let tableH = window.innerWidth < 768 ? '170px' : '260px';
+
+    fly.style.top=s.top+'px'; fly.style.left=s.left+'px';
+    if(endId.includes('xp')) fly.style.transform='scale(0.3)';
+    document.body.appendChild(fly); fly.offsetHeight;
+    
+    if(isToTable) { fly.style.width=tableW; fly.style.height=tableH; }
+    fly.style.top=e.top+'px'; fly.style.left=e.left+'px';
+    setTimeout(() => { fly.remove(); if(cb) cb(); }, 250);
+}
+function drawCardAnimated(unit, deckId, handId, cb) { if(unit.deck.length===0) { cb(); return; } animateFly(deckId, handId, unit.deck[unit.deck.length-1], cb); }
+function renderTable(key, slotId) { let el = document.getElementById(slotId); el.innerHTML = ''; let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`; card.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[key].img}')"></div>`; el.appendChild(card); }
+function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
+
+function updateUnit(u) {
+    document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
+    document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
+    let hpPct = (Math.max(0,u.hp)/u.maxHp)*100;
+    let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
+    if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
+    document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
+    if(u===player) {
+        let hc=document.getElementById('player-hand'); hc.innerHTML='';
+        u.hand.forEach((k,i)=>{
+            let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
+            c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
+            if(u.disabled===k) c.classList.add('disabled-card');
+            c.style.opacity = '1';
+            let lethalType = checkCardLethality(k); 
+            let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
+            c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
+            c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
+            c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
+            c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
+            hc.appendChild(c); apply3DTilt(c, true);
+        });
+    }
+    let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
+    u.xp.forEach(k=>{ let d=document.createElement('div'); d.className='xp-mini'; d.style.backgroundImage = `url('${CARDS_DB[k].img}')`; d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; xc.appendChild(d); });
+    let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
+    if(u.bonusAtk>0) addMI(mc, 'ATAQUE', u.bonusAtk, '#e74c3c', u.id); 
+    if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
+}
+
+function bindMasteryTooltip(el, key, value, ownerId) {
+    return {
+        onmouseenter: (e) => {
+            let db=CARDS_DB[key];
+            document.getElementById('tt-title').innerHTML = key; 
+            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
+            tt.style.display = 'block';
+            tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); 
+            void tt.offsetWidth; 
+            let rect = el.getBoundingClientRect();
+            if(ownerId === 'p') {
+                tt.classList.add('tooltip-anim-up');
+                tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+                tt.style.top = 'auto';
+            } else {
+                tt.classList.add('tooltip-anim-down');
+                tt.style.top = (rect.bottom + 10) + 'px';
+                tt.style.bottom = 'auto';
+            }
+            tt.style.left = (rect.left + rect.width/2) + 'px';
+            tt.style.transform = "translateX(-50%)"; 
+        }
+    };
+}
+
+function addMI(parent, key, value, col, ownerId){ 
+    let d = document.createElement('div'); d.className = 'mastery-icon'; 
+    d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`;
+    d.style.borderColor = col; 
+    let handlers = bindMasteryTooltip(d, key, value, ownerId);
+    d.onmouseenter = handlers.onmouseenter;
+    d.onmouseleave = () => { tt.style.display = 'none'; }; 
+    parent.appendChild(d); 
+}
+
+function showFloatingText(eid, txt, col) { 
+    let el = document.createElement('div'); 
+    el.className='floating-text'; 
+    el.innerText=txt; 
+    el.style.color=col; 
+    let parent = document.getElementById(eid);
+    if(parent) {
+        let rect = parent.getBoundingClientRect();
+        el.style.left = (rect.left + rect.width/2) + 'px';
+        el.style.top = (rect.top) + 'px';
+        document.body.appendChild(el); 
+    } else {
+         document.body.appendChild(el);
+    }
+    setTimeout(()=>el.remove(), 2000); 
+}
 
 window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
 window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
