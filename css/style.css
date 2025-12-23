@@ -89,27 +89,36 @@
 
 /* ARQUIVO: css/style.css */
 
+/* ARQUIVO: css/style.css */
+
 .lobby-bg {
+    /* Posição fixa para não rolar com a página */
     position: fixed;
+    
+    /* Ancoramos o elemento nos 4 cantos da janela. 
+       Essa técnica é mais robusta contra o zoom do navegador do que usar width/height 100%. */
     top: 0;
     left: 0;
-    
-    /* Tamanho exato da tela, sem exageros */
-    width: 100%;
-    height: 100%;
+    right: 0;
+    bottom: 0;
     
     background-image: var(--lobby-bg-url);
     
-    /* O SEGREDO ESTÁ AQUI: */
-    /* "cover" dava zoom e cortava. */
-    /* "100% 100%" força a imagem a aparecer inteira, esticando se necessário para caber na caixa. */
-    background-size: 100% 100%;
+    /* O CORRETO É 'COVER': */
+    /* Ele garante que a imagem cubra TODO o espaço sem distorcer (sem esmagar). 
+       Ele vai cortar as bordas se necessário, mas manterá a imagem proporcional. */
+    background-size: cover;
     
-    background-position: center;
+    /* Mantém o foco no centro da imagem */
+    background-position: center center;
     background-repeat: no-repeat;
     
-    filter: blur(8px) brightness(0.6);
-    z-index: 0;
+    /* REMOVIDA A LINHA DO FILTER/BLUR para a imagem ficar limpa */
+    /* filter: blur(8px) brightness(0.6); */
+    
+    /* Garante que fique atrás de tudo e não bloqueie cliques */
+    z-index: -1;
+    pointer-events: none;
 }
 
         /* Container do Quadro */
