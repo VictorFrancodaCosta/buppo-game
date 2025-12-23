@@ -88,19 +88,29 @@
         }
 
 .lobby-bg {
-    position: fixed; /* Isso trava a imagem na janela do navegador */
-    top: 0;
-    left: 0;
-    width: 100vw; /* 100% da largura da JANELA */
-    height: 100vh; /* 100% da altura da JANELA */
-    
+    position: fixed;
+    /* Centralizamos o ponto de origem no meio da tela */
+    top: 50%;
+    left: 50%;
+    /* Movemos o elemento de volta 50% do seu próprio tamanho para ficar perfeitamente centralizado */
+    transform: translate(-50%, -50%);
+
+    /* Definimos um tamanho absurdamente grande. 
+       Mesmo com muito zoom out, 3x o tamanho da tela será suficiente. */
+    min-width: 300vw;
+    min-height: 300vh;
+    width: auto;
+    height: auto;
+
     background-image: var(--lobby-bg-url);
+    /* 'cover' garante que a imagem preencha esse elemento gigante sem distorcer */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    
+
     filter: blur(8px) brightness(0.6);
-    z-index: 0;
+    z-index: -1; /* Garante que fique atrás de tudo */
+    pointer-events: none; /* Garante que não interfira em cliques */
 }
 
         /* Container do Quadro */
@@ -180,7 +190,7 @@
     position: absolute;
     
     /* CENTRALIZAÇÃO MATEMÁTICA NA DIREITA */
-    left: 75%; 
+    left: 65%; 
     top: 50%; 
     /* Puxa 50% do tamanho da própria imagem para trás, centralizando perfeitamente */
     transform: translate(-50%, -50%); 
