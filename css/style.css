@@ -353,3 +353,41 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     .card { width: 90px; height: 130px; margin: 0 -6px; border-width: 2px; }
     .hand-card:not(.disabled-card):hover { margin: 0 15px; transform: scale(1.15) translateY(-50px); }
 }
+
+/* --- EFEITO DE LUZ DA LAMPARINA --- */
+.lobby-lamp-light {
+    position: fixed; /* Fixa na tela, igual ao fundo */
+    
+    /* Posição da Lamparina (Ajustado para o canto direito superior) */
+    top: 15%; 
+    right: 20%; 
+    
+    /* Tamanho da luz */
+    width: 300px;
+    height: 300px;
+    
+    /* Centraliza o efeito */
+    transform: translate(50%, -50%);
+
+    /* Cor da Luz: Um degradê do amarelo para transparente */
+    background: radial-gradient(circle, rgba(255, 200, 50, 0.6) 0%, rgba(255, 100, 0, 0.2) 40%, transparent 70%);
+    
+    /* Mistura a luz com o fundo para ficar realista */
+    mix-blend-mode: screen; 
+    
+    /* Deixa a borda suave */
+    filter: blur(20px);
+    
+    /* Animação de piscar */
+    animation: luzTremula 3s infinite alternate ease-in-out;
+    
+    pointer-events: none; /* Deixa clicar através da luz */
+    z-index: 1; /* Fica na frente do fundo */
+}
+
+/* Animação que faz a luz aumentar e diminuir */
+@keyframes luzTremula {
+    0% { opacity: 0.6; transform: translate(50%, -50%) scale(1); }
+    50% { opacity: 0.8; transform: translate(50%, -50%) scale(1.1); }
+    100% { opacity: 0.5; transform: translate(50%, -50%) scale(0.95); }
+}
