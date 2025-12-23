@@ -329,19 +329,23 @@ document.addEventListener('click', function(e) { const panel = document.getEleme
 window.updateVol = function(type, val) { if(type==='master') masterVol = parseFloat(val); if(type==='music') musicVolMult = parseFloat(val); ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-block', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { if(audios[k]) audios[k].volume = 0.8 * masterVol; }); }
 function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[key].play().catch(e => console.log("Audio prevented:", e)); } }
 
-function startGameFlow() {
+function startGameFlow(skipReset = false) {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     if(audios['bgm-loop']) audios['bgm-loop'].play().catch(e => console.log("BGM Blocked", e));
-    resetUnit(player); resetUnit(monster); turnCount = 1; playerHistory = [];
     
-    drawCardLogic(monster, 6); 
-    drawCardLogic(player, 6); 
+    // Se vier da transição, já resetou. Se for "Jogar Novamente" (fim de jogo), reseta agora.
+    if(!skipReset) {
+        resetUnit(player); resetUnit(monster); turnCount = 1; playerHistory = [];
+        drawCardLogic(monster, 6); 
+        drawCardLogic(player, 6); 
+        updateUI();
+        const handEl = document.getElementById('player-hand'); 
+        if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
+    }
     
-    updateUI();
-    const handEl = document.getElementById('player-hand'); 
-    Array.from(handEl.children).forEach(c => c.style.opacity = '0');
+    // Inicia a distribuição das cartas visualmente
     setTimeout(() => { dealAllInitialCards(); }, 50);
 }
 
