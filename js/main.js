@@ -3,7 +3,7 @@
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
@@ -31,7 +31,8 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png'
     ],
     audio: [
-        { id: 'bgm-menu', src: 'https://files.catbox.moe/g8a1ux.mp3', loop: true }, { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
+        { id: 'bgm-menu', src: 'https://files.catbox.moe/g8a1ux.mp3', loop: true }, 
+        { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
         { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
         { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
@@ -46,10 +47,10 @@ let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let isProcessing = false; let turnCount = 1; let playerHistory = []; let masterVol = 1.0; let musicVolMult = 1.0; let isLethalHover = false; let mixerInterval = null;
-const fadeIntervals = {};
+const fadeIntervals = {}; // Controle de Fades de áudio
 
 // =======================
-// CONTROLES DE SOM
+// CONTROLES DE ÁUDIO & FADE
 // =======================
 window.isMuted = false;
 
@@ -70,160 +71,134 @@ window.toggleMute = function() {
     });
 }
 
-// ARQUIVO: js/main.js (Adicione esta função nova)
-
-// ARQUIVO: js/main.js
-
 function switchBackgroundMusic(mode) {
     const menuMusic = audios['bgm-menu'];
     const battleMusic = audios['bgm-loop'];
-    const targetVolume = 0.5 * (window.masterVol || 1.0); // Volume alvo (50% do master)
+    const targetVolume = 0.5 * (window.masterVol || 1.0); 
 
     // Função Auxiliar de Fade
     const fadeAudio = (audio, type) => {
         if (!audio) return;
-        const id = audio.id; // Usa o ID do áudio como chave
+        const id = audio.id; 
 
-        // 1. Limpa qualquer fade que esteja acontecendo neste áudio
         if (fadeIntervals[id]) clearInterval(fadeIntervals[id]);
 
         if (type === 'OUT') {
-            // --- FADE OUT (Diminuir até parar) ---
             fadeIntervals[id] = setInterval(() => {
                 if (audio.volume > 0.05) {
-                    audio.volume -= 0.05; // Desce o volume suavemente
+                    audio.volume -= 0.05; 
                 } else {
-                    // Quando chegar perto de zero:
                     audio.volume = 0;
                     audio.pause();
-                    audio.currentTime = 0; // Reseta a música
-                    clearInterval(fadeIntervals[id]); // Para o timer
+                    audio.currentTime = 0; 
+                    clearInterval(fadeIntervals[id]); 
                 }
-            }, 50); // Executa a cada 50ms (aprox. 1 segundo total)
+            }, 50); 
         } 
         else if (type === 'IN') {
-            // --- FADE IN (Começar do zero e subir) ---
-            if (window.isMuted) return; // Se tiver mutado, nem começa
-
+            if (window.isMuted) return; 
             audio.volume = 0;
-            audio.play().catch(()=>{}); // Dá o play mudo
+            audio.play().catch(()=>{}); 
 
             fadeIntervals[id] = setInterval(() => {
                 if (audio.volume < targetVolume - 0.05) {
-                    audio.volume += 0.05; // Sobe o volume suavemente
+                    audio.volume += 0.05; 
                 } else {
-                    // Quando chegar no volume ideal:
                     audio.volume = targetVolume;
-                    clearInterval(fadeIntervals[id]); // Para o timer
+                    clearInterval(fadeIntervals[id]); 
                 }
             }, 50);
         }
     };
 
-    // Lógica de Troca
     if (mode === 'MENU') {
-        fadeAudio(battleMusic, 'OUT'); // Tira a batalha
-        if (menuMusic.paused) fadeAudio(menuMusic, 'IN'); // Coloca o menu
+        fadeAudio(battleMusic, 'OUT'); 
+        if (menuMusic.paused) fadeAudio(menuMusic, 'IN'); 
     } 
     else if (mode === 'BATTLE') {
-        fadeAudio(menuMusic, 'OUT'); // Tira o menu
-        if (battleMusic.paused) fadeAudio(battleMusic, 'IN'); // Coloca a batalha
+        fadeAudio(menuMusic, 'OUT'); 
+        if (battleMusic.paused) fadeAudio(battleMusic, 'IN'); 
     }
     else if (mode === 'SILENCE') {
         fadeAudio(menuMusic, 'OUT');
         fadeAudio(battleMusic, 'OUT');
     }
 }
+
+window.playNavSound = function() { 
+    let s = audios['sfx-nav']; 
+    if(s) { 
+        s.currentTime = 0; 
+        s.play().catch(()=>{}); 
+    } 
+};
+
 // =======================
-// NAVEGAÇÃO DE TELAS
+// NAVEGAÇÃO E TRANSIÇÃO
 // =======================
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
     
-    // Controle dos Botões de Config
     const configBtn = document.getElementById('btn-config-toggle');
     const surrenderBtn = document.getElementById('btn-surrender');
 
     if(screenId === 'game-screen') {
-        // NO JOGO: Mostra botão de config e desistir
         if(surrenderBtn) surrenderBtn.style.display = 'block';
         if(configBtn) configBtn.style.display = 'flex'; 
     } else {
-        // FORA DO JOGO: Esconde config
         if(surrenderBtn) surrenderBtn.style.display = 'none';
         if(configBtn) configBtn.style.display = 'none';
-        
-        // Fecha painel se estiver aberto
         const panel = document.getElementById('config-panel');
         if(panel) { panel.style.display = 'none'; panel.classList.remove('active'); }
     }
 }
 
-onAuthStateChanged(auth, (user) => {
+window.transitionToGame = function() {
+    const transScreen = document.getElementById('transition-overlay');
+    
+    // 1. Sobe a cortina
+    if(transScreen) transScreen.classList.add('active');
+
+    // 2. Aguarda cobrir a tela (500ms)
     setTimeout(() => {
-        const loading = document.getElementById('loading-screen');
-        if(loading) {
-            loading.style.opacity = '0';
-            setTimeout(() => loading.style.display = 'none', 500);
-        }
-    }, 500);
+        // TROCA DE MÚSICA COM FADE
+        switchBackgroundMusic('BATTLE');
 
-    if (user) {
-        currentUser = user;
-        window.goToLobby(true); 
-    } else {
-        currentUser = null;
-        window.showScreen('start-screen');
-        const bg = document.getElementById('game-background');
+        let bg = document.getElementById('game-background');
         if(bg) bg.classList.remove('lobby-mode');
-        const btnTxt = document.getElementById('btn-text');
-        if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
-    }
-});
 
-window.googleLogin = async function() {
-    playNavSound(); 
-    const btnText = document.getElementById('btn-text');
-    btnText.innerText = "CONECTANDO...";
-    try {
-        await signInWithPopup(auth, provider);
-    } catch (error) {
-        console.error(error);
-        btnText.innerText = "ERRO - TENTE NOVAMENTE";
-        setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000);
-    }
-};
+        window.showScreen('game-screen');
+        
+        resetUnit(player); resetUnit(monster); turnCount = 1; playerHistory = [];
+        drawCardLogic(monster, 6); drawCardLogic(player, 6); updateUI();
+        
+        const handEl = document.getElementById('player-hand'); 
+        if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
 
-window.handleLogout = function() {
-    playNavSound();
-    signOut(auth).then(() => {
-        location.reload(); 
-    });
-};
+        // 3. Abre a cortina
+        setTimeout(() => {
+            if(transScreen) transScreen.classList.remove('active');
+            setTimeout(() => { startGameFlow(true); }, 500);
+        }, 1500);
 
-// ARQUIVO: js/main.js
+    }, 500); 
+}
 
 window.goToLobby = async function(isAutoLogin = false) {
     if(!currentUser) {
         window.showScreen('start-screen');
-        // Se estiver na tela de login, garante música do menu também
         switchBackgroundMusic('MENU');
         return;
     }
 
-    // Ativa visual do saguão
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
     
-    // --- ATIVA MÚSICA DO MENU/SAGUÃO ---
     switchBackgroundMusic('MENU');
-    // -----------------------------------
+    createLobbyFlares();
 
-    // Cria os efeitos de partícula
-    if(typeof createLobbyFlares === "function") createLobbyFlares();
-
-    // Lógica do Firebase (User e Ranking)
+    // Firebase Logic
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
     
@@ -259,6 +234,99 @@ window.goToLobby = async function(isAutoLogin = false) {
     document.getElementById('end-screen').classList.remove('visible'); 
 };
 
+// =======================
+// LÓGICA DO JOGO (GAME LOOP)
+// =======================
+function startGameFlow(skipReset = false) {
+    document.getElementById('end-screen').classList.remove('visible');
+    isProcessing = false; 
+    startCinematicLoop(); 
+    
+    if(!skipReset) {
+        resetUnit(player); resetUnit(monster); turnCount = 1; playerHistory = [];
+        drawCardLogic(monster, 6); 
+        drawCardLogic(player, 6); 
+        updateUI();
+        const handEl = document.getElementById('player-hand'); 
+        if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
+    }
+    
+    setTimeout(() => { dealAllInitialCards(); }, 50);
+}
+
+function checkEndGame(){ 
+    if(player.hp<=0 || monster.hp<=0) { 
+        isProcessing = true; 
+        isLethalHover = false; 
+        
+        switchBackgroundMusic('SILENCE'); // Fade out da batalha
+
+        setTimeout(()=>{ 
+            let title = document.getElementById('end-title'); 
+            let isWin = player.hp > 0;
+            let isTie = player.hp <= 0 && monster.hp <= 0;
+
+            if(isTie) { 
+                title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); 
+            } else if(isWin) { 
+                title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); 
+            } else { 
+                title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); 
+            } 
+            
+            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(); } 
+            else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
+            
+            document.getElementById('end-screen').classList.add('visible'); 
+        }, 1000); 
+    } else { isProcessing = false; } 
+}
+
+// =======================
+// FIREBASE & LOGIN
+// =======================
+onAuthStateChanged(auth, (user) => {
+    setTimeout(() => {
+        const loading = document.getElementById('loading-screen');
+        if(loading) {
+            loading.style.opacity = '0';
+            setTimeout(() => loading.style.display = 'none', 500);
+        }
+    }, 500);
+
+    if (user) {
+        currentUser = user;
+        window.goToLobby(true); 
+    } else {
+        currentUser = null;
+        window.showScreen('start-screen');
+        const bg = document.getElementById('game-background');
+        if(bg) bg.classList.remove('lobby-mode');
+        const btnTxt = document.getElementById('btn-text');
+        if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
+    }
+});
+
+window.googleLogin = async function() {
+    window.playNavSound(); 
+    const btnText = document.getElementById('btn-text');
+    btnText.innerText = "CONECTANDO...";
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.error(error);
+        btnText.innerText = "ERRO - TENTE NOVAMENTE";
+        setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000);
+    }
+};
+
+window.handleLogout = function() {
+    window.playNavSound();
+    signOut(auth).then(() => {
+        location.reload(); 
+    });
+};
+
 window.registrarVitoriaOnline = async function() {
     if(!currentUser) return;
     try {
@@ -290,40 +358,24 @@ window.registrarDerrotaOnline = async function() {
     } catch(e) {}
 };
 
-// ARQUIVO: js/main.js
-
-window.transitionToGame = function() {
-    const transScreen = document.getElementById('transition-overlay');
-    
-    // 1. Sobe a cortina
-    if(transScreen) transScreen.classList.add('active');
-
-    // 2. Aguarda cobrir a tela (500ms)
-    setTimeout(() => {
-        
-        // --- TROCA DE MÚSICA AQUI (Enquanto está escuro) ---
-        switchBackgroundMusic('BATTLE');
-        // ---------------------------------------------------
-
-        let bg = document.getElementById('game-background');
-        if(bg) bg.classList.remove('lobby-mode');
-
-        window.showScreen('game-screen');
-        
-        resetUnit(player); resetUnit(monster); turnCount = 1; playerHistory = [];
-        drawCardLogic(monster, 6); drawCardLogic(player, 6); updateUI();
-        
-        const handEl = document.getElementById('player-hand'); 
-        if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
-
-        // 3. Abre a cortina
-        setTimeout(() => {
-            if(transScreen) transScreen.classList.remove('active');
-            setTimeout(() => { startGameFlow(true); }, 500);
-        }, 1500);
-
-    }, 500); 
+window.restartMatch = function() {
+    document.getElementById('end-screen').classList.remove('visible');
+    setTimeout(startGameFlow, 50);
 }
+
+window.abandonMatch = function() {
+     if(document.getElementById('game-screen').classList.contains('active')) {
+         window.toggleConfig(); 
+         if(window.confirm("Tem certeza que deseja sair? Contará como derrota.")) {
+             window.registrarDerrotaOnline();
+             window.goToLobby(false);
+         }
+     }
+}
+
+// =======================
+// CARREGAMENTO & EFEITOS
+// =======================
 function preloadGame() {
     ASSETS_TO_LOAD.images.forEach(src => { let img = new Image(); img.src = src; img.onload = () => updateLoader(); img.onerror = () => updateLoader(); });
     ASSETS_TO_LOAD.audio.forEach(a => { let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; audios[a.id] = s; s.onloadedmetadata = () => updateLoader(); s.onerror = () => updateLoader(); setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); });
@@ -343,26 +395,57 @@ function updateLoader() {
             }
         }, 1000); 
 
-        playMenuAudio();
-        document.body.addEventListener('click', () => { if (audios['bgm-menu'] && audios['bgm-menu'].paused && !window.isMuted) { audios['bgm-menu'].volume = 0.5; audios['bgm-menu'].play().catch(()=>{}); } }, { once: true });
+        // Tenta tocar música do menu se já estiver carregado
+        // A lógica do onAuthStateChanged também chamará switchBackgroundMusic
+        document.body.addEventListener('click', () => { 
+            const menuMusic = audios['bgm-menu'];
+            if (menuMusic && menuMusic.paused && !window.isMuted) { 
+                menuMusic.volume = 0.5 * (window.masterVol || 1.0);
+                menuMusic.play().catch(()=>{}); 
+            } 
+        }, { once: true });
     }
 }
+
+window.onload = function() {
+    // 1. Carrega os recursos
+    preloadGame();
+    
+    // 2. FORÇA a conexão do botão de som (Método à prova de falhas)
+    const btnSound = document.getElementById('btn-sound');
+    if (btnSound) {
+        btnSound.onclick = null; 
+        btnSound.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            window.toggleMute();
+        });
+    }
+};
 
 window.toggleFullScreen = function() {
     if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
     else { if (document.exitFullscreen) { document.exitFullscreen(); } }
 }
 
-function playMenuAudio() { let s = audios['bgm-menu']; if(s) { s.volume = 0; if(s.duration > 60) s.currentTime = 10 + Math.random() * 50; s.play().then(() => { let vol = 0; let fade = setInterval(() => { if(vol < 0.5) { vol += 0.05; s.volume = vol; } else clearInterval(fade); }, 200); }).catch(e => console.log("Autoplay blocked")); } }
-window.playNavSound = function() { 
-    let s = audios['sfx-nav']; 
-    if(s) { 
-        s.currentTime = 0; 
-        s.play().catch(()=>{}); 
-    } 
-};
-
-window.onload = preloadGame;
+function createLobbyFlares() {
+    const container = document.getElementById('lobby-particles');
+    if(!container) return;
+    
+    container.innerHTML = ''; 
+    
+    for(let i=0; i < 70; i++) {
+        let flare = document.createElement('div');
+        flare.className = 'lobby-flare';
+        flare.style.left = Math.random() * 100 + '%';
+        flare.style.top = Math.random() * 100 + '%';
+        let size = 4 + Math.random() * 18; 
+        flare.style.width = size + 'px';
+        flare.style.height = size + 'px';
+        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
+        flare.style.animationDelay = (Math.random() * 4) + 's';
+        container.appendChild(flare);
+    }
+}
 
 function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
 function updateAudioMixer() { const cineAudio = audios['sfx-cine']; const bgmAudio = audios['bgm-loop']; if(!cineAudio || !bgmAudio) return; const maxCine = 0.6 * masterVol; const maxBgm = 0.5 * musicVolMult * masterVol; const dimmedBgm = 0.1 * musicVolMult * masterVol; let targetCine = isLethalHover ? maxCine : 0; let targetBgm = isLethalHover ? dimmedBgm : maxBgm; if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); if(bgmAudio.volume < targetBgm) bgmAudio.volume = Math.min(targetBgm, bgmAudio.volume + 0.02); else if(bgmAudio.volume > targetBgm) bgmAudio.volume = Math.max(targetBgm, bgmAudio.volume - 0.02); }
@@ -373,26 +456,9 @@ document.addEventListener('click', function(e) { const panel = document.getEleme
 window.updateVol = function(type, val) { if(type==='master') masterVol = parseFloat(val); if(type==='music') musicVolMult = parseFloat(val); ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-block', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { if(audios[k]) audios[k].volume = 0.8 * masterVol; }); }
 function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[key].play().catch(e => console.log("Audio prevented:", e)); } }
 
-function startGameFlow(skipReset = false) {
-    document.getElementById('end-screen').classList.remove('visible');
-    isProcessing = false; 
-    startCinematicLoop(); 
-    if(audios['bgm-loop']) audios['bgm-loop'].play().catch(e => console.log("BGM Blocked", e));
-    
-    // Se vier da transição, já resetou. Se for "Jogar Novamente" (fim de jogo), reseta agora.
-    if(!skipReset) {
-        resetUnit(player); resetUnit(monster); turnCount = 1; playerHistory = [];
-        drawCardLogic(monster, 6); 
-        drawCardLogic(player, 6); 
-        updateUI();
-        const handEl = document.getElementById('player-hand'); 
-        if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
-    }
-    
-    // Inicia a distribuição das cartas visualmente
-    setTimeout(() => { dealAllInitialCards(); }, 50);
-}
-
+// =======================
+// VISUAL FX E AUXILIARES
+// =======================
 function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
 initAmbientParticles();
 
@@ -667,77 +733,8 @@ function showFloatingText(eid, txt, col) {
     setTimeout(()=>el.remove(), 2000); 
 }
 
-// ARQUIVO: js/main.js
-
-// ARQUIVO: js/main.js
-
-function checkEndGame(){ 
-    if(player.hp<=0 || monster.hp<=0) { 
-        isProcessing = true; 
-        isLethalHover = false; 
-        
-        // Agora usamos nossa função poderosa para silenciar suavemente
-        switchBackgroundMusic('SILENCE');
-
-        setTimeout(()=>{ 
-            let title = document.getElementById('end-title'); 
-            let isWin = player.hp > 0;
-            let isTie = player.hp <= 0 && monster.hp <= 0;
-
-            if(isTie) { 
-                title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); 
-            } else if(isWin) { 
-                title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); 
-            } else { 
-                title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); 
-            } 
-            
-            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(); } 
-            else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
-            
-            document.getElementById('end-screen').classList.add('visible'); 
-        }, 1000); // 1 segundo de silêncio dramático antes do resultado
-    } else { isProcessing = false; } 
-}
 window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
 window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
 const tt=document.getElementById('tooltip-box');
 function bindFixedTooltip(el,k) { const updatePos = () => { let rect = el.getBoundingClientRect(); tt.style.left = (rect.left + rect.width / 2) + 'px'; }; return { onmouseenter: (e) => { showTT(k); tt.style.bottom = (window.innerWidth < 768 ? '160px' : '320px'); tt.style.top = 'auto'; tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); tt.classList.add('tooltip-anim-up'); updatePos(); el.addEventListener('mousemove', updatePos); } }; }
 function showTT(k) { let db=CARDS_DB[k]; document.getElementById('tt-title').innerHTML = k; document.getElementById('tt-content').innerHTML=`<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; tt.style.display='block'; }
-
-// ARQUIVO: js/main.js
-
-function createLobbyFlares() {
-    const container = document.getElementById('lobby-particles');
-    if(!container) return;
-    
-    container.innerHTML = ''; // Limpa tudo antes de começar
-    
-    // Cria 50 partículas
-    for(let i=0; i < 70; i++) {
-        let flare = document.createElement('div');
-        flare.className = 'lobby-flare';
-        
-        // Posição aleatória
-        flare.style.left = Math.random() * 100 + '%';
-        flare.style.top = Math.random() * 100 + '%';
-        
-        // Tamanho variado (4px a 22px)
-        let size = 4 + Math.random() * 18; 
-        flare.style.width = size + 'px';
-        flare.style.height = size + 'px';
-        
-        // Opacidade máxima variável (para alguns serem mais brilhantes que outros)
-        // Isso será controlado pelo CSS, mas podemos dar um toque extra se quiser, 
-        // mas vamos deixar o CSS controlar para garantir o fade-in.
-        
-        // Velocidade (duração)
-        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
-        
-        // Delay (Atraso)
-        // Isso faz com que eles surjam aos poucos, um por um
-        flare.style.animationDelay = (Math.random() * 4) + 's';
-        
-        container.appendChild(flare);
-    }
-}
