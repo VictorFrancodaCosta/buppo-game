@@ -370,15 +370,20 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 .lobby-flare {
     position: absolute;
+    /* Gradiente dourado */
     background: radial-gradient(circle, #fff 10%, var(--gold) 60%, transparent 100%);
     border-radius: 50%;
-    opacity: 0;
-    box-shadow: 0 0 15px var(--gold);
     
-    /* ADICIONE ISSO PARA SUAVIZAR AS BORDAS DOS FLARES MAIORES: */
+    /* COMEÇA INVISÍVEL */
+    opacity: 0; 
+    
+    box-shadow: 0 0 15px var(--gold);
     filter: blur(2px); 
     
-    animation: flareFloat linear infinite;
+    /* O SEGREDO ESTÁ AQUI: */
+    /* animation-fill-mode: both; garante que, enquanto espera o delay, */
+    /* o elemento obedeça o "0%" da animação (ou seja, fique invisível e na posição inicial) */
+    animation: flareFloat linear infinite both;
 }
 
 @keyframes flareFloat {
@@ -386,15 +391,14 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
         opacity: 0;
         transform: translateY(0) scale(0.5) rotate(0deg);
     }
-    20% {
-        opacity: 0.8; /* Brilho máximo */
+    10% { /* Aparece rápido (Fade In) */
+        opacity: 0.8; 
     }
     80% {
         opacity: 0.6;
     }
     100% {
         opacity: 0;
-        /* Sobe e gira levemente */
-        transform: translateY(-100px) scale(0) rotate(45deg); 
+        transform: translateY(-150px) scale(0) rotate(45deg); /* Sobe mais alto */
     }
 }
