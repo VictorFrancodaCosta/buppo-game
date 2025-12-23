@@ -637,12 +637,17 @@ function showFloatingText(eid, txt, col) {
     setTimeout(()=>el.remove(), 2000); 
 }
 
+// ARQUIVO: js/main.js
+
 function checkEndGame(){ 
     if(player.hp<=0 || monster.hp<=0) { 
         isProcessing = true; 
-        let bgm = audios['bgm-loop']; 
         isLethalHover = false; 
-        let fadeOut = setInterval(() => { if(bgm.volume > 0.05) bgm.volume -= 0.05; else { bgm.pause(); clearInterval(fadeOut); } }, 50); 
+        
+        // --- PARA A MÚSICA DA BATALHA IMEDIATAMENTE ---
+        switchBackgroundMusic('SILENCE');
+        // ----------------------------------------------
+
         setTimeout(()=>{ 
             let title = document.getElementById('end-title'); 
             let isWin = player.hp > 0;
