@@ -16,9 +16,10 @@ export const CARDS_DB = {
         color: 'border-red',
         fCol: '#ff4757',
         icon: '⚔️',
-        // AQUI ESTÁ A MÁGICA: Texto customizado em HTML
         customTooltip: `
-            <div class="tt-desc">Causa <span class="highlight-val">(Nível)</span> de dano ao oponente.</div>
+            <div class="tt-desc">
+                Causa <span class="dynamic-val">{PLAYER_LVL}</span> (Nível) de dano ao oponente.
+            </div>
 
             <div class="tt-cartoon-title cartoon-orange">BÔNUS - GOLPE SURPRESA</div>
             <div class="tt-text">Se o oponente jogar <span class="highlight-card">DESCANSAR</span> neste turno, coloque a carta do topo de seu baralho em sua área de experiência.</div>
@@ -26,7 +27,6 @@ export const CARDS_DB = {
             <div class="tt-cartoon-title cartoon-purple">MAESTRIA EM ATAQUE</div>
             <div class="tt-text">O oponente recebe uma quantidade de dano igual a quantidade de maestrias de ataque que você possui.</div>
         `,
-        // Mantemos os dados antigos caso precise de fallback
         base: 'Dano = Nível',
         bonus: '+XP se inimigo Descansar',
         mastery: 'Dano Extra = Qtd Maestrias'
