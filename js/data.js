@@ -38,7 +38,7 @@ export const CARDS_DB = {
             <div class="tt-desc">Previna todo dano de combate causado a você neste turno.</div>
 
             <div class="tt-cartoon-title cartoon-orange">BÔNUS - CONTRA-GOLPE</div>
-            <div class="tt-text">Se o oponente jogar <span class="highlight-card hc-red">ATAQUE</span> neste turno, cause <span class="dynamic-val">{PLAYER_BLOCK_DMG}</span> pontos de dano aquele oponente.</div>
+            <div class="tt-text">Se o oponente jogar <span class="highlight-card hc-red">ATAQUE</span> neste turno, cause <span class="dynamic-val">{PLAYER_BLOCK_DMG}</span> de dano aquele oponente.</div>
 
             <div class="tt-cartoon-title cartoon-purple">MAESTRIA EM BLOQUEIO</div>
             <div class="tt-text">Seus Contra-Golpes causam 1 ponto de dano a mais.</div>
@@ -57,9 +57,7 @@ export const CARDS_DB = {
 
             <div class="tt-cartoon-title cartoon-orange">BÔNUS - REVITALIZAR</div>
             <div class="tt-text">Se você não receber dano durante o combate deste turno, esta ação restaura <span class="highlight-val">1</span> ponto de vida a mais.</div>
-
-            <div class="tt-cartoon-title" style="color: #95a5a6;">SEM MAESTRIA</div>
-            <div class="tt-text" style="color: #7f8c8d;">Esta carta não possui efeito de maestria.</div>
+            
         `,
         base: 'Cura 2 HP (3 se não sofrer dano)',
         bonus: 'Nenhum',
@@ -90,9 +88,6 @@ export const CARDS_DB = {
         icon: '✨',
         customTooltip: `
             <div class="tt-desc">Coloque a carta do topo de seu baralho em sua área de experiência.</div>
-
-            <div class="tt-cartoon-title" style="color: #95a5a6;">SEM BÔNUS</div>
-            <div class="tt-text" style="color: #7f8c8d;">Esta carta não possui bônus de combate.</div>
 
             <div class="tt-cartoon-title cartoon-purple">MAESTRIA EM TREINAR</div>
             <div class="tt-text">Dispare o efeito de maestria de outra ação em sua área de experiência.</div>
