@@ -279,7 +279,13 @@ window.toggleFullScreen = function() {
 }
 
 function playMenuAudio() { let s = audios['bgm-menu']; if(s) { s.volume = 0; if(s.duration > 60) s.currentTime = 10 + Math.random() * 50; s.play().then(() => { let vol = 0; let fade = setInterval(() => { if(vol < 0.5) { vol += 0.05; s.volume = vol; } else clearInterval(fade); }, 200); }).catch(e => console.log("Autoplay blocked")); } }
-function playNavSound() { let s = audios['sfx-nav']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } }
+window.playNavSound = function() { 
+    let s = audios['sfx-nav']; 
+    if(s) { 
+        s.currentTime = 0; 
+        s.play().catch(()=>{}); 
+    } 
+};
 
 window.onload = preloadGame;
 
