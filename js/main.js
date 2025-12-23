@@ -787,15 +787,23 @@ function bindFixedTooltip(el,k) { const updatePos = () => { let rect = el.getBou
 function showTT(k) {
     let db = CARDS_DB[k];
     
-    // Título (Sempre igual)
+    // Título
     document.getElementById('tt-title').innerHTML = k; 
 
     // Conteúdo
     if (db.customTooltip) {
-        // SE TIVER O TEXTO NOVO (Como no ATAQUE), USA ELE
-        document.getElementById('tt-content').innerHTML = db.customTooltip;
+        // 1. Pega o texto HTML do data.js
+        let content = db.customTooltip;
+        
+        // 2. SUBSTITUI O PLACEHOLDER PELO VALOR REAL
+        // Troca "{PLAYER_LVL}" pelo nível atual do jogador (player.lvl)
+        // Se player não existir (tela de login), usa "1" como exemplo.
+        let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
+        content = content.replace('{PLAYER_LVL}', currentLvl);
+
+        document.getElementById('tt-content').innerHTML = content;
     } else {
-        // SE NÃO TIVER (Como nas outras cartas ainda), USA O FORMATO ANTIGO
+        // Fallback para cartas antigas
         document.getElementById('tt-content').innerHTML = `
             <span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span>
             <span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>
