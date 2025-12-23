@@ -615,31 +615,38 @@ const tt=document.getElementById('tooltip-box');
 function bindFixedTooltip(el,k) { const updatePos = () => { let rect = el.getBoundingClientRect(); tt.style.left = (rect.left + rect.width / 2) + 'px'; }; return { onmouseenter: (e) => { showTT(k); tt.style.bottom = (window.innerWidth < 768 ? '160px' : '320px'); tt.style.top = 'auto'; tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); tt.classList.add('tooltip-anim-up'); updatePos(); el.addEventListener('mousemove', updatePos); } }; }
 function showTT(k) { let db=CARDS_DB[k]; document.getElementById('tt-title').innerHTML = k; document.getElementById('tt-content').innerHTML=`<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; tt.style.display='block'; }
 
-// ARQUIVO: js/main.js (Função nova)
+// ARQUIVO: js/main.js
 
 function createLobbyFlares() {
     const container = document.getElementById('lobby-particles');
     if(!container) return;
     
-    container.innerHTML = ''; // Limpa partículas antigas
+    container.innerHTML = ''; // Limpa
     
-    // Cria 40 partículas aleatórias
-    for(let i=0; i < 40; i++) {
+    // Vamos criar 50 partículas para preencher bem
+    for(let i=0; i < 50; i++) {
         let flare = document.createElement('div');
         flare.className = 'lobby-flare';
         
-        // Posição aleatória na tela
+        // Posição aleatória
         flare.style.left = Math.random() * 100 + '%';
         flare.style.top = Math.random() * 100 + '%';
         
-        // Tamanho aleatório (pequeno e delicado)
-        let size = 2 + Math.random() * 6; // Entre 2px e 8px
+        // --- A MUDANÇA ESTÁ AQUI (TAMANHO) ---
+        // Math.random() * 18 gera um número entre 0 e 18.
+        // + 4 garante o mínimo de 4px.
+        // Resultado: Partículas variando de 4px até 22px
+        let size = 4 + Math.random() * 18; 
+        
         flare.style.width = size + 'px';
         flare.style.height = size + 'px';
         
-        // Velocidade e atraso aleatórios para parecer natural
-        flare.style.animationDuration = (3 + Math.random() * 4) + 's'; // Duração entre 3s e 7s
-        flare.style.animationDelay = (Math.random() * 5) + 's'; // Atraso inicial
+        // Opacidade aleatória para alguns serem mais sutis
+        flare.style.opacity = 0.3 + Math.random() * 0.7; 
+        
+        // Velocidade variada
+        flare.style.animationDuration = (4 + Math.random() * 6) + 's'; 
+        flare.style.animationDelay = (Math.random() * 5) + 's';
         
         container.appendChild(flare);
     }
