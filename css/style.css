@@ -186,23 +186,24 @@
         #btn-logout:hover { background: rgba(255,0,0,0.4); color: #fff; }
 
         /* LOGO DO SAGUÃO (DIREITA) */
+/* ARQUIVO: css/style.css */
+
 .lobby-logo-right {
-    position: absolute;
+    position: fixed; /* FIXA: Não mexe com scroll ou zoom estranho */
     
-    /* CENTRALIZAÇÃO MATEMÁTICA NA DIREITA */
-    left: 65%; 
+    /* MATEMÁTICA: 75% é exatamente o centro da metade direita */
+    left: 75%; 
     top: 50%; 
-    /* Puxa 50% do tamanho da própria imagem para trás, centralizando perfeitamente */
-    transform: translate(-50%, -50%); 
+    transform: translate(-50%, -50%); /* Centraliza a própria imagem no ponto */
 
     max-width: 450px; 
-    width: 35%; /* Ajustei levemente para não brigar com o quadro */
+    width: 35vw; /* Usa 'vw' para o tamanho ser responsivo à largura da tela */
     height: auto;
     
     filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9));
     z-index: 5;
     
-    /* REMOVIDA A ANIMAÇÃO (animation: logoFloat...) */
+    /* Removemos a animação para ela ficar sólida como você pediu */
     animation: none; 
 }
 
