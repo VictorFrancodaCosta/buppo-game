@@ -206,12 +206,43 @@ body {
 .cartoon-purple { color: #a29bfe; }
 .tt-text { font-size: 11px; color: #d7ccc8; line-height: 1.3; }
 .dynamic-val { display: inline-block; background: #000; color: var(--gold); border: 2px solid var(--gold); border-radius: 4px; padding: 0px 6px; font-family: 'Russo One', sans-serif; font-size: 14px; vertical-align: middle; box-shadow: 0 2px 5px rgba(0,0,0,0.5); margin: 0 2px; }
-.highlight-card { font-weight: 700; font-family: 'Russo One', sans-serif; text-transform: uppercase; }
-.hc-red { color: #ff4757; text-shadow: 0 0 5px rgba(255, 71, 87, 0.4); }
-.hc-blue { color: #00cec9; text-shadow: 0 0 5px rgba(0, 206, 201, 0.4); }
-.hc-green { color: #2ed573; text-shadow: 0 0 5px rgba(46, 213, 115, 0.4); }
-.hc-yellow { color: #ffa502; text-shadow: 0 0 5px rgba(255, 165, 2, 0.4); }
-.hc-purple { color: #a29bfe; text-shadow: 0 0 5px rgba(162, 155, 254, 0.4); }
+
+/* Base do destaque */
+.highlight-card { 
+    font-weight: 900; /* Fonte bem grossa */
+    font-family: 'Russo One', sans-serif; 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Cores Específicas + Borda Preta Cartoon
+   Usamos 4 sombras sólidas (sem blur) para simular o contorno preto
+*/
+
+.hc-red { 
+    color: #ff4757; 
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
+}
+
+.hc-blue { 
+    color: #00cec9; 
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
+}
+
+.hc-green { 
+    color: #2ed573; 
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
+}
+
+.hc-yellow { 
+    color: #ffa502; 
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
+}
+
+.hc-purple { 
+    color: #a29bfe; 
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
+}
 
 .modal-overlay { position: fixed; top:0;left:0;width:100%;height:100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(8px); }
 .modal-box { background: var(--wood-light); padding: 40px; border-radius: 20px; border: 4px solid var(--wood-dark); text-align: center; min-width: 350px; box-shadow: 0 30px 60px rgba(0,0,0,1); }
