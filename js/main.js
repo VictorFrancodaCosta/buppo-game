@@ -1,12 +1,10 @@
 // ARQUIVO: js/main.js
 
-// 1. IMPORTAÇÕES (Isso conecta os arquivos)
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 2. CONFIGURAÇÃO DO FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
     authDomain: "buppo-game.firebaseapp.com",
@@ -21,12 +19,9 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// 3. VARIÁVEIS GLOBAIS
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
-// Precisamos definir os assets aqui ou importar de um arquivo de config. 
-// Por enquanto vamos manter aqui para não quebrar.
 const ASSETS_TO_LOAD = {
     images: [
         'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png', 'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png', 
@@ -48,26 +43,17 @@ const ASSETS_TO_LOAD = {
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 
-// Variáveis de Estado do Jogo
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let isProcessing = false; let turnCount = 1; let playerHistory = []; let masterVol = 1.0; let musicVolMult = 1.0; let isLethalHover = false; let mixerInterval = null;
 
-// =============================================================================
-// FUNÇÕES DE LÓGICA E UI (Copiadas e Adaptadas para Módulo)
-// =============================================================================
-
-// Precisamos anexar ao 'window' o que for usado pelo HTML (botões onclick)
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
     
-    // Controle botão Abandono
     if(screenId === 'game-screen') document.getElementById('btn-surrender').style.display = 'block';
     else document.getElementById('btn-surrender').style.display = 'none';
 }
-
-// ... LOGIN E FIREBASE ...
 
 onAuthStateChanged(auth, (user) => {
     setTimeout(() => {
@@ -84,6 +70,8 @@ onAuthStateChanged(auth, (user) => {
     } else {
         currentUser = null;
         window.showScreen('start-screen');
+        const bg = document.getElementById('game-background');
+        if(bg) bg.classList.remove('lobby-mode');
         const btnTxt = document.getElementById('btn-text');
         if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
     }
@@ -114,13 +102,16 @@ window.goToLobby = async function(isAutoLogin = false) {
         window.showScreen('start-screen');
         return;
     }
+
+    // ATIVA O FUNDO DO SAGUÃO
+    let bg = document.getElementById('game-background');
+    if(bg) bg.classList.add('lobby-mode');
     
     if(!isAutoLogin) {
         let s = audios['bgm-menu'];
         if(s && s.paused && !window.isMuted) s.play().catch(()=>{}); 
     }
 
-    // DADOS USUÁRIO
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
     
@@ -143,7 +134,6 @@ window.goToLobby = async function(isAutoLogin = false) {
         await updateDoc(userRef, { lastLogin: new Date() });
     }
 
-    // RANKING LISTENER
     const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
     onSnapshot(q, (snapshot) => {
         let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
@@ -193,9 +183,11 @@ window.registrarDerrotaOnline = async function() {
     } catch(e) {}
 };
 
-// ... JOGO ...
-
 window.transitionToGame = function() {
+    // REMOVE O FUNDO DO SAGUÃO (VOLTA AO PADRÃO)
+    let bg = document.getElementById('game-background');
+    if(bg) bg.classList.remove('lobby-mode');
+
     window.showScreen('game-screen');
     let s = audios['bgm-menu'];
     if(s && s.paused && !window.isMuted) { s.volume=0.5; s.play().catch(()=>{}); }
@@ -263,7 +255,6 @@ window.toggleFullScreen = function() {
 function playMenuAudio() { let s = audios['bgm-menu']; if(s) { s.volume = 0; if(s.duration > 60) s.currentTime = 10 + Math.random() * 50; s.play().then(() => { let vol = 0; let fade = setInterval(() => { if(vol < 0.5) { vol += 0.05; s.volume = vol; } else clearInterval(fade); }, 200); }).catch(e => console.log("Autoplay blocked")); } }
 function playNavSound() { let s = audios['sfx-nav']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } }
 
-// INICIALIZADOR
 window.onload = preloadGame;
 
 function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
