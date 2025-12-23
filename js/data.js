@@ -31,11 +31,21 @@ export const CARDS_DB = {
         bonus: '+XP se inimigo Descansar',
         mastery: 'Dano Extra = Qtd Maestrias'
     },
-    'BLOQUEIO': {
+'BLOQUEIO': {
         img: 'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png',
         color: 'border-blue',
         fCol: '#2ed573',
         icon: '🛡️',
+        // --- TEXTO NOVO DO BLOQUEIO ---
+        customTooltip: `
+            <div class="tt-desc">Previna todo dano de combate causado a você neste turno.</div>
+
+            <div class="tt-cartoon-title cartoon-orange">BÔNUS - CONTRA-GOLPE</div>
+            <div class="tt-text">Se o oponente jogar <span class="highlight-card">ATAQUE</span> neste turno, cause <span class="dynamic-val">{PLAYER_BLOCK_DMG}</span> pontos de dano aquele oponente.</div>
+
+            <div class="tt-cartoon-title cartoon-purple">MAESTRIA EM BLOQUEIO</div>
+            <div class="tt-text">Seus Contra-Golpes causam 1 ponto de dano a mais.</div>
+        `,
         base: 'Anula Dano',
         bonus: 'Reflete 1 de Dano',
         mastery: '+1 Dano Refletido'
