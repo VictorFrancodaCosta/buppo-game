@@ -621,10 +621,10 @@ function createLobbyFlares() {
     const container = document.getElementById('lobby-particles');
     if(!container) return;
     
-    container.innerHTML = ''; // Limpa
+    container.innerHTML = ''; // Limpa tudo antes de começar
     
-    // Vamos criar 50 partículas para preencher bem
-    for(let i=0; i < 50; i++) {
+    // Cria 50 partículas
+    for(let i=0; i < 70; i++) {
         let flare = document.createElement('div');
         flare.className = 'lobby-flare';
         
@@ -632,21 +632,21 @@ function createLobbyFlares() {
         flare.style.left = Math.random() * 100 + '%';
         flare.style.top = Math.random() * 100 + '%';
         
-        // --- A MUDANÇA ESTÁ AQUI (TAMANHO) ---
-        // Math.random() * 18 gera um número entre 0 e 18.
-        // + 4 garante o mínimo de 4px.
-        // Resultado: Partículas variando de 4px até 22px
+        // Tamanho variado (4px a 22px)
         let size = 4 + Math.random() * 18; 
-        
         flare.style.width = size + 'px';
         flare.style.height = size + 'px';
         
-        // Opacidade aleatória para alguns serem mais sutis
-        flare.style.opacity = 0.3 + Math.random() * 0.7; 
+        // Opacidade máxima variável (para alguns serem mais brilhantes que outros)
+        // Isso será controlado pelo CSS, mas podemos dar um toque extra se quiser, 
+        // mas vamos deixar o CSS controlar para garantir o fade-in.
         
-        // Velocidade variada
-        flare.style.animationDuration = (4 + Math.random() * 6) + 's'; 
-        flare.style.animationDelay = (Math.random() * 5) + 's';
+        // Velocidade (duração)
+        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
+        
+        // Delay (Atraso)
+        // Isso faz com que eles surjam aos poucos, um por um
+        flare.style.animationDelay = (Math.random() * 4) + 's';
         
         container.appendChild(flare);
     }
