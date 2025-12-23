@@ -209,33 +209,36 @@ window.abandonMatch = function() {
      }
 }
 
-// ARQUIVO: js/main.js (Substitua a função window.toggleMute antiga por esta)
+// ARQUIVO: js/main.js
 
 window.isMuted = false;
 
 window.toggleMute = function() {
-    console.log("Botão de som clicado!"); // Para confirmar que o clique funcionou
+    console.log("CLIQUE NO SOM DETECTADO!"); // Abra o F12 (Console) para ver isso
     
     window.isMuted = !window.isMuted;
     const btn = document.getElementById('btn-sound');
     
-    // Ícones SVG para trocar (Brancos e Limpos)
-    const iconOn = '<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M3,9v6h4l5,5V4L7,9H3z M16.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C15.48,15.29,16.5,13.77,16.5,12z M14,3.23v2.06 c2.89,0.86,5,3.54,5,6.71s-2.11,5.85-5,6.71v2.06c4.01-0.91,7-4.49,7-8.77S18.01,4.14,14,3.23z"/></svg>';
-    
-    // Ícone de Mute (com o risco)
-    const iconOff = '<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M16.5,12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45,2.45C16.42,12.5,16.5,12.26,16.5,12z M19,12c0,0.94-0.2,1.82-0.54,2.64l1.51,1.51C20.63,14.91,21,13.5,21,12c0-4.28-2.99-7.86-7-8.77v2.06C16.89,6.15,19,8.83,19,12z M4.27,3L3,4.27l4.56,4.56C7.39,8.91,7.2,8.96,7,9H3v6h4l5,5v-6.73l4.25,4.25c-0.67,0.52-1.42,0.93-2.25,1.18v2.06c1.38-0.31,2.63-0.95,3.69-1.81L19.73,21L21,19.73L9,7.73V4L4.27,3z M12,4L9.91,6.09L12,8.18V4z"/></svg>';
+    // Usamos crases (`) para evitar erros de texto
+    const iconOn = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M3,9v6h4l5,5V4L7,9H3z M16.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C15.48,15.29,16.5,13.77,16.5,12z M14,3.23v2.06 c2.89,0.86,5,3.54,5,6.71s-2.11,5.85-5,6.71v2.06c4.01-0.91,7-4.49,7-8.77S18.01,4.14,14,3.23z"/></svg>`;
+    const iconOff = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M16.5,12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45,2.45C16.42,12.5,16.5,12.26,16.5,12z M19,12c0,0.94-0.2,1.82-0.54,2.64l1.51,1.51C20.63,14.91,21,13.5,21,12c0-4.28-2.99-7.86-7-8.77v2.06C16.89,6.15,19,8.83,19,12z M4.27,3L3,4.27l4.56,4.56C7.39,8.91,7.2,8.96,7,9H3v6h4l5,5v-6.73l4.25,4.25c-0.67,0.52-1.42,0.93-2.25,1.18v2.06c1.38-0.31,2.63-0.95,3.69-1.81L19.73,21L21,19.73L9,7.73V4L4.27,3z M12,4L9.91,6.09L12,8.18V4z"/></svg>`;
 
-    // 1. Troca o Ícone visualmente
-    if(window.isMuted) {
-        btn.innerHTML = iconOff;
-    } else {
-        btn.innerHTML = iconOn;
+    // 1. Troca o Ícone
+    if(btn) {
+        btn.innerHTML = window.isMuted ? iconOff : iconOn;
     }
 
-    // 2. Aplica o Mute em TODOS os áudios carregados
-    // A propriedade .muted = true silencia sem pausar o tempo da música
-    Object.values(audios).forEach(audio => {
-        if(audio) audio.muted = window.isMuted;
+    // 2. Muta TODOS os áudios
+    const audioList = Object.values(audios);
+    console.log(`Mutando ${audioList.length} sons...`);
+    
+    audioList.forEach(audio => {
+        if(audio) {
+            audio.muted = window.isMuted;
+            // Garantia extra: se tiver música rodando, atualiza o volume
+            if(window.isMuted) audio.volume = 0; 
+            else audio.volume = 0.5; // Restaura volume médio
+        }
     });
 }
 
