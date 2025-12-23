@@ -522,23 +522,36 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 function dealAllInitialCards() {
-    isProcessing = true; playSound('sfx-deal'); 
+    isProcessing = true; 
+    playSound('sfx-deal'); // Som de embaralhar
+    
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
-    if(cards.length === 0) { isProcessing = false; return; }
+    
+    if(cards.length === 0) { 
+        isProcessing = false; 
+        return; 
+    }
+
+    // Garante que todas comecem invisíveis antes da animação
+    cards.forEach(c => c.style.opacity = '0');
+
+    // Loop simples: Adiciona a classe CSS com atraso
     cards.forEach((cardEl, i) => {
         setTimeout(() => {
-            const rect = cardEl.getBoundingClientRect();
-            let target = (rect.width > 0) ? rect : { top: window.innerHeight - 150, left: window.innerWidth/2 };
-            animateFly('p-deck-container', target, player.hand[i], () => { 
-                cardEl.style.opacity = '1'; 
-                if(i === cards.length - 1) isProcessing = false; 
-            }, true);
-        }, i * 150); 
+            // Adiciona a classe que faz a animação do CSS acontecer
+            cardEl.classList.add('pop-in');
+            
+            // Somzinho de "carta chegando"
+            playSound('sfx-hover'); 
+            
+            // Quando a última carta subir, libera o jogo
+            if(i === cards.length - 1) {
+                setTimeout(() => { isProcessing = false; }, 500);
+            }
+        }, i * 150); // 150ms de intervalo entre cada carta
     });
-    setTimeout(() => { cards.forEach(c => c.style.opacity = '1'); isProcessing = false; }, (cards.length * 150) + 500);
 }
-
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
 
 function onCardClick(index) {
@@ -749,72 +762,58 @@ function processMasteries(u, triggers, cb) {
 function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; updateUI(); }
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
-function animateFly(startRef, endRef, cardKey, callback, isDeal = false) {
-    // 1. OBTER COORDENADAS (COM PROTEÇÃO)
+function animateFly(startRef, endRef, cardKey, callback) {
+    // Se por acaso tentar chamar sem destino, executa o callback e sai
+    if (!startRef || !endRef) {
+        if(callback) callback();
+        return;
+    }
+
+    // 1. Pega posições
+    let startRect, endRect;
     
-    // Função auxiliar para pegar retângulo seguro
-    const getRect = (ref) => {
-        let el = (typeof ref === 'string') ? document.getElementById(ref) : ref;
-        
-        // Se o elemento existe e é visível
-        if (el && el.getBoundingClientRect) {
-            const r = el.getBoundingClientRect();
-            // Se o elemento tem tamanho, retorna ele
-            if (r.width > 0 && r.height > 0) return r;
-        }
-        
-        // FALLBACK: Se falhar, retorna o centro da tela (para não quebrar)
-        console.warn("Elemento inválido ou oculto para animação:", ref);
-        return { 
-            top: window.innerHeight / 2, 
-            left: window.innerWidth / 2, 
-            width: 100, 
-            height: 140 
-        };
-    };
+    try {
+        const sEl = (typeof startRef === 'string') ? document.getElementById(startRef) : startRef;
+        const eEl = (typeof endRef === 'string') ? document.getElementById(endRef) : endRef;
+        startRect = sEl.getBoundingClientRect();
+        endRect = eEl.getBoundingClientRect();
+    } catch(e) {
+        // Se der erro de coordenada, ignora animação e segue o jogo
+        if(callback) callback();
+        return;
+    }
 
-    let startRect = getRect(startRef);
-    let endRect = getRect(endRef);
-
-    // 2. CRIAR O ELEMENTO VOADOR
+    // 2. Cria o clone voador
     const fly = document.createElement('div');
     fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
     fly.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[cardKey].img}')"></div>`;
-
-    // 3. POSICIONAR NO INÍCIO (DECK)
-    // Importante: Remover transição inicialmente para "teletransportar" pro começo
-    fly.style.transition = 'none'; 
     
+    // Configura tamanho e posição inicial
     fly.style.width = startRect.width + 'px';
     fly.style.height = startRect.height + 'px';
     fly.style.top = startRect.top + 'px';
     fly.style.left = startRect.left + 'px';
-    
-    // Rotação inicial aleatória
-    const randomRot = (Math.random() - 0.5) * 15;
-    fly.style.transform = `rotate(${randomRot}deg) scale(0.8)`;
+    fly.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    fly.style.zIndex = '99999';
+    fly.style.position = 'fixed';
 
     document.body.appendChild(fly);
 
-    // 4. FORÇAR O REFLOW (A MÁGICA)
-    // Lê uma propriedade geométrica para obrigar o browser a desenhar o frame inicial
-    void fly.offsetHeight; 
+    // Força o desenho inicial
+    void fly.offsetWidth; 
 
-    // 5. ATIVAR TRANSIÇÃO E MOVER PARA O FINAL
-    // Agora ligamos a animação
-    fly.style.transition = 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-    
+    // 3. Move para o destino
     fly.style.top = endRect.top + 'px';
     fly.style.left = endRect.left + 'px';
     fly.style.width = endRect.width + 'px';
     fly.style.height = endRect.height + 'px';
-    fly.style.transform = `rotate(0deg) scale(1)`;
+    fly.style.transform = 'rotate(5deg) scale(1.1)'; // Um leve efeito de impacto
 
-    // 6. LIMPEZA
+    // 4. Limpa
     setTimeout(() => {
         fly.remove();
         if(callback) callback();
-    }, 600); // Tempo igual ao CSS transition
+    }, 500);
 }
 function drawCardAnimated(unit, deckId, handId, cb) { if(unit.deck.length===0) { cb(); return; } animateFly(deckId, handId, unit.deck[unit.deck.length-1], cb); }
 function renderTable(key, slotId) { let el = document.getElementById(slotId); el.innerHTML = ''; let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`; card.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[key].img}')"></div>`; el.appendChild(card); }
