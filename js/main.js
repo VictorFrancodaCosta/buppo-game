@@ -265,57 +265,35 @@ window.registrarDerrotaOnline = async function() {
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
     
-    // 1. SOBE A CORTINA (Aparece a tela preta com logo)
+    // 1. Sobe a cortina
     if(transScreen) transScreen.classList.add('active');
 
-    // 2. AGUARDA A CORTINA COBRIR A TELA (500ms)
+    // 2. Aguarda cobrir a tela (500ms)
     setTimeout(() => {
-        // --- TROCA DE CENÁRIO (Isso acontece escondido atrás da cortina) ---
         
-        // Remove o modo Saguão do fundo
+        // --- TROCA DE MÚSICA AQUI (Enquanto está escuro) ---
+        switchBackgroundMusic('BATTLE');
+        // ---------------------------------------------------
+
         let bg = document.getElementById('game-background');
         if(bg) bg.classList.remove('lobby-mode');
 
-        // Troca a tela visível
         window.showScreen('game-screen');
         
-        // Ajusta áudio (diminui volume para entrar na batalha)
-        let s = audios['bgm-menu'];
-        if(s && s.paused && !window.isMuted) { 
-            s.volume = 0.5; 
-            s.play().catch(()=>{}); 
-        }
-
-        // Prepara o jogo (reseta status, embaralha cartas)
-        // Fazemos isso aqui para quando a cortina abrir, tudo já estar pronto
-        resetUnit(player); 
-        resetUnit(monster); 
-        turnCount = 1; 
-        playerHistory = [];
-        drawCardLogic(monster, 6); 
-        drawCardLogic(player, 6); 
-        updateUI();
+        resetUnit(player); resetUnit(monster); turnCount = 1; playerHistory = [];
+        drawCardLogic(monster, 6); drawCardLogic(player, 6); updateUI();
         
-        // Esconde as cartas da mão para fazer a animação de entrada depois
         const handEl = document.getElementById('player-hand'); 
         if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
 
-        // 3. ABRE A CORTINA (Revela o jogo)
-        // Damos um tempo extra (1500ms) para criar suspense
+        // 3. Abre a cortina
         setTimeout(() => {
             if(transScreen) transScreen.classList.remove('active');
-            
-            // Inicia o fluxo do jogo (Animação das cartas voando)
-            // Espera só o tempo do fade-out da cortina (500ms)
-            setTimeout(() => {
-                startGameFlow(true); // true indica que já resetamos os dados
-            }, 500);
-            
+            setTimeout(() => { startGameFlow(true); }, 500);
         }, 1500);
 
     }, 500); 
 }
-
 function preloadGame() {
     ASSETS_TO_LOAD.images.forEach(src => { let img = new Image(); img.src = src; img.onload = () => updateLoader(); img.onerror = () => updateLoader(); });
     ASSETS_TO_LOAD.audio.forEach(a => { let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; audios[a.id] = s; s.onloadedmetadata = () => updateLoader(); s.onerror = () => updateLoader(); setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); });
