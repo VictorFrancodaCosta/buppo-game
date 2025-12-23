@@ -47,10 +47,10 @@ let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let isProcessing = false; let turnCount = 1; let playerHistory = []; let masterVol = 1.0; let musicVolMult = 1.0; let isLethalHover = false; let mixerInterval = null;
-const fadeIntervals = {}; // Controle de timers de áudio
+const fadeIntervals = {}; 
 
 // =======================
-// CONTROLES DE ÁUDIO & FADE (CORRIGIDO)
+// CONTROLES DE ÁUDIO & FADE
 // =======================
 window.isMuted = false;
 
@@ -74,49 +74,37 @@ window.toggleMute = function() {
 function switchBackgroundMusic(mode) {
     const menuMusic = audios['bgm-menu'];
     const battleMusic = audios['bgm-loop'];
-    const targetVolume = 0.5 * (window.masterVol || 1.0); 
+    // Correção: Usa masterVol local para evitar erro de NaN
+    const targetVolume = 0.5 * (masterVol || 1.0); 
 
-    // Função Auxiliar de Fade
     const fadeAudio = (audio, type) => {
         if (!audio) return;
         const id = audio.id; 
 
-        // 1. Limpa fade anterior
         if (fadeIntervals[id]) clearInterval(fadeIntervals[id]);
 
         if (type === 'OUT') {
-            // FADE OUT (Diminuir)
             fadeIntervals[id] = setInterval(() => {
-                // Matemática segura: garante que não fique negativo ou quebre
                 if (audio.volume > 0.05) {
-                    audio.volume = Math.max(0, audio.volume - 0.05); 
+                    audio.volume -= 0.05; 
                 } else {
                     audio.volume = 0;
                     audio.pause();
-                    audio.currentTime = 0; // Reseta música
+                    audio.currentTime = 0; 
                     clearInterval(fadeIntervals[id]); 
                 }
             }, 60); 
-
-            // --- TRAVA DE SEGURANÇA (HARD STOP) ---
-            // Garante que a música pare em 1.5s, mesmo se o fade falhar
-            setTimeout(() => {
-                if(audio) {
-                    audio.pause();
-                    audio.currentTime = 0;
-                }
-            }, 1500);
+            // TRAVA DE SEGURANÇA: Garante que pare em 1.5s se der erro
+            setTimeout(() => { if(audio) { audio.pause(); audio.currentTime=0; } }, 1500);
         } 
         else if (type === 'IN') {
-            // FADE IN (Aumentar)
             if (window.isMuted) return; 
-
             audio.volume = 0;
             audio.play().catch(()=>{}); 
 
             fadeIntervals[id] = setInterval(() => {
                 if (audio.volume < targetVolume - 0.05) {
-                    audio.volume = Math.min(targetVolume, audio.volume + 0.05); 
+                    audio.volume += 0.05; 
                 } else {
                     audio.volume = targetVolume;
                     clearInterval(fadeIntervals[id]); 
@@ -125,7 +113,6 @@ function switchBackgroundMusic(mode) {
         }
     };
 
-    // Gerenciamento dos Canais
     if (mode === 'MENU') {
         fadeAudio(battleMusic, 'OUT'); 
         if (menuMusic.paused) fadeAudio(menuMusic, 'IN'); 
@@ -142,14 +129,11 @@ function switchBackgroundMusic(mode) {
 
 window.playNavSound = function() { 
     let s = audios['sfx-nav']; 
-    if(s) { 
-        s.currentTime = 0; 
-        s.play().catch(()=>{}); 
-    } 
+    if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
 };
 
 // =======================
-// NAVEGAÇÃO E TRANSIÇÃO
+// NAVEGAÇÃO E TRANSIÇÃO (CORRIGIDO)
 // =======================
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -177,21 +161,27 @@ window.transitionToGame = function() {
 
     // 2. Aguarda cobrir a tela (500ms)
     setTimeout(() => {
-        // --- TROCA DE MÚSICA (CRUCIAL: DENTRO DA CORTINA) ---
-        switchBackgroundMusic('BATTLE');
+        // --- BLOCO BLINDADO (TRY/CATCH) ---
+        // Se der erro no setup, o jogo continua e a cortina abre igual
+        try {
+            console.log("Iniciando setup da batalha...");
+            switchBackgroundMusic('BATTLE');
 
-        let bg = document.getElementById('game-background');
-        if(bg) bg.classList.remove('lobby-mode');
+            let bg = document.getElementById('game-background');
+            if(bg) bg.classList.remove('lobby-mode');
 
-        window.showScreen('game-screen');
-        
-        resetUnit(player); resetUnit(monster); turnCount = 1; playerHistory = [];
-        drawCardLogic(monster, 6); drawCardLogic(player, 6); updateUI();
-        
-        const handEl = document.getElementById('player-hand'); 
-        if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
+            window.showScreen('game-screen');
+            
+            resetUnit(player); resetUnit(monster); turnCount = 1; playerHistory = [];
+            drawCardLogic(monster, 6); drawCardLogic(player, 6); updateUI();
+            
+            const handEl = document.getElementById('player-hand'); 
+            if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
+        } catch (error) {
+            console.error("Erro na transição:", error);
+        }
 
-        // 3. Abre a cortina
+        // 3. Abre a cortina (Isso roda mesmo se der erro acima)
         setTimeout(() => {
             if(transScreen) transScreen.classList.remove('active');
             setTimeout(() => { startGameFlow(true); }, 500);
@@ -213,7 +203,6 @@ window.goToLobby = async function(isAutoLogin = false) {
     switchBackgroundMusic('MENU');
     createLobbyFlares();
 
-    // Lógica do Firebase
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
     
@@ -410,14 +399,12 @@ function updateLoader() {
             }
         }, 1000); 
 
-        // Toca música de menu no primeiro clique
         document.body.addEventListener('click', () => { 
             const menuMusic = audios['bgm-menu'];
-            // Verifica se não está mutado e se não está em batalha
             if (menuMusic && menuMusic.paused && !window.isMuted) { 
                 const battleMusic = audios['bgm-loop'];
-                if(battleMusic && battleMusic.paused) { // Só toca menu se a batalha não estiver rolando
-                    menuMusic.volume = 0.5 * (window.masterVol || 1.0);
+                if(battleMusic && battleMusic.paused) { 
+                    menuMusic.volume = 0.5 * (masterVol || 1.0);
                     menuMusic.play().catch(()=>{}); 
                 }
             } 
@@ -427,7 +414,6 @@ function updateLoader() {
 
 window.onload = function() {
     preloadGame();
-    // Conecta botão de som
     const btnSound = document.getElementById('btn-sound');
     if (btnSound) {
         btnSound.onclick = null; 
