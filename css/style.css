@@ -24,23 +24,58 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw; /* Garante que cubra a tela toda */
+    width: 100vw;
     height: 100vh;
-    
-    /* Imagem Padrão (Mesa de Jogo) */
     background-image: var(--bg-image-url);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    
     z-index: -5;
     transition: filter 0.5s ease, background-image 0.1s ease;
 }
 
-/* O Estado "Modo Saguão" (Ativado via JS) */
 #game-background.lobby-mode {
     background-image: var(--lobby-bg-url) !important;
-    filter: blur(3px); /* Blur sutil */
+    filter: blur(3px);
+}
+
+/* --- ÍCONES E CONTROLES (TOPO ESQUERDA) --- */
+#top-left-controls { 
+    position: fixed; top: 15px; left: 15px; z-index: 5000; 
+    display: flex; gap: 10px; 
+}
+
+.circle-btn {
+    font-size: 0 !important; /* Remove texto antigo */
+    background: var(--wood-dark); 
+    width: 40px; height: 40px; 
+    border-radius: 50%; 
+    display: flex; justify-content: center; align-items: center; 
+    border: 2px solid var(--gold); 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    cursor: pointer;
+    transition: transform 0.2s;
+    padding: 8px; /* Espaço para o ícone */
+    box-sizing: border-box;
+}
+
+.circle-btn:hover { 
+    transform: scale(1.1); 
+    border-color: #fff;
+}
+
+/* Estilo dos Ícones SVG */
+.circle-btn svg {
+    width: 100%;
+    height: 100%;
+    fill: #ecf0f1; /* Cor Branca do ícone */
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8));
+    pointer-events: none; /* Garante que o clique vá para o botão, não pro icone */
+}
+
+/* Começa invisível, JS mostra quando precisar */
+#btn-config-toggle {
+    display: none; 
 }
 
 /* LOADING SCREEN */
@@ -103,7 +138,6 @@ body {
     z-index: 10000; position: relative;
 }
 
-/* Logo Fixa na Direita */
 .lobby-logo-right {
     position: fixed;
     left: 75%; 
@@ -117,7 +151,6 @@ body {
     animation: none; 
 }
 
-/* Container do Quadro */
 .lobby-frame-container {
     position: relative; z-index: 5;
     width: auto; height: 85vh; 
@@ -208,10 +241,7 @@ body {
 .secondary-btn { background: transparent; border: 3px solid #fff; color: #fff; box-shadow: none; }
 .secondary-btn:hover { background: rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(255,255,255,0.4); color: #fff; }
 
-/* --- CONFIGS ATUALIZADAS --- */
-#top-left-controls { position: fixed; top: 15px; left: 15px; z-index: 5000; display: flex; gap: 10px; }
-.circle-btn { font-size: 24px; cursor: pointer; color: #eee; transition: 0.3s; background: var(--wood-dark); width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid var(--gold); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-.circle-btn:hover { color: var(--gold); transform: scale(1.1); }
+/* CONFIG E FULLSCREEN */
 #btn-fullscreen { position: fixed; bottom: 20px; right: 20px; z-index: 20000; font-size: 28px; cursor: pointer; color: rgba(255, 255, 255, 0.4); transition: 0.3s; background: transparent; border: none; width: auto; height: auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
 #btn-fullscreen:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 15px var(--gold); }
 #config-panel { position: fixed; top: 65px; left: 15px; z-index: 5000; background: var(--wood-light); border: 3px solid var(--wood-dark); border-radius: 12px; padding: 15px; width: 220px; display: none; flex-direction: column; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); color: var(--txt-primary); }
@@ -221,7 +251,7 @@ body {
 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 .cfg-row { display: flex; flex-direction: column; gap: 5px; } .cfg-label { color: var(--gold); font-size: 10px; text-transform: uppercase; font-weight: 700; font-family: 'Russo One', sans-serif; } .cfg-slider { width: 100%; cursor: pointer; accent-color: var(--gold); }
 
-/* --- GAME ELEMENTS (CORREÇÃO DE Z-INDEX) --- */
+/* --- GAME ELEMENTS --- */
 .deck-area { position: absolute; z-index: 30; width: 120px; height: 170px; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-direction: column; font-family: 'Russo One', sans-serif; color: #fff; font-size: 10px; background-image: var(--cardback-url); background-size: cover; background-position: center; border: 3px solid var(--wood-dark); box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
 .deck-count { position: absolute; bottom: -30px; left: 0; width: 100%; text-align: center; font-size: 14px; color: var(--gold); font-family: 'Russo One', sans-serif; font-weight: 600; text-shadow: 1px 1px 3px #000; }
 #m-deck { top: 30px; left: 30px; display: none; } 
@@ -322,31 +352,4 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     .hand-wrapper { height: 140px; bottom: 0; }
     .card { width: 90px; height: 130px; margin: 0 -6px; border-width: 2px; }
     .hand-card:not(.disabled-card):hover { margin: 0 15px; transform: scale(1.15) translateY(-50px); }
-}
-
-/* --- ÍCONES E CONTROLES --- */
-
-/* ARQUIVO: css/style.css */
-
-/* Ajuste para o botão circular aceitar o ícone SVG corretamente */
-.circle-btn {
-    /* Mude o font-size para 0 para não atrapalhar o SVG */
-    font-size: 0 !important; 
-    padding: 8px;
-    display: flex; 
-    justify-content: center; 
-    align-items: center;
-}
-
-/* Estilo do ícone SVG dentro do botão */
-.circle-btn svg {
-    width: 100%;
-    height: 100%;
-    fill: #eee; /* Cor branca/cinza */
-    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8));
-    transition: fill 0.3s;
-}
-
-.circle-btn:hover svg {
-    fill: var(--gold); /* Dourado ao passar o mouse */
 }
