@@ -46,6 +46,7 @@ let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let isProcessing = false; let turnCount = 1; let playerHistory = []; let masterVol = 1.0; let musicVolMult = 1.0; let isLethalHover = false; let mixerInterval = null;
+const fadeIntervals = {};
 
 // =======================
 // CONTROLES DE SOM
@@ -71,39 +72,68 @@ window.toggleMute = function() {
 
 // ARQUIVO: js/main.js (Adicione esta função nova)
 
+// ARQUIVO: js/main.js
+
 function switchBackgroundMusic(mode) {
-    const menuMusic = audios['bgm-menu']; // Música do Saguão/Login
-    const battleMusic = audios['bgm-loop']; // Música da Partida
+    const menuMusic = audios['bgm-menu'];
+    const battleMusic = audios['bgm-loop'];
+    const targetVolume = 0.5 * (window.masterVol || 1.0); // Volume alvo (50% do master)
 
-    if (!menuMusic || !battleMusic) return;
+    // Função Auxiliar de Fade
+    const fadeAudio = (audio, type) => {
+        if (!audio) return;
+        const id = audio.id; // Usa o ID do áudio como chave
 
-    if (mode === 'MENU') {
-        // Para a batalha, toca o menu
-        battleMusic.pause();
-        battleMusic.currentTime = 0; // Reseta para o começo
-        
-        if (!window.isMuted && menuMusic.paused) {
-            menuMusic.volume = 0.5 * masterVol; // Volume padrão
-            menuMusic.play().catch(()=>{});
+        // 1. Limpa qualquer fade que esteja acontecendo neste áudio
+        if (fadeIntervals[id]) clearInterval(fadeIntervals[id]);
+
+        if (type === 'OUT') {
+            // --- FADE OUT (Diminuir até parar) ---
+            fadeIntervals[id] = setInterval(() => {
+                if (audio.volume > 0.05) {
+                    audio.volume -= 0.05; // Desce o volume suavemente
+                } else {
+                    // Quando chegar perto de zero:
+                    audio.volume = 0;
+                    audio.pause();
+                    audio.currentTime = 0; // Reseta a música
+                    clearInterval(fadeIntervals[id]); // Para o timer
+                }
+            }, 50); // Executa a cada 50ms (aprox. 1 segundo total)
+        } 
+        else if (type === 'IN') {
+            // --- FADE IN (Começar do zero e subir) ---
+            if (window.isMuted) return; // Se tiver mutado, nem começa
+
+            audio.volume = 0;
+            audio.play().catch(()=>{}); // Dá o play mudo
+
+            fadeIntervals[id] = setInterval(() => {
+                if (audio.volume < targetVolume - 0.05) {
+                    audio.volume += 0.05; // Sobe o volume suavemente
+                } else {
+                    // Quando chegar no volume ideal:
+                    audio.volume = targetVolume;
+                    clearInterval(fadeIntervals[id]); // Para o timer
+                }
+            }, 50);
         }
+    };
+
+    // Lógica de Troca
+    if (mode === 'MENU') {
+        fadeAudio(battleMusic, 'OUT'); // Tira a batalha
+        if (menuMusic.paused) fadeAudio(menuMusic, 'IN'); // Coloca o menu
     } 
     else if (mode === 'BATTLE') {
-        // Para o menu, toca a batalha
-        menuMusic.pause();
-        menuMusic.currentTime = 0; // Reseta para o começo
-        
-        if (!window.isMuted && battleMusic.paused) {
-            battleMusic.volume = 0.5 * masterVol; // Volume padrão
-            battleMusic.play().catch(()=>{});
-        }
+        fadeAudio(menuMusic, 'OUT'); // Tira o menu
+        if (battleMusic.paused) fadeAudio(battleMusic, 'IN'); // Coloca a batalha
     }
     else if (mode === 'SILENCE') {
-        // Para tudo (usado na vitória/derrota)
-        menuMusic.pause();
-        battleMusic.pause();
+        fadeAudio(menuMusic, 'OUT');
+        fadeAudio(battleMusic, 'OUT');
     }
 }
-
 // =======================
 // NAVEGAÇÃO DE TELAS
 // =======================
@@ -639,14 +669,15 @@ function showFloatingText(eid, txt, col) {
 
 // ARQUIVO: js/main.js
 
+// ARQUIVO: js/main.js
+
 function checkEndGame(){ 
     if(player.hp<=0 || monster.hp<=0) { 
         isProcessing = true; 
         isLethalHover = false; 
         
-        // --- PARA A MÚSICA DA BATALHA IMEDIATAMENTE ---
+        // Agora usamos nossa função poderosa para silenciar suavemente
         switchBackgroundMusic('SILENCE');
-        // ----------------------------------------------
 
         setTimeout(()=>{ 
             let title = document.getElementById('end-title'); 
@@ -665,10 +696,9 @@ function checkEndGame(){
             else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
             
             document.getElementById('end-screen').classList.add('visible'); 
-        }, 1000); 
+        }, 1000); // 1 segundo de silêncio dramático antes do resultado
     } else { isProcessing = false; } 
 }
-
 window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
 window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
 const tt=document.getElementById('tooltip-box');
