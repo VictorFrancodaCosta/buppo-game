@@ -322,3 +322,95 @@
             .card { width: 90px; height: 130px; margin: 0 -6px; border-width: 2px; }
             .hand-card:not(.disabled-card):hover { margin: 0 15px; transform: scale(1.15) translateY(-50px); }
         }
+
+/* --- TELA DE FIM DE JOGO (VITÓRIA/DERROTA) --- */
+#end-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Fundo escuro transparente */
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 20000;
+    
+    /* Centralizar conteúdo */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Escondido por padrão */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    backdrop-filter: blur(5px);
+}
+
+/* Quando tiver a classe .visible (via JS), ela aparece */
+#end-screen.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.end-content {
+    text-align: center;
+    transform: scale(0.8);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#end-screen.visible .end-content {
+    transform: scale(1);
+}
+
+#end-title {
+    font-family: 'Russo One', sans-serif;
+    font-size: 80px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    text-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    margin-top: 0;
+}
+
+/* Cores dos títulos */
+.win-theme { color: #ffd700; text-shadow: 0 0 30px rgba(255, 215, 0, 0.6); }
+.lose-theme { color: #ff7675; text-shadow: 0 0 30px rgba(255, 118, 117, 0.6); }
+.tie-theme { color: #fff; text-shadow: 0 0 30px rgba(255, 255, 255, 0.6); }
+
+/* Botões da tela final */
+.end-btn-row {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.big-btn {
+    padding: 20px 50px;
+    font-size: 24px;
+    font-family: 'Russo One', sans-serif;
+    background: #ffd700;
+    color: #000;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-transform: uppercase;
+}
+
+.big-btn:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 35px rgba(255, 215, 0, 0.6);
+}
+
+.secondary-btn {
+    background: transparent;
+    border: 3px solid #fff;
+    color: #fff;
+    box-shadow: none;
+}
+
+.secondary-btn:hover {
+    background: rgba(255,255,255,0.1);
+    box-shadow: 0 0 20px rgba(255,255,255,0.4);
+    color: #fff;
+}
