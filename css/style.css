@@ -19,67 +19,29 @@ body {
     margin: 0; padding: 0; height: 100vh; overflow: hidden; user-select: none;
 }
 
-/* --- FUNDO PRINCIPAL (HÍBRIDO) --- */
+/* --- FUNDO PRINCIPAL --- */
 #game-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-image: var(--bg-image-url);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    z-index: -5;
-    transition: filter 0.5s ease, background-image 0.1s ease;
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background-image: var(--bg-image-url); background-size: cover; background-position: center; background-repeat: no-repeat;
+    z-index: -5; transition: filter 0.5s ease, background-image 0.1s ease;
 }
+#game-background.lobby-mode { background-image: var(--lobby-bg-url) !important; filter: blur(3px); }
 
-#game-background.lobby-mode {
-    background-image: var(--lobby-bg-url) !important;
-    filter: blur(3px);
-}
-
-/* --- ÍCONES E CONTROLES (TOPO ESQUERDA) --- */
-#top-left-controls { 
-    position: fixed; top: 15px; left: 15px; z-index: 60000; 
-    display: flex; gap: 10px; 
-}
-
+/* --- UI E CONTROLES --- */
+#top-left-controls { position: fixed; top: 15px; left: 15px; z-index: 60000; display: flex; gap: 10px; }
 .circle-btn {
-    font-size: 0 !important; 
-    background: var(--wood-dark); 
-    width: 40px; height: 40px; 
-    border-radius: 50%; 
-    display: flex; justify-content: center; align-items: center; 
-    border: 2px solid var(--gold); 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    cursor: pointer;
-    transition: transform 0.2s;
-    padding: 8px; 
-    box-sizing: border-box;
+    font-size: 0 !important; background: var(--wood-dark); width: 40px; height: 40px;
+    border-radius: 50%; display: flex; justify-content: center; align-items: center;
+    border: 2px solid var(--gold); box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer;
+    transition: transform 0.2s; padding: 8px; box-sizing: border-box;
 }
-
-.circle-btn:hover { 
-    transform: scale(1.1); 
-    border-color: #fff;
-}
-
-.circle-btn svg {
-    width: 100%;
-    height: 100%;
-    fill: #ecf0f1; 
-    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8));
-    pointer-events: none; 
-}
-
-#btn-config-toggle {
-    display: none; 
-}
+.circle-btn:hover { transform: scale(1.1); border-color: #fff; }
+.circle-btn svg { width: 100%; height: 100%; fill: #ecf0f1; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8)); pointer-events: none; }
+#btn-config-toggle { display: none; }
 
 /* LOADING SCREEN */
 #loading-screen {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: #000; z-index: 50000;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 50000;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     transition: opacity 0.5s; opacity: 1; pointer-events: auto;
 }
@@ -88,144 +50,69 @@ body {
 .loader-bar-fill { width: 0%; height: 100%; background: var(--gold); transition: width 0.2s; box-shadow: 0 0 10px var(--gold); }
 .loader-txt { color: #777; margin-top: 10px; font-size: 12px; font-family: 'Montserrat', sans-serif; }
 
-/* VISIBILIDADE FORÇADA */
-#game-container { 
-    max-width: 1600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; 
-    padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; 
-    opacity: 1 !important; 
-}
-
+/* TELAS */
+#game-container { max-width: 1600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; opacity: 1 !important; }
 .screen { display: none; height: 100%; width: 100%; flex-direction: column; justify-content: space-between; }
 .screen.active { display: flex !important; }
 
-/* --- TELA 1: LOGIN --- */
-#start-screen {
-    justify-content: center !important; align-items: center; gap: 20px; 
-    z-index: 10000; background: transparent; overflow: hidden;
-}
+/* TELA LOGIN */
+#start-screen { justify-content: center !important; align-items: center; gap: 20px; z-index: 10000; background: transparent; overflow: hidden; }
 .start-bg-layer {
     position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
     background-image: var(--bg-image-url); background-size: cover; background-position: center;
-    filter: blur(6px) brightness(0.3); z-index: 0;
-    animation: bgZoomFast 3s infinite alternate ease-in-out; 
+    filter: blur(6px) brightness(0.3); z-index: 0; animation: bgZoomFast 3s infinite alternate ease-in-out; 
 }
 @keyframes bgZoomFast { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
-
-.game-logo {
-    max-width: 450px; width: 80%; height: auto;
-    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
-    z-index: 2; position: relative;
-    animation: logoFloat 3s ease-in-out infinite; 
-}
+.game-logo { max-width: 450px; width: 80%; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); z-index: 2; position: relative; animation: logoFloat 3s ease-in-out infinite; }
 @keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-
 #btn-login { 
     padding: 15px 40px; font-size: 18px; font-family: 'Russo One', sans-serif; 
-    background: var(--purple-btn); color: #fff; border: 2px solid #fff; 
-    border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(142, 68, 173, 0.6); 
-    transition: 0.2s; text-transform: uppercase; z-index: 2; position: relative; letter-spacing: 1px;
-    min-width: 280px;
+    background: var(--purple-btn); color: #fff; border: 2px solid #fff; border-radius: 50px;
+    cursor: pointer; box-shadow: 0 5px 15px rgba(142, 68, 173, 0.6); transition: 0.2s;
+    text-transform: uppercase; z-index: 2; position: relative; letter-spacing: 1px; min-width: 280px;
 }
 #btn-login:hover { transform: scale(1.05); box-shadow: 0 0 30px #9b59b6; background: #9b59b6; }
 
-/* --- TELA 2: SAGUÃO (VISUAL FIX) --- */
-#lobby-screen {
-    justify-content: center !important; 
-    align-items: flex-start !important; 
-    padding-left: 5%; 
-    z-index: 10000; position: relative;
-}
-
+/* TELA SAGUÃO */
+#lobby-screen { justify-content: center !important; align-items: flex-start !important; padding-left: 5%; z-index: 10000; position: relative; }
 .lobby-logo-right {
-    position: fixed;
-    left: 62%; 
-    top: 50%; 
-    transform: translate(-50%, -50%);
-    max-width: 450px; 
-    width: 35vw; 
-    height: auto;
-    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9));
-    z-index: 5;
-    animation: none; 
-    pointer-events: none; 
+    position: fixed; left: 62%; top: 50%; transform: translate(-50%, -50%);
+    max-width: 450px; width: 35vw; height: auto;
+    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9)); z-index: 5; pointer-events: none; 
 }
-
 .lobby-frame-container {
-    position: relative; z-index: 5;
-    width: auto; height: 85vh; 
-    display: flex; justify-content: center; align-items: center;
-    animation: frameFloat 4s ease-in-out infinite;
+    position: relative; z-index: 5; width: auto; height: 85vh; 
+    display: flex; justify-content: center; align-items: center; animation: frameFloat 4s ease-in-out infinite;
 }
 @keyframes frameFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-
-.lobby-frame-img {
-    height: 100%; width: auto; 
-    filter: drop-shadow(0 20px 50px rgba(0,0,0,0.8));
-    display: block;
-}
-
+.lobby-frame-img { height: 100%; width: auto; filter: drop-shadow(0 20px 50px rgba(0,0,0,0.8)); display: block; }
 .lobby-ui-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    display: flex; flex-direction: column; align-items: center;
-    padding: 22% 14% 14% 14%; 
-    box-sizing: border-box; text-align: center;
-    color: #fff; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    display: flex; flex-direction: column; align-items: center; padding: 22% 14% 14% 14%; 
+    box-sizing: border-box; text-align: center; color: #fff;
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
-
-.user-welcome { 
-    font-family: 'Russo One'; font-size: 26px; margin-bottom: 5px; 
-    text-transform: uppercase; color: #fff;
-}
-.user-stats { 
-    color: #ffd700; font-size: 15px; font-weight: 700; margin-bottom: 15px; 
-    font-family: 'Russo One'; 
-}
-
-.ranking-scroll { 
-    flex-grow: 1; width: 100%; 
-    overflow-y: auto; 
-    margin-bottom: 15px;
-    scrollbar-width: thin; scrollbar-color: var(--wood-dark) transparent;
-}
-
+.user-welcome { font-family: 'Russo One'; font-size: 26px; margin-bottom: 5px; text-transform: uppercase; color: #fff; }
+.user-stats { color: #ffd700; font-size: 15px; font-weight: 700; margin-bottom: 15px; font-family: 'Russo One'; }
+.ranking-scroll { flex-grow: 1; width: 100%; overflow-y: auto; margin-bottom: 15px; scrollbar-width: thin; scrollbar-color: var(--wood-dark) transparent; }
 #ranking-table { width: 100%; border-collapse: collapse; font-size: 14px; color: #fff; }
-#ranking-table th { 
-    text-align: left; padding: 5px; 
-    border-bottom: 2px solid #fff; 
-    font-family: 'Russo One'; color: var(--gold);
-    text-shadow: 2px 2px 0 #000;
-}
-#ranking-table td { 
-    padding: 8px 5px; 
-    border-bottom: 1px solid rgba(255,255,255,0.3); 
-    font-weight: 700; 
-    text-shadow: 1px 1px 0 #000;
-}
+#ranking-table th { text-align: left; padding: 5px; border-bottom: 2px solid #fff; font-family: 'Russo One'; color: var(--gold); text-shadow: 2px 2px 0 #000; }
+#ranking-table td { padding: 8px 5px; border-bottom: 1px solid rgba(255,255,255,0.3); font-weight: 700; text-shadow: 1px 1px 0 #000; }
 .rank-1 { color: #ffd700 !important; font-size: 16px; } 
-
 #btn-play-match {
-    padding: 15px 40px; font-size: 22px; font-family: 'Russo One';
-    background: #8e44ad; color: #fff; 
-    border: 2px solid #fff; border-radius: 50px; cursor: pointer;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: 0.2s; text-transform: uppercase;
-    margin-bottom: 10px; width: 100%;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    padding: 15px 40px; font-size: 22px; font-family: 'Russo One'; background: #8e44ad; color: #fff; 
+    border: 2px solid #fff; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    transition: 0.2s; text-transform: uppercase; margin-bottom: 10px; width: 100%; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
 }
 #btn-play-match:hover { transform: scale(1.05); background: #9b59b6; }
-
-#btn-logout {
-    background: rgba(0,0,0,0.4); border: 1px solid #fff; color: #ccc;
-    padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 12px; font-family: 'Russo One'; text-transform: uppercase;
-}
+#btn-logout { background: rgba(0,0,0,0.4); border: 1px solid #fff; color: #ccc; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 12px; font-family: 'Russo One'; text-transform: uppercase; }
 #btn-logout:hover { background: rgba(255,0,0,0.4); color: #fff; }
 
-/* --- TELA DE FIM DE JOGO --- */
+/* TELA FIM */
 #end-screen {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85); z-index: 20000;
-    display: flex; justify-content: center; align-items: center;
-    opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
-    backdrop-filter: blur(5px);
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 20000;
+    display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none;
+    transition: opacity 0.5s ease; backdrop-filter: blur(5px);
 }
 #end-screen.visible { opacity: 1; pointer-events: auto; }
 .end-content { text-align: center; transform: scale(0.8); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -250,7 +137,7 @@ body {
 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 .cfg-row { display: flex; flex-direction: column; gap: 5px; } .cfg-label { color: var(--gold); font-size: 10px; text-transform: uppercase; font-weight: 700; font-family: 'Russo One', sans-serif; } .cfg-slider { width: 100%; cursor: pointer; accent-color: var(--gold); }
 
-/* --- GAME ELEMENTS --- */
+/* GAME ELEMENTS */
 .deck-area { position: absolute; z-index: 30; width: 120px; height: 170px; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-direction: column; font-family: 'Russo One', sans-serif; color: #fff; font-size: 10px; background-image: var(--cardback-url); background-size: cover; background-position: center; border: 3px solid var(--wood-dark); box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
 .deck-count { position: absolute; bottom: -30px; left: 0; width: 100%; text-align: center; font-size: 14px; color: var(--gold); font-family: 'Russo One', sans-serif; font-weight: 600; text-shadow: 1px 1px 3px #000; }
 #m-deck { top: 30px; left: 30px; display: none; } 
@@ -305,13 +192,27 @@ body {
 @keyframes cardPlayBounce { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 .floating-text { position: absolute; font-family: 'Russo One', sans-serif; font-size: 36px; text-shadow: 0 4px 10px rgba(0,0,0,0.9); pointer-events: none; animation: floatUp 1.5s forwards; z-index: 200; width: 300px; text-align: center; left: 50%; transform: translateX(-50%); }
 @keyframes floatUp { 0% { opacity: 0; top: 20px; transform: translateX(-50%) scale(0.5); } 20% { opacity: 1; top: -30px; transform: translateX(-50%) scale(1.2); } 100% { opacity: 0; top: -80px; transform: translateX(-50%) scale(0.8); } }
-#tooltip-box { position: fixed; pointer-events: none; z-index: 99999; background: var(--wood-light); border: 3px solid var(--wood-dark); color: var(--gold); padding: 15px 18px; border-radius: 12px; width: 180px; display: none; text-align: left; box-shadow: 0 15px 40px rgba(0,0,0,0.6); font-size: 12px; line-height: 1.5; transform: translateX(-50%); }
-.tooltip-anim-up { animation: tooltipSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-.tooltip-anim-down { animation: tooltipSlideDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-@keyframes tooltipSlideUp { 0% { opacity: 0; transform: translate(-50%, 20px); } 100% { opacity: 1; transform: translate(-50%, 0); } }
-@keyframes tooltipSlideDown { 0% { opacity: 0; transform: translate(-50%, -20px); } 100% { opacity: 1; transform: translate(-50%, 0); } }
-#tt-title { font-family: 'Russo One', sans-serif; font-size: 14px; color: var(--gold); margin: 0 0 8px 0; border-bottom: 2px solid var(--wood-dark); padding-bottom: 5px; text-transform: uppercase; } 
-.tt-label { color: var(--txt-secondary); font-weight: 700; font-size: 10px; text-transform: uppercase; display: block; margin-top: 8px;} .tt-val { color: #fff; font-weight: 600; font-size: 13px; }
+
+/* TOOLTIP & OVERLAYS */
+#tooltip-box {
+    position: fixed; pointer-events: none; z-index: 99999; background: var(--wood-light); border: 3px solid var(--wood-dark); color: var(--gold); padding: 15px 18px; border-radius: 12px; width: 200px; display: none; text-align: left; box-shadow: 0 15px 40px rgba(0,0,0,0.6); font-size: 12px; line-height: 1.5; transform: translateX(-50%);
+    animation: tooltipFloat 3s ease-in-out infinite;
+}
+@keyframes tooltipFloat { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
+#tt-title { font-family: 'Russo One', sans-serif; font-size: 18px; color: var(--gold); margin: 0 0 12px 0; border-bottom: 2px solid var(--wood-dark); padding-bottom: 8px; text-transform: uppercase; text-align: center; letter-spacing: 1px; text-shadow: 2px 2px 0 #000; }
+.tt-desc { font-size: 13px; color: #fff; margin-bottom: 12px; line-height: 1.4; font-weight: 400; }
+.tt-cartoon-title { font-family: 'Russo One', sans-serif; font-size: 11px; text-transform: uppercase; margin-top: 12px; margin-bottom: 4px; text-shadow: 1px 1px 0 #000; letter-spacing: 0.5px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 2px; display: inline-block; }
+.cartoon-orange { color: #ff9f43; }
+.cartoon-purple { color: #a29bfe; }
+.tt-text { font-size: 11px; color: #d7ccc8; line-height: 1.3; }
+.dynamic-val { display: inline-block; background: #000; color: var(--gold); border: 2px solid var(--gold); border-radius: 4px; padding: 0px 6px; font-family: 'Russo One', sans-serif; font-size: 14px; vertical-align: middle; box-shadow: 0 2px 5px rgba(0,0,0,0.5); margin: 0 2px; }
+.highlight-card { font-weight: 700; font-family: 'Russo One', sans-serif; text-transform: uppercase; }
+.hc-red { color: #ff4757; text-shadow: 0 0 5px rgba(255, 71, 87, 0.4); }
+.hc-blue { color: #00cec9; text-shadow: 0 0 5px rgba(0, 206, 201, 0.4); }
+.hc-green { color: #2ed573; text-shadow: 0 0 5px rgba(46, 213, 115, 0.4); }
+.hc-yellow { color: #ffa502; text-shadow: 0 0 5px rgba(255, 165, 2, 0.4); }
+.hc-purple { color: #a29bfe; text-shadow: 0 0 5px rgba(162, 155, 254, 0.4); }
+
 .modal-overlay { position: fixed; top:0;left:0;width:100%;height:100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(8px); }
 .modal-box { background: var(--wood-light); padding: 40px; border-radius: 20px; border: 4px solid var(--wood-dark); text-align: center; min-width: 350px; box-shadow: 0 30px 60px rgba(0,0,0,1); }
 #modal-title { color: var(--gold) !important; font-weight: 900; font-size: 26px; margin-bottom: 15px; } 
@@ -328,12 +229,10 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     .game-logo { max-width: 80%; }
     #btn-login { padding: 15px 40px; font-size: 20px; }
     #end-title { font-size: 50px; }
-    /* Ajuste Saguão Mobile */
     #lobby-screen { align-items: center !important; padding-left: 0; }
     .lobby-frame-container { height: 70vh; }
     .lobby-ui-overlay { padding: 25% 15% 15% 15%; }
     .lobby-logo-right { position: relative; left: auto; top: auto; transform: none; width: 60%; margin-bottom: 20px; order: -1; }
-
     .middle-area { gap: 20px; flex-direction: column; top: 5%; height: 60%; padding-bottom: 0; } 
     .turn-display { top: 2%; font-size: 12px; left: 5px; transform: none; writing-mode: vertical-rl; }
     .slot { width: 120px; height: 170px; transform: rotateX(15deg); border-width: 0; }
@@ -351,234 +250,41 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     .hand-wrapper { height: 140px; bottom: 0; }
     .card { width: 90px; height: 130px; margin: 0 -6px; border-width: 2px; }
     .hand-card:not(.disabled-card):hover { margin: 0 15px; transform: scale(1.15) translateY(-50px); }
+    #tooltip-box { width: 180px; font-size: 11px; }
+    #tt-title { font-size: 16px; }
 }
 
-/* ARQUIVO: css/style.css (Adicione ao final) */
-
-/* --- SISTEMA DE PARTÍCULAS DO SAGUÃO (FLARES) --- */
-
-/* O Container que segura as partículas */
+/* SISTEMA DE PARTÍCULAS DO SAGUÃO */
 #lobby-particles {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* Não bloqueia cliques */
-    z-index: 1; /* Fica na frente do fundo, atrás da UI */
-    overflow: hidden;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden;
 }
-
 .lobby-flare {
-    position: absolute;
-    /* Gradiente dourado */
-    background: radial-gradient(circle, #fff 10%, var(--gold) 60%, transparent 100%);
-    border-radius: 50%;
-    
-    /* COMEÇA INVISÍVEL */
-    opacity: 0; 
-    
-    box-shadow: 0 0 15px var(--gold);
-    filter: blur(2px); 
-    
-    /* O SEGREDO ESTÁ AQUI: */
-    /* animation-fill-mode: both; garante que, enquanto espera o delay, */
-    /* o elemento obedeça o "0%" da animação (ou seja, fique invisível e na posição inicial) */
+    position: absolute; background: radial-gradient(circle, #fff 10%, var(--gold) 60%, transparent 100%);
+    border-radius: 50%; opacity: 0; box-shadow: 0 0 15px var(--gold); filter: blur(2px); 
     animation: flareFloat linear infinite both;
 }
-
 @keyframes flareFloat {
-    0% {
-        opacity: 0;
-        transform: translateY(0) scale(0.5) rotate(0deg);
-    }
-    10% { /* Aparece rápido (Fade In) */
-        opacity: 0.8; 
-    }
-    80% {
-        opacity: 0.6;
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-150px) scale(0) rotate(45deg); /* Sobe mais alto */
-    }
+    0% { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); }
+    10% { opacity: 0.8; } 80% { opacity: 0.6; }
+    100% { opacity: 0; transform: translateY(-150px) scale(0) rotate(45deg); }
 }
 
-/* ARQUIVO: css/style.css */
-
-/* --- TELA DE TRANSIÇÃO (CORTINA) --- */
+/* TRANSIÇÃO E CORTINA */
 #transition-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    
-    /* Fundo preto sólido para cobrir a troca de tela */
-    background: #050505;
-    
-    /* Z-INDEX MÁXIMO (Acima de tudo, menos do mouse customizado se tiver) */
-    z-index: 99999;
-    
-    /* Centralização */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    
-    /* Estado Inicial: Invisível e Intocável */
-    opacity: 0;
-    pointer-events: none;
-    
-    /* Suavidade do Fade In/Out */
-    transition: opacity 0.5s ease-in-out;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999;
+    display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px;
+    opacity: 0; pointer-events: none; transition: opacity 0.5s ease-in-out;
 }
-
-/* Quando ativado via JS, fica visível */
-#transition-overlay.active {
-    opacity: 1;
-    pointer-events: auto; /* Bloqueia cliques durante a transição */
-}
-
+#transition-overlay.active { opacity: 1; pointer-events: auto; }
 .trans-logo {
-    max-width: 300px;
-    width: 60%;
-    height: auto;
-    filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
-    
-    /* Animação de pulsar enquanto espera */
+    max-width: 300px; width: 60%; height: auto; filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
     animation: transPulse 1s infinite alternate;
 }
-
 .trans-text {
-    font-family: 'Russo One', sans-serif;
-    color: var(--txt-secondary);
-    font-size: 14px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    opacity: 0.7;
+    font-family: 'Russo One', sans-serif; color: var(--txt-secondary); font-size: 14px;
+    letter-spacing: 4px; text-transform: uppercase; opacity: 0.7;
 }
-
 @keyframes transPulse {
     from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); }
     to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); }
 }
-
-
-/* ARQUIVO: css/style.css (Adicione ao final) */
-
-/* --- ESTILOS DO TOOLTIP CUSTOMIZADO --- */
-.tt-desc {
-    font-size: 13px;
-    color: #fff;
-    margin-bottom: 12px;
-    line-height: 1.4;
-    font-weight: 400;
-}
-
-.tt-cartoon-title {
-    font-family: 'Russo One', sans-serif;
-    font-size: 11px;
-    text-transform: uppercase;
-    margin-top: 12px;
-    margin-bottom: 4px;
-    text-shadow: 1px 1px 0 #000;
-    letter-spacing: 0.5px;
-    border-bottom: 1px dashed rgba(255,255,255,0.2);
-    padding-bottom: 2px;
-    display: inline-block;
-}
-
-.cartoon-orange { color: #ff9f43; } /* Cor do Bônus */
-.cartoon-purple { color: #a29bfe; } /* Cor da Maestria */
-
-.tt-text {
-    font-size: 11px;
-    color: #d7ccc8; /* Cor secundária suave */
-    line-height: 1.3;
-}
-
-.highlight-val { color: #fff; font-weight: 700; }
-.highlight-card { color: #81ecec; font-weight: 700; font-family: 'Russo One'; }
-
-
-/* ARQUIVO: css/style.css (Atualização do final) */
-
-/* --- TOOLTIP BOX (Ajuste Geral) --- */
-#tooltip-box {
-    position: fixed; 
-    pointer-events: none; 
-    z-index: 99999; 
-    background: var(--wood-light); 
-    border: 3px solid var(--wood-dark); 
-    color: var(--gold); 
-    padding: 15px 18px; 
-    border-radius: 12px; 
-    width: 200px; /* Um pouco mais largo para caber o título maior */
-    display: none; 
-    text-align: left; 
-    box-shadow: 0 15px 40px rgba(0,0,0,0.6); 
-    font-size: 12px; 
-    line-height: 1.5; 
-    transform: translateX(-50%);
-    
-    /* ANIMAÇÃO DE FLUTUAÇÃO PERMANENTE */
-    animation: tooltipFloat 3s ease-in-out infinite;
-}
-
-@keyframes tooltipFloat {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(-8px); }
-}
-
-/* TÍTULO DO TOOLTIP (Maior e Centralizado) */
-#tt-title { 
-    font-family: 'Russo One', sans-serif; 
-    font-size: 18px; /* Maior */
-    color: var(--gold); 
-    margin: 0 0 12px 0; 
-    border-bottom: 2px solid var(--wood-dark); 
-    padding-bottom: 8px; 
-    text-transform: uppercase; 
-    text-align: center; /* Centralizado */
-    letter-spacing: 1px;
-    text-shadow: 2px 2px 0 #000;
-} 
-
-/* VALOR DINÂMICO (O Nível do Jogador) */
-.dynamic-val {
-    display: inline-block;
-    background: #000;
-    color: var(--gold);
-    border: 2px solid var(--gold);
-    border-radius: 4px;
-    padding: 0px 6px;
-    font-family: 'Russo One', sans-serif;
-    font-size: 14px;
-    vertical-align: middle;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    margin: 0 2px;
-}
-
-/* O resto dos estilos (tt-desc, tt-cartoon-title...) mantém igual ao anterior */
-.tt-desc { font-size: 13px; color: #fff; margin-bottom: 12px; line-height: 1.4; font-weight: 400; }
-.tt-cartoon-title { font-family: 'Russo One', sans-serif; font-size: 11px; text-transform: uppercase; margin-top: 12px; margin-bottom: 4px; text-shadow: 1px 1px 0 #000; letter-spacing: 0.5px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 2px; display: inline-block; }
-.cartoon-orange { color: #ff9f43; }
-.cartoon-purple { color: #a29bfe; }
-.tt-text { font-size: 11px; color: #d7ccc8; line-height: 1.3; }
-/* ARQUIVO: css/style.css (Atualização no final) */
-
-/* Base do destaque (Fonte grossa) */
-.highlight-card { 
-    font-weight: 700; 
-    font-family: 'Russo One', sans-serif; 
-    text-transform: uppercase;
-}
-
-/* Cores Específicas */
-.hc-red { color: #ff4757; text-shadow: 0 0 5px rgba(255, 71, 87, 0.4); }    /* Para ATAQUE */
-.hc-blue { color: #00cec9; text-shadow: 0 0 5px rgba(0, 206, 201, 0.4); }   /* Para BLOQUEIO */
-.hc-green { color: #2ed573; text-shadow: 0 0 5px rgba(46, 213, 115, 0.4); } /* Para DESCANSAR */
-.hc-yellow { color: #ffa502; text-shadow: 0 0 5px rgba(255, 165, 2, 0.4); } /* Para DESARMAR */
-.hc-purple { color: #a29bfe; text-shadow: 0 0 5px rgba(162, 155, 254, 0.4); } /* Para TREINAR */
