@@ -501,3 +501,70 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 .highlight-val { color: #fff; font-weight: 700; }
 .highlight-card { color: #81ecec; font-weight: 700; font-family: 'Russo One'; }
+
+
+/* ARQUIVO: css/style.css (Atualização do final) */
+
+/* --- TOOLTIP BOX (Ajuste Geral) --- */
+#tooltip-box {
+    position: fixed; 
+    pointer-events: none; 
+    z-index: 99999; 
+    background: var(--wood-light); 
+    border: 3px solid var(--wood-dark); 
+    color: var(--gold); 
+    padding: 15px 18px; 
+    border-radius: 12px; 
+    width: 200px; /* Um pouco mais largo para caber o título maior */
+    display: none; 
+    text-align: left; 
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6); 
+    font-size: 12px; 
+    line-height: 1.5; 
+    transform: translateX(-50%);
+    
+    /* ANIMAÇÃO DE FLUTUAÇÃO PERMANENTE */
+    animation: tooltipFloat 3s ease-in-out infinite;
+}
+
+@keyframes tooltipFloat {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-8px); }
+}
+
+/* TÍTULO DO TOOLTIP (Maior e Centralizado) */
+#tt-title { 
+    font-family: 'Russo One', sans-serif; 
+    font-size: 18px; /* Maior */
+    color: var(--gold); 
+    margin: 0 0 12px 0; 
+    border-bottom: 2px solid var(--wood-dark); 
+    padding-bottom: 8px; 
+    text-transform: uppercase; 
+    text-align: center; /* Centralizado */
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 0 #000;
+} 
+
+/* VALOR DINÂMICO (O Nível do Jogador) */
+.dynamic-val {
+    display: inline-block;
+    background: #000;
+    color: var(--gold);
+    border: 2px solid var(--gold);
+    border-radius: 4px;
+    padding: 0px 6px;
+    font-family: 'Russo One', sans-serif;
+    font-size: 14px;
+    vertical-align: middle;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    margin: 0 2px;
+}
+
+/* O resto dos estilos (tt-desc, tt-cartoon-title...) mantém igual ao anterior */
+.tt-desc { font-size: 13px; color: #fff; margin-bottom: 12px; line-height: 1.4; font-weight: 400; }
+.tt-cartoon-title { font-family: 'Russo One', sans-serif; font-size: 11px; text-transform: uppercase; margin-top: 12px; margin-bottom: 4px; text-shadow: 1px 1px 0 #000; letter-spacing: 0.5px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 2px; display: inline-block; }
+.cartoon-orange { color: #ff9f43; }
+.cartoon-purple { color: #a29bfe; }
+.tt-text { font-size: 11px; color: #d7ccc8; line-height: 1.3; }
+.highlight-card { color: #81ecec; font-weight: 700; font-family: 'Russo One'; }
