@@ -147,6 +147,7 @@ body {
     filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9));
     z-index: 5;
     animation: none; 
+    pointer-events: none; 
 }
 
 .lobby-frame-container {
