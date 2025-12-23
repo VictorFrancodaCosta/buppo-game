@@ -90,32 +90,40 @@
 /* ARQUIVO: css/style.css */
 
 .lobby-bg {
-    /* 1. Geometria idêntica ao #game-background */
+    /* 1. POSIÇÃO FIXA: Cola na tela */
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
     
-    /* 2. Imagem e Comportamento */
+    /* 2. O SEGREDO DO SUCESSO: */
+    /* Em vez de 100% (que respeita o pai), usamos vw/vh */
+    /* vw = viewport width (largura da janela) */
+    /* vh = viewport height (altura da janela) */
+    width: 100vw; 
+    height: 100vh;
+    
+    /* 3. IMAGEM: */
     background-image: var(--lobby-bg-url);
     
-    /* "cover" é o que o game-background usa. 
-       Ele preenche tudo. Se a imagem parecer "perto demais", 
-       é porque a própria imagem original tem os objetos muito grandes. */
-    background-size: cover;
+    /* Cover garante que preencha tudo sem distorcer a proporção */
+    background-size: cover; 
+    
+    /* Centraliza a imagem */
     background-position: center;
     background-repeat: no-repeat;
     
-    /* 3. Camada e Efeitos */
-    z-index: -5; /* Mesmo nível de profundidade da partida */
-    
-    /* Blur suave como solicitado (3px é o ideal para não perder forma) */
+    /* 4. VISUAL: */
+    /* Blur sutil para destacar o menu, como você pediu */
     filter: blur(3px);
     
-    /* Garante que o mouse atravesse o fundo */
+    /* z-index ajustado para ficar NA FRENTE do #game-background (-5) */
+    /* mas ATRÁS do conteúdo do saguão */
+    z-index: -1; 
+    
     pointer-events: none;
 }
+
+
         /* Container do Quadro */
         .lobby-frame-container {
             position: relative; z-index: 5;
