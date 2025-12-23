@@ -653,9 +653,32 @@ function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
     if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); } 
     else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } 
+    else if(type === 'TREINAR' && u.id === 'm') {
+        let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR' && x !== 'DESCANSAR'))]; // IA NÃO COPIA DESCANSAR
+        if(opts.length > 0) {
+            let choice = opts[0];
+            if(opts.includes('ATAQUE')) choice = 'ATAQUE';
+            else if(opts.includes('BLOQUEIO')) choice = 'BLOQUEIO';
+            
+            if(choice === 'DESARMAR') {
+                let target = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE';
+                player.disabled = target;
+                showFloatingText('p-lvl', "BLOQUEADO!", "#fab1a0");
+            } else {
+                applyMastery(u, choice);
+            }
+        }
+        processMasteries(u, triggers, cb);
+    }
+    else if(type === 'DESARMAR' && u.id === 'm') {
+        let target = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE';
+        player.disabled = target;
+        showFloatingText('p-lvl', "BLOQUEADO!", "#fab1a0");
+        processMasteries(u, triggers, cb);
+    }
     else { applyMastery(u, type); processMasteries(u, triggers, cb); }
 }
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; updateUI(); }
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
 function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false) {
@@ -787,34 +810,21 @@ function bindFixedTooltip(el,k) { const updatePos = () => { let rect = el.getBou
 
 function showTT(k) {
     let db = CARDS_DB[k];
-    
-    // Título
     document.getElementById('tt-title').innerHTML = k; 
-
-    // Conteúdo
     if (db.customTooltip) {
         let content = db.customTooltip;
-        
-        // --- CÁLCULOS DINÂMICOS ---
-        
-        // 1. Para carta ATAQUE: Nível do Jogador
         let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
         content = content.replace('{PLAYER_LVL}', currentLvl);
-
-        // 2. Para carta BLOQUEIO: Dano do Contra-Golpe (1 + Maestria de Bloqueio)
         let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
         let reflectDmg = 1 + bonusBlock;
         content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
-
         document.getElementById('tt-content').innerHTML = content;
     } else {
-        // Fallback antigo
         document.getElementById('tt-content').innerHTML = `
             <span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span>
             <span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>
             <span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>
         `;
     }
-    
     tt.style.display = 'block';
 }
