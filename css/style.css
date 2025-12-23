@@ -338,3 +338,26 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); }
     to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); }
 }
+
+/* ARQUIVO: css/style.css (Adicione ao final) */
+
+/* --- ANIMAÇÃO: SURGIR DA MÃO (POP-UP) --- */
+@keyframes handEnter {
+    0% { 
+        opacity: 0; 
+        transform: translateY(150px) scale(0.8); /* Começa invisível, lá embaixo */
+    }
+    60% { 
+        opacity: 1; 
+        transform: translateY(-20px) scale(1.1); /* Sobe um pouco além (Bounce) */
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); /* Posição Final */
+    }
+}
+
+/* Classe que ativamos via JS */
+.pop-in {
+    animation: handEnter 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
