@@ -172,34 +172,35 @@ window.handleLogout = function() {
     });
 };
 
+// ARQUIVO: js/main.js
+
 window.goToLobby = async function(isAutoLogin = false) {
     if(!currentUser) {
         window.showScreen('start-screen');
+        // Se estiver na tela de login, garante música do menu também
+        switchBackgroundMusic('MENU');
         return;
     }
 
+    // Ativa visual do saguão
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
-
-    createLobbyFlares();
     
-    if(!isAutoLogin) {
-        let s = audios['bgm-menu'];
-        if(s && s.paused && !window.isMuted) s.play().catch(()=>{}); 
-    }
+    // --- ATIVA MÚSICA DO MENU/SAGUÃO ---
+    switchBackgroundMusic('MENU');
+    // -----------------------------------
 
+    // Cria os efeitos de partícula
+    if(typeof createLobbyFlares === "function") createLobbyFlares();
+
+    // Lógica do Firebase (User e Ranking)
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
     
     if (!userSnap.exists()) {
         await setDoc(userRef, {
-            name: currentUser.displayName,
-            email: currentUser.email,
-            photo: currentUser.photoURL,
-            totalWins: 0,
-            totalMatches: 0,
-            score: 0, 
-            joinedAt: new Date()
+            name: currentUser.displayName, email: currentUser.email, photo: currentUser.photoURL,
+            totalWins: 0, totalMatches: 0, score: 0, joinedAt: new Date()
         });
         document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
