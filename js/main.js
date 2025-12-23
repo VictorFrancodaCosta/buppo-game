@@ -784,6 +784,8 @@ window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title'
 window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
 const tt=document.getElementById('tooltip-box');
 function bindFixedTooltip(el,k) { const updatePos = () => { let rect = el.getBoundingClientRect(); tt.style.left = (rect.left + rect.width / 2) + 'px'; }; return { onmouseenter: (e) => { showTT(k); tt.style.bottom = (window.innerWidth < 768 ? '160px' : '320px'); tt.style.top = 'auto'; tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); tt.classList.add('tooltip-anim-up'); updatePos(); el.addEventListener('mousemove', updatePos); } }; }
+// ARQUIVO: js/main.js (Atualização da função showTT)
+
 function showTT(k) {
     let db = CARDS_DB[k];
     
@@ -792,18 +794,22 @@ function showTT(k) {
 
     // Conteúdo
     if (db.customTooltip) {
-        // 1. Pega o texto HTML do data.js
         let content = db.customTooltip;
         
-        // 2. SUBSTITUI O PLACEHOLDER PELO VALOR REAL
-        // Troca "{PLAYER_LVL}" pelo nível atual do jogador (player.lvl)
-        // Se player não existir (tela de login), usa "1" como exemplo.
+        // --- CÁLCULOS DINÂMICOS ---
+        
+        // 1. Para carta ATAQUE: Nível do Jogador
         let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
         content = content.replace('{PLAYER_LVL}', currentLvl);
 
+        // 2. Para carta BLOQUEIO: Dano do Contra-Golpe (1 + Maestria de Bloqueio)
+        let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
+        let reflectDmg = 1 + bonusBlock;
+        content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
+
         document.getElementById('tt-content').innerHTML = content;
     } else {
-        // Fallback para cartas antigas
+        // Fallback antigo
         document.getElementById('tt-content').innerHTML = `
             <span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span>
             <span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>
