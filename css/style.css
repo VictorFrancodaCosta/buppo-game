@@ -368,14 +368,16 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     overflow: hidden;
 }
 
-/* O visual de cada flare individual */
 .lobby-flare {
     position: absolute;
     background: radial-gradient(circle, #fff 10%, var(--gold) 60%, transparent 100%);
     border-radius: 50%;
     opacity: 0;
     box-shadow: 0 0 15px var(--gold);
-    /* Animação suave de aparecer, flutuar e sumir */
+    
+    /* ADICIONE ISSO PARA SUAVIZAR AS BORDAS DOS FLARES MAIORES: */
+    filter: blur(2px); 
+    
     animation: flareFloat linear infinite;
 }
 
