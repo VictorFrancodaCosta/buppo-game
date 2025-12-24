@@ -179,16 +179,22 @@ body {
 .slot .card { width: 100% !important; height: 100% !important; margin: 0; border-radius: 16px !important; box-shadow: none; cursor: default; transform: translateZ(0px); border-width: 2px; }
 .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
+
+/* --- TRAVA DE SEGURANÇA VISUAL (NOVA) --- 
+   Se a mão tiver a classe .preparing, FORÇAMOS a invisibilidade
+   das cartas. Isso evita o "piscar" estático antes da animação.
+*/
+#player-hand.preparing .card {
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
 .card { 
     /* Variáveis para o efeito de brilho */
     --rx: 0;
     --ry: 0;
 
-    /* --- AJUSTE DE VELOCIDADE AQUI --- */
-    /* transform 0.05s linear -> Zoom praticamente instantâneo (50ms)
-       margin 0.1s -> Acompanha o movimento lateral rápido
-       box-shadow 0.1s -> Sombra acompanha rápido
-    */
+    /* --- AJUSTE DE VELOCIDADE (ZOOM RÁPIDO) --- */
     transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; 
 
     pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; 
@@ -198,6 +204,27 @@ body {
     
     opacity: 1 !important; visibility: visible !important; 
 }
+
+/* --- EFEITO FOIL / BRILHO APPLE TV --- */
+.card::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 10px;
+    pointer-events: none;
+    z-index: 15;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    background: radial-gradient(
+        circle at calc(50% + (var(--rx) * 150%)) calc(50% + (var(--ry) * 150%)), 
+        rgba(255, 255, 255, 0.6) 0%,   
+        rgba(255, 255, 255, 0.1) 40%,  
+        transparent 60%
+    );
+    mix-blend-mode: overlay; 
+}
+.card:hover::after { opacity: 1; }
+
 .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
 .flares-container { position: absolute; top: 50%; left: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
 .flare-spark { position: absolute; background: var(--flare-col, white); border-radius: 50%; box-shadow: 0 0 10px var(--flare-col, white); opacity: 0; }
@@ -361,52 +388,14 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 /* --- ANIMAÇÃO DE ENTRADA INICIAL (BOUNCE) --- */
 @keyframes introBounce {
-    0% { transform: translateY(120vh) scale(0.5); opacity: 0; } /* Começa lá embaixo */
-    60% { transform: translateY(-40px) scale(1.1); opacity: 1; } /* Sobe um pouco demais (Pulo) */
-    80% { transform: translateY(10px) scale(0.95); } /* Desce um pouco (Amortecimento) */
-    100% { transform: translateY(0) scale(1); opacity: 1; } /* Encaixa no lugar */
+    0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 
+    60% { transform: translateY(-40px) scale(1.1); opacity: 1; }
+    80% { transform: translateY(10px) scale(0.95); }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .intro-anim {
     /* Força a animação a rodar e manter o estado final */
     animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    /* Garante que o usuário não interaja enquanto voa */
     pointer-events: none; 
-}
-
-/* --- ATUALIZAÇÃO DA ANIMAÇÃO INICIAL --- */
-@keyframes introBounce {
-    0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 
-    60% { transform: translateY(-40px) scale(1.1); opacity: 1; }
-    80% { transform: translateY(10px) scale(0.95); }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-.intro-anim {
-    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    pointer-events: none;
-    /* GARANTIA: Começa invisível para não "piscar" na tela antes de animar */
-    opacity: 0; 
-}
-
-/* --- TRAVA DE SEGURANÇA VISUAL --- */
-/* Enquanto a mão estiver em modo 'preparando', todas as cartas ficam invisíveis.
-   Isso evita que elas "pisquem" na tela antes da animação começar. */
-#player-hand.preparing .card {
-    opacity: 0 !important;
-    visibility: hidden !important;
-}
-
-/* Mantém a animação que já criamos */
-@keyframes introBounce {
-    0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 
-    60% { transform: translateY(-40px) scale(1.1); opacity: 1; }
-    80% { transform: translateY(10px) scale(0.95); }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-.intro-anim {
-    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    pointer-events: none;
-    opacity: 0; /* Começa invisível */
 }
