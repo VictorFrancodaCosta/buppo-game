@@ -396,10 +396,24 @@ function checkEndGame(){
         }, 1000); 
     } else isProcessing = false; 
 }
+
 function applyMastery(u, k) { 
-    if(k==='ATAQUE'){ u.bonusAtk++; let t=u===player?monster:player; t.hp-=u.bonusAtk; showFloatingText(t.id+'-lvl',`-${u.bonusAtk}`,'#ff7675'); triggerDamageEffect(u!==player); checkEndGame(); }
-    if(k==='BLOQUEIO')u.bonusBlock++; if(k==='DESCANSAR'){ u.maxHp++; showFloatingText(u.id+'-hp-txt','+1 MAX','#55efc4'); } updateUI();
+    if(k === 'ATAQUE') { 
+        u.bonusAtk++; 
+        let target = (u === player) ? monster : player; 
+        target.hp -= u.bonusAtk; 
+        showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); 
+        triggerDamageEffect(u !== player); 
+        checkEndGame(); 
+    } 
+    if(k === 'BLOQUEIO') u.bonusBlock++; 
+    if(k === 'DESCANSAR') { 
+        u.maxHp++; 
+        showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); 
+    } 
+    updateUI(); 
 }
+
 function drawCardLogic(u, qty) { for(let i=0;i<qty;i++)if(u.deck.length>0)u.hand.push(u.deck.pop()); u.hand.sort(); }
 function animateFly(sId, eId, k, cb, ini, tbl) {
     let s; if(typeof sId==='string'){ let el=document.getElementById(sId); if(!el)s={top:0,left:0,width:0}; else s=el.getBoundingClientRect(); } else s=sId;
