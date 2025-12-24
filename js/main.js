@@ -276,69 +276,36 @@ function dealAllInitialCards() {
     playSound('sfx-deal'); 
     
     const handEl = document.getElementById('player-hand'); 
-    const cards = Array.from(handEl.children);
     
-    if(cards.length === 0) { isProcessing = false; return; }
+    // Pequeno delay para garantir que o DOM renderizou as cartas criadas no updateUI
+    setTimeout(() => {
+        const cards = Array.from(handEl.children);
+        if(cards.length === 0) { isProcessing = false; return; }
 
-    // Garante invisibilidade inicial
-    cards.forEach(c => c.style.opacity = '0');
+        // 1. Esconde TODAS as cartas reais usando VISIBILITY (mais seguro que opacity)
+        cards.forEach(c => c.style.visibility = 'hidden');
 
-    // Cria as cartas no Canvas
-    cards.forEach((cardEl, i) => {
-        let cardKey = player.hand[i]; 
-        if(!cardKey) return;
+        // 2. Dispara a animação do Canvas
+        cards.forEach((cardEl, i) => {
+            let cardKey = player.hand[i];
+            if(!cardKey) return;
 
-        // Recupera posição alvo
-        const rect = cardEl.getBoundingClientRect();
+            // Pega a posição onde a carta DEVERIA estar
+            // Precisamos torná-la visível temporariamente (mas transparente) para o navegador calcular a posição
+            cardEl.style.visibility = 'visible'; 
+            cardEl.style.opacity = '0';
+            const rect = cardEl.getBoundingClientRect();
+            // Volta a esconder até a animação chegar
+            cardEl.style.visibility = 'hidden';
+            cardEl.style.opacity = '1';
 
-        // 1. Cria a animação visual
-        flyingCards.push(new FlyingCard(
-            rect.left, 
-            rect.top, 
-            rect.width, 
-            rect.height, 
-            cardKey, 
-            () => {
-                // Ao chegar: revela a carta real
-                cardEl.style.transition = 'none';
-                cardEl.style.opacity = '1';
-                // Restaura transição suave após um frame
-                requestAnimationFrame(() => {
-                    cardEl.style.transition = 'margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s, opacity 0.2s ease';
-                });
-                playSound('sfx-hover');
+            // Se o rect vier zerado (erro de layout), usa fallback
+            if(rect.width === 0) {
+                console.warn("Erro de layout na carta, forçando exibição.");
+                cardEl.style.visibility = 'visible';
+                return;
             }
-        ));
-        
-        // 2. REDE DE SEGURANÇA: Garante que a carta apareça mesmo se o Canvas falhar
-        setTimeout(() => {
-            if (cardEl.style.opacity === '0') {
-                cardEl.style.opacity = '1';
-            }
-        }, 1200); // 1.2 segundos (tempo máximo seguro)
 
-        if(i === cards.length - 1) {
-            setTimeout(() => { isProcessing = false; }, 1000);
-        }
-    });
-}
-
-// Compra de carta no meio do turno
-function drawCardAnimated(unit, deckId, handId, cb) { 
-    if(unit.deck.length===0) { cb(); return; } 
-
-    if (unit.id === 'p') {
-        cb(); // Adiciona dados e cria elemento no DOM
-        
-        // Busca a nova carta (última adicionada)
-        const handEl = document.getElementById('player-hand');
-        const newCardEl = handEl.lastElementChild;
-        const cardKey = player.hand[player.hand.length-1];
-
-        if (newCardEl && cardKey) {
-            newCardEl.style.opacity = '0'; // Esconde para animar
-            const rect = newCardEl.getBoundingClientRect();
-            
             flyingCards.push(new FlyingCard(
                 rect.left, 
                 rect.top, 
@@ -346,15 +313,78 @@ function drawCardAnimated(unit, deckId, handId, cb) {
                 rect.height, 
                 cardKey, 
                 () => {
-                    newCardEl.style.transition = 'none';
-                    newCardEl.style.opacity = '1';
+                    // CALLBACK: A carta do Canvas chegou!
+                    // Revela a carta real instantaneamente
+                    cardEl.style.visibility = 'visible';
+                    cardEl.style.opacity = '1';
+                    
+                    // Efeito de "pouso"
+                    cardEl.animate([
+                        { transform: 'scale(1.1)' },
+                        { transform: 'scale(1)' }
+                    ], { duration: 200, easing: 'ease-out' });
+                    
                     playSound('sfx-hover');
                 }
             ));
             
-            // Rede de segurança também aqui
-            setTimeout(() => { newCardEl.style.opacity = '1'; }, 1000);
-        }
+            // 3. REDE DE SEGURANÇA MÁXIMA
+            // Se algo der errado no Canvas, a carta aparece sozinha em 1.5s
+            setTimeout(() => {
+                cardEl.style.visibility = 'visible';
+                cardEl.style.opacity = '1';
+            }, 1500);
+
+            if(i === cards.length - 1) {
+                setTimeout(() => { isProcessing = false; }, 1200);
+            }
+        });
+    }, 100); // Delay técnico essencial
+}
+
+// Compra de carta no meio do turno
+function drawCardAnimated(unit, deckId, handId, cb) { 
+    if(unit.deck.length===0) { cb(); return; } 
+
+    if (unit.id === 'p') {
+        cb(); // Cria o elemento no DOM
+        
+        // Aguarda renderização
+        requestAnimationFrame(() => {
+            const handEl = document.getElementById('player-hand');
+            const newCardEl = handEl.lastElementChild;
+            const cardKey = player.hand[player.hand.length-1];
+
+            if (newCardEl && cardKey) {
+                // Prepara para calcular posição
+                newCardEl.style.visibility = 'visible';
+                newCardEl.style.opacity = '0';
+                const rect = newCardEl.getBoundingClientRect();
+                
+                // Esconde de novo
+                newCardEl.style.visibility = 'hidden';
+                newCardEl.style.opacity = '1';
+
+                flyingCards.push(new FlyingCard(
+                    rect.left, 
+                    rect.top, 
+                    rect.width, 
+                    rect.height, 
+                    cardKey, 
+                    () => {
+                        newCardEl.style.visibility = 'visible';
+                        newCardEl.style.opacity = '1';
+                        playSound('sfx-hover');
+                    }
+                ));
+                
+                // Rede de segurança
+                setTimeout(() => { 
+                    newCardEl.style.visibility = 'visible'; 
+                    newCardEl.style.opacity = '1';
+                }, 1000);
+            }
+        });
     } else {
         cb();
     }
