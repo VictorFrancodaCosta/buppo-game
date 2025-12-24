@@ -603,10 +603,12 @@ function getBestAIMove() {
 
 function playCardFlow(index, pDisarmChoice) {
     isProcessing = true; 
+    
+    // Remove a carta da lógica (array)
     let cardKey = player.hand.splice(index, 1)[0]; 
     playerHistory.push(cardKey);
 
-    // Lógica da IA (mantida igual)
+    // Lógica da IA (Inalterada)
     let aiMove = getBestAIMove(); 
     let mCardKey = 'ATAQUE'; 
     let mDisarmTarget = null; 
@@ -626,38 +628,42 @@ function playCardFlow(index, pDisarmChoice) {
         else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } 
     }
 
-    // --- CORREÇÃO VISUAL AQUI ---
+    // --- CORREÇÃO DO FANTASMA / DUPLICAÇÃO ---
     let handContainer = document.getElementById('player-hand'); 
     let realCardEl = handContainer.children[index]; 
     let startRect = null;
 
     if(realCardEl) { 
-        // 1. Capturamos a posição exata da carta HOJE (incluindo transforms se houver)
+        // 1. Capturamos a posição antes de mexer em qualquer coisa
         startRect = realCardEl.getBoundingClientRect(); 
         
-        // 2. Removemos a transição CSS para que a alteração seja instantânea
+        // 2. Removemos a transição para o sumiço ser instantâneo
         realCardEl.style.transition = 'none';
+
+        // 3. A SOLUÇÃO: Usamos setProperty com 'important' para vencer o CSS
+        realCardEl.style.setProperty('opacity', '0', 'important');
+        realCardEl.style.setProperty('visibility', 'hidden', 'important');
         
-        // 3. Tornamos ela invisível imediatamente. 
-        // Nota: Não usamos display:none para não "quebrar" o layout da mão (flexbox) antes da hora.
-        realCardEl.style.visibility = 'hidden';
-        realCardEl.style.opacity = '0';
+        // 4. Limpeza extra (Removemos a arte interna para garantir que fique vazio)
+        realCardEl.innerHTML = '';
+        realCardEl.style.border = 'none';
+        realCardEl.style.background = 'none';
+        realCardEl.style.boxShadow = 'none';
     }
     
-    // Inicia a animação de voo saindo EXATAMENTE de onde a carta invisível está
+    // Dispara a animação de voo saindo do lugar onde a carta estava
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
         renderTable(cardKey, 'p-slot'); 
         updateUI(); 
     }, false, true); 
 
-    // Animação do oponente (mantida igual)
+    // Animação do Inimigo (Inalterada)
     const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
     animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { 
         renderTable(mCardKey, 'm-slot'); 
         setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); 
     }, false, true);
 }
-
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
 
