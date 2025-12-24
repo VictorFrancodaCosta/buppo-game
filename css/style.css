@@ -206,8 +206,7 @@ body {
     visibility: visible; 
 }
 
-/* --- EFEITO FOIL / BRILHO APPLE TV --- */
-/* --- EFEITO FOIL HOLOGRÁFICO (ESTILO TCG) --- */
+/* --- EFEITO FOIL HOLOGRÁFICO (SUAVIZADO) --- */
 .card::after {
     content: "";
     position: absolute;
@@ -218,33 +217,30 @@ body {
     opacity: 0;
     transition: opacity 0.2s ease;
 
-    /* AQUI ESTÁ A MÁGICA DO FOIL:
-       Um gradiente linear inclinado com faixas de cores (dourado, rosa, ciano, branco).
-       Isso simula o reflexo prismático de cartas raras.
+    /* GRADIENTE RECALIBRADO PARA NÃO ESCONDER A ARTE:
+       Reduzi as cores para 0.15 (15%) e o branco para 0.25 (25%).
+       Agora é uma "película" fina, não uma luz forte.
     */
     background: linear-gradient(
         115deg,
-        transparent 20%,
-        rgba(255, 215, 0, 0.2) 30%,  /* Dourado sutil */
-        rgba(255, 0, 150, 0.2) 45%,  /* Magenta */
-        rgba(0, 255, 255, 0.2) 55%,  /* Ciano */
-        rgba(255, 255, 255, 0.8) 70%, /* Brilho Branco Forte (Reflexo) */
+        transparent 25%,
+        rgba(255, 215, 0, 0.15) 35%,  /* Dourado bem leve */
+        rgba(255, 0, 150, 0.15) 45%,  /* Magenta leve */
+        rgba(0, 255, 255, 0.15) 55%,  /* Ciano leve */
+        rgba(255, 255, 255, 0.25) 70%, /* Branco suave (Reflexo de vidro) */
         transparent 80%
     );
 
-    /* O background é maior que a carta para podermos "passear" com ele */
     background-size: 300% 300%;
-
-    /* Movemos o arco-íris baseado na posição do mouse (que já vem do JS) */
     background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%));
 
-    /* color-dodge ou hard-light criam o aspecto metálico vibrante */
+    /* Mantemos color-dodge para o aspecto metálico, mas com cores fracas ele não estoura */
     mix-blend-mode: color-dodge; 
 }
 
-/* Mostra o foil no hover */
+/* Reduzi a opacidade máxima para 0.8 para garantir transparência */
 .card:hover::after {
-    opacity: 1;
+    opacity: 0.8;
 }
 
 .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
