@@ -195,7 +195,8 @@ function dealAllInitialCards() {
     
     if(cards.length === 0) { isProcessing = false; return; }
 
-    // Garante visibilidade
+    // Garante que todas estejam visíveis (opacidade 1) mas na posição inicial (mão)
+    // A função animateCardFromDeck vai "puxá-las" para o deck visualmente e soltar
     cards.forEach(c => { c.style.opacity = '1'; });
 
     // Anima uma por uma
