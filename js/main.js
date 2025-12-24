@@ -220,18 +220,18 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA
+// LÓGICA DE PARTIDA (COM CORREÇÃO DE VISIBILIDADE)
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // 1. BLOQUEIO VISUAL: Adiciona a classe que esconde tudo
+    // --- CORREÇÃO: ADICIONA A CLASSE QUE ESCONDE AS CARTAS ---
     const handEl = document.getElementById('player-hand');
     if (handEl) {
-        handEl.innerHTML = ''; 
-        handEl.classList.add('preparing'); // <--- O SEGREDO
+        handEl.innerHTML = '';
+        handEl.classList.add('preparing'); // A trava visual
     }
     
     resetUnit(player); 
@@ -239,16 +239,17 @@ function startGameFlow() {
     turnCount = 1; 
     playerHistory = [];
     
-    // Distribui as cartas na memória
+    // Distribui as cartas
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Cria o HTML das cartas (elas nascerão invisíveis por causa da classe 'preparing')
+    // Cria o HTML (que nascerá invisível por causa da classe .preparing)
     updateUI();
     
-    // Inicia a animação
+    // Inicia a animação imediatamente (sem setTimeout)
     dealAllInitialCards();
 }
+
 function checkEndGame(){ 
     if(player.hp<=0 || monster.hp<=0) { 
         isProcessing = true; 
@@ -462,21 +463,22 @@ function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
     
+    // 1. Pega as cartas que JÁ ESTÃO na tela
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // 2. CONFIGURA A ANIMAÇÃO EM CADA CARTA (Ainda invisíveis)
+    // 2. Aplica a classe de animação em cada uma
     cards.forEach((cardEl, i) => {
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
     });
 
-    // 3. DESBLOQUEIO: Remove a trava do container.
-    // Como as cartas agora têm a classe .intro-anim (que também tem opacity:0 no start),
-    // a transição visual será perfeita, sem piscar.
+    // 3. DESBLOQUEIO VISUAL: Remove a classe .preparing do pai.
+    // Como os filhos agora têm .intro-anim (que começa com opacity:0),
+    // eles continuarão invisíveis até a animação começar, evitando o "piscar".
     if(handEl) handEl.classList.remove('preparing');
 
-    // 4. LIMPEZA FINAL: Remove as classes de animação quando terminarem
+    // 4. LIMPEZA FINAL: Remove as classes de animação
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
