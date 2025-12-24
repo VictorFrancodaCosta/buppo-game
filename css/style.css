@@ -179,7 +179,7 @@ body {
 .slot .card { width: 100% !important; height: 100% !important; margin: 0; border-radius: 16px !important; box-shadow: none; cursor: default; transform: translateZ(0px); border-width: 2px; }
 .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
 
-/* --- CORREÇÃO DA MÃO DO JOGADOR (FLIP) --- */
+/* --- MÃO DO JOGADOR (ESTÁVEL) --- */
 .hand-wrapper { 
     position: absolute; 
     bottom: -25px; 
@@ -189,8 +189,7 @@ body {
     display: flex; 
     justify-content: center; 
     align-items: flex-end; 
-    /* GARANTE QUE FIQUE ACIMA DO TABULEIRO */
-    z-index: 2000; 
+    z-index: 2000; /* Garante que fique acima do tabuleiro */
     pointer-events: none; 
     perspective: 1000px; 
 }
@@ -213,11 +212,11 @@ body {
     transform-style: preserve-3d; 
     background-color: #111; 
     
-    /* OPACIDADE SEMPRE 1 PARA EVITAR SUMIÇO */
+    /* VISIBILIDADE PADRÃO GARANTIDA */
     opacity: 1; 
     visibility: visible; 
     
-    /* Transição para o movimento suave */
+    /* Transições suaves para movimento */
     transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
                 margin 0.2s, 
                 box-shadow 0.2s, 
