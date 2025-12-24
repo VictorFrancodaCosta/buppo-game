@@ -57,51 +57,35 @@ let mixerInterval = null;
 const MusicController = {
     currentTrackId: null,
     fadeTimer: null,
-
-    // Função única para trocar faixas
     play(trackId) {
-        if (this.currentTrackId === trackId) return; // Se já está tocando a certa, não faz nada (Evita reinício)
-
+        if (this.currentTrackId === trackId) return; 
         console.log(`[Music] Trocando de ${this.currentTrackId} para ${trackId}`);
         const maxVol = 0.5 * window.masterVol;
-
-        // 1. FADE OUT da música antiga (se houver)
         if (this.currentTrackId && audios[this.currentTrackId]) {
             const oldAudio = audios[this.currentTrackId];
             this.fadeOut(oldAudio);
         }
-
-        // 2. PREPARA a nova música (se houver)
         if (trackId && audios[trackId]) {
             const newAudio = audios[trackId];
-            
-            // --- LÓGICA DE INÍCIO ---
             if (trackId === 'bgm-menu') {
-                // Saguão: Ponto Aleatório Seguro (entre 10s e 50s)
                 newAudio.currentTime = 10 + Math.random() * 40;
             } else {
-                // Batalha: Início
                 newAudio.currentTime = 0;
             }
-            
             if (!window.isMuted) {
-                newAudio.volume = 0; // Começa mudo para o fade in
+                newAudio.volume = 0; 
                 newAudio.play().catch(e => console.warn("Autoplay prevent", e));
                 this.fadeIn(newAudio, maxVol);
             }
         }
-
         this.currentTrackId = trackId;
     },
-
-    // Apenas para a música atual (Fade Out)
     stopCurrent() {
         if (this.currentTrackId && audios[this.currentTrackId]) {
             this.fadeOut(audios[this.currentTrackId]);
         }
         this.currentTrackId = null;
     },
-
     fadeOut(audio) {
         let vol = audio.volume;
         const fadeOutInt = setInterval(() => {
@@ -115,7 +99,6 @@ const MusicController = {
             }
         }, 50);
     },
-
     fadeIn(audio, targetVol) {
         let vol = 0;
         audio.volume = 0;
@@ -138,10 +121,7 @@ window.toggleMute = function() {
     const iconOn = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M3,9v6h4l5,5V4L7,9H3z M16.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C15.48,15.29,16.5,13.77,16.5,12z M14,3.23v2.06 c2.89,0.86,5,3.54,5,6.71s-2.11,5.85-5,6.71v2.06c4.01-0.91,7-4.49,7-8.77S18.01,4.14,14,3.23z"/></svg>`;
     const iconOff = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M16.5,12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45,2.45C16.42,12.5,16.5,12.26,16.5,12z M19,12c0,0.94-0.2,1.82-0.54,2.64l1.51,1.51C20.63,14.91,21,13.5,21,12c0-4.28-2.99-7.86-7-8.77v2.06C16.89,6.15,19,8.83,19,12z M4.27,3L3,4.27l4.56,4.56C7.39,8.91,7.2,8.96,7,9H3v6h4l5,5v-6.73l4.25,4.25c-0.67,0.52-1.42,0.93-2.25,1.18v2.06c1.38-0.31,2.63-0.95,3.69-1.81L19.73,21L21,19.73L9,7.73V4L4.27,3z M12,4L9.91,6.09L12,8.18V4z"/></svg>`;
     if(btn) btn.innerHTML = window.isMuted ? iconOff : iconOn;
-
     Object.values(audios).forEach(audio => { if(audio) audio.muted = window.isMuted; });
-    
-    // Se desmutar, força o MusicController a tocar o que deveria estar tocando
     if(!window.isMuted && MusicController.currentTrackId) {
         const audio = audios[MusicController.currentTrackId];
         if(audio && audio.paused) audio.play();
@@ -153,16 +133,11 @@ window.playNavSound = function() {
     if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
 };
 
-// =======================
-// NAVEGAÇÃO E TRANSIÇÃO
-// =======================
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
-    
     const configBtn = document.getElementById('btn-config-toggle');
     const surrenderBtn = document.getElementById('btn-surrender');
-
     if(screenId === 'game-screen') {
         if(surrenderBtn) surrenderBtn.style.display = 'block';
         if(configBtn) configBtn.style.display = 'flex'; 
@@ -174,46 +149,31 @@ window.showScreen = function(screenId) {
     }
 }
 
-// 1. TRANSIÇÃO: SAGUÃO -> BATALHA
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
-    
     if(transText) transText.innerText = "PREPARANDO BATALHA...";
     if(transScreen) transScreen.classList.add('active');
-
-    // Durante a transição: Toca Batalha (O Controller cuida do Fade Out do Menu)
     setTimeout(() => {
-        MusicController.play('bgm-loop'); // Toca Batalha
-
+        MusicController.play('bgm-loop'); 
         let bg = document.getElementById('game-background');
         if(bg) bg.classList.remove('lobby-mode');
-
         window.showScreen('game-screen');
-        
-        // Limpa visual
         const handEl = document.getElementById('player-hand'); 
         if(handEl) handEl.innerHTML = '';
-        
         setTimeout(() => {
             if(transScreen) transScreen.classList.remove('active');
             setTimeout(() => { startGameFlow(); }, 200); 
         }, 1500);
-
     }, 500); 
 }
 
-// 2. TRANSIÇÃO: BATALHA -> SAGUÃO
 window.transitionToLobby = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
-    
     if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
     if(transScreen) transScreen.classList.add('active');
-
-    // Fade Out da Batalha IMEDIATO
     MusicController.stopCurrent(); 
-
     setTimeout(() => {
         window.goToLobby(false); 
         setTimeout(() => {
@@ -222,21 +182,16 @@ window.transitionToLobby = function() {
     }, 500);
 }
 
-// 3. ENTRADA NO SAGUÃO
 window.goToLobby = async function(isAutoLogin = false) {
     if(!currentUser) {
         window.showScreen('start-screen');
-        MusicController.play('bgm-menu'); // Toca Menu
+        MusicController.play('bgm-menu'); 
         return;
     }
-
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
-    
-    MusicController.play('bgm-menu'); // Toca Menu (Com ponto aleatório automático)
+    MusicController.play('bgm-menu'); 
     createLobbyFlares();
-
-    // Firebase
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
@@ -248,7 +203,6 @@ window.goToLobby = async function(isAutoLogin = false) {
         document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
     }
-
     const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
     onSnapshot(q, (snapshot) => {
         let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
@@ -262,50 +216,35 @@ window.goToLobby = async function(isAutoLogin = false) {
         html += '</tbody></table>';
         document.getElementById('ranking-content').innerHTML = html;
     });
-
     window.showScreen('lobby-screen');
     document.getElementById('end-screen').classList.remove('visible'); 
 };
 
-// =======================
-// LÓGICA DO JOGO (GAME LOOP)
-// =======================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
-    
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
     playerHistory = [];
-    
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
-    
     updateUI();
-    
-    // Configura a opacidade para 0 antes da animação
     const handEl = document.getElementById('player-hand'); 
     if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
-    
     setTimeout(() => { dealAllInitialCards(); }, 100);
 }
 
-// 4. FIM DE JOGO
 function checkEndGame(){ 
     if(player.hp<=0 || monster.hp<=0) { 
         isProcessing = true; 
         isLethalHover = false; 
-        
-        // Para a música de batalha
         MusicController.stopCurrent();
-
         setTimeout(()=>{ 
             let title = document.getElementById('end-title'); 
             let isWin = player.hp > 0;
             let isTie = player.hp <= 0 && monster.hp <= 0;
-
             if(isTie) { 
                 title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); 
             } else if(isWin) { 
@@ -313,18 +252,13 @@ function checkEndGame(){
             } else { 
                 title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); 
             } 
-            
             if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(); } 
             else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
-            
             document.getElementById('end-screen').classList.add('visible'); 
         }, 1000); 
     } else { isProcessing = false; } 
 }
 
-// =======================
-// FIREBASE & LOGIN
-// =======================
 onAuthStateChanged(auth, (user) => {
     setTimeout(() => {
         const loading = document.getElementById('loading-screen');
@@ -333,7 +267,6 @@ onAuthStateChanged(auth, (user) => {
             setTimeout(() => loading.style.display = 'none', 500);
         }
     }, 500);
-
     if (user) {
         currentUser = user;
         window.goToLobby(true); 
@@ -344,8 +277,7 @@ onAuthStateChanged(auth, (user) => {
         if(bg) bg.classList.remove('lobby-mode');
         const btnTxt = document.getElementById('btn-text');
         if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
-        
-        MusicController.play('bgm-menu'); // Toca Menu no Login
+        MusicController.play('bgm-menu'); 
     }
 });
 
@@ -399,7 +331,7 @@ window.registrarDerrotaOnline = async function() {
 window.restartMatch = function() {
     document.getElementById('end-screen').classList.remove('visible');
     setTimeout(startGameFlow, 50);
-    MusicController.play('bgm-loop'); // Reinicia a de batalha
+    MusicController.play('bgm-loop'); 
 }
 
 window.abandonMatch = function() {
@@ -412,9 +344,6 @@ window.abandonMatch = function() {
      }
 }
 
-// =======================
-// CARREGAMENTO & EFEITOS
-// =======================
 function preloadGame() {
     ASSETS_TO_LOAD.images.forEach(src => { let img = new Image(); img.src = src; img.onload = () => updateLoader(); img.onerror = () => updateLoader(); });
     ASSETS_TO_LOAD.audio.forEach(a => { let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; audios[a.id] = s; s.onloadedmetadata = () => updateLoader(); s.onerror = () => updateLoader(); setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); });
@@ -424,7 +353,6 @@ function updateLoader() {
     assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
     const fill = document.getElementById('loader-fill');
     if(fill) fill.style.width = pct + '%';
-    
     if(assetsLoaded >= totalAssets) {
         setTimeout(() => {
             const loading = document.getElementById('loading-screen');
@@ -433,10 +361,7 @@ function updateLoader() {
                 setTimeout(() => loading.style.display = 'none', 500);
             }
         }, 1000); 
-
-        // INICIALIZA O ÁUDIO NO PRIMEIRO CLIQUE (Evita erro de autoplay)
         document.body.addEventListener('click', () => { 
-            // Só tenta tocar se NENHUMA faixa estiver definida ainda
             if (!MusicController.currentTrackId) {
                 MusicController.play('bgm-menu');
             }
@@ -481,7 +406,6 @@ function createLobbyFlares() {
 
 function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
 
-// MIXER AGORA SÓ CONTROLA EFEITO CINE (TENSÃO)
 function updateAudioMixer() { 
     const cineAudio = audios['sfx-cine']; 
     if(!cineAudio) return; 
@@ -504,56 +428,11 @@ window.updateVol = function(type, val) {
 }
 function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[key].play().catch(e => console.log("Audio prevented:", e)); } }
 
-// =======================
-// VISUAL FX E AUXILIARES
-// =======================
 function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
 initAmbientParticles();
 
-function apply3DTilt(element, isHand = false) { 
-    if(window.innerWidth < 768) return; 
-    
-    element.addEventListener('mousemove', (e) => { 
-        const rect = element.getBoundingClientRect(); 
-        const x = e.clientX - rect.left; 
-        const y = e.clientY - rect.top; 
-        
-        // Coordenadas normalizadas (-0.5 a 0.5)
-        const xPct = (x / rect.width) - 0.5; 
-        const yPct = (y / rect.height) - 0.5; 
-        
-        // ENVIA COORDENADAS PARA O CSS (Para o efeito Foil)
-        element.style.setProperty('--rx', xPct);
-        element.style.setProperty('--ry', yPct);
+function apply3DTilt(element, isHand = false) { if(window.innerWidth < 768) return; element.addEventListener('mousemove', (e) => { const rect = element.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; let lift = isHand ? 'translateY(-100px) scale(1.8)' : 'scale(1.1)'; let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; element.style.transform = `${lift} ${rotate}`; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; }); element.addEventListener('mouseleave', () => { element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; }); }
 
-        // CONFIGURAÇÃO DO 3D MAIS FORTE
-        // Aumentei o scale para 2.2 e o translateY para subir mais
-        let lift = isHand ? 'translateY(-140px) scale(2.2)' : 'scale(1.1)';
-        
-        // Aumentei a rotação para 55deg (antes era 40)
-        let rotate = `rotateX(${yPct * -55}deg) rotateY(${xPct * 55}deg)`; 
-        
-        if(element.classList.contains('disabled-card')) {
-             rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
-        }
-        
-        element.style.transform = `${lift} ${rotate}`; 
-        
-        // Parallax da arte interna
-        let art = element.querySelector('.card-art'); 
-        if(art) art.style.backgroundPosition = `${50 + (xPct * 25)}% ${50 + (yPct * 25)}%`; 
-    }); 
-    
-    element.addEventListener('mouseleave', () => { 
-        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
-        let art = element.querySelector('.card-art'); 
-        if(art) art.style.backgroundPosition = 'center'; 
-        
-        // Reseta o brilho
-        element.style.setProperty('--rx', 0);
-        element.style.setProperty('--ry', 0);
-    }); 
-}
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
 function triggerDamageEffect(isPlayer, playAudio = true) { try { if(playAudio) playSound('sfx-hit'); let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); let ov = document.getElementById('dmg-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } } catch(e) {} }
@@ -565,37 +444,25 @@ function showCenterText(txt, col) { let el = document.createElement('div'); el.c
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
-// ===============================================
-// FUNÇÃO DEAL CARDS (MODIFICADA: SEM MOVIMENTO)
-// ===============================================
 function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
-    
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
-    
     if(cards.length === 0) { 
         isProcessing = false; 
         return; 
     }
-
-    // Garante que todas comecem invisíveis (mas no lugar certo)
     cards.forEach(c => c.style.opacity = '0');
-
-    // Loop simples: Apenas Fade In (Opacidade)
     cards.forEach((cardEl, i) => {
         setTimeout(() => {
-            // Habilita a transição de opacidade
             cardEl.style.transition = 'opacity 0.5s ease-out, transform 0.2s'; 
             cardEl.style.opacity = '1'; 
-            
             playSound('sfx-hover'); 
-            
             if(i === cards.length - 1) {
                 setTimeout(() => { isProcessing = false; }, 500);
             }
-        }, i * 100); // Rápido (100ms)
+        }, i * 100); 
     });
 }
 
@@ -618,18 +485,14 @@ function getBestAIMove() {
             moves.push({ card: card, index: index, score: 0 }); 
         }
     });
-
     if(moves.length === 0) return null;
-
     let recentHistory = playerHistory.slice(-5);
     let attackCount = recentHistory.filter(c => c === 'ATAQUE').length;
     let playerAggro = recentHistory.length > 0 ? (attackCount / recentHistory.length) : 0.5;
-
     let threatLvl = player.lvl + player.bonusAtk;
     let amIDying = monster.hp <= threatLvl;
     let myDmg = monster.lvl + monster.bonusAtk;
     let canKill = player.hp <= myDmg;
-
     moves.forEach(m => {
         let score = 50; 
         if (m.card === 'ATAQUE') { if (canKill) score += 500; if (playerAggro < 0.4) score += 40; if (amIDying) score -= 30; }
@@ -639,19 +502,15 @@ function getBestAIMove() {
         else if (m.card === 'TREINAR') { if (turnCount < 5) score += 30; if (amIDying || monster.hp <= 3) score -= 200; }
         m.score = score + Math.random() * 15; 
     });
-
     moves.sort((a, b) => b.score - a.score);
     return moves[0];
 }
 
 function playCardFlow(index, pDisarmChoice) {
     isProcessing = true; 
-    
-    // Remove a carta da lógica (array)
     let cardKey = player.hand.splice(index, 1)[0]; 
     playerHistory.push(cardKey);
 
-    // Lógica da IA (Inalterada)
     let aiMove = getBestAIMove(); 
     let mCardKey = 'ATAQUE'; 
     let mDisarmTarget = null; 
@@ -675,44 +534,33 @@ function playCardFlow(index, pDisarmChoice) {
     let handContainer = document.getElementById('player-hand'); 
     let realCardEl = handContainer.children[index]; 
     let startRect = null;
-
     if(realCardEl) { 
-        // 1. Capturamos a posição antes de mexer em qualquer coisa
         startRect = realCardEl.getBoundingClientRect(); 
-        
-        // 2. Removemos a transição para o sumiço ser instantâneo
         realCardEl.style.transition = 'none';
-
-        // 3. A SOLUÇÃO: Usamos setProperty com 'important' para vencer o CSS
         realCardEl.style.setProperty('opacity', '0', 'important');
         realCardEl.style.setProperty('visibility', 'hidden', 'important');
-        
-        // 4. Limpeza extra (Removemos a arte interna para garantir que fique vazio)
         realCardEl.innerHTML = '';
         realCardEl.style.border = 'none';
         realCardEl.style.background = 'none';
         realCardEl.style.boxShadow = 'none';
     }
     
-    // Dispara a animação de voo saindo do lugar onde a carta estava
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
         renderTable(cardKey, 'p-slot'); 
         updateUI(); 
     }, false, true); 
 
-    // Animação do Inimigo (Inalterada)
     const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
     animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { 
         renderTable(mCardKey, 'm-slot'); 
         setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); 
     }, false, true);
 }
+
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
-
     if(mAct === 'ATAQUE') { pDmg += monster.lvl; }
     if(pAct === 'ATAQUE') { mDmg += player.lvl; }
-
     if(pAct === 'BLOQUEIO') { pDmg = 0; if(mAct === 'ATAQUE') { mDmg += (1 + player.bonusBlock); } }
     if(mAct === 'BLOQUEIO') { mDmg = 0; if(pAct === 'ATAQUE') { pDmg += (1 + monster.bonusBlock); } }
 
@@ -792,7 +640,6 @@ function processMasteries(u, triggers, cb) {
 function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
-// ANIMAÇÃO DE VOO (COMBATE) - MANTIDA PARA MÃO -> MESA
 function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false) {
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
     let e = { top: 0, left: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
