@@ -404,11 +404,10 @@ function startGameFlow() {
     
     updateUI(); 
     
-    // Força invisibilidade antes da animação
-    const handEl = document.getElementById('player-hand'); 
-    if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
+    // (Linha removida aqui para evitar conflito)
 
-    setTimeout(() => { dealAllInitialCards(); }, 100);
+    // Chama a animação
+    dealAllInitialCards();
 }
 
 function updateUI() { 
