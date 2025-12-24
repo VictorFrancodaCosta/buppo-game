@@ -348,3 +348,29 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); }
     to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); }
 }
+
+/* ARQUIVO: css/style.css (Adicione ao final) */
+
+/* --- ANIMAÇÃO DE BOUNCE (SURGIMENTO) --- */
+@keyframes handBounce {
+    0% { 
+        opacity: 0;
+        transform: translateY(100px) scale(0.5); /* Começa pequena e baixo */
+    }
+    60% { 
+        opacity: 1;
+        transform: translateY(-20px) scale(1.1); /* Sobe um pouco além (Bounce) */
+    }
+    80% {
+        transform: translateY(10px) scale(0.95); /* Desce um pouquinho */
+    }
+    100% { 
+        opacity: 1;
+        transform: translateY(0) scale(1); /* Assenta no lugar original */
+    }
+}
+
+.pop-in {
+    /* "forwards" garante que ela pare no frame 100% até removermos a classe */
+    animation: handBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
