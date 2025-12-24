@@ -846,7 +846,21 @@ function showTT(k) {
 // SISTEMA HÍBRIDO DE FX (CANVAS)
 // =======================
 
-const canvas = document.getElementById('fx-canvas');
+// --- CRIAÇÃO AUTOMÁTICA DO CANVAS SE NÃO EXISTIR ---
+let canvas = document.getElementById('fx-canvas');
+if (!canvas) {
+    canvas = document.createElement('canvas');
+    canvas.id = 'fx-canvas';
+    // Aplica estilos essenciais via JS caso o CSS falhe
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '9000';
+    document.body.appendChild(canvas);
+}
 const ctx = canvas.getContext('2d');
 let particles = [];
 
