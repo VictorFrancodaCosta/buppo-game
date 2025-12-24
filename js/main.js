@@ -613,38 +613,161 @@ function playCardFlow(index, pDisarmChoice) {
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
-    if(mAct === 'ATAQUE') mDmg += monster.lvl; 
-    if(pAct === 'ATAQUE') pDmg += player.lvl;
-    if(pAct === 'BLOQUEIO') { pDmg = 0; if(mAct === 'ATAQUE') mDmg += (1 + player.bonusBlock); }
-    if(mAct === 'BLOQUEIO') { mDmg = 0; if(pAct === 'ATAQUE') pDmg += (1 + monster.bonusBlock); }
 
+    // --- 1. CÁLCULO DE DANO BASE (CORRIGIDO) ---
+    // Quem ATACA causa dano na variável do OUTRO
+    
+    if(mAct === 'ATAQUE') {
+        pDmg += monster.lvl; // Se Monstro ataca, JOGADOR (pDmg) toma dano
+    }
+    
+    if(pAct === 'ATAQUE') {
+        mDmg += player.lvl; // Se Jogador ataca, MONSTRO (mDmg) toma dano
+    }
+
+    // --- 2. CÁLCULO DE BLOQUEIO E REFLEXÃO ---
+    
+    // Bloqueio do Jogador
+    if(pAct === 'BLOQUEIO') { 
+        pDmg = 0; // Anula o dano que o jogador tomaria
+        if(mAct === 'ATAQUE') {
+            // Contra-Golpe: Adiciona dano ao Monstro
+            mDmg += (1 + player.bonusBlock); 
+        }
+    }
+    
+    // Bloqueio do Monstro
+    if(mAct === 'BLOQUEIO') { 
+        mDmg = 0; // Anula o dano que o monstro tomaria
+        if(pAct === 'ATAQUE') {
+            // Contra-Golpe: Adiciona dano ao Jogador
+            pDmg += (1 + monster.bonusBlock); 
+        }
+    }
+
+    // --- 3. VERIFICAÇÃO DE COLISÃO (CLASH) ---
     let clash = false;
-    let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
-    if(pBlocks || mBlocks) { clash = true; triggerBlockEffect(); }
+    let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); 
+    let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
+    
+    if(pBlocks || mBlocks) { 
+        clash = true; 
+        triggerBlockEffect(); 
+    }
 
-    let nextPlayerDisabled = null; let nextMonsterDisabled = null;
-    if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
-    if(pAct === 'DESARMAR') { nextMonsterDisabled = pDisarmChoice; }
-    if(pAct === 'DESARMAR' && mAct === 'DESARMAR') { nextPlayerDisabled = null; nextMonsterDisabled = null; showCenterText("ANULADO", "#aaa"); }
+    // --- 4. LÓGICA DE DESARME ---
+    let nextPlayerDisabled = null; 
+    let nextMonsterDisabled = null;
+    
+    if(mAct === 'DESARMAR') { 
+        if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; 
+        else nextPlayerDisabled = 'ATAQUE'; 
+    }
+    if(pAct === 'DESARMAR') { 
+        nextMonsterDisabled = pDisarmChoice; 
+    }
+    
+    if(pAct === 'DESARMAR' && mAct === 'DESARMAR') { 
+        nextPlayerDisabled = null; 
+        nextMonsterDisabled = null; 
+        showCenterText("ANULADO", "#aaa"); 
+    }
 
-    player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
+    player.disabled = nextPlayerDisabled; 
+    monster.disabled = nextMonsterDisabled;
+
+    // --- 5. APLICAÇÃO DO DANO E EFEITOS VISUAIS ---
     if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
 
-    if(pDmg > 0) { player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); let soundOn = !(clash && mAct === 'BLOQUEIO'); triggerDamageEffect(true, soundOn); }
-    if(mDmg > 0) { monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn); }
+    if(pDmg > 0) { 
+        player.hp -= pDmg; 
+        showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); 
+        // Som de hit toca se NÃO foi um bloqueio bem sucedido do monstro
+        let soundOn = !(clash && mAct === 'BLOQUEIO'); 
+        triggerDamageEffect(true, soundOn); 
+    }
+    
+    if(mDmg > 0) { 
+        monster.hp -= mDmg; 
+        showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); 
+        // Som de hit toca se NÃO foi um bloqueio bem sucedido do jogador
+        let soundOn = !(clash && pAct === 'BLOQUEIO'); 
+        triggerDamageEffect(false, soundOn); 
+    }
     
     updateUI();
-    let pDead = player.hp <= 0, mDead = monster.hp <= 0;
-    if(!pDead && pAct === 'DESCANSAR') { let h = pDmg===0?3:2; player.hp=Math.min(player.maxHp, player.hp+h); showFloatingText('p-lvl', `+${h} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
-    if(!mDead && mAct === 'DESCANSAR') { monster.hp=Math.min(monster.maxHp, monster.hp+(mDmg===0?3:2)); triggerHealEffect(false); playSound('sfx-heal'); }
-    function handleExtraXP(u) { if(u.deck.length > 0) { let card = u.deck.pop(); animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }); } }
-    if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
-    if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
 
+    // --- 6. CURA E BÔNUS DE DESCANSAR ---
+    let pDead = player.hp <= 0, mDead = monster.hp <= 0;
+    
+    if(!pDead && pAct === 'DESCANSAR') { 
+        // Bônus: Se não tomou dano (pDmg === 0), cura 3. Senão, cura 2.
+        let healAmount = (pDmg === 0) ? 3 : 2; 
+        player.hp = Math.min(player.maxHp, player.hp + healAmount); 
+        showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); 
+        triggerHealEffect(true); 
+        playSound('sfx-heal'); 
+    }
+    
+    if(!mDead && mAct === 'DESCANSAR') { 
+        let healAmount = (mDmg === 0) ? 3 : 2;
+        monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); 
+        triggerHealEffect(false); 
+        playSound('sfx-heal'); 
+    }
+
+    // --- 7. XP EXTRA (TREINAR E BÔNUS DE ATAQUE) ---
+    function handleExtraXP(u) { 
+        if(u.deck.length > 0) { 
+            let card = u.deck.pop(); 
+            animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
+                u.xp.push(card); 
+                triggerXPGlow(u.id); 
+                updateUI(); 
+            }); 
+        } 
+    }
+
+    // Treinar sempre dá XP
+    if(!pDead && pAct === 'TREINAR') handleExtraXP(player); 
+    if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
+    
+    // Ataque dá XP se o oponente Descansou
+    if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); 
+    if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
+
+    // --- 8. FINALIZAÇÃO E ANIMAÇÃO PARA ÁREA DE XP ---
     setTimeout(() => {
-        animateFly('p-slot', 'p-xp', pAct, () => { if(!pDead) { player.xp.push(pAct); triggerXPGlow('p'); updateUI(); } checkLevelUp(player, () => { if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); }); });
-        animateFly('m-slot', 'm-xp', mAct, () => { if(!mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); } checkLevelUp(monster, () => { if(!mDead) drawCardLogic(monster, 1); checkEndGame(); }); });
-        document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
+        animateFly('p-slot', 'p-xp', pAct, () => { 
+            if(!pDead) { 
+                player.xp.push(pAct); 
+                triggerXPGlow('p'); 
+                updateUI(); 
+            } 
+            checkLevelUp(player, () => { 
+                if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { 
+                    drawCardLogic(player, 1); 
+                    turnCount++; 
+                    updateUI(); 
+                    isProcessing = false; 
+                }); 
+            }); 
+        });
+        
+        animateFly('m-slot', 'm-xp', mAct, () => { 
+            if(!mDead) { 
+                monster.xp.push(mAct); 
+                triggerXPGlow('m'); 
+                updateUI(); 
+            } 
+            checkLevelUp(monster, () => { 
+                if(!mDead) drawCardLogic(monster, 1); 
+                checkEndGame(); 
+            }); 
+        });
+        
+        document.getElementById('p-slot').innerHTML = ''; 
+        document.getElementById('m-slot').innerHTML = '';
     }, 700);
 }
 
