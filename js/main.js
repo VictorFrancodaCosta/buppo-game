@@ -52,14 +52,13 @@ let isLethalHover = false;
 let mixerInterval = null;
 
 // =======================
-// NOVO CONTROLADOR DE MÚSICA (MusicController)
+// CONTROLLER DE MÚSICA
 // =======================
 const MusicController = {
     currentTrackId: null,
     fadeTimer: null,
     play(trackId) {
         if (this.currentTrackId === trackId) return; 
-        console.log(`[Music] Trocando de ${this.currentTrackId} para ${trackId}`);
         const maxVol = 0.5 * window.masterVol;
         if (this.currentTrackId && audios[this.currentTrackId]) {
             const oldAudio = audios[this.currentTrackId];
@@ -220,6 +219,9 @@ window.goToLobby = async function(isAutoLogin = false) {
     document.getElementById('end-screen').classList.remove('visible'); 
 };
 
+// ============================================
+// LÓGICA DE PARTIDA (LIMPA DE ANIMAÇÕES DE ENTRADA)
+// ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
@@ -230,15 +232,14 @@ function startGameFlow() {
     turnCount = 1; 
     playerHistory = [];
     
-    // Distribui as cartas logicamente (array)
+    // Distribui as cartas logicamente
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Desenha na tela (agora elas vão aparecer instantaneamente)
+    // Desenha na tela (instantaneamente)
     updateUI();
     
-    // REMOVIDO: Ocultação de cartas e timeout
-    // Chama a função de deal imediatamente, sem atrasos
+    // Destrava o jogo
     dealAllInitialCards();
 }
 
@@ -437,37 +438,6 @@ function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[
 function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
 initAmbientParticles();
 
-function apply3DTilt(element, isHand = false) { 
-    if(window.innerWidth < 768) return; 
-    
-    element.addEventListener('mousemove', (e) => { 
-        const rect = element.getBoundingClientRect(); 
-        const x = e.clientX - rect.left; 
-        const y = e.clientY - rect.top; 
-        const xPct = (x / rect.width) - 0.5; 
-        const yPct = (y / rect.height) - 0.5; 
-        
-        // --- ALTERAÇÃO DE ZOOM AQUI ---
-        // scale(2.3) = Aumenta muito o tamanho
-        // translateY(-140px) = Joga a carta mais pra cima
-        let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
-        
-        let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
-        if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
-        
-        element.style.transform = `${lift} ${rotate}`; 
-        
-        let art = element.querySelector('.card-art'); 
-        if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
-    }); 
-    
-    element.addEventListener('mouseleave', () => { 
-        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
-        let art = element.querySelector('.card-art'); 
-        if(art) art.style.backgroundPosition = 'center'; 
-    }); 
-}
-
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
 function triggerDamageEffect(isPlayer, playAudio = true) { try { if(playAudio) playSound('sfx-hit'); let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); let ov = document.getElementById('dmg-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } } catch(e) {} }
@@ -483,8 +453,6 @@ function dealAllInitialCards() {
     // LIMPEZA COMPLETA:
     // Sem loops, sem timeouts, sem opacidade.
     // As cartas já estão na tela graças ao updateUI() chamado no startGameFlow.
-    
-    // Apenas destravamos o jogo para o jogador interagir.
     isProcessing = false; 
 }
 
@@ -685,12 +653,14 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
     fly.style.top=e.top+'px'; fly.style.left=e.left+'px';
     setTimeout(() => { fly.remove(); if(cb) cb(); }, 250);
 }
-function function drawCardAnimated(unit, deckId, handId, cb) { 
+
+function drawCardAnimated(unit, deckId, handId, cb) { 
     // LIMPEZA COMPLETA:
     // Removemos o animateFly.
     // Apenas executa o callback (cb) imediatamente para seguir a lógica do jogo.
     if(cb) cb(); 
 }
+
 function renderTable(key, slotId) { let el = document.getElementById(slotId); el.innerHTML = ''; let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`; card.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[key].img}')"></div>`; el.appendChild(card); }
 function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
 
@@ -779,6 +749,7 @@ function showFloatingText(eid, txt, col) {
 window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
 window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
 const tt=document.getElementById('tooltip-box');
+
 function bindFixedTooltip(el,k) { 
     const updatePos = () => { 
         let rect = el.getBoundingClientRect(); 
@@ -787,10 +758,7 @@ function bindFixedTooltip(el,k) {
     return { 
         onmouseenter: (e) => { 
             showTT(k); 
-            
-            // --- ALTERAÇÃO DE POSIÇÃO AQUI ---
-            // Mobile: 300px (antes 160px)
-            // Desktop: 520px (antes 320px) - Bem alto para livrar o zoom
+            // AJUSTE DE POSIÇÃO (LIVRA O ZOOM)
             tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
             tt.style.top = 'auto'; 
             
@@ -802,6 +770,7 @@ function bindFixedTooltip(el,k) {
         } 
     }; 
 }
+
 function showTT(k) {
     let db = CARDS_DB[k];
     document.getElementById('tt-title').innerHTML = k; 
@@ -821,4 +790,43 @@ function showTT(k) {
         `;
     }
     tt.style.display = 'block';
+}
+
+function apply3DTilt(element, isHand = false) { 
+    if(window.innerWidth < 768) return; 
+    
+    element.addEventListener('mousemove', (e) => { 
+        const rect = element.getBoundingClientRect(); 
+        const x = e.clientX - rect.left; 
+        const y = e.clientY - rect.top; 
+        
+        // Calcula a posição do mouse em porcentagem (-0.5 a 0.5)
+        const xPct = (x / rect.width) - 0.5; 
+        const yPct = (y / rect.height) - 0.5; 
+        
+        // --- NOVO: Envia a posição para o CSS criar o brilho ---
+        element.style.setProperty('--rx', xPct);
+        element.style.setProperty('--ry', yPct);
+
+        // Zoom 2.3 e Translate -140px
+        let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
+        
+        let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
+        if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
+        
+        element.style.transform = `${lift} ${rotate}`; 
+        
+        let art = element.querySelector('.card-art'); 
+        if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
+    }); 
+    
+    element.addEventListener('mouseleave', () => { 
+        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
+        let art = element.querySelector('.card-art'); 
+        if(art) art.style.backgroundPosition = 'center'; 
+        
+        // Reseta o brilho quando tira o mouse
+        element.style.setProperty('--rx', 0);
+        element.style.setProperty('--ry', 0);
+    }); 
 }
