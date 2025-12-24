@@ -255,7 +255,7 @@ function dealAllInitialCards() {
     });
 }
 
-// AnimateFly Restaurada com Coordenadas
+// AnimateFly Restaurada com Coordenadas (COM SEGURANÇA DE ELEMENTOS)
 function animateFly(startRef, endRef, cardKey, callback, isDeal = false) {
     let startRect;
     if (typeof startRef === 'string') {
@@ -282,11 +282,14 @@ function animateFly(startRef, endRef, cardKey, callback, isDeal = false) {
     fly.style.top = startRect.top + 'px';
     fly.style.left = startRect.left + 'px';
     fly.style.transition = 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
+    
+    // Pequena rotação no deck
     fly.style.transform = `rotate(${(Math.random() - 0.5) * 10}deg) scale(0.8)`;
 
     document.body.appendChild(fly);
-    void fly.offsetWidth; 
+    void fly.offsetWidth; // Force Reflow
 
+    // 4. Mover para o Destino
     fly.style.top = endRect.top + 'px';
     fly.style.left = endRect.left + 'px';
     fly.style.width = endRect.width + 'px';
