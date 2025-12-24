@@ -841,3 +841,166 @@ function showTT(k) {
     }
     tt.style.display = 'block';
 }
+
+// =======================
+// SISTEMA HÍBRIDO DE FX (CANVAS)
+// =======================
+
+const canvas = document.getElementById('fx-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+// Ajusta o tamanho do canvas para a tela
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas(); // Chama uma vez ao iniciar
+
+// Classe Genérica de Partícula
+class Particle {
+    constructor(x, y, color, type) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.type = type; // 'explosion', 'heal', 'block'
+        
+        const angle = Math.random() * Math.PI * 2;
+        // Velocidade baseada no tipo
+        if(type === 'explosion') {
+            const speed = Math.random() * 5 + 2;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.life = 1.0;
+            this.decay = 0.02 + Math.random() * 0.02;
+            this.size = Math.random() * 6 + 2;
+        } else if (type === 'heal') {
+            this.vx = (Math.random() - 0.5) * 2;
+            this.vy = - (Math.random() * 2 + 1); // Sobe suavemente
+            this.life = 1.0;
+            this.decay = 0.01;
+            this.size = Math.random() * 4 + 2;
+        } else if (type === 'block') {
+            this.vx = (Math.random() - 0.5) * 8;
+            this.vy = (Math.random() - 0.5) * 8;
+            this.life = 1.0;
+            this.decay = 0.05;
+            this.size = Math.random() * 3 + 1;
+        }
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= this.decay;
+
+        // Gravidade leve apenas para explosões
+        if(this.type === 'explosion') this.vy += 0.2; 
+    }
+
+    draw(ctx) {
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.fillStyle = this.color;
+        
+        if(this.type === 'heal') {
+            // Desenha pequenas cruzes (+) ou círculos
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            // Quadrados ou Círculos para explosão
+            ctx.beginPath();
+            ctx.rect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+    }
+}
+
+// O Loop de Animação do Canvas
+function fxLoop() {
+    // Limpa a tela (mas deixa um rastro muito leve se quiser motion blur, aqui limpamos tudo)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Atualiza e desenha partículas
+    for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        particles[i].draw(ctx);
+        if (particles[i].life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+
+    requestAnimationFrame(fxLoop);
+}
+// Inicia o loop
+fxLoop();
+
+// --- SUBSTITUIÇÕES DAS FUNÇÕES ANTIGAS ---
+
+// Substitui a spawnParticles antiga
+window.spawnParticles = function(x, y, color, type = 'explosion') {
+    const amount = type === 'explosion' ? 30 : 15; // Mais partículas para explosão
+    for (let i = 0; i < amount; i++) {
+        particles.push(new Particle(x, y, color, type));
+    }
+}
+
+// Atualizando os gatilhos para usar o novo sistema
+window.triggerDamageEffect = function(isPlayer, playAudio = true) {
+    try {
+        if(playAudio) playSound('sfx-hit');
+        let elId = isPlayer ? 'p-slot' : 'm-slot';
+        let slot = document.getElementById(elId);
+        
+        if(slot) {
+            let r = slot.getBoundingClientRect();
+            // Calcula o centro do slot
+            let centerX = r.left + r.width / 2;
+            let centerY = r.top + r.height / 2;
+            
+            // Dispara partículas vermelhas no Canvas
+            spawnParticles(centerX, centerY, '#ff4757', 'explosion');
+        }
+
+        // Mantém o efeito de tremer a tela (CSS) pois é bom
+        document.body.classList.add('shake-screen');
+        setTimeout(() => document.body.classList.remove('shake-screen'), 400);
+
+        let ov = document.getElementById('dmg-overlay');
+        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); }
+    } catch(e) { console.error(e); }
+}
+
+window.triggerHealEffect = function(isPlayer) {
+    try {
+        let elId = isPlayer ? 'p-slot' : 'm-slot';
+        let slot = document.getElementById(elId);
+        if(slot) {
+            let r = slot.getBoundingClientRect();
+            // Partículas verdes flutuando
+            spawnParticles(r.left + r.width/2, r.top + r.height/2, '#2ecc71', 'heal');
+        }
+        let ov = document.getElementById('heal-overlay');
+        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); }
+    } catch(e) {}
+}
+
+window.triggerBlockEffect = function() {
+    try {
+        playSound('sfx-block');
+        // Pega o centro da tela (aproximado) para o impacto do bloqueio
+        let centerX = window.innerWidth / 2;
+        let centerY = window.innerHeight / 2;
+        
+        // Partículas de faísca azul/branca
+        spawnParticles(centerX, centerY, '#74b9ff', 'block');
+        spawnParticles(centerX, centerY, '#ffffff', 'block');
+
+        let ov = document.getElementById('block-overlay');
+        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); }
+        document.body.classList.add('shake-screen');
+        setTimeout(() => document.body.classList.remove('shake-screen'), 200);
+    } catch(e) {}
+}
