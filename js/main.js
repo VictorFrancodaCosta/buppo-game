@@ -224,16 +224,22 @@ function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
+    
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
     playerHistory = [];
+    
+    // Distribui as cartas logicamente (array)
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
+    
+    // Desenha na tela (agora elas vão aparecer instantaneamente)
     updateUI();
-    const handEl = document.getElementById('player-hand'); 
-    if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
-    setTimeout(() => { dealAllInitialCards(); }, 100);
+    
+    // REMOVIDO: Ocultação de cartas e timeout
+    // Chama a função de deal imediatamente, sem atrasos
+    dealAllInitialCards();
 }
 
 function checkEndGame(){ 
@@ -474,39 +480,12 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 function dealAllInitialCards() {
-    isProcessing = true; 
-    playSound('sfx-deal'); 
+    // LIMPEZA COMPLETA:
+    // Sem loops, sem timeouts, sem opacidade.
+    // As cartas já estão na tela graças ao updateUI() chamado no startGameFlow.
     
-    const handEl = document.getElementById('player-hand'); 
-    const cards = Array.from(handEl.children);
-    
-    if(cards.length === 0) { 
-        isProcessing = false; 
-        return; 
-    }
-
-    // Prepara as cartas invisíveis
-    cards.forEach(c => c.style.opacity = '0');
-
-    cards.forEach((cardEl, i) => {
-        setTimeout(() => {
-            // 1. Aplica a transição LENTA apenas para a entrada (fade-in e slide)
-            cardEl.style.transition = 'opacity 0.5s ease-out, transform 0.2s'; 
-            cardEl.style.opacity = '1'; 
-            
-            playSound('sfx-hover'); 
-            
-            // 2. A MÁGICA: Após 500ms (fim da animação de entrada), limpamos a regra inline.
-            // Assim, a carta volta a obedecer o CSS (que tem o zoom super rápido de 0.05s)
-            setTimeout(() => {
-                cardEl.style.transition = ''; 
-            }, 500);
-
-            if(i === cards.length - 1) {
-                setTimeout(() => { isProcessing = false; }, 500);
-            }
-        }, i * 100); 
-    });
+    // Apenas destravamos o jogo para o jogador interagir.
+    isProcessing = false; 
 }
 
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
@@ -706,7 +685,12 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
     fly.style.top=e.top+'px'; fly.style.left=e.left+'px';
     setTimeout(() => { fly.remove(); if(cb) cb(); }, 250);
 }
-function drawCardAnimated(unit, deckId, handId, cb) { if(unit.deck.length===0) { cb(); return; } animateFly(deckId, handId, unit.deck[unit.deck.length-1], cb); }
+function function drawCardAnimated(unit, deckId, handId, cb) { 
+    // LIMPEZA COMPLETA:
+    // Removemos o animateFly.
+    // Apenas executa o callback (cb) imediatamente para seguir a lógica do jogo.
+    if(cb) cb(); 
+}
 function renderTable(key, slotId) { let el = document.getElementById(slotId); el.innerHTML = ''; let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`; card.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[key].img}')"></div>`; el.appendChild(card); }
 function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
 
