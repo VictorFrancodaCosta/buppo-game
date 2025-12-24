@@ -187,10 +187,10 @@ body {
     display: flex; 
     justify-content: center; 
     align-items: flex-end; 
-    /* AUMENTAMOS O Z-INDEX PARA 2000 PARA FICAR ACIMA DO TABULEIRO */
     z-index: 2000; 
     pointer-events: none; 
-    transform-style: flat; 
+    /* CORREÇÃO CRÍTICA: Permite que elementos 3D filhos funcionem corretamente */
+    transform-style: preserve-3d; 
 }
 
 .card { 
@@ -211,11 +211,11 @@ body {
     transform-style: preserve-3d; 
     background-color: #111; 
     
-    /* REMOVIDO O !IMPORTANT DA OPACIDADE PARA O JS CONTROLAR */
+    /* PADRÃO: Visível. O JS controlará a invisibilidade temporária */
     opacity: 1; 
-    visibility: visible; 
+    visibility: visible;
     
-    transition: margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s, opacity 0.2s ease; 
+    transition: margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s; 
 }
 .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
 .flares-container { position: absolute; top: 50%; left: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
