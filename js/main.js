@@ -462,32 +462,29 @@ function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
     
-    // 1. Pega as cartas que JÁ ESTÃO na tela (colocadas pelo updateUI)
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // 2. Aplica a animação visual em cada uma
+    // 2. CONFIGURA A ANIMAÇÃO EM CADA CARTA (Ainda invisíveis)
     cards.forEach((cardEl, i) => {
-        // Deixa invisível para começar
-        cardEl.style.opacity = '0';
-        
-        // Adiciona a classe de animação (que definimos no CSS)
         cardEl.classList.add('intro-anim');
-        
-        // Coloca um delay progressivo (0.1s, 0.2s...) para efeito cascata
         cardEl.style.animationDelay = (i * 0.1) + 's';
-        
-        // 3. LIMPEZA: Quando a animação acabar (após 1.5s), remove a classe.
-        // Isso é crucial para que o zoom e o hover voltem a funcionar rápido.
-        setTimeout(() => {
-            cardEl.classList.remove('intro-anim');
-            cardEl.style.opacity = '1';
-            cardEl.style.animationDelay = '';
-        }, 1500);
     });
 
-    // Destrava o jogo
-    setTimeout(() => { isProcessing = false; }, 1600);
+    // 3. DESBLOQUEIO: Remove a trava do container.
+    // Como as cartas agora têm a classe .intro-anim (que também tem opacity:0 no start),
+    // a transição visual será perfeita, sem piscar.
+    if(handEl) handEl.classList.remove('preparing');
+
+    // 4. LIMPEZA FINAL: Remove as classes de animação quando terminarem
+    setTimeout(() => {
+        cards.forEach(c => {
+            c.classList.remove('intro-anim');
+            c.style.animationDelay = '';
+            c.style.opacity = '1';
+        });
+        isProcessing = false;
+    }, 1600); // Tempo total da animação + delays
 }
 
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
