@@ -348,3 +348,16 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); }
     to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); }
 }
+
+/* ARQUIVO: css/style.css */
+
+#fx-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* O mouse "fura" o canvas e clica no jogo abaixo */
+    z-index: 9000; /* Acima do tabuleiro, mas abaixo de Modais e Loading */
+    display: block;
+}
