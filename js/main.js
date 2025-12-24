@@ -476,18 +476,32 @@ function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j =
 function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
+    
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
+    
     if(cards.length === 0) { 
         isProcessing = false; 
         return; 
     }
+
+    // Prepara as cartas invisíveis
     cards.forEach(c => c.style.opacity = '0');
+
     cards.forEach((cardEl, i) => {
         setTimeout(() => {
+            // 1. Aplica a transição LENTA apenas para a entrada (fade-in e slide)
             cardEl.style.transition = 'opacity 0.5s ease-out, transform 0.2s'; 
             cardEl.style.opacity = '1'; 
+            
             playSound('sfx-hover'); 
+            
+            // 2. A MÁGICA: Após 500ms (fim da animação de entrada), limpamos a regra inline.
+            // Assim, a carta volta a obedecer o CSS (que tem o zoom super rápido de 0.05s)
+            setTimeout(() => {
+                cardEl.style.transition = ''; 
+            }, 500);
+
             if(i === cards.length - 1) {
                 setTimeout(() => { isProcessing = false; }, 500);
             }
