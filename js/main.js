@@ -227,23 +227,26 @@ function startGameFlow() {
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // --- CORREÇÃO: LIMPEZA VISUAL IMEDIATA ---
+    // 1. BLOQUEIO VISUAL: Adiciona a classe que esconde tudo
     const handEl = document.getElementById('player-hand');
-    if (handEl) handEl.innerHTML = ''; // Esvazia a mão antes de começar
+    if (handEl) {
+        handEl.innerHTML = ''; 
+        handEl.classList.add('preparing'); // <--- O SEGREDO
+    }
     
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
     playerHistory = [];
     
-    // Distribui as cartas (lógica)
+    // Distribui as cartas na memória
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Desenha na tela (O updateUI vai criar os elementos HTML)
+    // Cria o HTML das cartas (elas nascerão invisíveis por causa da classe 'preparing')
     updateUI();
     
-    // Onde a mágica acontece: Pega os elementos criados e anima a entrada
+    // Inicia a animação
     dealAllInitialCards();
 }
 function checkEndGame(){ 
