@@ -162,10 +162,9 @@ function startGameFlow() {
     resetUnit(player); resetUnit(monster); 
     turnCount = 1; playerHistory = [];
     drawCardLogic(monster, 6); drawCardLogic(player, 6); 
-    
     updateUI(); 
     
-    // Esconde cartas apenas para o efeito de "dar cartas"
+    // GARANTIA: Esconde cartas antes de animar
     const handEl = document.getElementById('player-hand'); 
     if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
     
@@ -176,7 +175,7 @@ function startGameFlow() {
 // ANIMAÇÕES E VISUAL (NOVA LÓGICA DE COMPRA SIMPLES)
 // =======================
 
-// 1. ANIMAÇÃO INICIAL (MÃO) - FADE IN SEQUENCIAL (SEM MOVIMENTO)
+// 1. ANIMAÇÃO INICIAL (MÃO) - POP UP (BOUNCE)
 function dealAllInitialCards() {
     isProcessing = true; playSound('sfx-deal'); 
     const handEl = document.getElementById('player-hand'); 
@@ -185,9 +184,17 @@ function dealAllInitialCards() {
 
     cards.forEach((cardEl, i) => {
         setTimeout(() => {
+            // Torna visível e aplica a classe de animação
             cardEl.style.opacity = '1'; 
+            cardEl.classList.add('pop-in');
             playSound('sfx-hover'); 
-            if(i === cards.length - 1) setTimeout(() => { isProcessing = false; }, 500);
+            
+            // Remove a classe depois que a animação termina para liberar o Hover
+            setTimeout(() => {
+                cardEl.classList.remove('pop-in');
+            }, 550);
+
+            if(i === cards.length - 1) setTimeout(() => { isProcessing = false; }, 600);
         }, i * 150); 
     });
 }
@@ -249,7 +256,6 @@ function onCardClick(index) {
     else { playCardFlow(index, null); }
 }
 
-// IA Melhorada (Strategy)
 function getBestAIMove() {
     let moves = []; 
     monster.hand.forEach((card, index) => { if(card !== monster.disabled) moves.push({ card, index, score: 0 }); });
@@ -276,12 +282,8 @@ function getBestAIMove() {
 
 function playCardFlow(index, pDisarmChoice) {
     isProcessing = true; 
-    let cardKey = player.hand[index]; 
-    player.hand.splice(index, 1); 
-    playerHistory.push(cardKey);
-
-    let aiMove = getBestAIMove(); 
-    let mCardKey = 'ATAQUE'; let mDisarmTarget = null; 
+    let cardKey = player.hand.splice(index, 1)[0]; playerHistory.push(cardKey);
+    let aiMove = getBestAIMove(); let mCardKey = 'ATAQUE'; let mDisarmTarget = null; 
     if(aiMove) { mCardKey = aiMove.card; monster.hand.splice(aiMove.index, 1); if(mCardKey === 'DESARMAR') mDisarmTarget = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE'; } 
     else { if(monster.hand.length > 0) mCardKey = monster.hand.pop(); else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } }
 
@@ -411,7 +413,9 @@ function updateUnit(u) {
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
-            c.style.opacity = '1';
+            
+            c.style.opacity = '1'; // GARANTIA DE VISIBILIDADE
+            
             let lethalType = checkCardLethality(k); 
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
