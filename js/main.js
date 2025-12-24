@@ -227,6 +227,10 @@ function startGameFlow() {
     isProcessing = false; 
     startCinematicLoop(); 
     
+    // --- CORREÇÃO: LIMPEZA VISUAL IMEDIATA ---
+    const handEl = document.getElementById('player-hand');
+    if (handEl) handEl.innerHTML = ''; // Esvazia a mão antes de começar
+    
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
@@ -236,13 +240,12 @@ function startGameFlow() {
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Desenha na tela
+    // Desenha na tela (O updateUI vai criar os elementos HTML)
     updateUI();
     
-    // DISPARA A ANIMAÇÃO INICIAL (BOUNCE)
+    // Onde a mágica acontece: Pega os elementos criados e anima a entrada
     dealAllInitialCards();
 }
-
 function checkEndGame(){ 
     if(player.hp<=0 || monster.hp<=0) { 
         isProcessing = true; 
