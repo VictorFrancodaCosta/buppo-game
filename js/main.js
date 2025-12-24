@@ -57,7 +57,7 @@ const ASSETS_TO_LOAD = {
 totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 
 // =======================
-// CONTROLLER DE MÚSICA
+// CONTROLLER DE MÚSICA & LOGIN
 // =======================
 const MusicController = {
     currentTrackId: null,
@@ -81,8 +81,25 @@ const MusicController = {
 
 window.playNavSound = function() { let s = audios['sfx-nav']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } };
 
+window.googleLogin = async function() {
+    window.playNavSound(); 
+    const btnText = document.getElementById('btn-text');
+    btnText.innerText = "CONECTANDO...";
+    try { await signInWithPopup(auth, provider); } 
+    catch (error) { console.error(error); btnText.innerText = "ERRO"; setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000); }
+};
+
+window.handleLogout = function() { window.playNavSound(); signOut(auth).then(() => { location.reload(); }); };
+
+// Firebase Listener
+onAuthStateChanged(auth, (user) => {
+    setTimeout(() => { const l=document.getElementById('loading-screen'); if(l){l.style.opacity='0';setTimeout(()=>l.style.display='none',500);} }, 500);
+    if (user) { currentUser = user; window.goToLobby(true); } 
+    else { currentUser = null; window.showScreen('start-screen'); document.getElementById('game-background').classList.remove('lobby-mode'); MusicController.play('bgm-menu'); }
+});
+
 // =======================
-// FX CANVAS (APENAS PARTÍCULAS E EFEITOS)
+// FX CANVAS (APENAS EFEITOS)
 // =======================
 let canvas = document.getElementById('fx-canvas');
 if (!canvas) {
@@ -139,31 +156,29 @@ window.triggerBlockEffect = function() {
 }
 
 // =======================
-// LÓGICA DE JOGO - CRIAÇÃO DE CARTAS (MÉTODO SEGURO FLIP)
+// LÓGICA DE CARTAS (DOM / FLIP)
 // =======================
 
 function animateCardFromDeck(cardElement) {
     const deckEl = document.getElementById('p-deck-container');
     if (!deckEl || !cardElement) return;
 
-    // 1. Pega as posições
+    // 1. Posições
     const startRect = deckEl.getBoundingClientRect();
     const endRect = cardElement.getBoundingClientRect();
 
-    // 2. Calcula a diferença (Delta)
+    // 2. Delta
     const deltaX = startRect.left - endRect.left + (startRect.width/2 - endRect.width/2);
     const deltaY = startRect.top - endRect.top;
 
-    // 3. Aplica a transformação instantaneamente (Move visualmente para o deck)
-    // Remove a transição temporariamente para o "teleporte"
+    // 3. Teleporte Inicial
     cardElement.style.transition = 'none';
-    cardElement.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`; // Sai pequeno do deck
+    cardElement.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
 
-    // 4. Força o navegador a recalcular (Reflow)
+    // 4. Reflow
     void cardElement.offsetHeight;
 
-    // 5. Ativa a transição e remove a transformação (A carta desliza para a mão)
-    // Usamos um requestAnimationFrame duplo para garantir a suavidade
+    // 5. Animação
     requestAnimationFrame(() => {
         cardElement.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
         cardElement.style.transform = 'translate(0, 0) scale(1)';
@@ -180,10 +195,10 @@ function dealAllInitialCards() {
     
     if(cards.length === 0) { isProcessing = false; return; }
 
-    // Garante que todas estejam visíveis (opacidade 1) mas na posição inicial (mão)
-    // A função animateCardFromDeck vai "puxá-las" para o deck visualmente e soltar
+    // Garante visibilidade
     cards.forEach(c => { c.style.opacity = '1'; });
 
+    // Anima uma por uma
     cards.forEach((cardEl, i) => {
         setTimeout(() => {
             animateCardFromDeck(cardEl);
@@ -196,14 +211,12 @@ function drawCardAnimated(unit, deckId, handId, cb) {
     if(unit.deck.length===0) { cb(); return; } 
 
     if (unit.id === 'p') {
-        cb(); // Cria a carta no DOM (Update UI roda aqui)
-        
-        // Aguarda o DOM atualizar
+        cb(); // Cria no DOM
         setTimeout(() => {
             const handEl = document.getElementById('player-hand');
             const newCardEl = handEl.lastElementChild;
             if (newCardEl) {
-                newCardEl.style.opacity = '1'; // Garante visibilidade
+                newCardEl.style.opacity = '1'; 
                 animateCardFromDeck(newCardEl);
             }
         }, 50);
@@ -213,7 +226,7 @@ function drawCardAnimated(unit, deckId, handId, cb) {
 }
 
 // =======================
-// LÓGICA GERAL DO JOGO
+// CORE GAMEPLAY
 // =======================
 
 function startGameFlow() {
@@ -225,9 +238,7 @@ function startGameFlow() {
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    updateUI(); // Cria as cartas no HTML
-    
-    // Inicia a animação segura
+    updateUI(); 
     setTimeout(() => { dealAllInitialCards(); }, 100);
 }
 
@@ -275,20 +286,7 @@ function updateUnit(u) {
     }
 }
 
-// =======================
-// LOGIN & SISTEMA
-// =======================
-onAuthStateChanged(auth, (user) => {
-    setTimeout(() => { const l=document.getElementById('loading-screen'); if(l){l.style.opacity='0';setTimeout(()=>l.style.display='none',500);} }, 500);
-    if (user) { currentUser = user; window.goToLobby(true); } 
-    else { currentUser = null; window.showScreen('start-screen'); document.getElementById('game-background').classList.remove('lobby-mode'); MusicController.play('bgm-menu'); }
-});
-window.googleLogin = async function() { window.playNavSound(); try { await signInWithPopup(auth, provider); } catch(e){console.error(e);} };
-window.handleLogout = function() { window.playNavSound(); signOut(auth).then(()=>location.reload()); };
-
-// =======================
-// AUXILIARES
-// =======================
+// Helpers
 function checkCardLethality(k) { if(k==='ATAQUE') return player.lvl>=monster.hp?'red':false; if(k==='BLOQUEIO') return (1+player.bonusBlock)>=monster.hp?'blue':false; return false; }
 function onCardClick(i) {
     if(isProcessing) return; if (!player.hand[i]) return;
@@ -434,3 +432,21 @@ window.toggleConfig = function() { let p = document.getElementById('config-panel
 document.addEventListener('click', function(e) { const panel = document.getElementById('config-panel'); const btn = document.getElementById('btn-config-toggle'); if (panel && panel.classList.contains('active') && !panel.contains(e.target) && (btn && !btn.contains(e.target))) window.toggleConfig(); });
 window.toggleFullScreen = function() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } else { if (document.exitFullscreen) { document.exitFullscreen(); } } }
 window.updateVol = function(type, val) { if(type==='master') window.masterVol = parseFloat(val); }
+
+// =======================
+// CARREGAMENTO FINAL
+// =======================
+function preloadGame() {
+    ASSETS_TO_LOAD.images.forEach(src => { let i=new Image(); i.src=src; i.onload=updateLoader; i.onerror=updateLoader; });
+    ASSETS_TO_LOAD.audio.forEach(a => { let s=new Audio(); s.src=a.src; if(a.loop)s.loop=true; audios[a.id]=s; s.onloadedmetadata=updateLoader; s.onerror=updateLoader; });
+}
+function updateLoader() {
+    assetsLoaded++; let fill = document.getElementById('loader-fill'); if(fill) fill.style.width = Math.min(100,(assetsLoaded/totalAssets)*100)+'%';
+    if(assetsLoaded>=totalAssets) {
+        setTimeout(() => { let ls=document.getElementById('loading-screen'); if(ls){ls.style.opacity='0'; setTimeout(()=>ls.style.display='none',500);} }, 1000);
+        document.body.addEventListener('click', () => { if(!MusicController.currentTrackId) MusicController.play('bgm-menu'); }, {once:true});
+    }
+}
+window.onload = function() { preloadGame(); const b=document.getElementById('btn-sound'); if(b) b.addEventListener('click', (e)=>{e.stopPropagation(); window.toggleMute();}); };
+
+function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[key].play().catch(e => console.log("Audio prevented:", e)); } }
