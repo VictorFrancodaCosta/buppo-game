@@ -675,22 +675,77 @@ function updateUnit(u) {
     let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
     if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
     document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
+
     if(u===player) {
-        let hc=document.getElementById('player-hand'); hc.innerHTML='';
+        let hc = document.getElementById('player-hand');
+        
+        // 1. Remove excesso de cartas (se a mão diminuiu)
+        while(hc.children.length > u.hand.length) {
+            hc.removeChild(hc.lastChild);
+        }
+
         u.hand.forEach((k,i)=>{
-            let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
+            let c = hc.children[i];
+            let isNew = false;
+
+            // 2. Se a carta não existe no DOM, criamos ela
+            if(!c) {
+                c = document.createElement('div');
+                hc.appendChild(c);
+                isNew = true; // Marca como nova para animar
+            }
+
+            // 3. Atualiza as classes e visual (mesmo para as antigas)
+            c.className = `card hand-card ${CARDS_DB[k].color}`;
+            // Mantemos a propriedade de cor do brilho
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
+            
             if(u.disabled===k) c.classList.add('disabled-card');
-            c.style.opacity = '1';
-            let lethalType = checkCardLethality(k); 
+            
+            // Renderiza o conteúdo (Arte + Brilhos)
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
-            c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
-            c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
-            c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
-            hc.appendChild(c); apply3DTilt(c, true);
+            
+            // Re-vincula os eventos (importante pois o índice 'i' pode mudar)
+            c.onclick = () => onCardClick(i); 
+            
+            // Tooltip e Hover
+            let lethalType = checkCardLethality(k);
+            c.onmouseenter = (e) => { 
+                bindFixedTooltip(c,k).onmouseenter(e); 
+                document.body.classList.add('focus-hand'); 
+                document.body.classList.add('cinematic-active'); 
+                if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } 
+                playSound('sfx-hover'); 
+            };
+            c.onmouseleave = (e) => { 
+                tt.style.display='none'; 
+                document.body.classList.remove('focus-hand'); 
+                document.body.classList.remove('cinematic-active'); 
+                document.body.classList.remove('tension-active'); 
+                isLethalHover = false; 
+            };
+
+            // 4. APLICA O EFEITO DE ENTRADA (SÓ SE FOR NOVA)
+            if(isNew) {
+                // Aplica o efeito 3D (apenas uma vez para não duplicar listeners)
+                apply3DTilt(c, true);
+                
+                // Adiciona a classe de animação CSS
+                c.classList.add('card-enter');
+                
+                // Delay em cascata (0.1s, 0.2s, 0.3s...) para dar efeito escadinha
+                c.style.animationDelay = (i * 0.1) + 's';
+                
+                // Remove a classe depois que animar para limpar o código
+                setTimeout(() => { 
+                    c.classList.remove('card-enter'); 
+                    c.style.animationDelay = '';
+                }, 1000);
+            }
         });
     }
+
     let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
     u.xp.forEach(k=>{ let d=document.createElement('div'); d.className='xp-mini'; d.style.backgroundImage = `url('${CARDS_DB[k].img}')`; d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; xc.appendChild(d); });
     let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
