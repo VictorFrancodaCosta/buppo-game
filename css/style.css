@@ -178,53 +178,16 @@ body {
 .slot { width: 170px; height: 250px; border: none; display: flex; justify-content: center; align-items: center; background: transparent; transform: rotateX(25deg); transform-style: preserve-3d; perspective: 1000px; pointer-events: auto; }
 .slot .card { width: 100% !important; height: 100% !important; margin: 0; border-radius: 16px !important; box-shadow: none; cursor: default; transform: translateZ(0px); border-width: 2px; }
 .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
-
-/* --- MÃO DO JOGADOR (ESTÁVEL) --- */
-.hand-wrapper { 
-    position: absolute; 
-    bottom: -25px; 
-    left: 0; 
-    width: 100%; 
-    height: 170px; 
-    display: flex; 
-    justify-content: center; 
-    align-items: flex-end; 
-    z-index: 2000; /* Garante que fique acima do tabuleiro */
-    pointer-events: none; 
-    perspective: 1000px; 
-}
-
+.hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 .card { 
-    pointer-events: auto; 
-    width: 110px; 
-    height: 155px; 
-    border-radius: 10px; 
-    color: white; 
-    border: 2px solid #111; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    justify-content: flex-end; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.7); 
-    cursor: pointer; 
-    position: relative; 
-    margin: 0 -8px; 
-    transform-style: preserve-3d; 
-    background-color: #111; 
-    
-    /* VISIBILIDADE PADRÃO GARANTIDA */
-    opacity: 1; 
-    visibility: visible; 
-    
-    /* Transições suaves para movimento */
-    transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                margin 0.2s, 
-                box-shadow 0.2s, 
-                filter 0.3s;
-    
-    will-change: transform; 
+    pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; 
+    color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
+    transform-style: preserve-3d; background-color: #111; 
+    /* AQUI É IMPORTANTE: Transição padrão para hover e opacidade */
+    transition: margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s, opacity 0.5s ease; 
+    opacity: 1 !important; visibility: visible !important; 
 }
-
 .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
 .flares-container { position: absolute; top: 50%; left: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
 .flare-spark { position: absolute; background: var(--flare-col, white); border-radius: 50%; box-shadow: 0 0 10px var(--flare-col, white); opacity: 0; }
@@ -384,16 +347,4 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 @keyframes transPulse {
     from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); }
     to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); }
-}
-
-/* CANVAS HIBRIDO - EFEITOS ESPECIAIS */
-#fx-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* ESSENCIAL: Permite clicar através dos efeitos */
-    z-index: 15000; /* Acima do tabuleiro, mas abaixo de modais */
-    display: block;
 }
