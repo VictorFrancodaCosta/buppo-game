@@ -220,7 +220,7 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA (LIMPA DE ANIMAÇÕES DE ENTRADA)
+// LÓGICA DE PARTIDA (LIMPA E SEGURA)
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
@@ -232,11 +232,11 @@ function startGameFlow() {
     turnCount = 1; 
     playerHistory = [];
     
-    // Distribui as cartas logicamente
+    // Distribui as cartas (lógica)
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Desenha na tela (instantaneamente)
+    // Desenha na tela imediatamente
     updateUI();
     
     // Destrava o jogo
@@ -450,9 +450,7 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 function dealAllInitialCards() {
-    // LIMPEZA COMPLETA:
-    // Sem loops, sem timeouts, sem opacidade.
-    // As cartas já estão na tela graças ao updateUI() chamado no startGameFlow.
+    // Apenas destrava (limpeza completa das animações antigas)
     isProcessing = false; 
 }
 
@@ -628,11 +626,7 @@ function processMasteries(u, triggers, cb) {
     else { applyMastery(u, type); processMasteries(u, triggers, cb); }
 }
 function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
-function drawCardLogic(u, qty) { 
-    for(let i=0; i<qty; i++) 
-        if(u.deck.length > 0) u.hand.push(u.deck.pop()); 
-    // REMOVIDO: u.hand.sort(); -> Isso garante que cartas novas fiquem no final para animar
-}
+function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
 function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false) {
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
@@ -660,8 +654,6 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
 
 function drawCardAnimated(unit, deckId, handId, cb) { 
     // LIMPEZA COMPLETA:
-    // Removemos o animateFly.
-    // Apenas executa o callback (cb) imediatamente para seguir a lógica do jogo.
     if(cb) cb(); 
 }
 
@@ -675,77 +667,22 @@ function updateUnit(u) {
     let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
     if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
     document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
-
     if(u===player) {
-        let hc = document.getElementById('player-hand');
-        
-        // 1. Remove excesso de cartas (se a mão diminuiu)
-        while(hc.children.length > u.hand.length) {
-            hc.removeChild(hc.lastChild);
-        }
-
+        let hc=document.getElementById('player-hand'); hc.innerHTML='';
         u.hand.forEach((k,i)=>{
-            let c = hc.children[i];
-            let isNew = false;
-
-            // 2. Se a carta não existe no DOM, criamos ela
-            if(!c) {
-                c = document.createElement('div');
-                hc.appendChild(c);
-                isNew = true; // Marca como nova para animar
-            }
-
-            // 3. Atualiza as classes e visual (mesmo para as antigas)
-            c.className = `card hand-card ${CARDS_DB[k].color}`;
-            // Mantemos a propriedade de cor do brilho
+            let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
-            
             if(u.disabled===k) c.classList.add('disabled-card');
-            
-            // Renderiza o conteúdo (Arte + Brilhos)
+            c.style.opacity = '1';
+            let lethalType = checkCardLethality(k); 
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
-            
-            // Re-vincula os eventos (importante pois o índice 'i' pode mudar)
-            c.onclick = () => onCardClick(i); 
-            
-            // Tooltip e Hover
-            let lethalType = checkCardLethality(k);
-            c.onmouseenter = (e) => { 
-                bindFixedTooltip(c,k).onmouseenter(e); 
-                document.body.classList.add('focus-hand'); 
-                document.body.classList.add('cinematic-active'); 
-                if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } 
-                playSound('sfx-hover'); 
-            };
-            c.onmouseleave = (e) => { 
-                tt.style.display='none'; 
-                document.body.classList.remove('focus-hand'); 
-                document.body.classList.remove('cinematic-active'); 
-                document.body.classList.remove('tension-active'); 
-                isLethalHover = false; 
-            };
-
-            // 4. APLICA O EFEITO DE ENTRADA (SÓ SE FOR NOVA)
-            if(isNew) {
-                // Aplica o efeito 3D (apenas uma vez para não duplicar listeners)
-                apply3DTilt(c, true);
-                
-                // Adiciona a classe de animação CSS
-                c.classList.add('card-enter');
-                
-                // Delay em cascata (0.1s, 0.2s, 0.3s...) para dar efeito escadinha
-                c.style.animationDelay = (i * 0.1) + 's';
-                
-                // Remove a classe depois que animar para limpar o código
-                setTimeout(() => { 
-                    c.classList.remove('card-enter'); 
-                    c.style.animationDelay = '';
-                }, 1000);
-            }
+            c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
+            c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
+            c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
+            hc.appendChild(c); apply3DTilt(c, true);
         });
     }
-
     let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
     u.xp.forEach(k=>{ let d=document.createElement('div'); d.className='xp-mini'; d.style.backgroundImage = `url('${CARDS_DB[k].img}')`; d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; xc.appendChild(d); });
     let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
