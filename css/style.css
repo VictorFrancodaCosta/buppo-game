@@ -180,10 +180,9 @@ body {
 .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 
-/* --- TRAVA DE SEGURANÇA VISUAL (NOVA) --- 
-   Se a mão tiver a classe .preparing, FORÇAMOS a invisibilidade
-   das cartas. Isso evita o "piscar" estático antes da animação.
-*/
+/* --- TRAVA DE SEGURANÇA VISUAL ---
+   Essa classe no container FORÇA as cartas a ficarem invisíveis
+   enquanto o JS prepara a animação. */
 #player-hand.preparing .card {
     opacity: 0 !important;
     visibility: hidden !important;
@@ -194,7 +193,7 @@ body {
     --rx: 0;
     --ry: 0;
 
-    /* --- AJUSTE DE VELOCIDADE (ZOOM RÁPIDO) --- */
+    /* Zoom rápido e suave */
     transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; 
 
     pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; 
