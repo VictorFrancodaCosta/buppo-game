@@ -373,3 +373,18 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     /* Garante que o usuário não interaja enquanto voa */
     pointer-events: none; 
 }
+
+/* --- ATUALIZAÇÃO DA ANIMAÇÃO INICIAL --- */
+@keyframes introBounce {
+    0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 
+    60% { transform: translateY(-40px) scale(1.1); opacity: 1; }
+    80% { transform: translateY(10px) scale(0.95); }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.intro-anim {
+    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    pointer-events: none;
+    /* GARANTIA: Começa invisível para não "piscar" na tela antes de animar */
+    opacity: 0; 
+}
