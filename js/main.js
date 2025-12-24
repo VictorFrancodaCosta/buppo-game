@@ -608,7 +608,10 @@ function playCardFlow(index, pDisarmChoice) {
     else { if(monster.hand.length > 0) mCardKey = monster.hand.pop(); else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } }
 
     let handContainer = document.getElementById('player-hand'); 
-    let realCardEl = handContainer.children[index]; 
+    if(realCardEl) { 
+    startRect = realCardEl.getBoundingClientRect(); 
+    realCardEl.style.opacity = '0'; // <--- O CULPADO: Respeita a transição lenta do CSS
+}
     
     let startRect = null;
     if(realCardEl) { 
