@@ -220,18 +220,18 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA (COM CORREÇÃO DE VISIBILIDADE)
+// LÓGICA DE PARTIDA (CORRIGIDA)
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // --- CORREÇÃO: ADICIONA A CLASSE QUE ESCONDE AS CARTAS ---
+    // --- PASSO 1: Oculta visualmente o container da mão ---
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.classList.add('preparing'); // A trava visual
+        handEl.classList.add('preparing'); // Bloqueia via CSS
     }
     
     resetUnit(player); 
@@ -239,14 +239,14 @@ function startGameFlow() {
     turnCount = 1; 
     playerHistory = [];
     
-    // Distribui as cartas
+    // Distribui as cartas na memória
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
     // Cria o HTML (que nascerá invisível por causa da classe .preparing)
     updateUI();
     
-    // Inicia a animação imediatamente (sem setTimeout)
+    // Inicia a animação imediatamente
     dealAllInitialCards();
 }
 
@@ -457,36 +457,39 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 // -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE)
+// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - VERSÃO CORRIGIDA
 // -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
     
-    // 1. Pega as cartas que JÁ ESTÃO na tela
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // 2. Aplica a classe de animação em cada uma
+    // --- CORREÇÃO: Força inline opacity 0 para garantir invisibilidade ---
+    // Isso sobrescreve qualquer opacity:1 que o updateUI tenha colocado.
+    cards.forEach(c => c.style.opacity = '0');
+
+    // Configura a animação
     cards.forEach((cardEl, i) => {
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
     });
 
-    // 3. DESBLOQUEIO VISUAL: Remove a classe .preparing do pai.
-    // Como os filhos agora têm .intro-anim (que começa com opacity:0),
-    // eles continuarão invisíveis até a animação começar, evitando o "piscar".
-    if(handEl) handEl.classList.remove('preparing');
+    // Remove a trava do container (usando requestAnimationFrame para garantir renderização)
+    requestAnimationFrame(() => {
+        if(handEl) handEl.classList.remove('preparing');
+    });
 
-    // 4. LIMPEZA FINAL: Remove as classes de animação
+    // Limpeza final após animação
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
             c.style.animationDelay = '';
-            c.style.opacity = '1';
+            c.style.opacity = '1'; // Devolve a visibilidade normal
         });
         isProcessing = false;
-    }, 1600); // Tempo total da animação + delays
+    }, 2000); 
 }
 
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
