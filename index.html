@@ -15,17 +15,20 @@
     </div>
 
     <div id="transition-overlay">
-    <img src="https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png" class="trans-logo">
-    <div class="trans-text">PREPARANDO BATALHA...</div>
-</div>
+        <img src="https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png" class="trans-logo">
+        <div class="trans-text">PREPARANDO BATALHA...</div>
+    </div>
 
     <div id="game-background"></div>
     
     <div id="ambient-particles"></div>
+
     <div class="overlay-fx dmg-fx" id="dmg-overlay"></div>
     <div class="overlay-fx heal-fx" id="heal-overlay"></div>
     <div class="overlay-fx block-fx" id="block-overlay"></div>
     <div class="overlay-fx crit-flash" id="crit-overlay"></div>
+
+    <canvas id="fx-canvas"></canvas>
 
     <div id="game-container">
         
@@ -56,7 +59,7 @@
         </div>
 
         <div id="lobby-screen" class="screen">
-<div id="lobby-particles"></div>
+            <div id="lobby-particles"></div>
             <img src="https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png" class="lobby-logo-right">
 
             <div class="lobby-frame-container">
@@ -122,15 +125,5 @@
     <div id="modal-overlay" class="modal-overlay" onclick="cancelModal()"><div class="modal-box" onclick="event.stopPropagation()"><h2 id="modal-title"></h2><p id="modal-desc"></p><div class="modal-btns" id="modal-btns"></div></div></div>
 
     <script type="module" src="js/main.js"></script>
-
-<canvas id="fx-canvas"></canvas> 
-
-    <script type="module" src="js/main.js"></script>
 </body>
 </html>
-
-
-
-
-
-
