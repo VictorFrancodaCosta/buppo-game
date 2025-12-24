@@ -358,3 +358,16 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); }
     to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); }
 }
+
+/* --- ANIMAÇÃO DE ENTRADA (BOUNCE) --- */
+@keyframes cardEnterUp {
+    0% { transform: translateY(100vh) scale(0.6); opacity: 0; }
+    60% { transform: translateY(-30px) scale(1.05); opacity: 1; } /* O Pulo */
+    80% { transform: translateY(10px) scale(0.95); } /* O amortecimento */
+    100% { transform: translateY(0) scale(1); } /* Posição final */
+}
+
+.card-enter {
+    /* Executa a animação e mantém o estado final */
+    animation: cardEnterUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
