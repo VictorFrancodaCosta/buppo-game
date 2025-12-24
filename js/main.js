@@ -602,26 +602,60 @@ function getBestAIMove() {
 }
 
 function playCardFlow(index, pDisarmChoice) {
-    isProcessing = true; let cardKey = player.hand.splice(index, 1)[0]; playerHistory.push(cardKey);
-    let aiMove = getBestAIMove(); let mCardKey = 'ATAQUE'; let mDisarmTarget = null; 
-    if(aiMove) { mCardKey = aiMove.card; monster.hand.splice(aiMove.index, 1); if(mCardKey === 'DESARMAR') { if(player.hp <= (monster.lvl + monster.bonusAtk + 2)) { mDisarmTarget = 'BLOQUEIO'; } else { let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1); let bestTarget = null; for(let k in pCounts) if(pCounts[k] >= 3) bestTarget = k; if(bestTarget) mDisarmTarget = bestTarget; else mDisarmTarget = 'ATAQUE'; } } } 
-    else { if(monster.hand.length > 0) mCardKey = monster.hand.pop(); else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } }
+    isProcessing = true; 
+    let cardKey = player.hand.splice(index, 1)[0]; 
+    playerHistory.push(cardKey);
 
+    // Lógica da IA (mantida igual)
+    let aiMove = getBestAIMove(); 
+    let mCardKey = 'ATAQUE'; 
+    let mDisarmTarget = null; 
+    if(aiMove) { 
+        mCardKey = aiMove.card; 
+        monster.hand.splice(aiMove.index, 1); 
+        if(mCardKey === 'DESARMAR') { 
+            if(player.hp <= (monster.lvl + monster.bonusAtk + 2)) { mDisarmTarget = 'BLOQUEIO'; } 
+            else { 
+                let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1); 
+                let bestTarget = null; for(let k in pCounts) if(pCounts[k] >= 3) bestTarget = k; 
+                if(bestTarget) mDisarmTarget = bestTarget; else mDisarmTarget = 'ATAQUE'; 
+            } 
+        } 
+    } else { 
+        if(monster.hand.length > 0) mCardKey = monster.hand.pop(); 
+        else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } 
+    }
+
+    // --- CORREÇÃO VISUAL AQUI ---
     let handContainer = document.getElementById('player-hand'); 
-    if(realCardEl) { 
-    startRect = realCardEl.getBoundingClientRect(); 
-    realCardEl.style.opacity = '0'; // <--- O CULPADO: Respeita a transição lenta do CSS
-}
-    
+    let realCardEl = handContainer.children[index]; 
     let startRect = null;
+
     if(realCardEl) { 
+        // 1. Capturamos a posição exata da carta HOJE (incluindo transforms se houver)
         startRect = realCardEl.getBoundingClientRect(); 
-        realCardEl.style.opacity = '0'; 
+        
+        // 2. Removemos a transição CSS para que a alteração seja instantânea
+        realCardEl.style.transition = 'none';
+        
+        // 3. Tornamos ela invisível imediatamente. 
+        // Nota: Não usamos display:none para não "quebrar" o layout da mão (flexbox) antes da hora.
+        realCardEl.style.visibility = 'hidden';
+        realCardEl.style.opacity = '0';
     }
     
-    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { renderTable(cardKey, 'p-slot'); updateUI(); }, false, true); // true = combat
+    // Inicia a animação de voo saindo EXATAMENTE de onde a carta invisível está
+    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
+        renderTable(cardKey, 'p-slot'); 
+        updateUI(); 
+    }, false, true); 
+
+    // Animação do oponente (mantida igual)
     const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
-    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { renderTable(mCardKey, 'm-slot'); setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); }, false, true);
+    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { 
+        renderTable(mCardKey, 'm-slot'); 
+        setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); 
+    }, false, true);
 }
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
