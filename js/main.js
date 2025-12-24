@@ -280,35 +280,46 @@ function dealAllInitialCards() {
     
     if(cards.length === 0) { isProcessing = false; return; }
 
-    // Garante invisibilidade
+    // Garante invisibilidade inicial
     cards.forEach(c => c.style.opacity = '0');
 
     // Cria as cartas no Canvas
     cards.forEach((cardEl, i) => {
-        let cardKey = player.hand[i]; // Pega a chave correta da mão
+        let cardKey = player.hand[i]; 
         if(!cardKey) return;
 
-        setTimeout(() => {
-            const rect = cardEl.getBoundingClientRect();
-            
-            flyingCards.push(new FlyingCard(
-                rect.left, 
-                rect.top, 
-                rect.width, 
-                rect.height, 
-                cardKey, 
-                () => {
-                    // Swap Canvas -> DOM
-                    cardEl.style.transition = 'none';
-                    cardEl.style.opacity = '1';
-                    playSound('sfx-hover');
-                }
-            ));
-            
-            if(i === cards.length - 1) {
-                setTimeout(() => { isProcessing = false; }, 1000);
+        // Recupera posição alvo
+        const rect = cardEl.getBoundingClientRect();
+
+        // 1. Cria a animação visual
+        flyingCards.push(new FlyingCard(
+            rect.left, 
+            rect.top, 
+            rect.width, 
+            rect.height, 
+            cardKey, 
+            () => {
+                // Ao chegar: revela a carta real
+                cardEl.style.transition = 'none';
+                cardEl.style.opacity = '1';
+                // Restaura transição suave após um frame
+                requestAnimationFrame(() => {
+                    cardEl.style.transition = 'margin 0.2s, box-shadow 0.2s, transform 0.1s ease-out, filter 0.3s, opacity 0.2s ease';
+                });
+                playSound('sfx-hover');
             }
-        }, i * 200); // Intervalo
+        ));
+        
+        // 2. REDE DE SEGURANÇA: Garante que a carta apareça mesmo se o Canvas falhar
+        setTimeout(() => {
+            if (cardEl.style.opacity === '0') {
+                cardEl.style.opacity = '1';
+            }
+        }, 1200); // 1.2 segundos (tempo máximo seguro)
+
+        if(i === cards.length - 1) {
+            setTimeout(() => { isProcessing = false; }, 1000);
+        }
     });
 }
 
@@ -317,15 +328,15 @@ function drawCardAnimated(unit, deckId, handId, cb) {
     if(unit.deck.length===0) { cb(); return; } 
 
     if (unit.id === 'p') {
-        cb(); // Executa lógica de dados (adiciona na mão do player)
+        cb(); // Adiciona dados e cria elemento no DOM
         
-        // Agora busca a carta que acabou de ser criada no DOM
+        // Busca a nova carta (última adicionada)
         const handEl = document.getElementById('player-hand');
         const newCardEl = handEl.lastElementChild;
         const cardKey = player.hand[player.hand.length-1];
 
         if (newCardEl && cardKey) {
-            newCardEl.style.opacity = '0';
+            newCardEl.style.opacity = '0'; // Esconde para animar
             const rect = newCardEl.getBoundingClientRect();
             
             flyingCards.push(new FlyingCard(
@@ -340,6 +351,9 @@ function drawCardAnimated(unit, deckId, handId, cb) {
                     playSound('sfx-hover');
                 }
             ));
+            
+            // Rede de segurança também aqui
+            setTimeout(() => { newCardEl.style.opacity = '1'; }, 1000);
         }
     } else {
         cb();
