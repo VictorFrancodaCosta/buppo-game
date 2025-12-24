@@ -181,45 +181,34 @@ body {
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 
 /* --- TRAVA DE SEGURANÇA VISUAL ---
-   Essa classe no container FORÇA as cartas a ficarem invisíveis
-   enquanto o JS prepara a animação. */
+   A classe .preparing no pai esconde tudo com !important para garantir
+   que nada "pisque" antes da hora. */
 #player-hand.preparing .card {
     opacity: 0 !important;
     visibility: hidden !important;
 }
 
 .card { 
-    /* Variáveis para o efeito de brilho */
     --rx: 0;
     --ry: 0;
-
-    /* Zoom rápido e suave */
     transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; 
-
     pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; 
     color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
     transform-style: preserve-3d; background-color: #111; 
     
-    opacity: 1 !important; visibility: visible !important; 
+    /* AQUI ESTAVA O PROBLEMA: O !important forçava a visibilidade sempre */
+    opacity: 1 !important; 
+    visibility: visible !important; 
 }
 
 /* --- EFEITO FOIL / BRILHO APPLE TV --- */
 .card::after {
     content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 10px;
-    pointer-events: none;
-    z-index: 15;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    background: radial-gradient(
-        circle at calc(50% + (var(--rx) * 150%)) calc(50% + (var(--ry) * 150%)), 
-        rgba(255, 255, 255, 0.6) 0%,   
-        rgba(255, 255, 255, 0.1) 40%,  
-        transparent 60%
-    );
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 10px; pointer-events: none; z-index: 15;
+    opacity: 0; transition: opacity 0.2s ease;
+    background: radial-gradient(circle at calc(50% + (var(--rx) * 150%)) calc(50% + (var(--ry) * 150%)), rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.1) 40%, transparent 60%);
     mix-blend-mode: overlay; 
 }
 .card:hover::after { opacity: 1; }
@@ -233,32 +222,16 @@ body {
 .hand-card:not(.disabled-card):hover { z-index: 10000 !important; margin: 0 30px; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), 0 50px 100px rgba(0,0,0,1); filter: none !important; }
 .disabled-card { filter: grayscale(100%) brightness(0.5) !important; cursor: not-allowed; border-color: #555; }
 .disabled-card:hover { margin: 0 30px; }
-/* --- ANIMAÇÃO DE CARTAS VOANDO --- */
 .flying-card { 
-    position: fixed; 
-    z-index: 99999; /* Garante que fique acima de tudo */
-    pointer-events: none; /* O mouse ignora ela enquanto voa */
-    transform-origin: center center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-    border-radius: 10px; 
-    border: 2px solid #111;
-    background-color: #111;
-    
-    /* A mágica do movimento suave */
+    position: fixed; z-index: 99999; pointer-events: none; transform-origin: center center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 10px; border: 2px solid #111; background-color: #111;
     transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
 }
-
-/* Classe auxiliar para quando a carta chega no destino (opcional, para ajustes finos) */
-.flying-landed {
-    transform: scale(1.0);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
+.flying-landed { transform: scale(1.0); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
 .card-bounce { animation: cardPlayBounce 0.3s ease-out; }
 @keyframes cardPlayBounce { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 .floating-text { position: absolute; font-family: 'Russo One', sans-serif; font-size: 36px; text-shadow: 0 4px 10px rgba(0,0,0,0.9); pointer-events: none; animation: floatUp 1.5s forwards; z-index: 200; width: 300px; text-align: center; left: 50%; transform: translateX(-50%); }
 @keyframes floatUp { 0% { opacity: 0; top: 20px; transform: translateX(-50%) scale(0.5); } 20% { opacity: 1; top: -30px; transform: translateX(-50%) scale(1.2); } 100% { opacity: 0; top: -80px; transform: translateX(-50%) scale(0.8); } }
-
-/* TOOLTIP & OVERLAYS */
 #tooltip-box {
     position: fixed; pointer-events: none; z-index: 99999; background: var(--wood-light); border: 3px solid var(--wood-dark); color: var(--gold); padding: 15px 18px; border-radius: 12px; width: 200px; display: none; text-align: left; box-shadow: 0 15px 40px rgba(0,0,0,0.6); font-size: 12px; line-height: 1.5; transform: translateX(-50%);
     animation: tooltipFloat 3s ease-in-out infinite;
@@ -271,44 +244,12 @@ body {
 .cartoon-purple { color: #a29bfe; }
 .tt-text { font-size: 11px; color: #d7ccc8; line-height: 1.3; }
 .dynamic-val { display: inline-block; background: #000; color: var(--gold); border: 2px solid var(--gold); border-radius: 4px; padding: 0px 6px; font-family: 'Russo One', sans-serif; font-size: 14px; vertical-align: middle; box-shadow: 0 2px 5px rgba(0,0,0,0.5); margin: 0 2px; }
-
-/* Base do destaque */
-.highlight-card { 
-    font-weight: 900; /* Fonte bem grossa */
-    font-family: 'Russo One', sans-serif; 
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* Cores Específicas + Borda Preta Cartoon
-   Usamos 4 sombras sólidas (sem blur) para simular o contorno preto
-*/
-
-.hc-red { 
-    color: #ff4757; 
-    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
-}
-
-.hc-blue { 
-    color: #00cec9; 
-    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
-}
-
-.hc-green { 
-    color: #2ed573; 
-    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
-}
-
-.hc-yellow { 
-    color: #ffa502; 
-    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
-}
-
-.hc-purple { 
-    color: #a29bfe; 
-    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
-}
-
+.highlight-card { font-weight: 900; font-family: 'Russo One', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
+.hc-red { color: #ff4757; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.hc-blue { color: #00cec9; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.hc-green { color: #2ed573; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.hc-yellow { color: #ffa502; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.hc-purple { color: #a29bfe; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .modal-overlay { position: fixed; top:0;left:0;width:100%;height:100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(8px); }
 .modal-box { background: var(--wood-light); padding: 40px; border-radius: 20px; border: 4px solid var(--wood-dark); text-align: center; min-width: 350px; box-shadow: 0 30px 60px rgba(0,0,0,1); }
 #modal-title { color: var(--gold) !important; font-weight: 900; font-size: 26px; margin-bottom: 15px; } 
@@ -350,51 +291,28 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     #tt-title { font-size: 16px; }
 }
 
-/* SISTEMA DE PARTÍCULAS DO SAGUÃO */
-#lobby-particles {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden;
-}
-.lobby-flare {
-    position: absolute; background: radial-gradient(circle, #fff 10%, var(--gold) 60%, transparent 100%);
-    border-radius: 50%; opacity: 0; box-shadow: 0 0 15px var(--gold); filter: blur(2px); 
-    animation: flareFloat linear infinite both;
-}
-@keyframes flareFloat {
-    0% { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); }
-    10% { opacity: 0.8; } 80% { opacity: 0.6; }
-    100% { opacity: 0; transform: translateY(-150px) scale(0) rotate(45deg); }
-}
-
-/* TRANSIÇÃO E CORTINA */
-#transition-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999;
-    display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px;
-    opacity: 0; pointer-events: none; transition: opacity 0.5s ease-in-out;
-}
+#lobby-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
+.lobby-flare { position: absolute; background: radial-gradient(circle, #fff 10%, var(--gold) 60%, transparent 100%); border-radius: 50%; opacity: 0; box-shadow: 0 0 15px var(--gold); filter: blur(2px); animation: flareFloat linear infinite both; }
+@keyframes flareFloat { 0% { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); } 10% { opacity: 0.8; } 80% { opacity: 0.6; } 100% { opacity: 0; transform: translateY(-150px) scale(0) rotate(45deg); } }
+#transition-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; opacity: 0; pointer-events: none; transition: opacity 0.5s ease-in-out; }
 #transition-overlay.active { opacity: 1; pointer-events: auto; }
-.trans-logo {
-    max-width: 300px; width: 60%; height: auto; filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
-    animation: transPulse 1s infinite alternate;
-}
-.trans-text {
-    font-family: 'Russo One', sans-serif; color: var(--txt-secondary); font-size: 14px;
-    letter-spacing: 4px; text-transform: uppercase; opacity: 0.7;
-}
-@keyframes transPulse {
-    from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); }
-    to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); }
-}
+.trans-logo { max-width: 300px; width: 60%; height: auto; filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.4)); animation: transPulse 1s infinite alternate; }
+.trans-text { font-family: 'Russo One', sans-serif; color: var(--txt-secondary); font-size: 14px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.7; }
+@keyframes transPulse { from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); } to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); } }
 
-/* --- ANIMAÇÃO DE ENTRADA INICIAL (BOUNCE) --- */
+/* --- CORREÇÃO DA ANIMAÇÃO INICIAL (BOUNCE) --- */
+/* O segredo aqui é usar !important para vencer a classe .card padrão */
 @keyframes introBounce {
-    0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 
-    60% { transform: translateY(-40px) scale(1.1); opacity: 1; }
+    0% { transform: translateY(120vh) scale(0.5); opacity: 0 !important; } 
+    60% { transform: translateY(-40px) scale(1.1); opacity: 1 !important; }
     80% { transform: translateY(10px) scale(0.95); }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1 !important; }
 }
 
 .intro-anim {
     /* Força a animação a rodar e manter o estado final */
     animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    pointer-events: none; 
+    pointer-events: none;
+    /* AQUI É A CHAVE: Força invisibilidade sobrepondo o .card */
+    opacity: 0 !important; 
 }
