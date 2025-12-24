@@ -628,7 +628,11 @@ function processMasteries(u, triggers, cb) {
     else { applyMastery(u, type); processMasteries(u, triggers, cb); }
 }
 function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
-function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
+function drawCardLogic(u, qty) { 
+    for(let i=0; i<qty; i++) 
+        if(u.deck.length > 0) u.hand.push(u.deck.pop()); 
+    // REMOVIDO: u.hand.sort(); -> Isso garante que cartas novas fiquem no final para animar
+}
 
 function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false) {
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
