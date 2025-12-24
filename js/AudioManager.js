@@ -1,18 +1,14 @@
-// js/AudioManager.js
 export class AudioManager {
     constructor() {
         this.audios = {};
-        this.masterVol = 1.0;
         this.isMuted = false;
         this.currentTrackId = null;
-        this.assetsToLoad = []; // Preencha com sua lista ASSETS_TO_LOAD.audio
     }
 
-    // Carrega tudo e retorna promessa
-    loadAll(audioList, onProgress) {
+    loadAll(assetList) {
         let loaded = 0;
         return new Promise((resolve) => {
-            audioList.forEach(item => {
+            assetList.audio.forEach(item => {
                 const s = new Audio();
                 s.src = item.src;
                 s.preload = 'auto';
@@ -20,30 +16,24 @@ export class AudioManager {
                 
                 s.onloadedmetadata = () => {
                     loaded++;
-                    if(onProgress) onProgress(loaded, audioList.length);
-                    if(loaded === audioList.length) resolve();
+                    if(loaded === assetList.audio.length) resolve();
                 };
-                // Fallback para erro
-                s.onerror = () => { loaded++; if(loaded===audioList.length) resolve(); };
-                
+                s.onerror = () => { loaded++; if(loaded === assetList.audio.length) resolve(); };
                 this.audios[item.id] = s;
             });
+            // Carrega imagens também apenas para garantir cache, se necessário
+            assetList.images.forEach(src => { let img = new Image(); img.src = src; });
         });
     }
 
-    play(id, loop = false) {
-        if (!this.audios[id]) return;
-        if (this.isMuted) return;
-        
-        try {
-            this.audios[id].currentTime = 0;
-            if (loop) this.audios[id].loop = true;
-            this.audios[id].volume = 0.8 * this.masterVol;
-            this.audios[id].play().catch(e => console.warn("Audio block:", e));
-        } catch(e) {}
+    play(id) {
+        if (this.isMuted || !this.audios[id]) return;
+        const s = this.audios[id];
+        s.currentTime = 0;
+        s.volume = 0.8; 
+        s.play().catch(() => {});
     }
 
-    // Sua lógica de MusicController (Fade in/out) vem pra cá como método da classe
     playMusic(trackId) {
         if (this.currentTrackId === trackId) return;
         if (this.currentTrackId && this.audios[this.currentTrackId]) {
@@ -58,12 +48,26 @@ export class AudioManager {
         }
     }
 
-    setMute(isMuted) {
-        this.isMuted = isMuted;
-        Object.values(this.audios).forEach(a => a.muted = isMuted);
-        if(!isMuted && this.currentTrackId) this.audios[this.currentTrackId].play();
+    toggleMute() {
+        this.isMuted = !this.isMuted;
+        Object.values(this.audios).forEach(a => a.muted = this.isMuted);
+        if(!this.isMuted && this.currentTrackId) this.audios[this.currentTrackId].play();
+        return this.isMuted;
     }
 
-    _fadeOut(audio) { /* Sua lógica de fade out aqui */ }
-    _fadeIn(audio) { /* Sua lógica de fade in aqui */ }
+    _fadeOut(audio) {
+        let vol = audio.volume;
+        const fade = setInterval(() => {
+            if (vol > 0.05) { vol -= 0.05; audio.volume = vol; }
+            else { audio.volume = 0; audio.pause(); clearInterval(fade); }
+        }, 50);
+    }
+
+    _fadeIn(audio) {
+        let vol = 0;
+        const fade = setInterval(() => {
+            if (vol < 0.75) { vol += 0.05; audio.volume = vol; }
+            else { clearInterval(fade); }
+        }, 50);
+    }
 }
