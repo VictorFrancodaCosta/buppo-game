@@ -510,7 +510,50 @@ function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[
 function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
 initAmbientParticles();
 
-function apply3DTilt(element, isHand = false) { if(window.innerWidth < 768) return; element.addEventListener('mousemove', (e) => { const rect = element.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; let lift = isHand ? 'translateY(-100px) scale(1.8)' : 'scale(1.1)'; let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; element.style.transform = `${lift} ${rotate}`; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; }); element.addEventListener('mouseleave', () => { element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; }); }
+function apply3DTilt(element, isHand = false) { 
+    if(window.innerWidth < 768) return; 
+    
+    element.addEventListener('mousemove', (e) => { 
+        const rect = element.getBoundingClientRect(); 
+        const x = e.clientX - rect.left; 
+        const y = e.clientY - rect.top; 
+        
+        // Coordenadas normalizadas (-0.5 a 0.5)
+        const xPct = (x / rect.width) - 0.5; 
+        const yPct = (y / rect.height) - 0.5; 
+        
+        // ENVIA COORDENADAS PARA O CSS (Para o efeito Foil)
+        element.style.setProperty('--rx', xPct);
+        element.style.setProperty('--ry', yPct);
+
+        // CONFIGURAÇÃO DO 3D MAIS FORTE
+        // Aumentei o scale para 2.2 e o translateY para subir mais
+        let lift = isHand ? 'translateY(-140px) scale(2.2)' : 'scale(1.1)';
+        
+        // Aumentei a rotação para 55deg (antes era 40)
+        let rotate = `rotateX(${yPct * -55}deg) rotateY(${xPct * 55}deg)`; 
+        
+        if(element.classList.contains('disabled-card')) {
+             rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
+        }
+        
+        element.style.transform = `${lift} ${rotate}`; 
+        
+        // Parallax da arte interna
+        let art = element.querySelector('.card-art'); 
+        if(art) art.style.backgroundPosition = `${50 + (xPct * 25)}% ${50 + (yPct * 25)}%`; 
+    }); 
+    
+    element.addEventListener('mouseleave', () => { 
+        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
+        let art = element.querySelector('.card-art'); 
+        if(art) art.style.backgroundPosition = 'center'; 
+        
+        // Reseta o brilho
+        element.style.setProperty('--rx', 0);
+        element.style.setProperty('--ry', 0);
+    }); 
+}
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
 function triggerDamageEffect(isPlayer, playAudio = true) { try { if(playAudio) playSound('sfx-hit'); let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); let ov = document.getElementById('dmg-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } } catch(e) {} }
