@@ -220,7 +220,7 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA (LIMPA E SEGURA)
+// LÓGICA DE PARTIDA
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
@@ -236,10 +236,10 @@ function startGameFlow() {
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Desenha na tela imediatamente
+    // Desenha na tela
     updateUI();
     
-    // Destrava o jogo
+    // DISPARA A ANIMAÇÃO INICIAL (BOUNCE)
     dealAllInitialCards();
 }
 
@@ -449,9 +449,39 @@ function showCenterText(txt, col) { let el = document.createElement('div'); el.c
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
+// -----------------------------------------------------------------
+// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE)
+// -----------------------------------------------------------------
 function dealAllInitialCards() {
-    // Apenas destrava (limpeza completa das animações antigas)
-    isProcessing = false; 
+    isProcessing = true; 
+    playSound('sfx-deal'); 
+    
+    // 1. Pega as cartas que JÁ ESTÃO na tela (colocadas pelo updateUI)
+    const handEl = document.getElementById('player-hand'); 
+    const cards = Array.from(handEl.children);
+    
+    // 2. Aplica a animação visual em cada uma
+    cards.forEach((cardEl, i) => {
+        // Deixa invisível para começar
+        cardEl.style.opacity = '0';
+        
+        // Adiciona a classe de animação (que definimos no CSS)
+        cardEl.classList.add('intro-anim');
+        
+        // Coloca um delay progressivo (0.1s, 0.2s...) para efeito cascata
+        cardEl.style.animationDelay = (i * 0.1) + 's';
+        
+        // 3. LIMPEZA: Quando a animação acabar (após 1.5s), remove a classe.
+        // Isso é crucial para que o zoom e o hover voltem a funcionar rápido.
+        setTimeout(() => {
+            cardEl.classList.remove('intro-anim');
+            cardEl.style.opacity = '1';
+            cardEl.style.animationDelay = '';
+        }, 1500);
+    });
+
+    // Destrava o jogo
+    setTimeout(() => { isProcessing = false; }, 1600);
 }
 
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
