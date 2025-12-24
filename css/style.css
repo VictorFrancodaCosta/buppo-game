@@ -181,8 +181,8 @@ body {
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 
 /* --- TRAVA DE SEGURANÇA VISUAL ---
-   A classe .preparing no pai esconde tudo com !important para garantir
-   que nada "pisque" antes da hora. */
+   Enquanto a classe .preparing estiver na mão, todas as cartas
+   ficam invisíveis. Isso garante que a animação comece do zero. */
 #player-hand.preparing .card {
     opacity: 0 !important;
     visibility: hidden !important;
@@ -191,15 +191,19 @@ body {
 .card { 
     --rx: 0;
     --ry: 0;
+    
+    /* Transições padrão */
     transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; 
+    
     pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; 
     color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
     transform-style: preserve-3d; background-color: #111; 
     
-    /* AQUI ESTAVA O PROBLEMA: O !important forçava a visibilidade sempre */
-    opacity: 1 !important; 
-    visibility: visible !important; 
+    /* REMOVIDO O !IMPORTANT DA OPACIDADE.
+       Isso permite que o Javascript (e nossa trava) controlem a visibilidade. */
+    opacity: 1; 
+    visibility: visible; 
 }
 
 /* --- EFEITO FOIL / BRILHO APPLE TV --- */
@@ -301,18 +305,19 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 @keyframes transPulse { from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); } to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); } }
 
 /* --- CORREÇÃO DA ANIMAÇÃO INICIAL (BOUNCE) --- */
-/* O segredo aqui é usar !important para vencer a classe .card padrão */
 @keyframes introBounce {
-    0% { transform: translateY(120vh) scale(0.5); opacity: 0 !important; } 
-    60% { transform: translateY(-40px) scale(1.1); opacity: 1 !important; }
+    0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 
+    60% { transform: translateY(-40px) scale(1.1); opacity: 1; }
     80% { transform: translateY(10px) scale(0.95); }
-    100% { transform: translateY(0) scale(1); opacity: 1 !important; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .intro-anim {
     /* Força a animação a rodar e manter o estado final */
     animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     pointer-events: none;
-    /* AQUI É A CHAVE: Força invisibilidade sobrepondo o .card */
-    opacity: 0 !important; 
+    
+    /* REMOVI O OPACITY: 0 !IMPORTANT */
+    /* E GARANTIMOS QUE A TRANSIÇÃO NÃO INTERFIRA */
+    transition: none !important;
 }
