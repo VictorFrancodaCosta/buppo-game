@@ -511,12 +511,181 @@ function initAmbientParticles() { const container = document.getElementById('amb
 initAmbientParticles();
 
 function apply3DTilt(element, isHand = false) { if(window.innerWidth < 768) return; element.addEventListener('mousemove', (e) => { const rect = element.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; let lift = isHand ? 'translateY(-100px) scale(1.8)' : 'scale(1.1)'; let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; element.style.transform = `${lift} ${rotate}`; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; }); element.addEventListener('mouseleave', () => { element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; }); }
-function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
-function triggerDamageEffect(isPlayer, playAudio = true) { try { if(playAudio) playSound('sfx-hit'); let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); let ov = document.getElementById('dmg-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } } catch(e) {} }
+// =======================
+// SISTEMA HÍBRIDO DE FX (CANVAS)
+// =======================
+
+// --- GARANTIA DE EXISTÊNCIA DO CANVAS (Auto-Correção) ---
+let canvas = document.getElementById('fx-canvas');
+if (!canvas) {
+    console.log("Canvas não encontrado no HTML. Criando automaticamente...");
+    canvas = document.createElement('canvas');
+    canvas.id = 'fx-canvas';
+    // Aplica estilos essenciais via JS
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '15000'; // Garante que fique visível
+    document.body.appendChild(canvas);
+}
+
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+// Ajusta o tamanho do canvas para a tela
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas(); // Chama uma vez ao iniciar
+
+// Classe Genérica de Partícula
+class Particle {
+    constructor(x, y, color, type) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.type = type; // 'explosion', 'heal', 'block'
+        
+        const angle = Math.random() * Math.PI * 2;
+        // Velocidade baseada no tipo
+        if(type === 'explosion') {
+            const speed = Math.random() * 5 + 2;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.life = 1.0;
+            this.decay = 0.02 + Math.random() * 0.02;
+            this.size = Math.random() * 6 + 2;
+        } else if (type === 'heal') {
+            this.vx = (Math.random() - 0.5) * 2;
+            this.vy = - (Math.random() * 2 + 1); // Sobe suavemente
+            this.life = 1.0;
+            this.decay = 0.01;
+            this.size = Math.random() * 4 + 2;
+        } else if (type === 'block') {
+            this.vx = (Math.random() - 0.5) * 8;
+            this.vy = (Math.random() - 0.5) * 8;
+            this.life = 1.0;
+            this.decay = 0.05;
+            this.size = Math.random() * 3 + 1;
+        }
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= this.decay;
+
+        // Gravidade leve apenas para explosões
+        if(this.type === 'explosion') this.vy += 0.2; 
+    }
+
+    draw(ctx) {
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.fillStyle = this.color;
+        
+        if(this.type === 'heal') {
+            // Desenha pequenas cruzes (+) ou círculos
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            // Quadrados ou Círculos para explosão
+            ctx.beginPath();
+            ctx.rect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+    }
+}
+
+// O Loop de Animação do Canvas
+function fxLoop() {
+    // Limpa a tela
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Atualiza e desenha partículas
+    for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        particles[i].draw(ctx);
+        if (particles[i].life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+
+    requestAnimationFrame(fxLoop);
+}
+// Inicia o loop
+fxLoop();
+
+// --- SUBSTITUIÇÕES DAS FUNÇÕES ANTIGAS (Definição Global) ---
+
+window.spawnParticles = function(x, y, color, type = 'explosion') {
+    const amount = type === 'explosion' ? 30 : 15; 
+    for (let i = 0; i < amount; i++) {
+        particles.push(new Particle(x, y, color, type));
+    }
+}
+
+window.triggerDamageEffect = function(isPlayer, playAudio = true) {
+    try {
+        if(playAudio) playSound('sfx-hit');
+        let elId = isPlayer ? 'p-slot' : 'm-slot';
+        let slot = document.getElementById(elId);
+        
+        if(slot) {
+            let r = slot.getBoundingClientRect();
+            // Calcula o centro do slot
+            let centerX = r.left + r.width / 2;
+            let centerY = r.top + r.height / 2;
+            
+            // Dispara partículas vermelhas no Canvas
+            window.spawnParticles(centerX, centerY, '#ff4757', 'explosion');
+        }
+
+        document.body.classList.add('shake-screen');
+        setTimeout(() => document.body.classList.remove('shake-screen'), 400);
+
+        let ov = document.getElementById('dmg-overlay');
+        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); }
+    } catch(e) { console.error(e); }
+}
+
+window.triggerHealEffect = function(isPlayer) {
+    try {
+        let elId = isPlayer ? 'p-slot' : 'm-slot';
+        let slot = document.getElementById(elId);
+        if(slot) {
+            let r = slot.getBoundingClientRect();
+            window.spawnParticles(r.left + r.width/2, r.top + r.height/2, '#2ecc71', 'heal');
+        }
+        let ov = document.getElementById('heal-overlay');
+        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); }
+    } catch(e) {}
+}
+
+window.triggerBlockEffect = function() {
+    try {
+        playSound('sfx-block');
+        let centerX = window.innerWidth / 2;
+        let centerY = window.innerHeight / 2;
+        
+        window.spawnParticles(centerX, centerY, '#74b9ff', 'block');
+        window.spawnParticles(centerX, centerY, '#ffffff', 'block');
+
+        let ov = document.getElementById('block-overlay');
+        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); }
+        document.body.classList.add('shake-screen');
+        setTimeout(() => document.body.classList.remove('shake-screen'), 200);
+    } catch(e) {}
+}
+
 function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
-function triggerHealEffect(isPlayer) { try { let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } let ov = document.getElementById('heal-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } } catch(e) {} }
-function triggerBlockEffect() { try { playSound('sfx-block'); let ov = document.getElementById('block-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); } catch(e) {} }
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
@@ -840,181 +1009,4 @@ function showTT(k) {
         `;
     }
     tt.style.display = 'block';
-}
-
-// =======================
-// SISTEMA HÍBRIDO DE FX (CANVAS)
-// =======================
-
-// --- CRIAÇÃO AUTOMÁTICA DO CANVAS SE NÃO EXISTIR ---
-let canvas = document.getElementById('fx-canvas');
-if (!canvas) {
-    canvas = document.createElement('canvas');
-    canvas.id = 'fx-canvas';
-    // Aplica estilos essenciais via JS caso o CSS falhe
-    canvas.style.position = 'fixed';
-    canvas.style.top = '0';
-    canvas.style.left = '0';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.pointerEvents = 'none';
-    canvas.style.zIndex = '9000';
-    document.body.appendChild(canvas);
-}
-const ctx = canvas.getContext('2d');
-let particles = [];
-
-// Ajusta o tamanho do canvas para a tela
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas(); // Chama uma vez ao iniciar
-
-// Classe Genérica de Partícula
-class Particle {
-    constructor(x, y, color, type) {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        this.type = type; // 'explosion', 'heal', 'block'
-        
-        const angle = Math.random() * Math.PI * 2;
-        // Velocidade baseada no tipo
-        if(type === 'explosion') {
-            const speed = Math.random() * 5 + 2;
-            this.vx = Math.cos(angle) * speed;
-            this.vy = Math.sin(angle) * speed;
-            this.life = 1.0;
-            this.decay = 0.02 + Math.random() * 0.02;
-            this.size = Math.random() * 6 + 2;
-        } else if (type === 'heal') {
-            this.vx = (Math.random() - 0.5) * 2;
-            this.vy = - (Math.random() * 2 + 1); // Sobe suavemente
-            this.life = 1.0;
-            this.decay = 0.01;
-            this.size = Math.random() * 4 + 2;
-        } else if (type === 'block') {
-            this.vx = (Math.random() - 0.5) * 8;
-            this.vy = (Math.random() - 0.5) * 8;
-            this.life = 1.0;
-            this.decay = 0.05;
-            this.size = Math.random() * 3 + 1;
-        }
-    }
-
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.life -= this.decay;
-
-        // Gravidade leve apenas para explosões
-        if(this.type === 'explosion') this.vy += 0.2; 
-    }
-
-    draw(ctx) {
-        ctx.globalAlpha = Math.max(0, this.life);
-        ctx.fillStyle = this.color;
-        
-        if(this.type === 'heal') {
-            // Desenha pequenas cruzes (+) ou círculos
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
-        } else {
-            // Quadrados ou Círculos para explosão
-            ctx.beginPath();
-            ctx.rect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
-            ctx.fill();
-        }
-        ctx.globalAlpha = 1.0;
-    }
-}
-
-// O Loop de Animação do Canvas
-function fxLoop() {
-    // Limpa a tela (mas deixa um rastro muito leve se quiser motion blur, aqui limpamos tudo)
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Atualiza e desenha partículas
-    for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update();
-        particles[i].draw(ctx);
-        if (particles[i].life <= 0) {
-            particles.splice(i, 1);
-        }
-    }
-
-    requestAnimationFrame(fxLoop);
-}
-// Inicia o loop
-fxLoop();
-
-// --- SUBSTITUIÇÕES DAS FUNÇÕES ANTIGAS ---
-
-// Substitui a spawnParticles antiga
-window.spawnParticles = function(x, y, color, type = 'explosion') {
-    const amount = type === 'explosion' ? 30 : 15; // Mais partículas para explosão
-    for (let i = 0; i < amount; i++) {
-        particles.push(new Particle(x, y, color, type));
-    }
-}
-
-// Atualizando os gatilhos para usar o novo sistema
-window.triggerDamageEffect = function(isPlayer, playAudio = true) {
-    try {
-        if(playAudio) playSound('sfx-hit');
-        let elId = isPlayer ? 'p-slot' : 'm-slot';
-        let slot = document.getElementById(elId);
-        
-        if(slot) {
-            let r = slot.getBoundingClientRect();
-            // Calcula o centro do slot
-            let centerX = r.left + r.width / 2;
-            let centerY = r.top + r.height / 2;
-            
-            // Dispara partículas vermelhas no Canvas
-            spawnParticles(centerX, centerY, '#ff4757', 'explosion');
-        }
-
-        // Mantém o efeito de tremer a tela (CSS) pois é bom
-        document.body.classList.add('shake-screen');
-        setTimeout(() => document.body.classList.remove('shake-screen'), 400);
-
-        let ov = document.getElementById('dmg-overlay');
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); }
-    } catch(e) { console.error(e); }
-}
-
-window.triggerHealEffect = function(isPlayer) {
-    try {
-        let elId = isPlayer ? 'p-slot' : 'm-slot';
-        let slot = document.getElementById(elId);
-        if(slot) {
-            let r = slot.getBoundingClientRect();
-            // Partículas verdes flutuando
-            spawnParticles(r.left + r.width/2, r.top + r.height/2, '#2ecc71', 'heal');
-        }
-        let ov = document.getElementById('heal-overlay');
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); }
-    } catch(e) {}
-}
-
-window.triggerBlockEffect = function() {
-    try {
-        playSound('sfx-block');
-        // Pega o centro da tela (aproximado) para o impacto do bloqueio
-        let centerX = window.innerWidth / 2;
-        let centerY = window.innerHeight / 2;
-        
-        // Partículas de faísca azul/branca
-        spawnParticles(centerX, centerY, '#74b9ff', 'block');
-        spawnParticles(centerX, centerY, '#ffffff', 'block');
-
-        let ov = document.getElementById('block-overlay');
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); }
-        document.body.classList.add('shake-screen');
-        setTimeout(() => document.body.classList.remove('shake-screen'), 200);
-    } catch(e) {}
 }
