@@ -1,4 +1,3 @@
-// js/Network.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -21,52 +20,38 @@ export class NetworkManager {
         this.currentUser = null;
     }
 
-    // Gerencia Login
     async login() {
-        try {
-            await signInWithPopup(this.auth, this.provider);
-        } catch (error) {
-            console.error("Erro Login:", error);
-            throw error;
-        }
+        try { await signInWithPopup(this.auth, this.provider); } 
+        catch (error) { console.error("Erro Login:", error); throw error; }
     }
 
-    logout() {
-        return signOut(this.auth);
-    }
+    logout() { return signOut(this.auth); }
 
-    // Escuta mudanças de auth (Login/Logout)
     onAuthChange(callback) {
         onAuthStateChanged(this.auth, async (user) => {
             this.currentUser = user;
-            if (user) {
-                await this.ensureUserRecord(user);
-            }
+            if (user) await this._ensureUserRecord(user);
             callback(user);
         });
     }
 
-    // Garante que o doc do usuário existe no DB
-    async ensureUserRecord(user) {
+    async _ensureUserRecord(user) {
         const userRef = doc(this.db, "players", user.uid);
         const snap = await getDoc(userRef);
         if (!snap.exists()) {
             await setDoc(userRef, { name: user.displayName, score: 0, totalWins: 0 });
         }
-        return snap.data();
     }
 
-    // Atualiza Ranking em tempo real
     subscribeToRanking(callback) {
         const q = query(collection(this.db, "players"), orderBy("score", "desc"), limit(10));
         return onSnapshot(q, (snapshot) => {
             const data = [];
-            snapshot.forEach(doc => data.push(doc.data()));
+            snapshot.forEach(d => data.push(d.data()));
             callback(data);
         });
     }
 
-    // Registra Vitória/Derrota
     async registerResult(isWin) {
         if (!this.currentUser) return;
         const userRef = doc(this.db, "players", this.currentUser.uid);
