@@ -349,12 +349,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); }
 }
 
-/* ARQUIVO: css/style.css */
-
-/* ARQUIVO: css/style.css */
-
-/* ... resto do seu CSS ... */
-
+/* CANVAS HIBRIDO - EFEITOS ESPECIAIS */
 #fx-canvas {
     position: fixed;
     top: 0;
@@ -362,6 +357,6 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     width: 100%;
     height: 100%;
     pointer-events: none; /* ESSENCIAL: Permite clicar através dos efeitos */
-    z-index: 9000; /* Fica acima das cartas, mas abaixo de modais */
+    z-index: 15000; /* Acima do tabuleiro, mas abaixo de modais */
     display: block;
 }
