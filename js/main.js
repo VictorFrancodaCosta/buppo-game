@@ -5,6 +5,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
     authDomain: "buppo-game.firebaseapp.com",
@@ -19,9 +20,20 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+// --- VARIÁVEIS GLOBAIS ---
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
+let totalAssets = 0;
+let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+let isProcessing = false; 
+let turnCount = 1; 
+let playerHistory = []; 
+window.masterVol = 1.0; 
+let isLethalHover = false; 
+let mixerInterval = null;
+
 const ASSETS_TO_LOAD = {
     images: [
         'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png', 'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png', 
@@ -42,18 +54,13 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-tie', src: 'https://files.catbox.moe/sb18ja.mp3' }
     ]
 };
-let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
-
-let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
-let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
-let isProcessing = false; let turnCount = 1; let playerHistory = []; 
-window.masterVol = 1.0; 
-let isLethalHover = false; 
-let mixerInterval = null;
+totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 
 // =======================
-// CONTROLES DE MÚSICA & LOGIN (Mantidos)
+// FUNÇÕES DE SISTEMA (LOGIN/AUDIO) - Prioridade Alta
 // =======================
+
+// Audio Controller Simplificado
 const MusicController = {
     currentTrackId: null,
     play(trackId) {
@@ -74,183 +81,79 @@ const MusicController = {
     fadeIn(audio, targetVol) { let vol = 0; audio.volume = 0; const i = setInterval(() => { if (vol < targetVol - 0.05) { vol += 0.05; audio.volume = vol; } else { audio.volume = targetVol; clearInterval(i); } }, 50); }
 };
 
-window.isMuted = false;
-window.toggleMute = function() {
-    window.isMuted = !window.isMuted;
-    Object.values(audios).forEach(audio => { if(audio) audio.muted = window.isMuted; });
-    const btn = document.getElementById('btn-sound');
-    btn.innerHTML = window.isMuted ? 
-        `<svg viewBox="0 0 24 24" style="width:100%;height:100%;fill:#eee"><path d="M16.5,12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45,2.45C16.42,12.5,16.5,12.26,16.5,12z M19,12c0,0.94-0.2,1.82-0.54,2.64l1.51,1.51C20.63,14.91,21,13.5,21,12c0-4.28-2.99-7.86-7-8.77v2.06C16.89,6.15,19,8.83,19,12z M4.27,3L3,4.27l4.56,4.56C7.39,8.91,7.2,8.96,7,9H3v6h4l5,5v-6.73l4.25,4.25c-0.67,0.52-1.42,0.93-2.25,1.18v2.06c1.38-0.31,2.63-0.95,3.69-1.81L19.73,21L21,19.73L9,7.73V4L4.27,3z M12,4L9.91,6.09L12,8.18V4z"/></svg>` : 
-        `<svg viewBox="0 0 24 24" style="width:100%;height:100%;fill:#eee"><path d="M3,9v6h4l5,5V4L7,9H3z M16.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C15.48,15.29,16.5,13.77,16.5,12z M14,3.23v2.06 c2.89,0.86,5,3.54,5,6.71s-2.11,5.85-5,6.71v2.06c4.01-0.91,7-4.49,7-8.77S18.01,4.14,14,3.23z"/></svg>`;
-    if(!window.isMuted && MusicController.currentTrackId) { const a = audios[MusicController.currentTrackId]; if(a && a.paused) a.play(); }
-}
 window.playNavSound = function() { let s = audios['sfx-nav']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } };
 
-// =======================
-// NAVEGAÇÃO
-// =======================
-window.showScreen = function(screenId) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(screenId).classList.add('active');
-    const surrenderBtn = document.getElementById('btn-surrender');
-    const configBtn = document.getElementById('btn-config-toggle');
-    if(screenId === 'game-screen') { if(surrenderBtn) surrenderBtn.style.display='block'; if(configBtn) configBtn.style.display='flex'; }
-    else { if(surrenderBtn) surrenderBtn.style.display='none'; if(configBtn) configBtn.style.display='none'; document.getElementById('config-panel').style.display='none'; }
-}
+window.googleLogin = async function() {
+    window.playNavSound(); 
+    const btnText = document.getElementById('btn-text');
+    btnText.innerText = "CONECTANDO...";
+    try { await signInWithPopup(auth, provider); } 
+    catch (error) { console.error(error); btnText.innerText = "ERRO"; setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000); }
+};
 
-window.transitionToGame = function() {
-    const ts = document.getElementById('transition-overlay'); ts.classList.add('active');
-    ts.querySelector('.trans-text').innerText = "PREPARANDO BATALHA...";
-    setTimeout(() => {
-        MusicController.play('bgm-loop');
-        document.getElementById('game-background').classList.remove('lobby-mode');
-        window.showScreen('game-screen');
-        document.getElementById('player-hand').innerHTML = '';
-        setTimeout(() => { ts.classList.remove('active'); setTimeout(startGameFlow, 200); }, 1500);
-    }, 500);
-}
+window.handleLogout = function() { window.playNavSound(); signOut(auth).then(() => { location.reload(); }); };
 
-window.transitionToLobby = function() {
-    const ts = document.getElementById('transition-overlay'); ts.classList.add('active');
-    ts.querySelector('.trans-text').innerText = "RETORNANDO AO SAGUÃO...";
-    MusicController.stopCurrent();
-    setTimeout(() => { window.goToLobby(false); setTimeout(() => { ts.classList.remove('active'); }, 1000); }, 500);
-}
+// Firebase Auth Listener
+onAuthStateChanged(auth, (user) => {
+    // Remove loading screen
+    const loader = document.getElementById('loading-screen');
+    if(loader) { loader.style.opacity = '0'; setTimeout(() => loader.style.display = 'none', 500); }
 
-window.goToLobby = async function(isAutoLogin = false) {
-    if(!currentUser) { window.showScreen('start-screen'); MusicController.play('bgm-menu'); return; }
-    document.getElementById('game-background').classList.add('lobby-mode');
-    MusicController.play('bgm-menu'); createLobbyFlares();
-    
-    // Simples atualização de UI do Lobby
-    const userRef = doc(db, "players", currentUser.uid);
-    const snap = await getDoc(userRef);
-    if (!snap.exists()) {
-        await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
-        document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
-        document.getElementById('lobby-stats').innerText = "VITÓRIAS: 0 | PONTOS: 0";
+    if (user) {
+        currentUser = user;
+        window.goToLobby(true); 
     } else {
-        const d = snap.data();
-        document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
-        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins||0} | PONTOS: ${d.score||0}`;
+        currentUser = null;
+        window.showScreen('start-screen');
+        const bg = document.getElementById('game-background');
+        if(bg) bg.classList.remove('lobby-mode');
+        const btnTxt = document.getElementById('btn-text');
+        if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
+        MusicController.play('bgm-menu');
     }
-    const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
-    onSnapshot(q, (snapshot) => {
-        let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
-        let pos = 1;
-        snapshot.forEach((doc) => {
-            const p = doc.data();
-            let cls = pos===1?"rank-1":(pos===2?"rank-2":(pos===3?"rank-3":""));
-            html += `<tr class="${cls}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
-            pos++;
-        });
-        document.getElementById('ranking-content').innerHTML = html + '</tbody></table>';
-    });
-    window.showScreen('lobby-screen'); document.getElementById('end-screen').classList.remove('visible');
-}
-
-// =======================
-// LOOP DO JOGO
-// =======================
-function startGameFlow() {
-    document.getElementById('end-screen').classList.remove('visible');
-    isProcessing = false; startCinematicLoop();
-    resetUnit(player); resetUnit(monster); turnCount = 1; playerHistory = [];
-    
-    drawCardLogic(monster, 6); 
-    drawCardLogic(player, 6); 
-    
-    // O segredo do "sem fantasma": Update UI cria os elementos, mas DealCards os esconde
-    updateUI(); 
-    
-    // Garante que a mão esteja invisível antes da animação começar
-    const handEl = document.getElementById('player-hand'); 
-    if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
-
-    setTimeout(() => { dealAllInitialCards(); }, 100);
-}
-
-function checkEndGame(){ 
-    if(player.hp<=0 || monster.hp<=0) { 
-        isProcessing = true; isLethalHover = false; MusicController.stopCurrent();
-        setTimeout(()=>{ 
-            let title = document.getElementById('end-title'); 
-            let win = player.hp > 0; let tie = player.hp <= 0 && monster.hp <= 0;
-            if(tie) { title.innerText="EMPATE"; title.className="tie-theme"; playSound('sfx-tie'); }
-            else if(win) { title.innerText="VITÓRIA"; title.className="win-theme"; playSound('sfx-win'); }
-            else { title.innerText="DERROTA"; title.className="lose-theme"; playSound('sfx-lose'); }
-            if(win && !tie) window.registrarVitoriaOnline(); else window.registrarDerrotaOnline();
-            document.getElementById('end-screen').classList.add('visible'); 
-        }, 1000); 
-    } else isProcessing = false; 
-}
-
-// =======================
-// FIREBASE & AUX
-// =======================
-onAuthStateChanged(auth, (u) => {
-    setTimeout(() => { document.getElementById('loading-screen').style.opacity = '0'; setTimeout(()=>document.getElementById('loading-screen').style.display='none',500); }, 500);
-    if(u) { currentUser = u; window.goToLobby(true); } 
-    else { currentUser = null; window.showScreen('start-screen'); document.getElementById('game-background').classList.remove('lobby-mode'); MusicController.play('bgm-menu'); }
 });
 
-window.googleLogin = async function() { window.playNavSound(); try { await signInWithPopup(auth, provider); } catch(e){console.error(e);} };
-window.handleLogout = function() { window.playNavSound(); signOut(auth).then(()=>location.reload()); };
-window.registrarVitoriaOnline = async function() { if(!currentUser)return; try{const r=doc(db,"players",currentUser.uid);const s=await getDoc(r);if(s.exists()){const d=s.data();await updateDoc(r,{totalWins:(d.totalWins||0)+1,score:(d.score||0)+100});}}catch(e){} };
-window.registrarDerrotaOnline = async function() { if(!currentUser)return; try{const r=doc(db,"players",currentUser.uid);const s=await getDoc(r);if(s.exists())await updateDoc(r,{score:(s.data().score||0)+10});}catch(e){} };
-window.restartMatch = function() { document.getElementById('end-screen').classList.remove('visible'); setTimeout(startGameFlow,50); MusicController.play('bgm-loop'); };
-window.abandonMatch = function() { if(document.getElementById('game-screen').classList.contains('active')){window.toggleConfig();if(confirm("Sair? Contará como derrota.")) { window.registrarDerrotaOnline(); window.transitionToLobby(); }}};
-
 // =======================
-// CARREGAMENTO
-// =======================
-function preloadGame() {
-    ASSETS_TO_LOAD.images.forEach(src => { let i=new Image(); i.src=src; i.onload=updateLoader; i.onerror=updateLoader; });
-    ASSETS_TO_LOAD.audio.forEach(a => { let s=new Audio(); s.src=a.src; if(a.loop)s.loop=true; audios[a.id]=s; s.onloadedmetadata=updateLoader; s.onerror=updateLoader; });
-}
-function updateLoader() {
-    assetsLoaded++; document.getElementById('loader-fill').style.width = Math.min(100,(assetsLoaded/totalAssets)*100)+'%';
-    if(assetsLoaded>=totalAssets) {
-        setTimeout(() => { document.getElementById('loading-screen').style.opacity='0'; setTimeout(()=>document.getElementById('loading-screen').style.display='none',500); }, 1000);
-        document.body.addEventListener('click', () => { if(!MusicController.currentTrackId) MusicController.play('bgm-menu'); }, {once:true});
-    }
-}
-window.onload = function() { preloadGame(); const b=document.getElementById('btn-sound'); if(b) b.addEventListener('click', (e)=>{e.stopPropagation(); window.toggleMute();}); };
-
-// =======================
-// FX & CANVAS SYSTEM (ATUALIZADO PARA BOUNCE)
+// SETUP DO CANVAS (ANIMAÇÃO NOVA)
 // =======================
 
-// 1. Setup Canvas
 let canvas = document.getElementById('fx-canvas');
 if (!canvas) {
-    canvas = document.createElement('canvas'); canvas.id = 'fx-canvas';
-    Object.assign(canvas.style, { position:'fixed', top:'0', left:'0', width:'100%', height:'100%', pointerEvents:'none', zIndex:'15000' });
+    canvas = document.createElement('canvas');
+    canvas.id = 'fx-canvas';
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '15000';
     document.body.appendChild(canvas);
 }
 const ctx = canvas.getContext('2d');
 let particles = [];
-let flyingCards = []; // Nossa nova fila de cartas voadoras
-const imageCache = {}; // Cache para as imagens das cartas
+let flyingCards = [];
+const imageCache = {};
 
-// Pré-carregar imagens para o Canvas
+// Cache de Imagens das Cartas
 Object.keys(CARDS_DB).forEach(key => {
-    const img = new Image(); img.src = CARDS_DB[key].img;
+    const img = new Image(); 
+    img.src = CARDS_DB[key].img;
     imageCache[key] = img;
 });
 
 function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-window.addEventListener('resize', resizeCanvas); resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-// Easing Function: Ease Out Back (O segredo do Bounce)
-// Isso faz o valor ir de 0 a 1 ultrapassando um pouco 1 e voltando.
+// Função de Easing (Bounce)
 function easeOutBack(x) {
     const c1 = 1.70158;
     const c3 = c1 + 1;
     return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
 }
 
-// 2. Classe FlyingCard (Vertical + Bounce + Imagem Real)
+// Classe da Carta Voadora (Canvas)
 class FlyingCard {
     constructor(targetX, targetY, width, height, cardKey, onLand) {
         this.tx = targetX;
@@ -260,80 +163,62 @@ class FlyingCard {
         this.key = cardKey;
         this.onLand = onLand;
         
-        // Começa lá embaixo da tela, alinhado horizontalmente com o destino
-        this.startX = targetX;
-        this.startY = window.innerHeight + 200; // Fora da tela
+        // Começa de BAIXO da tela
+        this.startY = window.innerHeight + 150; 
         
-        this.x = this.startX;
+        this.x = targetX; // Alinhado horizontalmente com o destino
         this.y = this.startY;
         
         this.progress = 0;
-        this.speed = 0.015; // Velocidade da animação (ajuste conforme gosto)
+        this.speed = 0.015; // Velocidade da subida
         this.finished = false;
     }
 
     update() {
         if (this.finished) return;
-
         this.progress += this.speed;
         if (this.progress >= 1) {
             this.progress = 1;
             this.finished = true;
-            if (this.onLand) this.onLand(); // Chama o swap
+            if (this.onLand) this.onLand();
         }
-
-        // Aplica o Easing no Y para dar o efeito de bounce
         const ease = easeOutBack(this.progress);
-        
-        // Interpolação
         this.y = this.startY + (this.ty - this.startY) * ease;
-        // O X não muda, é reto para cima
     }
 
     draw(ctx) {
-        // Tenta desenhar a imagem exata da carta
         const img = imageCache[this.key];
-        
         ctx.save();
-        // Sombra suave para dar profundidade enquanto voa
         ctx.shadowColor = "rgba(0,0,0,0.5)";
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 15;
         ctx.shadowOffsetY = 10;
-
+        
         if (img && img.complete) {
-            // Desenha imagem com borda arredondada (simulada via clip ou apenas imagem)
+            // Desenha imagem
             ctx.drawImage(img, this.x, this.y, this.w, this.h);
+            
+            // Desenha borda colorida baseada na raridade/tipo
+            let borderColor = '#333';
+            if(CARDS_DB[this.key]) {
+               let colClass = CARDS_DB[this.key].color; // ex: 'border-red'
+               if(colClass.includes('red')) borderColor = '#ff4757';
+               if(colClass.includes('blue')) borderColor = '#00cec9';
+               if(colClass.includes('yellow')) borderColor = '#ffa502';
+               if(colClass.includes('purple')) borderColor = '#a29bfe';
+            }
+            ctx.strokeStyle = borderColor;
+            ctx.lineWidth = 3;
+            // Hack simples para borda arredondada no canvas sem clip complexo
+            ctx.strokeRect(this.x, this.y, this.w, this.h);
         } else {
-            // Fallback: Retângulo colorido se imagem falhar
             ctx.fillStyle = "#222";
             ctx.fillRect(this.x, this.y, this.w, this.h);
-            ctx.strokeStyle = "#fff";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(this.x, this.y, this.w, this.h);
         }
         ctx.restore();
     }
 }
 
-// Loop Principal do Canvas
-function fxLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // FX Partículas (Explosões)
-    for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update(); particles[i].draw(ctx);
-        if (particles[i].life <= 0) particles.splice(i, 1);
-    }
-    // FX Cartas
-    for (let i = flyingCards.length - 1; i >= 0; i--) {
-        flyingCards[i].update(); flyingCards[i].draw(ctx);
-        if (flyingCards[i].finished) flyingCards.splice(i, 1);
-    }
-    requestAnimationFrame(fxLoop);
-}
-fxLoop();
-
-// 3. Funções de Partículas (Mantidas do anterior)
+// Classe Partícula
 class Particle {
     constructor(x, y, color, type) {
         this.x = x; this.y = y; this.color = color; this.type = type;
@@ -346,6 +231,23 @@ class Particle {
     draw(c){ c.globalAlpha=Math.max(0,this.life); c.fillStyle=this.color; c.beginPath(); 
     if(this.type==='heal')c.arc(this.x,this.y,this.sz,0,6.28); else c.rect(this.x-this.sz/2,this.y-this.sz/2,this.sz,this.sz); c.fill(); c.globalAlpha=1; }
 }
+
+// Loop Principal
+function fxLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update(); particles[i].draw(ctx);
+        if (particles[i].life <= 0) particles.splice(i, 1);
+    }
+    for (let i = flyingCards.length - 1; i >= 0; i--) {
+        flyingCards[i].update(); flyingCards[i].draw(ctx);
+        if (flyingCards[i].finished) flyingCards.splice(i, 1);
+    }
+    requestAnimationFrame(fxLoop);
+}
+fxLoop();
+
+// FX Helpers Globais
 window.spawnParticles = function(x, y, col, type='explosion') { for(let i=0;i<(type==='explosion'?30:15);i++) particles.push(new Particle(x, y, col, type)); }
 window.triggerDamageEffect = function(isP, play=true) { 
     if(play) playSound('sfx-hit'); 
@@ -366,88 +268,66 @@ window.triggerBlockEffect = function() {
 }
 
 // =======================
-// LÓGICA DE CARTAS E JOGO
+// LÓGICA DE JOGO PRINCIPAL
 // =======================
 
-// --- COMPRA DE CARTAS (A NOVA LÓGICA) ---
 function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
     
     const handEl = document.getElementById('player-hand'); 
-    // OBS: drawCardLogic já foi chamado antes, então o handEl já tem os elementos HTML filhos (as cartas).
-    // Mas eles estão invisíveis (style.opacity = '0') devido ao reset no startGameFlow.
-    
     const cards = Array.from(handEl.children);
+    
     if(cards.length === 0) { isProcessing = false; return; }
 
-    // Loop para criar animação para cada carta
+    // Garante invisibilidade
+    cards.forEach(c => c.style.opacity = '0');
+
+    // Cria as cartas no Canvas
     cards.forEach((cardEl, i) => {
-        // Garantia extra que está invisível
-        cardEl.style.opacity = '0'; 
-        
-        // Precisamos saber QUAL carta é para desenhar a imagem correta.
-        // A chave da carta (ex: 'ATAQUE') foi salva no onclick ou podemos inferir do DOM se tivermos classes
-        // Hack: Vamos pegar a imagem de fundo do elemento .card-art filho para saber qual é a key ou 
-        // melhor: olhar no array do player.hand[i].
-        let cardKey = player.hand[i]; 
+        let cardKey = player.hand[i]; // Pega a chave correta da mão
+        if(!cardKey) return;
 
         setTimeout(() => {
-            // Descobre onde a carta DEVE ficar na tela
             const rect = cardEl.getBoundingClientRect();
             
-            // Cria o objeto voador no Canvas
             flyingCards.push(new FlyingCard(
-                rect.left, // X Alvo
-                rect.top,  // Y Alvo
+                rect.left, 
+                rect.top, 
                 rect.width, 
                 rect.height, 
-                cardKey,   // Chave para a imagem
+                cardKey, 
                 () => {
-                    // CALLBACK: A carta do Canvas "aterrissou" (terminou o bounce)
-                    // Momento exato da troca:
-                    // 1. O objeto FlyingCard se autodestrói (já tratado no update)
-                    // 2. A carta DOM torna-se visível
-                    cardEl.style.transition = 'none'; // Remove transição para aparecer instantâneo
+                    // Swap Canvas -> DOM
+                    cardEl.style.transition = 'none';
                     cardEl.style.opacity = '1';
-                    
-                    // Adiciona um pequeno brilho/som ao chegar
-                    playSound('sfx-hover'); 
+                    playSound('sfx-hover');
                 }
             ));
             
-            // Libera o jogo após a última carta
             if(i === cards.length - 1) {
                 setTimeout(() => { isProcessing = false; }, 1000);
             }
-        }, i * 150); // Delay entre cartas
+        }, i * 200); // Intervalo
     });
 }
 
-// Compra durante o jogo (Turno a turno)
+// Compra de carta no meio do turno
 function drawCardAnimated(unit, deckId, handId, cb) { 
     if(unit.deck.length===0) { cb(); return; } 
 
-    // Se for o Jogador, usa a animação Canvas "Surge de Baixo"
     if (unit.id === 'p') {
-        // 1. Executa a lógica de adicionar ao array e renderizar HTML invisível PRIMEIRO
-        // Isso é um pouco diferente da ordem antiga, mas necessário para sabermos onde a carta vai cair.
-        // O cb() original fazia o drawCardLogic. Vamos fazer diferente:
+        cb(); // Executa lógica de dados (adiciona na mão do player)
         
-        // Chamamos o callback para que o jogo processe a compra e atualize a UI (crie a carta no DOM)
-        cb(); 
-        
-        // Agora a carta existe no DOM, mas precisamos achá-la e escondê-la rápido
-        // Como o updateUI recria tudo, a nova carta é a última do player.hand
+        // Agora busca a carta que acabou de ser criada no DOM
         const handEl = document.getElementById('player-hand');
         const newCardEl = handEl.lastElementChild;
-        
-        if (newCardEl) {
-            newCardEl.style.opacity = '0'; // Esconde imediatamente
-            const rect = newCardEl.getBoundingClientRect();
-            const cardKey = player.hand[player.hand.length-1];
+        const cardKey = player.hand[player.hand.length-1];
 
-            // Cria animação
+        if (newCardEl && cardKey) {
+            newCardEl.style.opacity = '0';
+            const rect = newCardEl.getBoundingClientRect();
+            
             flyingCards.push(new FlyingCard(
                 rect.left, 
                 rect.top, 
@@ -462,13 +342,87 @@ function drawCardAnimated(unit, deckId, handId, cb) {
             ));
         }
     } else {
-        // Inimigo: Compra instantânea (ou lógica simplificada)
         cb();
     }
 }
 
-// --- RESTO DA LÓGICA DE JOGO (Mantida) ---
+function startGameFlow() {
+    document.getElementById('end-screen').classList.remove('visible');
+    isProcessing = false; 
+    startCinematicLoop();
+    resetUnit(player); 
+    resetUnit(monster); 
+    turnCount = 1; 
+    playerHistory = [];
+    
+    drawCardLogic(monster, 6); 
+    drawCardLogic(player, 6); 
+    
+    updateUI(); 
+    
+    // Força invisibilidade antes da animação
+    const handEl = document.getElementById('player-hand'); 
+    if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
+
+    setTimeout(() => { dealAllInitialCards(); }, 100);
+}
+
+function updateUI() { 
+    updateUnit(player); 
+    updateUnit(monster); 
+    document.getElementById('turn-txt').innerText = "TURNO " + turnCount; 
+}
+
+function updateUnit(u) {
+    document.getElementById(u.id+'-lvl').textContent = u.lvl;
+    document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
+    let hpPct = (Math.max(0,u.hp)/u.maxHp)*100;
+    let hpFill = document.getElementById(u.id+'-hp-fill');
+    hpFill.style.width = hpPct + '%';
+    hpFill.style.background = hpPct > 66 ? '#4cd137' : (hpPct > 33 ? '#fbc531' : '#e84118');
+    document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
+
+    let xc = document.getElementById(u.id+'-xp'); xc.innerHTML=''; 
+    u.xp.forEach(k=>{let d=document.createElement('div');d.className='xp-mini';d.style.backgroundImage=`url('${CARDS_DB[k].img}')`;xc.appendChild(d)});
+    
+    let mc = document.getElementById(u.id+'-masteries'); mc.innerHTML='';
+    if(u.bonusAtk>0) addMI(mc,'ATAQUE',u.bonusAtk,'#e74c3c',u.id); 
+    if(u.bonusBlock>0) addMI(mc,'BLOQUEIO',u.bonusBlock,'#00cec9',u.id);
+    
+    if(u === player) {
+        let h = document.getElementById('player-hand'); 
+        h.innerHTML = '';
+        u.hand.forEach((k,i) => {
+            let c = document.createElement('div'); 
+            c.className = `card hand-card ${CARDS_DB[k].color}`; 
+            c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
+            if(u.disabled===k) c.classList.add('disabled-card');
+            
+            c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div>`;
+            
+            c.onclick = () => onCardClick(i); 
+            bindTT(c,k); 
+            h.appendChild(c); 
+            apply3DTilt(c, true);
+            
+            c.onmouseenter = e => { 
+                bindTT(c,k).onmouseenter(e); 
+                document.body.classList.add('focus-hand'); 
+                playSound('sfx-hover'); 
+                if(checkCardLethality(k)) { isLethalHover=true; document.body.classList.add('tension-active'); }
+            };
+            c.onmouseleave = () => { 
+                document.getElementById('tooltip-box').style.display='none'; 
+                document.body.classList.remove('focus-hand','tension-active'); 
+                isLethalHover=false; 
+            }
+        });
+    }
+}
+
+// Funções de Gameplay (Combate)
 function checkCardLethality(k) { if(k==='ATAQUE') return player.lvl>=monster.hp?'red':false; if(k==='BLOQUEIO') return (1+player.bonusBlock)>=monster.hp?'blue':false; return false; }
+
 function onCardClick(i) {
     if(isProcessing) return; if (!player.hand[i]) return;
     playSound('sfx-play'); document.body.classList.remove('focus-hand','cinematic-active','tension-active');
@@ -479,33 +433,25 @@ function onCardClick(i) {
     else playCardFlow(i, null);
 }
 
-function getBestAIMove() {
-    let moves=[]; monster.hand.forEach((c,i)=>{ if(c!==monster.disabled) moves.push({card:c, index:i, score:0}); });
-    if(moves.length===0) return null;
-    let hist=playerHistory.slice(-5); let aggro=hist.length>0?(hist.filter(c=>c==='ATAQUE').length/hist.length):0.5;
-    let dying=monster.hp<=(player.lvl+player.bonusAtk);
-    moves.forEach(m=>{
-        let s=50;
-        if(m.card==='ATAQUE'){ if(player.hp<=(monster.lvl+monster.bonusAtk)) s+=500; if(aggro<0.4)s+=40; if(dying)s-=30; }
-        else if(m.card==='BLOQUEIO'){ if(dying)s+=100; if(aggro>0.6)s+=60; }
-        else if(m.card==='DESCANSAR'){ if(monster.hp===monster.maxHp)s-=100; else if(monster.hp<=3)s+=50; }
-        else if(m.card==='DESARMAR'){ if(dying)s+=120; if(aggro>0.8)s+=50; }
-        else if(m.card==='TREINAR'){ if(turnCount<5)s+=30; if(dying)s-=200; }
-        m.score=s+Math.random()*15;
-    });
-    moves.sort((a,b)=>b.score-a.score); return moves[0];
-}
-
 function playCardFlow(idx, pDisarm) {
-    isProcessing = true; let pKey = player.hand.splice(idx, 1)[0]; playerHistory.push(pKey);
-    let ai = getBestAIMove(); let mKey = 'ATAQUE'; let mDisarm = null; 
-    if(ai) { mKey = ai.card; monster.hand.splice(ai.index, 1); if(mKey==='DESARMAR'){ if(player.hp<=4)mDisarm='BLOQUEIO'; else mDisarm='ATAQUE'; } } 
-    else { if(monster.hand.length>0) mKey=monster.hand.pop(); else { drawCardLogic(monster,1); if(monster.hand.length>0) mKey=monster.hand.pop(); } }
+    isProcessing = true; 
+    let pKey = player.hand.splice(idx, 1)[0]; 
+    playerHistory.push(pKey);
+    let ai = getBestAIMove(); 
+    let mKey = 'ATAQUE'; let mDisarm = null; 
+    
+    if(ai) { 
+        mKey = ai.card; monster.hand.splice(ai.index, 1); 
+        if(mKey==='DESARMAR'){ if(player.hp<=4)mDisarm='BLOQUEIO'; else mDisarm='ATAQUE'; } 
+    } else { 
+        if(monster.hand.length>0) mKey=monster.hand.pop(); 
+        else { drawCardLogic(monster,1); if(monster.hand.length>0) mKey=monster.hand.pop(); } 
+    }
 
     let pHandEl = document.getElementById('player-hand'); 
     if(pHandEl.children[idx]) pHandEl.children[idx].style.opacity = '0'; 
 
-    // Animação de Combate (Mantendo a antiga DOM para mão->mesa, pois funciona bem)
+    // Animação de Combate (DOM ainda é melhor para Mão -> Mesa)
     animateFly('player-hand', 'p-slot', pKey, () => { renderTable(pKey, 'p-slot'); updateUI(); }, false, true); 
     animateFly({top:-150,left:window.innerWidth/2}, 'm-slot', mKey, () => { renderTable(mKey, 'm-slot'); setTimeout(()=>resolveTurn(pKey, mKey, pDisarm, mDisarm), 500); }, false, true);
 }
@@ -579,35 +525,46 @@ function processMasteries(u, trigs, cb) {
         processMasteries(u,trigs,cb);
     }
 }
+
+// Helpers e Utilidades
+function getBestAIMove() {
+    let moves=[]; monster.hand.forEach((c,i)=>{ if(c!==monster.disabled) moves.push({card:c, index:i, score:0}); });
+    if(moves.length===0) return null;
+    let hist=playerHistory.slice(-5); let aggro=hist.length>0?(hist.filter(c=>c==='ATAQUE').length/hist.length):0.5;
+    let dying=monster.hp<=(player.lvl+player.bonusAtk);
+    moves.forEach(m=>{
+        let s=50;
+        if(m.card==='ATAQUE'){ if(player.hp<=(monster.lvl+monster.bonusAtk)) s+=500; if(aggro<0.4)s+=40; if(dying)s-=30; }
+        else if(m.card==='BLOQUEIO'){ if(dying)s+=100; if(aggro>0.6)s+=60; }
+        else if(m.card==='DESCANSAR'){ if(monster.hp===monster.maxHp)s-=100; else if(monster.hp<=3)s+=50; }
+        else if(m.card==='DESARMAR'){ if(dying)s+=120; if(aggro>0.8)s+=50; }
+        else if(m.card==='TREINAR'){ if(turnCount<5)s+=30; if(dying)s-=200; }
+        m.score=s+Math.random()*15;
+    });
+    moves.sort((a,b)=>b.score-a.score); return moves[0];
+}
+
+function checkEndGame(){ 
+    if(player.hp<=0 || monster.hp<=0) { 
+        isProcessing = true; isLethalHover = false; MusicController.stopCurrent();
+        setTimeout(()=>{ 
+            let title = document.getElementById('end-title'); 
+            let win = player.hp > 0; let tie = player.hp <= 0 && monster.hp <= 0;
+            if(tie) { title.innerText="EMPATE"; title.className="tie-theme"; playSound('sfx-tie'); }
+            else if(win) { title.innerText="VITÓRIA"; title.className="win-theme"; playSound('sfx-win'); }
+            else { title.innerText="DERROTA"; title.className="lose-theme"; playSound('sfx-lose'); }
+            if(win && !tie) window.registrarVitoriaOnline(); else window.registrarDerrotaOnline();
+            document.getElementById('end-screen').classList.add('visible'); 
+        }, 1000); 
+    } else isProcessing = false; 
+}
+
 function applyMastery(u, k) { 
     if(k==='ATAQUE'){ u.bonusAtk++; let t=u===player?monster:player; t.hp-=u.bonusAtk; showFloatingText(t.id+'-lvl',`-${u.bonusAtk}`,'#ff7675'); triggerDamageEffect(u!==player); checkEndGame(); }
     if(k==='BLOQUEIO')u.bonusBlock++; if(k==='DESCANSAR'){ u.maxHp++; showFloatingText(u.id+'-hp-txt','+1 MAX','#55efc4'); } updateUI();
 }
 function drawCardLogic(u, qty) { for(let i=0;i<qty;i++)if(u.deck.length>0)u.hand.push(u.deck.pop()); u.hand.sort(); }
-function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText="TURNO "+turnCount; }
-function updateUnit(u) {
-    document.getElementById(u.id+'-lvl').textContent=u.lvl; document.getElementById(u.id+'-hp-txt').innerText=`${Math.max(0,u.hp)}/${u.maxHp}`;
-    let p=(Math.max(0,u.hp)/u.maxHp)*100; document.getElementById(u.id+'-hp-fill').style.width=p+'%'; document.getElementById(u.id+'-hp-fill').style.background=p>66?'#4cd137':(p>33?'#fbc531':'#e84118');
-    document.getElementById(u.id+'-deck-count').innerText=u.deck.length;
-    let xc=document.getElementById(u.id+'-xp'); xc.innerHTML=''; u.xp.forEach(k=>{let d=document.createElement('div');d.className='xp-mini';d.style.backgroundImage=`url('${CARDS_DB[k].img}')`;xc.appendChild(d)});
-    let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
-    if(u.bonusAtk>0)addMI(mc,'ATAQUE',u.bonusAtk,'#e74c3c',u.id); if(u.bonusBlock>0)addMI(mc,'BLOQUEIO',u.bonusBlock,'#00cec9',u.id);
-    
-    if(u===player) {
-        let h=document.getElementById('player-hand'); h.innerHTML='';
-        u.hand.forEach((k,i)=>{
-            let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`; c.style.setProperty('--flare-col',CARDS_DB[k].fCol);
-            if(u.disabled===k)c.classList.add('disabled-card');
-            // Cards created here, visible by default, but animations might hide them immediately
-            c.innerHTML=`<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div>`;
-            c.onclick=()=>onCardClick(i); bindTT(c,k); h.appendChild(c); apply3DTilt(c,true);
-            c.onmouseenter=e=>{ bindTT(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); playSound('sfx-hover'); if(checkCardLethality(k)){isLethalHover=true;document.body.classList.add('tension-active');}};
-            c.onmouseleave=()=>{document.getElementById('tooltip-box').style.display='none'; document.body.classList.remove('focus-hand','tension-active'); isLethalHover=false;}
-        });
-    }
-}
 function animateFly(sId, eId, k, cb, ini, tbl) {
-    // Essa função agora só é usada para combate (Mão -> Mesa), então não precisa alterar para o deck
     let s; if(typeof sId==='string'){ let el=document.getElementById(sId); if(!el)s={top:0,left:0,width:0}; else s=el.getBoundingClientRect(); } else s=sId;
     let e={top:0,left:0}; let dest=document.getElementById(eId); if(dest) e=dest.getBoundingClientRect();
     let f=document.createElement('div'); f.className=`card flying-card ${CARDS_DB[k].color}`;
@@ -638,3 +595,114 @@ window.toggleConfig = function() { let p = document.getElementById('config-panel
 document.addEventListener('click', function(e) { const panel = document.getElementById('config-panel'); const btn = document.getElementById('btn-config-toggle'); if (panel && panel.classList.contains('active') && !panel.contains(e.target) && (btn && !btn.contains(e.target))) window.toggleConfig(); });
 window.toggleFullScreen = function() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } else { if (document.exitFullscreen) { document.exitFullscreen(); } } }
 window.updateVol = function(type, val) { if(type==='master') window.masterVol = parseFloat(val); }
+
+window.goToLobby = async function(isAutoLogin = false) {
+    if(!currentUser) { window.showScreen('start-screen'); MusicController.play('bgm-menu'); return; }
+    document.getElementById('game-background').classList.add('lobby-mode');
+    MusicController.play('bgm-menu'); createLobbyFlares();
+    
+    const userRef = doc(db, "players", currentUser.uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) {
+        await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
+        document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
+        document.getElementById('lobby-stats').innerText = "VITÓRIAS: 0 | PONTOS: 0";
+    } else {
+        const d = snap.data();
+        document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins||0} | PONTOS: ${d.score||0}`;
+    }
+    const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
+    onSnapshot(q, (snapshot) => {
+        let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
+        let pos = 1;
+        snapshot.forEach((doc) => {
+            const p = doc.data();
+            let cls = pos===1?"rank-1":(pos===2?"rank-2":(pos===3?"rank-3":""));
+            html += `<tr class="${cls}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
+            pos++;
+        });
+        document.getElementById('ranking-content').innerHTML = html + '</tbody></table>';
+    });
+    window.showScreen('lobby-screen'); document.getElementById('end-screen').classList.remove('visible');
+}
+
+window.showScreen = function(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    const surrenderBtn = document.getElementById('btn-surrender');
+    const configBtn = document.getElementById('btn-config-toggle');
+    if(screenId === 'game-screen') { if(surrenderBtn) surrenderBtn.style.display='block'; if(configBtn) configBtn.style.display='flex'; }
+    else { if(surrenderBtn) surrenderBtn.style.display='none'; if(configBtn) configBtn.style.display='none'; document.getElementById('config-panel').style.display='none'; }
+}
+
+window.transitionToGame = function() {
+    const ts = document.getElementById('transition-overlay'); ts.classList.add('active');
+    ts.querySelector('.trans-text').innerText = "PREPARANDO BATALHA...";
+    setTimeout(() => {
+        MusicController.play('bgm-loop');
+        document.getElementById('game-background').classList.remove('lobby-mode');
+        window.showScreen('game-screen');
+        document.getElementById('player-hand').innerHTML = '';
+        setTimeout(() => { ts.classList.remove('active'); setTimeout(startGameFlow, 200); }, 1500);
+    }, 500);
+}
+
+window.transitionToLobby = function() {
+    const ts = document.getElementById('transition-overlay'); ts.classList.add('active');
+    ts.querySelector('.trans-text').innerText = "RETORNANDO AO SAGUÃO...";
+    MusicController.stopCurrent();
+    setTimeout(() => { window.goToLobby(false); setTimeout(() => { ts.classList.remove('active'); }, 1000); }, 500);
+}
+
+window.registrarVitoriaOnline = async function() { if(!currentUser)return; try{const r=doc(db,"players",currentUser.uid);const s=await getDoc(r);if(s.exists()){const d=s.data();await updateDoc(r,{totalWins:(d.totalWins||0)+1,score:(d.score||0)+100});}}catch(e){} };
+window.registrarDerrotaOnline = async function() { if(!currentUser)return; try{const r=doc(db,"players",currentUser.uid);const s=await getDoc(r);if(s.exists())await updateDoc(r,{score:(s.data().score||0)+10});}catch(e){} };
+window.restartMatch = function() { document.getElementById('end-screen').classList.remove('visible'); setTimeout(startGameFlow,50); MusicController.play('bgm-loop'); };
+window.abandonMatch = function() { if(document.getElementById('game-screen').classList.contains('active')){window.toggleConfig();if(confirm("Sair? Contará como derrota.")) { window.registrarDerrotaOnline(); window.transitionToLobby(); }}};
+
+function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
+function updateAudioMixer() { 
+    const cineAudio = audios['sfx-cine']; if(!cineAudio) return; 
+    const mVol = window.masterVol || 1.0; const maxCine = 0.6 * mVol; 
+    let targetCine = isLethalHover ? maxCine : 0; 
+    if(window.isMuted) { cineAudio.volume = 0; return; }
+    if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
+    else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
+}
+
+function createLobbyFlares() {
+    const container = document.getElementById('lobby-particles');
+    if(!container) return;
+    container.innerHTML = ''; 
+    for(let i=0; i < 70; i++) {
+        let flare = document.createElement('div');
+        flare.className = 'lobby-flare';
+        flare.style.left = Math.random() * 100 + '%';
+        flare.style.top = Math.random() * 100 + '%';
+        let size = 4 + Math.random() * 18; 
+        flare.style.width = size + 'px';
+        flare.style.height = size + 'px';
+        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
+        flare.style.animationDelay = (Math.random() * 4) + 's';
+        container.appendChild(flare);
+    }
+}
+function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
+initAmbientParticles();
+
+function apply3DTilt(element, isHand = false) { if(window.innerWidth < 768) return; element.addEventListener('mousemove', (e) => { const rect = element.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; let lift = isHand ? 'translateY(-100px) scale(1.8)' : 'scale(1.1)'; let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; element.style.transform = `${lift} ${rotate}`; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; }); element.addEventListener('mouseleave', () => { element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; }); }
+
+function preloadGame() {
+    ASSETS_TO_LOAD.images.forEach(src => { let i=new Image(); i.src=src; i.onload=updateLoader; i.onerror=updateLoader; });
+    ASSETS_TO_LOAD.audio.forEach(a => { let s=new Audio(); s.src=a.src; if(a.loop)s.loop=true; audios[a.id]=s; s.onloadedmetadata=updateLoader; s.onerror=updateLoader; });
+}
+function updateLoader() {
+    assetsLoaded++; let fill = document.getElementById('loader-fill'); if(fill) fill.style.width = Math.min(100,(assetsLoaded/totalAssets)*100)+'%';
+    if(assetsLoaded>=totalAssets) {
+        setTimeout(() => { let ls=document.getElementById('loading-screen'); if(ls){ls.style.opacity='0'; setTimeout(()=>ls.style.display='none',500);} }, 1000);
+        document.body.addEventListener('click', () => { if(!MusicController.currentTrackId) MusicController.play('bgm-menu'); }, {once:true});
+    }
+}
+window.onload = function() { preloadGame(); const b=document.getElementById('btn-sound'); if(b) b.addEventListener('click', (e)=>{e.stopPropagation(); window.toggleMute();}); };
+
+function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[key].play().catch(e => console.log("Audio prevented:", e)); } }
