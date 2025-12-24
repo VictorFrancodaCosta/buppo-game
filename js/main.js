@@ -227,7 +227,7 @@ function startGameFlow() {
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // --- PASSO 1: Oculta visualmente o container da mão ---
+    // --- 1. Oculta visualmente o container da mão ---
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
@@ -239,11 +239,11 @@ function startGameFlow() {
     turnCount = 1; 
     playerHistory = [];
     
-    // Distribui as cartas na memória
+    // Distribui as cartas
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Cria o HTML (que nascerá invisível por causa da classe .preparing)
+    // Cria o HTML (que nascerá invisível)
     updateUI();
     
     // Inicia a animação imediatamente
@@ -457,7 +457,7 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 // -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - VERSÃO CORRIGIDA
+// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - VERSÃO FINAL
 // -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
@@ -466,27 +466,28 @@ function dealAllInitialCards() {
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // --- CORREÇÃO: Força inline opacity 0 para garantir invisibilidade ---
-    // Isso sobrescreve qualquer opacity:1 que o updateUI tenha colocado.
-    cards.forEach(c => c.style.opacity = '0');
-
-    // Configura a animação
+    // Configura a animação em cada carta
     cards.forEach((cardEl, i) => {
+        // A classe .intro-anim agora tem opacity: 0 !important no CSS
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
     });
 
-    // Remove a trava do container (usando requestAnimationFrame para garantir renderização)
-    requestAnimationFrame(() => {
-        if(handEl) handEl.classList.remove('preparing');
-    });
+    // Força o navegador a recalcular o layout (Reflow)
+    // Isso garante que o navegador entenda que as cartas tem a classe nova
+    // antes de removermos a classe .preparing do pai.
+    void handEl.offsetWidth; 
+
+    // Remove a trava do container. 
+    // Como as cartas têm .intro-anim (com !important), elas continuarão invisíveis.
+    if(handEl) handEl.classList.remove('preparing');
 
     // Limpeza final após animação
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
             c.style.animationDelay = '';
-            c.style.opacity = '1'; // Devolve a visibilidade normal
+            c.style.opacity = '1'; 
         });
         isProcessing = false;
     }, 2000); 
