@@ -781,8 +781,29 @@ function showFloatingText(eid, txt, col) {
 window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
 window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
 const tt=document.getElementById('tooltip-box');
-function bindFixedTooltip(el,k) { const updatePos = () => { let rect = el.getBoundingClientRect(); tt.style.left = (rect.left + rect.width / 2) + 'px'; }; return { onmouseenter: (e) => { showTT(k); tt.style.bottom = (window.innerWidth < 768 ? '160px' : '320px'); tt.style.top = 'auto'; tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); tt.classList.add('tooltip-anim-up'); updatePos(); el.addEventListener('mousemove', updatePos); } }; }
-
+function bindFixedTooltip(el,k) { 
+    const updatePos = () => { 
+        let rect = el.getBoundingClientRect(); 
+        tt.style.left = (rect.left + rect.width / 2) + 'px'; 
+    }; 
+    return { 
+        onmouseenter: (e) => { 
+            showTT(k); 
+            
+            // --- ALTERAÇÃO DE POSIÇÃO AQUI ---
+            // Mobile: 300px (antes 160px)
+            // Desktop: 520px (antes 320px) - Bem alto para livrar o zoom
+            tt.style.bottom = (window.innerWidth < 768 ? '300px' : '520px'); 
+            tt.style.top = 'auto'; 
+            
+            tt.classList.remove('tooltip-anim-up'); 
+            tt.classList.remove('tooltip-anim-down'); 
+            tt.classList.add('tooltip-anim-up'); 
+            updatePos(); 
+            el.addEventListener('mousemove', updatePos); 
+        } 
+    }; 
+}
 function showTT(k) {
     let db = CARDS_DB[k];
     document.getElementById('tt-title').innerHTML = k; 
