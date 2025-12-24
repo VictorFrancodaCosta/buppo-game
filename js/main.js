@@ -793,7 +793,7 @@ function bindFixedTooltip(el,k) {
             // --- ALTERAÇÃO DE POSIÇÃO AQUI ---
             // Mobile: 300px (antes 160px)
             // Desktop: 520px (antes 320px) - Bem alto para livrar o zoom
-            tt.style.bottom = (window.innerWidth < 768 ? '300px' : '520px'); 
+            tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
             tt.style.top = 'auto'; 
             
             tt.classList.remove('tooltip-anim-up'); 
