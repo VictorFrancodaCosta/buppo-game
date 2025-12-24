@@ -207,15 +207,45 @@ body {
 }
 
 /* --- EFEITO FOIL / BRILHO APPLE TV --- */
+/* --- EFEITO FOIL HOLOGRÁFICO (ESTILO TCG) --- */
 .card::after {
     content: "";
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 10px; pointer-events: none; z-index: 15;
-    opacity: 0; transition: opacity 0.2s ease;
-    background: radial-gradient(circle at calc(50% + (var(--rx) * 150%)) calc(50% + (var(--ry) * 150%)), rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.1) 40%, transparent 60%);
-    mix-blend-mode: overlay; 
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 10px;
+    pointer-events: none;
+    z-index: 15;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+    /* AQUI ESTÁ A MÁGICA DO FOIL:
+       Um gradiente linear inclinado com faixas de cores (dourado, rosa, ciano, branco).
+       Isso simula o reflexo prismático de cartas raras.
+    */
+    background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(255, 215, 0, 0.2) 30%,  /* Dourado sutil */
+        rgba(255, 0, 150, 0.2) 45%,  /* Magenta */
+        rgba(0, 255, 255, 0.2) 55%,  /* Ciano */
+        rgba(255, 255, 255, 0.8) 70%, /* Brilho Branco Forte (Reflexo) */
+        transparent 80%
+    );
+
+    /* O background é maior que a carta para podermos "passear" com ele */
+    background-size: 300% 300%;
+
+    /* Movemos o arco-íris baseado na posição do mouse (que já vem do JS) */
+    background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%));
+
+    /* color-dodge ou hard-light criam o aspecto metálico vibrante */
+    mix-blend-mode: color-dodge; 
 }
-.card:hover::after { opacity: 1; }
+
+/* Mostra o foil no hover */
+.card:hover::after {
+    opacity: 1;
+}
 
 .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
 .flares-container { position: absolute; top: 50%; left: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
