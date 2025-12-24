@@ -64,7 +64,7 @@ const MusicController = {
             const newAudio = audios[trackId];
             if (trackId === 'bgm-menu') newAudio.currentTime = 10 + Math.random() * 40; else newAudio.currentTime = 0;
             if (!window.isMuted) {
-                newAudio.volume = 0; newAudio.play().catch(e => console.warn("Autoplay prevent", e));
+                newAudio.volume = 0; newAudio.play().catch(e => console.warn("Audio prevented", e));
                 this.fadeIn(newAudio, maxVol);
             }
         }
@@ -227,6 +227,7 @@ function startGameFlow() {
     drawCardLogic(monster, 6); drawCardLogic(player, 6); 
     
     updateUI(); 
+    
     const handEl = document.getElementById('player-hand'); 
     if(handEl) Array.from(handEl.children).forEach(c => c.style.opacity = '0');
     
@@ -256,7 +257,6 @@ function dealAllInitialCards() {
 
 // AnimateFly Restaurada com Coordenadas
 function animateFly(startRef, endRef, cardKey, callback, isDeal = false) {
-    // 1. Coordenadas
     let startRect;
     if (typeof startRef === 'string') {
         const el = document.getElementById(startRef);
@@ -273,25 +273,20 @@ function animateFly(startRef, endRef, cardKey, callback, isDeal = false) {
         endRect = endRef.getBoundingClientRect();
     }
 
-    // 2. Clone
     const fly = document.createElement('div');
     fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
     fly.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[cardKey].img}')"></div>`;
 
-    // 3. Posição Inicial
     fly.style.width = (startRect.width > 0 ? startRect.width : 100) + 'px';
     fly.style.height = (startRect.height > 0 ? startRect.height : 140) + 'px';
     fly.style.top = startRect.top + 'px';
     fly.style.left = startRect.left + 'px';
     fly.style.transition = 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
-    
-    // Pequena rotação no deck
     fly.style.transform = `rotate(${(Math.random() - 0.5) * 10}deg) scale(0.8)`;
 
     document.body.appendChild(fly);
-    void fly.offsetWidth; // Force Reflow
+    void fly.offsetWidth; 
 
-    // 4. Mover para o Destino
     fly.style.top = endRect.top + 'px';
     fly.style.left = endRect.left + 'px';
     fly.style.width = endRect.width + 'px';
@@ -463,6 +458,62 @@ function processMasteries(u, triggers, cb) {
 function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
+function preloadGame() { ASSETS_TO_LOAD.images.forEach(s => { let img = new Image(); img.src = s; img.onload = updateLoader; img.onerror = updateLoader; }); ASSETS_TO_LOAD.audio.forEach(a => { let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; audios[a.id] = s; s.onloadedmetadata = updateLoader; s.onerror = updateLoader; setTimeout(()=>{if(s.readyState===0)updateLoader()},2000); }); }
+function updateLoader() { assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); const f = document.getElementById('loader-fill'); if(f) f.style.width = pct + '%'; if(assetsLoaded >= totalAssets) { setTimeout(() => { const l = document.getElementById('loading-screen'); if(l) { l.style.opacity = '0'; setTimeout(() => l.style.display = 'none', 500); } }, 1000); document.body.addEventListener('click', () => { if (!MusicController.currentTrackId) MusicController.play('bgm-menu'); }, { once: true }); } }
+window.onload = function() { preloadGame(); const b = document.getElementById('btn-sound'); if (b) { b.onclick = null; b.addEventListener('click', (e) => { e.stopPropagation(); window.toggleMute(); }); } };
+window.toggleFullScreen = function() { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); else if (document.exitFullscreen) document.exitFullscreen(); }
+function createLobbyFlares() { const c = document.getElementById('lobby-particles'); if(!c) return; c.innerHTML = ''; for(let i=0; i < 70; i++) { let f = document.createElement('div'); f.className = 'lobby-flare'; f.style.left = Math.random() * 100 + '%'; f.style.top = Math.random() * 100 + '%'; let s = 4 + Math.random() * 18; f.style.width = s + 'px'; f.style.height = s + 'px'; f.style.animationDuration = (3 + Math.random() * 5) + 's'; f.style.animationDelay = (Math.random() * 4) + 's'; c.appendChild(f); } }
+function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
+function updateAudioMixer() { const c = audios['sfx-cine']; if(!c) return; const m = window.masterVol || 1.0; const max = 0.6 * m; let t = isLethalHover ? max : 0; if(window.isMuted) { c.volume = 0; return; } if(c.volume < t) c.volume = Math.min(t, c.volume + 0.05); else if(c.volume > t) c.volume = Math.max(t, c.volume - 0.05); }
+window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
+document.addEventListener('click', function(e) { const p = document.getElementById('config-panel'); const b = document.getElementById('btn-config-toggle'); if (p && p.classList.contains('active') && !p.contains(e.target) && (b && !b.contains(e.target))) window.toggleConfig(); });
+window.updateVol = function(type, val) { if(type==='master') window.masterVol = parseFloat(val); ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-block', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { if(audios[k]) audios[k].volume = 0.8 * (window.masterVol || 1.0); }); }
+function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[key].play().catch(()=>{}); } }
+function initAmbientParticles() { const c = document.getElementById('ambient-particles'); if(!c) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); c.appendChild(d); } } initAmbientParticles();
+function apply3DTilt(el, isHand = false) { if(window.innerWidth < 768) return; el.addEventListener('mousemove', (e) => { const r = el.getBoundingClientRect(); const x = e.clientX - r.left; const y = e.clientY - r.top; const xp = (x / r.width) - 0.5; const yp = (y / r.height) - 0.5; let lift = isHand ? 'translateY(-100px) scale(1.8)' : 'scale(1.1)'; let rot = `rotateX(${yp * -40}deg) rotateY(${xp * 40}deg)`; if(el.classList.contains('disabled-card')) rot = `rotateX(${yp * -10}deg) rotateY(${xp * 10}deg)`; el.style.transform = `${lift} ${rot}`; let art = el.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xp * 20)}% ${50 + (yp * 20)}%`; }); el.addEventListener('mouseleave', () => { el.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; let art = el.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; }); }
+function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
+function triggerDamageEffect(isPlayer, playAudio = true) { try { if(playAudio) playSound('sfx-hit'); let id = isPlayer ? 'p-slot' : 'm-slot'; let s = document.getElementById(id); if(s) { let r = s.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); let o = document.getElementById('dmg-overlay'); if(o) { o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 150); } } catch(e) {} }
+function triggerCritEffect() { let o = document.getElementById('crit-overlay'); if(o) { o.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { o.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
+function triggerHealEffect(isPlayer) { try { let id = isPlayer ? 'p-slot' : 'm-slot'; let s = document.getElementById(id); if(s) { let r = s.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } let o = document.getElementById('heal-overlay'); if(o) { o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 300); } } catch(e) {} }
+function triggerBlockEffect() { try { playSound('sfx-block'); let o = document.getElementById('block-overlay'); if(o) { o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 200); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); } catch(e) {} }
+function triggerXPGlow(uid) { let x = document.getElementById(uid + '-xp'); if(x) { x.classList.add('xp-glow'); setTimeout(() => x.classList.remove('xp-glow'), 600); } }
+function showCenterText(txt, col) { let e = document.createElement('div'); e.className = 'center-text'; e.innerText = txt; if(col) e.style.color = col; document.body.appendChild(e); setTimeout(() => e.remove(), 1000); }
+function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } }
+function drawCardAnimated(u, d, h, cb) { if(u.deck.length===0) { cb(); return; } animateFly(d, h, u.deck[u.deck.length-1], cb); }
+function renderTable(k, s) { let e = document.getElementById(s); e.innerHTML = ''; let c = document.createElement('div'); c.className = `card ${CARDS_DB[k].color} card-on-table`; c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div>`; e.appendChild(c); }
+function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
+
+function updateUnit(u) {
+    document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
+    document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
+    let hpPct = (Math.max(0,u.hp)/u.maxHp)*100;
+    let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
+    if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
+    document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
+    if(u===player) {
+        let hc=document.getElementById('player-hand'); hc.innerHTML='';
+        u.hand.forEach((k,i)=>{
+            let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
+            c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
+            if(u.disabled===k) c.classList.add('disabled-card');
+            c.style.opacity = '1';
+            let lethalType = checkCardLethality(k); 
+            let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
+            c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
+            c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
+            c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
+            c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
+            hc.appendChild(c); apply3DTilt(c, true);
+        });
+    }
+    let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
+    u.xp.forEach(k=>{ let d=document.createElement('div'); d.className='xp-mini'; d.style.backgroundImage = `url('${CARDS_DB[k].img}')`; d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; xc.appendChild(d); });
+    let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
+    if(u.bonusAtk>0) addMI(mc, 'ATAQUE', u.bonusAtk, '#e74c3c', u.id); 
+    if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
+}
+
 function bindMasteryTooltip(el, key, value, ownerId) {
     return {
         onmouseenter: (e) => {
@@ -487,22 +538,3 @@ window.cancelModal = function() { document.getElementById('modal-overlay').style
 const tt=document.getElementById('tooltip-box');
 function bindFixedTooltip(el,k) { const updatePos = () => { let rect = el.getBoundingClientRect(); tt.style.left = (rect.left + rect.width / 2) + 'px'; }; return { onmouseenter: (e) => { showTT(k); tt.style.bottom = (window.innerWidth < 768 ? '160px' : '320px'); tt.style.top = 'auto'; tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); tt.classList.add('tooltip-anim-up'); updatePos(); el.addEventListener('mousemove', updatePos); } }; }
 function showTT(k) { let db = CARDS_DB[k]; document.getElementById('tt-title').innerHTML = k; if (db.customTooltip) { let c = db.customTooltip; let l = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1; c = c.replace('{PLAYER_LVL}', l); let b = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0; c = c.replace('{PLAYER_BLOCK_DMG}', 1 + b); document.getElementById('tt-content').innerHTML = c; } else { document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; } tt.style.display = 'block'; }
-window.restartMatch = function() { document.getElementById('end-screen').classList.remove('visible'); setTimeout(startGameFlow, 50); MusicController.play('bgm-loop'); }
-window.abandonMatch = function() { if(document.getElementById('game-screen').classList.contains('active')) { window.toggleConfig(); if(window.confirm("Tem certeza que deseja sair? Contará como derrota.")) { window.registrarDerrotaOnline(); window.transitionToLobby(); } } }
-window.toggleFullScreen = function() { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); else if (document.exitFullscreen) document.exitFullscreen(); }
-window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
-document.addEventListener('click', function(e) { const p = document.getElementById('config-panel'); const b = document.getElementById('btn-config-toggle'); if (p && p.classList.contains('active') && !p.contains(e.target) && (b && !b.contains(e.target))) window.toggleConfig(); });
-window.updateVol = function(type, val) { if(type==='master') window.masterVol = parseFloat(val); ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-block', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { if(audios[k]) audios[k].volume = 0.8 * (window.masterVol || 1.0); }); }
-function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[key].play().catch(()=>{}); } }
-function initAmbientParticles() { const c = document.getElementById('ambient-particles'); if(!c) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); c.appendChild(d); } } initAmbientParticles();
-function apply3DTilt(el, isHand = false) { if(window.innerWidth < 768) return; el.addEventListener('mousemove', (e) => { const r = el.getBoundingClientRect(); const x = e.clientX - r.left; const y = e.clientY - r.top; const xp = (x / r.width) - 0.5; const yp = (y / r.height) - 0.5; let lift = isHand ? 'translateY(-100px) scale(1.8)' : 'scale(1.1)'; let rot = `rotateX(${yp * -40}deg) rotateY(${xp * 40}deg)`; if(el.classList.contains('disabled-card')) rot = `rotateX(${yp * -10}deg) rotateY(${xp * 10}deg)`; el.style.transform = `${lift} ${rot}`; let art = el.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xp * 20)}% ${50 + (yp * 20)}%`; }); el.addEventListener('mouseleave', () => { el.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; let art = el.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; }); }
-function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
-function triggerDamageEffect(isPlayer, playAudio = true) { try { if(playAudio) playSound('sfx-hit'); let id = isPlayer ? 'p-slot' : 'm-slot'; let s = document.getElementById(id); if(s) { let r = s.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); let o = document.getElementById('dmg-overlay'); if(o) { o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 150); } } catch(e) {} }
-function triggerCritEffect() { let o = document.getElementById('crit-overlay'); if(o) { o.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { o.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
-function triggerHealEffect(isPlayer) { try { let id = isPlayer ? 'p-slot' : 'm-slot'; let s = document.getElementById(id); if(s) { let r = s.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } let o = document.getElementById('heal-overlay'); if(o) { o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 300); } } catch(e) {} }
-function triggerBlockEffect() { try { playSound('sfx-block'); let o = document.getElementById('block-overlay'); if(o) { o.style.opacity = '1'; setTimeout(() => o.style.opacity = '0', 200); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); } catch(e) {} }
-function triggerXPGlow(uid) { let x = document.getElementById(uid + '-xp'); if(x) { x.classList.add('xp-glow'); setTimeout(() => x.classList.remove('xp-glow'), 600); } }
-function showCenterText(txt, col) { let e = document.createElement('div'); e.className = 'center-text'; e.innerText = txt; if(col) e.style.color = col; document.body.appendChild(e); setTimeout(() => e.remove(), 1000); }
-function createLobbyFlares() { const c = document.getElementById('lobby-particles'); if(!c) return; c.innerHTML = ''; for(let i=0; i < 70; i++) { let f = document.createElement('div'); f.className = 'lobby-flare'; f.style.left = Math.random() * 100 + '%'; f.style.top = Math.random() * 100 + '%'; let s = 4 + Math.random() * 18; f.style.width = s + 'px'; f.style.height = s + 'px'; f.style.animationDuration = (3 + Math.random() * 5) + 's'; f.style.animationDelay = (Math.random() * 4) + 's'; c.appendChild(f); } }
-function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
-function updateAudioMixer() { const c = audios['sfx-cine']; if(!c) return; const m = window.masterVol || 1.0; const max = 0.6 * m; let t = isLethalHover ? max : 0; if(window.isMuted) { c.volume = 0; return; } if(c.volume < t) c.volume = Math.min(t, c.volume + 0.05); else if(c.volume > t) c.volume = Math.max(t, c.volume - 0.05); }
