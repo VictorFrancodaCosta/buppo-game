@@ -431,7 +431,36 @@ function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[
 function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
 initAmbientParticles();
 
-function apply3DTilt(element, isHand = false) { if(window.innerWidth < 768) return; element.addEventListener('mousemove', (e) => { const rect = element.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; let lift = isHand ? 'translateY(-100px) scale(1.8)' : 'scale(1.1)'; let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; element.style.transform = `${lift} ${rotate}`; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; }); element.addEventListener('mouseleave', () => { element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; }); }
+function apply3DTilt(element, isHand = false) { 
+    if(window.innerWidth < 768) return; 
+    
+    element.addEventListener('mousemove', (e) => { 
+        const rect = element.getBoundingClientRect(); 
+        const x = e.clientX - rect.left; 
+        const y = e.clientY - rect.top; 
+        const xPct = (x / rect.width) - 0.5; 
+        const yPct = (y / rect.height) - 0.5; 
+        
+        // --- ALTERAÇÃO DE ZOOM AQUI ---
+        // scale(2.3) = Aumenta muito o tamanho
+        // translateY(-140px) = Joga a carta mais pra cima
+        let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
+        
+        let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
+        if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
+        
+        element.style.transform = `${lift} ${rotate}`; 
+        
+        let art = element.querySelector('.card-art'); 
+        if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
+    }); 
+    
+    element.addEventListener('mouseleave', () => { 
+        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
+        let art = element.querySelector('.card-art'); 
+        if(art) art.style.backgroundPosition = 'center'; 
+    }); 
+}
 
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
