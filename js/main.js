@@ -530,6 +530,7 @@ function dealAllInitialCards() {
     playSound('sfx-deal'); 
     
     const handEl = document.getElementById('player-hand'); 
+    // Garante que o array esteja atualizado com o DOM
     const cards = Array.from(handEl.children);
     
     if(cards.length === 0) { 
@@ -537,23 +538,75 @@ function dealAllInitialCards() {
         return; 
     }
 
-    // Garante que todas comecem invisíveis (mas no lugar certo)
+    // 1. Esconde todas inicialmente para não "piscar"
     cards.forEach(c => c.style.opacity = '0');
 
-    // Loop simples: Apenas Fade In (Opacidade)
+    // 2. Loop para animar uma por uma
     cards.forEach((cardEl, i) => {
         setTimeout(() => {
-            // Habilita a transição de opacidade
-            cardEl.style.transition = 'opacity 0.5s ease-out, transform 0.2s'; 
-            cardEl.style.opacity = '1'; 
+            // Remove o override manual de opacidade para a animação assumir
+            cardEl.style.opacity = ''; 
+            
+            // Adiciona a classe do Bounce
+            cardEl.classList.add('pop-in');
             
             playSound('sfx-hover'); 
             
-            if(i === cards.length - 1) {
-                setTimeout(() => { isProcessing = false; }, 500);
-            }
-        }, i * 100); // Rápido (100ms)
-    });
+            // LIMPEZA CRÍTICA: Remove a classe após a animação acabar.
+            // Isso "destrava" a carta para o Zoom (Hover) funcionar depois.
+setTimeout(() => {
+        // Anima carta do Jogador indo para XP
+        animateFly('p-slot', 'p-xp', pAct, () => { 
+            if(!pDead) { 
+                player.xp.push(pAct); 
+                triggerXPGlow('p'); 
+                updateUI(); 
+            } 
+            
+            checkLevelUp(player, () => { 
+                if(!pDead) {
+                    // Compra carta nova
+                    drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { 
+                        drawCardLogic(player, 1); 
+                        turnCount++; 
+                        updateUI(); // A carta nova é criada aqui no DOM
+                        
+                        // --- AQUI ADICIONAMOS O BOUNCE NA CARTA NOVA ---
+                        const handEl = document.getElementById('player-hand');
+                        if (handEl && handEl.lastElementChild) {
+                            const newCard = handEl.lastElementChild;
+                            newCard.classList.add('pop-in');
+                            playSound('sfx-hover');
+                            
+                            // Remove a classe depois para liberar o zoom
+                            setTimeout(() => {
+                                newCard.classList.remove('pop-in');
+                            }, 650);
+                        }
+                        // -----------------------------------------------
+
+                        isProcessing = false; 
+                    }); 
+                }
+            }); 
+        });
+        
+        // Anima carta do Monstro indo para XP
+        animateFly('m-slot', 'm-xp', mAct, () => { 
+            if(!mDead) { 
+                monster.xp.push(mAct); 
+                triggerXPGlow('m'); 
+                updateUI(); 
+            } 
+            checkLevelUp(monster, () => { 
+                if(!mDead) drawCardLogic(monster, 1); 
+                checkEndGame(); 
+            }); 
+        });
+        
+        document.getElementById('p-slot').innerHTML = ''; 
+        document.getElementById('m-slot').innerHTML = '';
+    }, 700);
 }
 
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
