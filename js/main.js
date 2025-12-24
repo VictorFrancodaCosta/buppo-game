@@ -468,18 +468,18 @@ function dealAllInitialCards() {
     
     // Configura a animação em cada carta
     cards.forEach((cardEl, i) => {
-        // A classe .intro-anim agora tem opacity: 0 !important no CSS
+        // inline opacity:0 garante invisibilidade até a animação começar
+        cardEl.style.opacity = '0';
+        
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
     });
 
     // Força o navegador a recalcular o layout (Reflow)
-    // Isso garante que o navegador entenda que as cartas tem a classe nova
-    // antes de removermos a classe .preparing do pai.
     void handEl.offsetWidth; 
 
     // Remove a trava do container. 
-    // Como as cartas têm .intro-anim (com !important), elas continuarão invisíveis.
+    // Como as cartas têm .intro-anim, a animação vai controlar a opacidade (0->1).
     if(handEl) handEl.classList.remove('preparing');
 
     // Limpeza final após animação
