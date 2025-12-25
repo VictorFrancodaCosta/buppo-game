@@ -31,7 +31,9 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png'
     ],
     audio: [
-        { id: 'bgm-menu', src: 'https://files.catbox.moe/g8a1ux.mp3', loop: true }, 
+        // --- MÚSICA DO SAGUÃO ALTERADA AQUI ---
+        { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
+        
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
         { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
@@ -220,7 +222,7 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA (CORRIGIDA)
+// LÓGICA DE PARTIDA
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
