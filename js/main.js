@@ -31,7 +31,6 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png'
     ],
     audio: [
-        // --- MÚSICA DO SAGUÃO ALTERADA AQUI ---
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
         
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
@@ -535,6 +534,9 @@ function getBestAIMove() {
     return moves[0];
 }
 
+// ============================================
+// ANIMAÇÃO DE VOO COM GIRO 3D (FLIP)
+// ============================================
 function playCardFlow(index, pDisarmChoice) {
     isProcessing = true; 
     let cardKey = player.hand.splice(index, 1)[0]; 
@@ -574,6 +576,7 @@ function playCardFlow(index, pDisarmChoice) {
         realCardEl.style.boxShadow = 'none';
     }
     
+    // ANIMAÇÃO DE VOO (AGORA COM FLIP)
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
         renderTable(cardKey, 'p-slot'); 
         updateUI(); 
@@ -669,13 +672,26 @@ function processMasteries(u, triggers, cb) {
 function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
+// -----------------------------------------------------------------
+// FUNÇÃO ANIMATE FLY ATUALIZADA (COM O ESTRUTURA DO FLIP 3D)
+// -----------------------------------------------------------------
 function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false) {
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
     let e = { top: 0, left: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
 
     const fly = document.createElement('div');
-    fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
-    fly.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[cardKey].img}')"></div>`;
+    // Agora o flying-card é apenas o container de movimento
+    fly.className = `flying-card`; 
+    
+    // Injetamos a estrutura de giro com Frente e Verso
+    // A URL do Cardback (Verso) é fixa e segura
+    fly.innerHTML = `
+        <div class="flying-inner">
+            <div class="face-front" style="background-image: url('${CARDS_DB[cardKey].img}')"></div>
+            <div class="face-back" style="background-image: url('https://i.ibb.co/jdZmTHC/CARDBACK.png')"></div>
+        </div>
+    `;
+
     if (isToTable) fly.classList.add('card-bounce');
 
     if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; } 
