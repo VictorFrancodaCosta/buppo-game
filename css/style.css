@@ -358,12 +358,15 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 .deck-options-container {
     display: flex; 
-    gap: 80px; 
+    
+    /* ALTERADO: De 80px para 30px (Aproxima os decks um do outro) */
+    gap: 30px; 
+    
     align-items: center;
     justify-content: center;
     perspective: 1000px; 
     
-    /* ALTERAÇÃO CRUCIAL: Empurra o botão para baixo, criando o espaço pro zoom */
+    /* Mantém a margem de segurança para o botão não sobrepor */
     margin-bottom: 80px; 
 }
 
@@ -376,9 +379,19 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     outline: none;
     padding: 0;
     
-    width: 320px; 
+    /* ALTERADO: De 320px para 420px (Decks muito maiores) */
+    width: 420px; 
+    
     display: flex;
     justify-content: center;
+}
+
+/* Ajuste responsivo para telas menores (Notebooks) 
+   para garantir que não fique gigante demais se a tela for pequena */
+@media (max-height: 800px) {
+    .deck-option { width: 300px; } /* Aumentei um pouco aqui também (era 250) */
+    .img-titulo-placa { max-width: 450px; }
+    #deck-selection-screen { gap: 15px; }
 }
 
 /* A IMAGEM (ARTE) */
