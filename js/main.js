@@ -32,6 +32,7 @@ const ASSETS_TO_LOAD = {
     ],
     audio: [
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
+        
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
         { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
@@ -148,31 +149,6 @@ window.showScreen = function(screenId) {
     }
 }
 
-// --- FUNÇÃO PARA ABRIR SELEÇÃO DE DECK ---
-window.openDeckSelector = function() {
-    window.showScreen('deck-selection-screen');
-};
-
-// --- FUNÇÃO PARA SELECIONAR E ANIMAR O DECK ---
-window.selectDeck = function(deckType) {
-    // Toca som de click
-    window.playNavSound();
-    
-    // Pega o elemento clicado (neste caso, simplificamos assumindo que foi o clique no knight)
-    // Em uma implementação mais robusta, passariamos o 'event' ou ID
-    const options = document.querySelectorAll('.deck-option');
-    options.forEach(opt => {
-        // Adiciona a classe de animação apenas ao que foi clicado (simulação visual)
-        // Como só tem um por enquanto, pegamos o primeiro
-        opt.classList.add('deck-selected');
-    });
-
-    // Espera a animação de zoom/fade (0.6s) e inicia o jogo
-    setTimeout(() => {
-        window.transitionToGame();
-    }, 600);
-};
-
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
@@ -245,7 +221,7 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA (VERSÃO ESTÁVEL)
+// LÓGICA DE PARTIDA (LIMPA E SEGURA)
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
@@ -257,12 +233,14 @@ function startGameFlow() {
     turnCount = 1; 
     playerHistory = [];
     
+    // Distribui as cartas (lógica)
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    updateUI(); 
+    // Desenha na tela imediatamente
+    updateUI();
     
-    // Inicia a animação de entrada (Bounce)
+    // Destrava o jogo
     dealAllInitialCards();
 }
 
@@ -473,7 +451,9 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 function dealAllInitialCards() {
-    // Apenas destrava (limpeza completa das animações antigas)
+    // LIMPEZA COMPLETA:
+    // Sem loops, sem timeouts, sem opacidade.
+    // As cartas já estão na tela graças ao updateUI() chamado no startGameFlow.
     isProcessing = false; 
 }
 
@@ -677,6 +657,8 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
 
 function drawCardAnimated(unit, deckId, handId, cb) { 
     // LIMPEZA COMPLETA:
+    // Removemos o animateFly.
+    // Apenas executa o callback (cb) imediatamente para seguir a lógica do jogo.
     if(cb) cb(); 
 }
 
@@ -849,3 +831,32 @@ function apply3DTilt(element, isHand = false) {
         element.style.setProperty('--ry', 0);
     }); 
 }
+
+// --- FUNÇÃO PARA ABRIR SELEÇÃO DE DECK (NOVO) ---
+window.openDeckSelector = function() {
+    // Esconde a tela atual (lobby) e mostra a de seleção
+    window.showScreen('deck-selection-screen');
+};
+
+// --- FUNÇÃO PARA SELECIONAR E ANIMAR O DECK (NOVO) ---
+window.selectDeck = function(deckType) {
+    // Toca som de click
+    window.playNavSound();
+    
+    // Pega o elemento clicado
+    const options = document.querySelectorAll('.deck-option');
+    options.forEach(opt => {
+        // Adiciona a classe de animação apenas ao que foi clicado (simulação visual)
+        opt.classList.add('deck-selected');
+    });
+
+    // Espera a animação de zoom/fade (0.6s) e inicia o jogo
+    setTimeout(() => {
+        window.transitionToGame();
+        
+        // Reseta visual para a próxima vez
+        setTimeout(() => {
+             options.forEach(opt => opt.classList.remove('deck-selected'));
+        }, 1000);
+    }, 600);
+};
