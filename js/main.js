@@ -33,7 +33,7 @@ const MAGE_ASSETS = {
     'DESCANSAR': 'https://i.ibb.co/sv98P3JK/03-DESCANSAR-MAGO.png',
     'DESARMAR': 'https://i.ibb.co/Q7SmhYQk/04-DESARMAR-MAGO.png',
     'TREINAR': 'https://i.ibb.co/8LGTJCn4/05-TREINAR-MAGO.png',
-    'DECK_IMG': 'https://i.ibb.co/XZ8qc166/DECK-MAGO.png',
+    'DECK_IMG': 'https://i.ibb.co/twXH1h46/DECK-MAGO.png',
     'DECK_SELECT': 'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png'
 };
 
