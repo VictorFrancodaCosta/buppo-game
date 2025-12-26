@@ -2,7 +2,8 @@
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// ADICIONADO: signInWithRedirect
+import { getAuth, signInWithRedirect, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -38,20 +39,15 @@ const MAGE_ASSETS = {
 
 const ASSETS_TO_LOAD = {
     images: [
-        // UI e Backgrounds
         'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png',
         'https://i.ibb.co/KzVqKR6D/MESA-DE-JOGO.png',
         'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png',
         'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',
         'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png',
-
-        // Tela de Seleção
         'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',
         'https://i.ibb.co/fzr36qbR/SELE-O-DE-DECK-CAVALEIRO.png',
         'https://i.ibb.co/bjBcKN6c/SELE-O-DE-DECK-MAGO.png',
         'https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png',
-
-        // Deck Cavaleiro
         'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
         'https://i.ibb.co/jdZmTHC/CARDBACK.png',
         'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png',
@@ -60,15 +56,8 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png',
         'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
         'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png',
-
-        // Deck Mago
-        MAGE_ASSETS.ATAQUE, 
-        MAGE_ASSETS.BLOQUEIO, 
-        MAGE_ASSETS.DESCANSAR, 
-        MAGE_ASSETS.DESARMAR, 
-        MAGE_ASSETS.TREINAR, 
-        MAGE_ASSETS.DECK_IMG, 
-        MAGE_ASSETS.DECK_SELECT
+        MAGE_ASSETS.ATAQUE, MAGE_ASSETS.BLOQUEIO, MAGE_ASSETS.DESCANSAR, 
+        MAGE_ASSETS.DESARMAR, MAGE_ASSETS.TREINAR, MAGE_ASSETS.DECK_IMG, MAGE_ASSETS.DECK_SELECT
     ],
     audio: [
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
@@ -95,7 +84,7 @@ let mixerInterval = null;
 window.isMatchStarting = false;
 window.currentDeck = 'knight';
 
-// --- HELPER: RETORNA ARTE CORRETA BASEADA NO DECK DO JOGADOR ---
+// --- HELPER: RETORNA ARTE CORRETA ---
 function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
         return MAGE_ASSETS[cardKey];
@@ -103,9 +92,6 @@ function getCardArt(cardKey, isPlayer) {
     return CARDS_DB[cardKey].img;
 }
 
-// =======================
-// CONTROLLER DE MÚSICA
-// =======================
 const MusicController = {
     currentTrackId: null,
     fadeTimer: null,
@@ -196,9 +182,6 @@ window.showScreen = function(screenId) {
     }
 }
 
-// =======================
-// LÓGICA DE SELEÇÃO DE DECK (APRIMORADA)
-// =======================
 window.openDeckSelector = function() {
     window.showScreen('deck-selection-screen');
 };
@@ -210,7 +193,6 @@ window.selectDeck = function(deckType) {
     const options = document.querySelectorAll('.deck-option');
     options.forEach(opt => {
         if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
-            // Efeito na escolhida
             opt.style.transition = "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
             opt.style.transform = "scale(1.15) translateY(-20px)";
             opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))";
@@ -218,7 +200,6 @@ window.selectDeck = function(deckType) {
             const img = opt.querySelector('img');
             if(img) img.style.filter = "grayscale(0%) brightness(1.2)";
         } else {
-            // Efeito na não escolhida
             opt.style.transition = "all 0.3s ease";
             opt.style.transform = "scale(0.8) translateY(10px)";
             opt.style.opacity = "0.2";
@@ -360,7 +341,6 @@ function checkEndGame(){
 }
 
 onAuthStateChanged(auth, (user) => {
-    // A tela de loading agora é controlada pelo updateLoader, não aqui.
     if (user) {
         currentUser = user;
         window.goToLobby(true); 
@@ -375,12 +355,16 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
+// ============================================
+// LOGIN MODIFICADO PARA REDIRECIONAMENTO (MOBILE)
+// ============================================
 window.googleLogin = async function() {
     window.playNavSound(); 
     const btnText = document.getElementById('btn-text');
-    btnText.innerText = "CONECTANDO...";
+    btnText.innerText = "REDIRECIONANDO...";
     try {
-        await signInWithPopup(auth, provider);
+        // MUDANÇA CRUCIAL: De Popup para Redirect
+        await signInWithRedirect(auth, provider);
     } catch (error) {
         console.error(error);
         btnText.innerText = "ERRO - TENTE NOVAMENTE";
@@ -438,32 +422,27 @@ window.abandonMatch = function() {
      }
 }
 
-// --- FUNÇÃO PRELOAD REESCRITA ---
 function preloadGame() {
     console.log("Iniciando Preload de " + totalAssets + " recursos...");
     
-    // Carrega Imagens
     ASSETS_TO_LOAD.images.forEach(src => { 
         let img = new Image(); 
         img.src = src; 
-        // IMPORTANTE: Adiciona ao cofre para não ser deletado pelo Garbage Collector
         window.gameAssets.push(img);
         
         img.onload = () => updateLoader(); 
         img.onerror = () => {
             console.warn("Erro ao carregar imagem: " + src);
-            updateLoader(); // Conta como carregado pra não travar o jogo
+            updateLoader(); 
         }; 
     });
 
-    // Carrega Áudio
     ASSETS_TO_LOAD.audio.forEach(a => { 
         let s = new Audio(); 
         s.src = a.src; 
         s.preload = 'auto'; 
         if(a.loop) s.loop = true; 
         audios[a.id] = s; 
-        // Também adiciona ao cofre, por segurança
         window.gameAssets.push(s);
 
         s.onloadedmetadata = () => updateLoader(); 
@@ -472,7 +451,6 @@ function preloadGame() {
             updateLoader();
         }; 
         
-        // Timeout de segurança para áudios que demoram demais
         setTimeout(() => { 
             if(s.readyState === 0) updateLoader(); 
         }, 3000); 
@@ -485,7 +463,6 @@ function updateLoader() {
     const fill = document.getElementById('loader-fill');
     if(fill) fill.style.width = pct + '%';
     
-    // Só fecha a tela se TUDO carregou
     if(assetsLoaded >= totalAssets) {
         console.log("Preload completo!");
         setTimeout(() => {
@@ -504,11 +481,9 @@ function updateLoader() {
     }
 }
 
-// Inicia o preload IMEDIATAMENTE (não espera window.onload)
 preloadGame();
 
 window.onload = function() {
-    // window.onload agora serve apenas para binding de eventos de UI
     const btnSound = document.getElementById('btn-sound');
     if (btnSound) {
         btnSound.onclick = null; 
