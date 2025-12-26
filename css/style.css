@@ -274,14 +274,7 @@ body {
 .cartoon-purple { color: #a29bfe; }
 .tt-text { font-size: 11px; color: #d7ccc8; line-height: 1.3; }
 .dynamic-val { display: inline-block; background: #000; color: var(--gold); border: 2px solid var(--gold); border-radius: 4px; padding: 0px 6px; font-family: 'Russo One', sans-serif; font-size: 14px; vertical-align: middle; box-shadow: 0 2px 5px rgba(0,0,0,0.5); margin: 0 2px; }
-
-/* Base do destaque */
-.highlight-card { 
-    font-weight: 900; /* Fonte bem grossa */
-    font-family: 'Russo One', sans-serif; 
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
+.highlight-card { font-weight: 900; font-family: 'Russo One', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
 .hc-red { color: #ff4757; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-blue { color: #00cec9; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-green { color: #2ed573; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
@@ -319,14 +312,14 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 .intro-anim {
     /* Força a animação a rodar e manter o estado final */
-    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    pointer-events: none; 
+    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+    pointer-events: none;
 }
 
 
 /* =========================================
    NOVA TELA: SELEÇÃO DE DECK (CSS ISOLADO)
-   Fundo mais claro, imagens flutuantes.
+   Adicionado no final para não afetar o lobby
 ========================================= */
 
 #deck-selection-screen {
@@ -337,11 +330,11 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     width: 100vw; 
     height: 100vh;
     
-    /* Fundo Desfocado e Levemente Escuro (Ajustado: 0.6 e 15px) */
-    background: rgba(0, 0, 0, 0.6); 
-    backdrop-filter: blur(15px);
+    /* Fundo Escuro para tapar o Lobby (Imersivo, sem "janela") */
+    background: rgba(0, 0, 0, 0.85); 
+    backdrop-filter: blur(8px);
     
-    z-index: 15000; /* Acima do lobby (10000) */
+    z-index: 15000; /* Acima do lobby (10000) mas abaixo de overlays (50000+) */
     
     /* Layout */
     display: none; /* Controlado pelo JS */
@@ -373,7 +366,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 .deck-options-container {
     display: flex; 
-    gap: 60px; /* Mais espaço entre as cartas flutuantes */
+    gap: 60px; 
     flex-wrap: wrap; 
     justify-content: center;
     max-width: 1200px;
@@ -391,6 +384,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 /* A imagem do deck - Estilo "Solto" */
 .deck-option img {
+    /* IMPORTANTE: Tamanho fixo para não estourar */
     width: 280px; 
     height: auto; 
     
