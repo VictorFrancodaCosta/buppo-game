@@ -24,6 +24,7 @@ const audios = {};
 let assetsLoaded = 0; 
 
 // --- COFRE DE ASSETS ---
+// (Evita que o navegador jogue fora o cache)
 window.gameAssets = []; 
 
 const MAGE_ASSETS = {
@@ -32,7 +33,7 @@ const MAGE_ASSETS = {
     'DESCANSAR': 'https://i.ibb.co/sv98P3JK/03-DESCANSAR-MAGO.png',
     'DESARMAR': 'https://i.ibb.co/Q7SmhYQk/04-DESARMAR-MAGO.png',
     'TREINAR': 'https://i.ibb.co/8LGTJCn4/05-TREINAR-MAGO.png',
-    'DECK_IMG': 'https://i.ibb.co/twXH1h46/DECK-MAGO.png',
+    'DECK_IMG': 'https://i.ibb.co/XZ8qc166/DECK-MAGO.png',
     'DECK_SELECT': 'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png'
 };
 
@@ -62,26 +63,11 @@ const ASSETS_TO_LOAD = {
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
-        { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, 
-        { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
-        
-        // --- SONS DE COMBATE ---
-        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' },      
-        { id: 'sfx-hit-mage', src: 'https://files.catbox.moe/y0x72c.mp3' }, 
-        
-        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },      
-        { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, 
-
-        // --- SONS GLOBAIS ---
-        { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' },       
-        { id: 'sfx-train', src: 'https://files.catbox.moe/f4hy7e.mp3' }, // ATUALIZADO
-        { id: 'sfx-disarm', src: 'https://files.catbox.moe/udd2sz.mp3' }, // NOVO
-        { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' },    
-        
-        { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
-        { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' },
-        { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, 
-        { id: 'sfx-lose', src: 'https://files.catbox.moe/n7nyck.mp3' },
+        { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
+        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
+        { id: 'sfx-heal', src: 'https://files.catbox.moe/uegibx.mp3' }, { id: 'sfx-levelup', src: 'https://files.catbox.moe/sm8cce.mp3' },
+        { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' },
+        { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, { id: 'sfx-lose', src: 'https://files.catbox.moe/n7nyck.mp3' },
         { id: 'sfx-tie', src: 'https://files.catbox.moe/sb18ja.mp3' }
     ]
 };
@@ -548,7 +534,7 @@ document.addEventListener('click', function(e) { const panel = document.getEleme
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
-    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-train', 'sfx-disarm', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
+    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-block', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) audios[k].volume = 0.8 * (window.masterVol || 1.0); 
     }); 
 }
@@ -559,37 +545,10 @@ initAmbientParticles();
 
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
-// --- FUNÇÃO DE DANO ---
-function triggerDamageEffect(isPlayer, soundKey = 'sfx-hit') { 
-    try { 
-        if(soundKey) playSound(soundKey); 
-        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
-        let slot = document.getElementById(elId); 
-        if(slot) { 
-            let r = slot.getBoundingClientRect(); 
-            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); 
-        } 
-        document.body.classList.add('shake-screen'); 
-        setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
-        let ov = document.getElementById('dmg-overlay'); 
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
-    } catch(e) {} 
-}
-
+function triggerDamageEffect(isPlayer, playAudio = true) { try { if(playAudio) playSound('sfx-hit'); let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); let ov = document.getElementById('dmg-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } } catch(e) {} }
 function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
 function triggerHealEffect(isPlayer) { try { let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } let ov = document.getElementById('heal-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } } catch(e) {} }
-
-// --- FUNÇÃO DE BLOQUEIO ---
-function triggerBlockEffect(soundKey = 'sfx-block') { 
-    try { 
-        playSound(soundKey); 
-        let ov = document.getElementById('block-overlay'); 
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
-        document.body.classList.add('shake-screen'); 
-        setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
-    } catch(e) {} 
-}
-
+function triggerBlockEffect() { try { playSound('sfx-block'); let ov = document.getElementById('block-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); } catch(e) {} }
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
@@ -603,13 +562,18 @@ function dealAllInitialCards() {
     const cards = Array.from(handEl.children);
     
     cards.forEach((cardEl, i) => {
+        // --- ORDEM CRÍTICA: ---
+        // 1. Adiciona a animação (ela agora tem 'both' e segura a invisibilidade)
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
+        
+        // 2. Remove o style inline (mas o 'intro-anim' segura o opacity:0)
         cardEl.style.opacity = '';
     });
 
     window.isMatchStarting = false;
     
+    // --- REMOVE A TRAVA DE SEGURANÇA GERAL ---
     if(handEl) handEl.classList.remove('preparing');
 
     setTimeout(() => {
@@ -721,15 +685,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let clash = false;
     let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); 
     let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
-    
-    if(pBlocks || mBlocks) { 
-        clash = true; 
-        let blockSound = 'sfx-block'; 
-        if (pBlocks && window.currentDeck === 'mage') {
-            blockSound = 'sfx-block-mage';
-        }
-        triggerBlockEffect(blockSound); 
-    }
+    if(pBlocks || mBlocks) { clash = true; triggerBlockEffect(); }
 
     let nextPlayerDisabled = null; let nextMonsterDisabled = null;
     if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
@@ -739,27 +695,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
     if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
 
-    // --- NOVO GATILHO DE SOM PARA DESARMAR ---
-    if(pAct === 'DESARMAR' || mAct === 'DESARMAR') {
-        playSound('sfx-disarm');
-    }
-
-    if(pDmg > 0) { 
-        player.hp -= pDmg; 
-        showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); 
-        let soundOn = !(clash && mAct === 'BLOQUEIO'); 
-        triggerDamageEffect(true, soundOn ? 'sfx-hit' : null); 
-    }
-    if(mDmg > 0) { 
-        monster.hp -= mDmg; 
-        showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); 
-        let soundOn = !(clash && pAct === 'BLOQUEIO'); 
-        
-        let soundKey = 'sfx-hit';
-        if (window.currentDeck === 'mage') soundKey = 'sfx-hit-mage';
-        
-        triggerDamageEffect(false, soundOn ? soundKey : null); 
-    }
+    if(pDmg > 0) { player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); let soundOn = !(clash && mAct === 'BLOQUEIO'); triggerDamageEffect(true, soundOn); }
+    if(mDmg > 0) { monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn); }
     
     updateUI();
     let pDead = player.hp <= 0, mDead = monster.hp <= 0;
@@ -767,7 +704,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
-    // --- SOM DE TREINAR ---
     function handleExtraXP(u) { 
         if(u.deck.length > 0) { 
             let card = u.deck.pop(); 
@@ -776,16 +712,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
             }, false, false, (u.id === 'p')); 
         } 
     }
-    
-    if(!pDead && pAct === 'TREINAR') { 
-        handleExtraXP(player); 
-        playSound('sfx-train'); 
-    } 
-    if(!mDead && mAct === 'TREINAR') { 
-        handleExtraXP(monster); 
-        if(pAct !== 'TREINAR') playSound('sfx-train'); 
-    }
-
+    if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
     if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
 
     setTimeout(() => {
@@ -837,23 +764,7 @@ function processMasteries(u, triggers, cb) {
     else if(type === 'DESARMAR' && u.id === 'm') { let target = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE'; player.disabled = target; showFloatingText('p-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }
     else { applyMastery(u, type); processMasteries(u, triggers, cb); }
 }
-function applyMastery(u, k) { 
-    if(k === 'ATAQUE') { 
-        u.bonusAtk++; 
-        let target = (u === player) ? monster : player; 
-        target.hp -= u.bonusAtk; 
-        showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); 
-        
-        let soundKey = 'sfx-hit';
-        if (u === player && window.currentDeck === 'mage') soundKey = 'sfx-hit-mage';
-        
-        triggerDamageEffect(u !== player, soundKey); 
-        checkEndGame(); 
-    } 
-    if(k === 'BLOQUEIO') u.bonusBlock++; 
-    if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } 
-    updateUI(); 
-}
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
 function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false, isPlayer = false) {
@@ -912,7 +823,7 @@ function updateUnit(u) {
         if(window.currentDeck === 'mage') {
             deckImgEl.src = MAGE_ASSETS.DECK_IMG;
         } else {
-            deckImgEl.src = 'https://i.ibb.co/cSVw71Wy/DECK-CAVALEIRO.png';
+            deckImgEl.src = 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png';
         }
     }
 
