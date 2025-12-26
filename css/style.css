@@ -518,3 +518,43 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     30% { transform: translateX(-50%) translateY(20px) scale(1); }
     100% { opacity: 0; transform: translateX(-50%) translateY(100px) scale(1); } /* Desce e some */
 }
+
+/* --- CORREÇÃO VISUAL: ANIMAÇÃO DE ENTRADA --- */
+
+/* Garante que a área da mão esteja visível e clicável */
+#player-hand {
+    position: relative;
+    z-index: 50; /* Traz para frente de overlays */
+    transition: opacity 0.3s ease;
+    opacity: 1 !important; /* Força visibilidade */
+}
+
+/* Classe usada enquanto o jogo prepara a mesa */
+#player-hand.preparing {
+    opacity: 0 !important;
+}
+
+/* A ANIMAÇÃO QUE FALTAVA */
+.intro-anim {
+    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes introBounce {
+    0% { 
+        opacity: 0; 
+        transform: translateY(150px) scale(0.5); /* Vem de baixo */
+    }
+    60% { 
+        opacity: 1; 
+        transform: translateY(-20px) scale(1.1); /* Efeito elástico */
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); /* Pouso final */
+    }
+}
+
+/* Garante a carta visível por padrão */
+.hand-card {
+    opacity: 1;
+}
