@@ -186,16 +186,10 @@ window.selectDeck = function(deckType) {
     window.currentDeck = deckType; // Armazena a escolha ('knight' ou 'mage')
     
     // Animação no item clicado
-    const options = document.querySelectorAll('.deck-option');
-    options.forEach(opt => {
-        // Remove seleção de todos primeiro (segurança)
-        opt.classList.remove('deck-selected');
-    });
+    // Como não passamos o 'event', vamos procurar pelo deck-option correto via JS ou
+    // simplificar e animar todos para sair.
     
-    // Adiciona ao clicado (truque: como o click foi dentro da div, usamos event.currentTarget se tivessmos passado evento, 
-    // mas aqui vamos simplificar assumindo que a animação de "sair" da tela é global).
-    // Para simplificar e evitar bugs: Fade out na tela inteira.
-    
+    // Simplificação visual para não quebrar: fade out na tela inteira de seleção
     const selectionScreen = document.getElementById('deck-selection-screen');
     selectionScreen.style.transition = "opacity 0.5s";
     selectionScreen.style.opacity = "0";
@@ -288,7 +282,7 @@ function startGameFlow() {
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // --- 1. ATIVAR MODO DE INÍCIO DE PARTIDA ---
+    // ATIVA O MODO DE INÍCIO DE PARTIDA
     // Isso é vital para as cartas nascerem invisíveis no updateUI
     window.isMatchStarting = true;
     
@@ -522,7 +516,7 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 // -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - REATIVADA
+// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - VERSÃO RESTAURADA
 // -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
@@ -531,7 +525,7 @@ function dealAllInitialCards() {
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // Configura a animação em cada carta
+    // Configura a animação
     cards.forEach((cardEl, i) => {
         // Adiciona a classe que faz o bounce e mantém invisível até começar
         cardEl.classList.add('intro-anim');
