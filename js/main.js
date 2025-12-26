@@ -51,6 +51,9 @@ window.masterVol = 1.0;
 let isLethalHover = false; 
 let mixerInterval = null;
 
+// --- CONTROLE DE ESTADO PARA EVITAR O FLASH DAS CARTAS ---
+window.isMatchStarting = false;
+
 // =======================
 // CONTROLLER DE MÚSICA
 // =======================
@@ -66,11 +69,11 @@ const MusicController = {
         }
         if (trackId && audios[trackId]) {
             const newAudio = audios[trackId];
-            if (trackId === 'bgm-menu') {
-                newAudio.currentTime = 10 + Math.random() * 40;
-            } else {
-                newAudio.currentTime = 0;
-            }
+            
+            // --- CORREÇÃO DA MÚSICA ---
+            // Removi a lógica aleatória que quebrava o audio wav curto
+            newAudio.currentTime = 0;
+            
             if (!window.isMuted) {
                 newAudio.volume = 0; 
                 newAudio.play().catch(e => console.warn("Autoplay prevent", e));
@@ -148,6 +151,27 @@ window.showScreen = function(screenId) {
     }
 }
 
+// --- FUNÇÃO PARA ABRIR SELEÇÃO DE DECK ---
+window.openDeckSelector = function() {
+    window.showScreen('deck-selection-screen');
+};
+
+// --- FUNÇÃO PARA SELECIONAR E ANIMAR O DECK ---
+window.selectDeck = function(deckType) {
+    window.playNavSound();
+    const options = document.querySelectorAll('.deck-option');
+    options.forEach(opt => {
+        opt.classList.add('deck-selected');
+    });
+
+    setTimeout(() => {
+        window.transitionToGame();
+        setTimeout(() => {
+             options.forEach(opt => opt.classList.remove('deck-selected'));
+        }, 1000);
+    }, 600);
+};
+
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
@@ -220,19 +244,22 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA (CORRIGIDA)
+// LÓGICA DE PARTIDA
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // --- 1. Oculta visualmente o container da mão ---
-    // Isso garante que quando o updateUI desenhar as cartas, elas não apareçam
+    // --- 1. ATIVAR MODO DE INÍCIO DE PARTIDA ---
+    window.isMatchStarting = true;
+    
+    // Limpa a mão antes de qualquer coisa
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.classList.add('preparing'); // Bloqueia via CSS
+        // Remove opacidade manual se houver resquicio
+        handEl.style.opacity = '';
     }
     
     resetUnit(player); 
@@ -240,14 +267,13 @@ function startGameFlow() {
     turnCount = 1; 
     playerHistory = [];
     
-    // Distribui as cartas
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Cria o HTML (que nascerá invisível)
-    updateUI();
+    // O updateUI vai desenhar as cartas, mas como isMatchStarting=true, elas nascerão invisíveis
+    updateUI(); 
     
-    // Inicia a animação imediatamente
+    // Inicia a animação (que revela as cartas)
     dealAllInitialCards();
 }
 
@@ -458,7 +484,7 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 // -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - VERSÃO CORRIGIDA
+// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - REATIVADA
 // -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
@@ -467,27 +493,25 @@ function dealAllInitialCards() {
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // --- CORREÇÃO: Força inline opacity 0 para garantir invisibilidade ---
-    // Isso sobrescreve qualquer opacity:1 que o updateUI tenha colocado.
-    cards.forEach(c => c.style.opacity = '0');
-
-    // Configura a animação
+    // Configura a animação em cada carta
     cards.forEach((cardEl, i) => {
+        // Adiciona a classe que faz o bounce e mantém invisível até começar
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
+        
+        // Remove a opacidade 0 que forçamos no updateUI, 
+        // deixando o CSS da animação (intro-anim) controlar a visibilidade
+        cardEl.style.opacity = '';
     });
 
-    // Remove a trava do container (usando requestAnimationFrame para garantir renderização)
-    requestAnimationFrame(() => {
-        if(handEl) handEl.classList.remove('preparing');
-    });
+    // Desliga a flag de início de jogo para as próximas atualizações
+    window.isMatchStarting = false;
 
-    // Limpeza final após animação
+    // Limpeza final após animação terminar
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
             c.style.animationDelay = '';
-            c.style.opacity = '1'; // Devolve a visibilidade normal
         });
         isProcessing = false;
     }, 2000); 
@@ -572,6 +596,7 @@ function playCardFlow(index, pDisarmChoice) {
         realCardEl.style.boxShadow = 'none';
     }
     
+    // ANIMAÇÃO DE VOO (AGORA COM FLIP)
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
         renderTable(cardKey, 'p-slot'); 
         updateUI(); 
@@ -712,7 +737,15 @@ function updateUnit(u) {
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
-            c.style.opacity = '1';
+            
+            // --- AQUI ESTAVA O PROBLEMA DO BOUNCE ---
+            // Se estiver começando a partida, a carta nasce invisível
+            if(window.isMatchStarting) {
+                c.style.opacity = '0';
+            } else {
+                c.style.opacity = '1';
+            }
+            
             let lethalType = checkCardLethality(k); 
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
@@ -865,31 +898,3 @@ function apply3DTilt(element, isHand = false) {
         element.style.setProperty('--ry', 0);
     }); 
 }
-
-// --- FUNÇÃO PARA ABRIR SELEÇÃO DE DECK (NOVO) ---
-window.openDeckSelector = function() {
-    window.showScreen('deck-selection-screen');
-};
-
-// --- FUNÇÃO PARA SELECIONAR E ANIMAR O DECK (NOVO) ---
-window.selectDeck = function(deckType) {
-    window.playNavSound();
-    
-    // Pega o elemento clicado
-    // Como só tem um por enquanto, pegamos o primeiro para demonstrar
-    const options = document.querySelectorAll('.deck-card');
-    options.forEach(opt => {
-        // Adiciona a classe de animação apenas ao que foi clicado (simulação visual)
-        opt.classList.add('deck-selected');
-    });
-
-    // Espera a animação de zoom/fade (0.6s) e inicia o jogo
-    setTimeout(() => {
-        window.transitionToGame();
-        
-        // Reseta visual para a próxima vez (limpeza)
-        setTimeout(() => {
-             options.forEach(opt => opt.classList.remove('deck-selected'));
-        }, 1000);
-    }, 600);
-};
