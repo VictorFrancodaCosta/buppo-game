@@ -31,7 +31,6 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png'
     ],
     audio: [
-        // --- MÚSICA DO SAGUÃO ALTERADA AQUI ---
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
         
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
@@ -53,6 +52,9 @@ window.masterVol = 1.0;
 let isLethalHover = false; 
 let mixerInterval = null;
 
+// --- VARIAVEL DE CONTROLE PARA EVITAR O FLASH DAS CARTAS ---
+window.isMatchStarting = false;
+
 // =======================
 // CONTROLLER DE MÚSICA
 // =======================
@@ -68,11 +70,10 @@ const MusicController = {
         }
         if (trackId && audios[trackId]) {
             const newAudio = audios[trackId];
-            if (trackId === 'bgm-menu') {
-                newAudio.currentTime = 10 + Math.random() * 40;
-            } else {
-                newAudio.currentTime = 0;
-            }
+            
+            // --- CORREÇÃO DA MÚSICA: COMEÇA SEMPRE DO ZERO ---
+            newAudio.currentTime = 0;
+            
             if (!window.isMuted) {
                 newAudio.volume = 0; 
                 newAudio.play().catch(e => console.warn("Autoplay prevent", e));
@@ -150,6 +151,28 @@ window.showScreen = function(screenId) {
     }
 }
 
+// --- FUNÇÃO PARA ABRIR SELEÇÃO DE DECK ---
+window.openDeckSelector = function() {
+    window.showScreen('deck-selection-screen');
+};
+
+// --- FUNÇÃO PARA SELECIONAR E ANIMAR O DECK ---
+window.selectDeck = function(deckType) {
+    window.playNavSound();
+    const options = document.querySelectorAll('.deck-card');
+    options.forEach(opt => {
+        opt.classList.add('deck-selected');
+    });
+
+    setTimeout(() => {
+        window.transitionToGame();
+        setTimeout(() => {
+             options.forEach(opt => opt.classList.remove('deck-selected'));
+        }, 1000);
+    }, 600);
+};
+
+
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
@@ -222,18 +245,22 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA
+// LÓGICA DE PARTIDA (CORRIGIDA)
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // --- 1. Oculta visualmente o container da mão ---
+    // --- 1. ATIVAR MODO DE INÍCIO DE PARTIDA ---
+    // Isso garante que as cartas nasçam invisíveis no updateUI
+    window.isMatchStarting = true;
+    
+    // Limpa a mão antes de qualquer coisa
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.classList.add('preparing'); // Bloqueia via CSS
+        handEl.style.opacity = ''; // Remove qualquer opacidade manual
     }
     
     resetUnit(player); 
@@ -241,14 +268,13 @@ function startGameFlow() {
     turnCount = 1; 
     playerHistory = [];
     
-    // Distribui as cartas
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Cria o HTML (que nascerá invisível)
-    updateUI();
+    // O updateUI vai desenhar as cartas. Se isMatchStarting for true, elas terão opacity: 0
+    updateUI(); 
     
-    // Inicia a animação imediatamente
+    // Inicia a animação que vai revelar as cartas
     dealAllInitialCards();
 }
 
@@ -459,7 +485,7 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 // -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - VERSÃO FINAL
+// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - REATIVADA
 // -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
@@ -470,26 +496,23 @@ function dealAllInitialCards() {
     
     // Configura a animação em cada carta
     cards.forEach((cardEl, i) => {
-        // inline opacity:0 garante invisibilidade até a animação começar
-        cardEl.style.opacity = '0';
-        
+        // Adiciona a classe que faz o bounce e mantém invisível até começar
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
+        
+        // Remove a opacidade 0 que forçamos no updateUI, 
+        // deixando o CSS da animação (intro-anim) controlar a visibilidade
+        cardEl.style.opacity = '';
     });
 
-    // Força o navegador a recalcular o layout (Reflow)
-    void handEl.offsetWidth; 
+    // Desliga a flag de início de jogo para as próximas atualizações
+    window.isMatchStarting = false;
 
-    // Remove a trava do container. 
-    // Como as cartas têm .intro-anim, a animação vai controlar a opacidade (0->1).
-    if(handEl) handEl.classList.remove('preparing');
-
-    // Limpeza final após animação
+    // Limpeza final após animação terminar
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
             c.style.animationDelay = '';
-            c.style.opacity = '1'; 
         });
         isProcessing = false;
     }, 2000); 
@@ -714,7 +737,15 @@ function updateUnit(u) {
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
-            c.style.opacity = '1';
+            
+            // --- AQUI ESTAVA O PROBLEMA DO BOUNCE ---
+            // Se estiver começando a partida, a carta nasce invisível
+            if(window.isMatchStarting) {
+                c.style.opacity = '0';
+            } else {
+                c.style.opacity = '1';
+            }
+            
             let lethalType = checkCardLethality(k); 
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
