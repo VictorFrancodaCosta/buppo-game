@@ -24,50 +24,6 @@ body {
     margin: 0; padding: 0; height: 100vh; overflow: hidden; user-select: none;
 }
 
-/* --- LEVEL UP ANIMATION (NOVO) --- */
-.avatar-cluster, .player-cluster, .opponent-cluster {
-    position: absolute !important; /* Mantém o absolute do jogo original */
-}
-
-.levelup-text {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'Bangers', cursive;
-    font-size: 3.5rem;
-    color: #FFD700;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 9999;
-    -webkit-text-stroke: 1.5px black;
-    text-shadow: 4px 4px 0px #000;
-}
-
-.lvl-anim-up {
-    bottom: 80%; /* Nasce em cima do círculo */
-    animation: floatLevelUp 2s ease-out forwards;
-}
-
-.lvl-anim-down {
-    top: 80%; /* Nasce embaixo do círculo */
-    animation: floatLevelDown 2s ease-out forwards;
-}
-
-@keyframes floatLevelUp {
-    0% { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.5); }
-    15% { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.2); }
-    30% { transform: translateX(-50%) translateY(-20px) scale(1); }
-    100% { opacity: 0; transform: translateX(-50%) translateY(-100px) scale(1); }
-}
-
-@keyframes floatLevelDown {
-    0% { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.5); }
-    15% { opacity: 1; transform: translateX(-50%) translateY(10px) scale(1.2); }
-    30% { transform: translateX(-50%) translateY(20px) scale(1); }
-    100% { opacity: 0; transform: translateX(-50%) translateY(100px) scale(1); }
-}
-/* --------------------------------- */
-
 /* --- FUNDO PRINCIPAL --- */
 #game-background {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -227,7 +183,7 @@ body {
 .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 
-/* --- TRAVA DE SEGURANÇA VISUAL (ESSENCIAL PARA AS CARTAS FUNCIONAREM) --- */
+/* --- TRAVA DE SEGURANÇA VISUAL (USADA NO JS AGORA) --- */
 #player-hand.preparing .card {
     opacity: 0 !important;
     visibility: hidden !important;
@@ -509,3 +465,4 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     .img-titulo-placa { max-width: 450px; }
     #deck-selection-screen { gap: 15px; }
 }
+ 
