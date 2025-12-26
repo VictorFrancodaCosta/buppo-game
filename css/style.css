@@ -325,8 +325,11 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 
 /* =========================================
-   SELEÇÃO DE DECK - VERSÃO "CLEAN" E ALTA
+   SELEÇÃO DE DECK - VERSÃO "RPG FANTASY"
 ========================================= */
+
+/* Importando fonte de RPG Medieval */
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
 
 #deck-selection-screen {
     position: fixed; 
@@ -335,20 +338,18 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     width: 100vw; 
     height: 100vh;
     
-    /* CORREÇÃO 1: Fundo mais claro (0.65) para ver o saguão atrás */
+    /* Fundo levemente transparente (0.65) + Blur */
     background: rgba(0, 0, 0, 0.65); 
-    backdrop-filter: blur(12px); /* Blur um pouco mais leve também */
+    backdrop-filter: blur(12px);
     
     z-index: 15000;
     
-    /* CORREÇÃO 2: Alinhamento para cima */
-    /* Removemos o 'center' vertical e usamos flex-start com padding */
     display: none; 
     flex-direction: column;
-    justify-content: flex-start; /* Começa do topo */
+    justify-content: flex-start;
     align-items: center;
     
-    padding-top: 8vh; /* Empurra um pouco para baixo (8% da altura da tela) */
+    padding-top: 8vh;
     box-sizing: border-box;
     
     opacity: 0;
@@ -361,12 +362,16 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 }
 
 .deck-select-title {
-    font-family: 'Russo One', sans-serif; 
-    color: transparent; 
-    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4); /* Traço um pouco mais forte */
+    /* FONTE NOVA: MedievalSharp */
+    font-family: 'MedievalSharp', cursive; 
+    
+    /* Estilo "Título de RPG": Dourado com borda preta */
+    color: #ffd700; 
+    text-shadow: 2px 2px 0 #000, 0 0 25px rgba(255, 215, 0, 0.4);
+    
     font-size: 50px; 
-    margin-bottom: 40px; /* Menos margem para aproximar as cartas */
-    letter-spacing: 10px;
+    margin-bottom: 40px; 
+    letter-spacing: 2px;
     text-align: center;
     text-transform: uppercase;
     pointer-events: none;
@@ -387,70 +392,73 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     background: transparent;
     border: none;
     outline: none;
-    padding: 0; /* Garante tamanho zero extra */
+    padding: 0;
+    
+    /* Garante que o texto longo do slogan fique centralizado na largura da carta */
+    width: 320px; 
+    display: flex;
+    justify-content: center;
 }
 
 /* A IMAGEM (ARTE) */
 .deck-option img {
-    width: 320px; 
+    width: 100%; /* Ocupa a largura do container (320px) */
     height: auto; 
     display: block;
     
-    /* Estado Inicial */
-    /* Usamos drop-shadow leve em vez de box-shadow para não marcar o quadrado */
     filter: grayscale(100%) brightness(0.6) drop-shadow(0 10px 10px rgba(0,0,0,0.5));
-    
     transform: scale(0.95);
     transition: all 0.4s ease-out;
-    
-    /* Removemos border-radius do CSS para não cortar a arte */
     border-radius: 0; 
-    box-shadow: none !important; /* Força remoção de sombra de caixa */
+    box-shadow: none !important;
 }
 
-/* --- HOVER (CORREÇÃO DO BOX) --- */
+/* --- HOVER --- */
 
 .deck-option:hover {
     z-index: 10;
 }
 
 .deck-option:hover img {
-    transform: scale(1.1) translateY(-10px); /* Zoom e sobe um pouquinho */
-    
-    /* A MÁGICA: Usamos drop-shadow colorido. 
-       Isso cria o brilho em volta da imagem, não do quadrado da div. */
+    transform: scale(1.1) translateY(-10px);
     filter: grayscale(0%) brightness(1.1) drop-shadow(0 0 30px rgba(255, 215, 0, 0.5));
 }
 
-/* TÍTULO DO DECK (No Hover) */
+/* SLOGAN DO DECK (Texto Sutil em Baixo) */
 .deck-option::after {
     content: attr(data-name);
     position: absolute;
-    bottom: -50px; /* Ajustado */
-    left: 50%;
-    transform: translateX(-50%) translateY(10px);
     
-    font-family: 'Russo One', sans-serif;
-    font-size: 24px;
-    color: #ffd700;
-    text-transform: uppercase;
-    letter-spacing: 4px;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    /* Posição ajustada para o texto ficar bem abaixo da carta flutuando */
+    top: 100%; 
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    
+    /* Estilo Sutil */
+    font-family: 'Montserrat', sans-serif; /* Fonte limpa para leitura */
+    font-weight: 400;
+    font-size: 14px; /* Pequeno e elegante */
+    color: #ecf0f1; /* Branco suave */
+    
+    text-align: center;
+    width: 150%; /* Permite que o texto seja mais largo que a carta se precisar */
     
     opacity: 0;
     transition: all 0.3s ease;
     pointer-events: none;
-    white-space: nowrap;
+    
+    /* Sombra leve para leitura */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
 .deck-option:hover::after {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(10px); /* Sobe um pouco suavemente */
 }
 
 /* BOTÃO VOLTAR */
 .return-btn {
-    margin-top: 80px; /* Mais espaço para separar das cartas */
+    margin-top: 100px; /* Mais afastado pois o texto do slogan ocupa espaço */
     padding: 12px 35px;
     background: transparent;
     border: 1px solid rgba(255,255,255,0.2);
