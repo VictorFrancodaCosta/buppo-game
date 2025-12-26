@@ -48,7 +48,7 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/fzr36qbR/SELE-O-DE-DECK-CAVALEIRO.png',
         'https://i.ibb.co/bjBcKN6c/SELE-O-DE-DECK-MAGO.png',
         'https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png',
-        'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
+        'https://i.ibb.co/cSVw71Wy/DECK-CAVALEIRO.png',
         'https://i.ibb.co/jdZmTHC/CARDBACK.png',
         'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png',
         'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png',
