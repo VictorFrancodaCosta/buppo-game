@@ -24,11 +24,14 @@ body {
     margin: 0; padding: 0; height: 100vh; overflow: hidden; user-select: none;
 }
 
-/* --- LEVEL UP ANIMATION (NOVO) --- */
-/* Garante que os clusters sejam referência para o texto absoluto */
-.player-cluster, .opponent-cluster {
-    position: relative !important; 
+/* --- NOVO: LEVEL UP ANIMATION --- */
+/* Necessário para o texto absoluto nascer no lugar certo */
+.avatar-cluster, .player-cluster, .opponent-cluster {
+    position: absolute !important; /* Mantém o absolute do jogo */
 }
+
+/* Container do texto precisa ser relativo ao cluster, mas o cluster já é absolute. 
+   Vamos posicionar o texto dentro do cluster. */
 
 .levelup-text {
     position: absolute;
@@ -40,21 +43,21 @@ body {
     color: #FFD700;
     white-space: nowrap;
     pointer-events: none;
-    z-index: 999;
+    z-index: 9999;
     
     -webkit-text-stroke: 1.5px black;
     text-shadow: 4px 4px 0px #000;
 }
 
-/* Jogador: Texto sobe */
+/* Jogador: Sobe */
 .lvl-anim-up {
-    bottom: 80%; /* Nasce em cima do círculo */
+    bottom: 100%; 
     animation: floatLevelUp 2s ease-out forwards;
 }
 
-/* Oponente: Texto desce */
+/* Oponente: Desce */
 .lvl-anim-down {
-    top: 80%; /* Nasce embaixo do círculo */
+    top: 100%; 
     animation: floatLevelDown 2s ease-out forwards;
 }
 
@@ -71,7 +74,7 @@ body {
     30% { transform: translateX(-50%) translateY(20px) scale(1); }
     100% { opacity: 0; transform: translateX(-50%) translateY(100px) scale(1); }
 }
-/* ------------------------------- */
+/* --------------------------------- */
 
 /* --- FUNDO PRINCIPAL --- */
 #game-background {
@@ -232,7 +235,7 @@ body {
 .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 
-/* --- TRAVA DE SEGURANÇA VISUAL (MANTIDA DO BACKUP) --- */
+/* --- TRAVA DE SEGURANÇA VISUAL (ESSENCIAL PARA AS CARTAS FUNCIONAREM) --- */
 #player-hand.preparing .card {
     opacity: 0 !important;
     visibility: hidden !important;
@@ -249,7 +252,7 @@ body {
     opacity: 1; visibility: visible; 
 }
 
-/* --- EFEITO FOIL HOLOGRÁFICO --- */
+/* --- EFEITO FOIL HOLOGRÁFICO (SUAVIZADO) --- */
 .card::after {
     content: "";
     position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 10px; pointer-events: none; z-index: 15; opacity: 0; transition: opacity 0.2s ease;
