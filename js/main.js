@@ -64,11 +64,18 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
         { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, 
         { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
-        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, // Som de Hit Padrão (Físico)
-        { id: 'sfx-hit-mage', src: 'https://files.catbox.moe/y0x72c.mp3' }, // NOVO: Som de Hit Mago (Mágico)
-        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
-        { id: 'sfx-heal', src: 'https://files.catbox.moe/uegibx.mp3' }, 
-        { id: 'sfx-levelup', src: 'https://files.catbox.moe/sm8cce.mp3' },
+        
+        // --- SONS DE COMBATE ---
+        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' },      // Hit Físico
+        { id: 'sfx-hit-mage', src: 'https://files.catbox.moe/y0x72c.mp3' }, // Hit Mágico (Novo)
+        
+        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },      // Block Físico
+        { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, // Block Mágico (Novo)
+
+        // --- SONS GLOBAIS ATUALIZADOS ---
+        { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' },       // Heal Universal (Novo)
+        { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' },    // Level Up Universal (Novo)
+        
         { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
         { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' },
         { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, 
@@ -307,11 +314,12 @@ function startGameFlow() {
     isProcessing = false; 
     startCinematicLoop(); 
     
+    // ATIVA TRAVA DE SEGURANÇA
     window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.classList.add('preparing'); 
+        handEl.classList.add('preparing'); // Oculta tudo via CSS
     }
     
     resetUnit(player); 
@@ -538,7 +546,7 @@ document.addEventListener('click', function(e) { const panel = document.getEleme
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
-    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
+    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) audios[k].volume = 0.8 * (window.masterVol || 1.0); 
     }); 
 }
@@ -549,7 +557,7 @@ initAmbientParticles();
 
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
-// --- FUNÇÃO DE DANO ATUALIZADA PARA ACEITAR CHAVE DE SOM ---
+// --- FUNÇÃO DE DANO (COM SUPORTE A SOM VARIÁVEL) ---
 function triggerDamageEffect(isPlayer, soundKey = 'sfx-hit') { 
     try { 
         if(soundKey) playSound(soundKey); 
@@ -568,7 +576,18 @@ function triggerDamageEffect(isPlayer, soundKey = 'sfx-hit') {
 
 function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
 function triggerHealEffect(isPlayer) { try { let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } let ov = document.getElementById('heal-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } } catch(e) {} }
-function triggerBlockEffect() { try { playSound('sfx-block'); let ov = document.getElementById('block-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); } catch(e) {} }
+
+// --- FUNÇÃO DE BLOQUEIO ATUALIZADA (COM SOM VARIÁVEL) ---
+function triggerBlockEffect(soundKey = 'sfx-block') { 
+    try { 
+        playSound(soundKey); 
+        let ov = document.getElementById('block-overlay'); 
+        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
+        document.body.classList.add('shake-screen'); 
+        setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+    } catch(e) {} 
+}
+
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
@@ -700,7 +719,20 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let clash = false;
     let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); 
     let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
-    if(pBlocks || mBlocks) { clash = true; triggerBlockEffect(); }
+    
+    if(pBlocks || mBlocks) { 
+        clash = true; 
+        // --- LÓGICA DE SOM DE BLOQUEIO ---
+        let blockSound = 'sfx-block'; // Padrão
+        
+        // Se o Jogador bloqueou usando Mago, toca som do Mago
+        if (pBlocks && window.currentDeck === 'mage') {
+            blockSound = 'sfx-block-mage';
+        }
+        // Se o Monstro bloqueou, por enquanto usa o som padrão (ou podemos criar lógica pra ele depois)
+        
+        triggerBlockEffect(blockSound); 
+    }
 
     let nextPlayerDisabled = null; let nextMonsterDisabled = null;
     if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
@@ -714,7 +746,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         player.hp -= pDmg; 
         showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); 
         let soundOn = !(clash && mAct === 'BLOQUEIO'); 
-        // Dano no Jogador (pelo monstro) usa som padrão sfx-hit
         triggerDamageEffect(true, soundOn ? 'sfx-hit' : null); 
     }
     if(mDmg > 0) { 
@@ -722,7 +753,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); 
         let soundOn = !(clash && pAct === 'BLOQUEIO'); 
         
-        // --- VERIFICA SE É MAGO PARA TOCAR O SOM NOVO ---
         let soundKey = 'sfx-hit';
         if (window.currentDeck === 'mage') soundKey = 'sfx-hit-mage';
         
@@ -802,7 +832,6 @@ function applyMastery(u, k) {
         target.hp -= u.bonusAtk; 
         showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); 
         
-        // --- SOM DO MAGO TAMBÉM NA MAESTRIA ---
         let soundKey = 'sfx-hit';
         if (u === player && window.currentDeck === 'mage') soundKey = 'sfx-hit-mage';
         
