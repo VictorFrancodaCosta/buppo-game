@@ -180,21 +180,15 @@ body {
 .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 
-/* REMOVIDA A TRAVA DE SEGURANÇA NO PAI - NÃO É MAIS NECESSÁRIA */
-
 .card { 
     --rx: 0;
     --ry: 0;
-    
-    /* Transições padrão */
     transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; 
-    
     pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; 
     color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
     transform-style: preserve-3d; background-color: #111; 
-    
-    /* Visibilidade normal */
+    /* Visibilidade normal - A Animação controla se ficará invisível */
     opacity: 1; 
     visibility: visible; 
 }
@@ -320,18 +314,18 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 .trans-text { font-family: 'Russo One', sans-serif; color: var(--txt-secondary); font-size: 14px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.7; }
 @keyframes transPulse { from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); } to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); } }
 
-/* --- CORREÇÃO DA ANIMAÇÃO INICIAL (BOUNCE) --- */
+/* --- CORREÇÃO FINAL DA ANIMAÇÃO INICIAL --- */
 @keyframes introBounce {
-    /* Usamos !important para garantir que a opacidade seja controlada aqui */
-    0% { transform: translateY(120vh) scale(0.5); opacity: 0 !important; } 
-    60% { transform: translateY(-40px) scale(1.1); opacity: 1 !important; }
+    /* 0% tem opacity 0 para garantir que comece invisível */
+    0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 
+    /* 60% já está visível para fazer o arco */
+    60% { transform: translateY(-40px) scale(1.1); opacity: 1; }
     80% { transform: translateY(10px) scale(0.95); }
-    100% { transform: translateY(0) scale(1); opacity: 1 !important; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .intro-anim {
-    /* Força a animação a rodar e manter o estado final */
     animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     pointer-events: none;
-    transition: none !important;
+    /* REMOVIDO: opacity: 0 !important e transition: none */
 }
