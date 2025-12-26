@@ -183,7 +183,7 @@ body {
 .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 
-/* --- TRAVA DE SEGURANÇA VISUAL --- */
+/* --- TRAVA DE SEGURANÇA VISUAL (USADA NO JS AGORA) --- */
 #player-hand.preparing .card {
     opacity: 0 !important;
     visibility: hidden !important;
@@ -284,7 +284,8 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 .intro-anim {
-    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    /* MUDANÇA CRÍTICA: 'both' garante que a opacidade 0 do 0% seja aplicada DURANTE O DELAY */
+    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
     pointer-events: none; 
 }
 
@@ -359,14 +360,14 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 .deck-options-container {
     display: flex; 
     
-    /* ALTERADO: De 80px para 30px (Aproxima os decks um do outro) */
+    /* Gap reduzido para aproximar os decks */
     gap: 30px; 
     
     align-items: center;
     justify-content: center;
     perspective: 1000px; 
     
-    /* Mantém a margem de segurança para o botão não sobrepor */
+    /* Margem de segurança para o botão não sobrepor */
     margin-bottom: 80px; 
 }
 
@@ -379,19 +380,11 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     outline: none;
     padding: 0;
     
-    /* ALTERADO: De 320px para 420px (Decks muito maiores) */
-    width: 520px; 
+    /* Largura aumentada para os decks */
+    width: 420px; 
     
     display: flex;
     justify-content: center;
-}
-
-/* Ajuste responsivo para telas menores (Notebooks) 
-   para garantir que não fique gigante demais se a tela for pequena */
-@media (max-height: 800px) {
-    .deck-option { width: 300px; } /* Aumentei um pouco aqui também (era 250) */
-    .img-titulo-placa { max-width: 450px; }
-    #deck-selection-screen { gap: 15px; }
 }
 
 /* A IMAGEM (ARTE) */
@@ -468,7 +461,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 /* Ajuste para telas menores (Notebooks) */
 @media (max-height: 800px) {
-    .deck-option { width: 250px; }
+    .deck-option { width: 300px; }
     .img-titulo-placa { max-width: 450px; }
     #deck-selection-screen { gap: 15px; }
 }
