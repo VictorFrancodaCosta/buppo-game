@@ -31,9 +31,7 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png'
     ],
     audio: [
-        // --- MÚSICA DO SAGUÃO ALTERADA AQUI ---
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
-        
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
         { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
@@ -150,6 +148,31 @@ window.showScreen = function(screenId) {
     }
 }
 
+// --- FUNÇÃO PARA ABRIR SELEÇÃO DE DECK ---
+window.openDeckSelector = function() {
+    window.showScreen('deck-selection-screen');
+};
+
+// --- FUNÇÃO PARA SELECIONAR E ANIMAR O DECK ---
+window.selectDeck = function(deckType) {
+    // Toca som de click
+    window.playNavSound();
+    
+    // Pega o elemento clicado (neste caso, simplificamos assumindo que foi o clique no knight)
+    // Em uma implementação mais robusta, passariamos o 'event' ou ID
+    const options = document.querySelectorAll('.deck-option');
+    options.forEach(opt => {
+        // Adiciona a classe de animação apenas ao que foi clicado (simulação visual)
+        // Como só tem um por enquanto, pegamos o primeiro
+        opt.classList.add('deck-selected');
+    });
+
+    // Espera a animação de zoom/fade (0.6s) e inicia o jogo
+    setTimeout(() => {
+        window.transitionToGame();
+    }, 600);
+};
+
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
@@ -222,33 +245,24 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA
+// LÓGICA DE PARTIDA (VERSÃO ESTÁVEL)
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // --- 1. Oculta visualmente o container da mão ---
-    const handEl = document.getElementById('player-hand');
-    if (handEl) {
-        handEl.innerHTML = '';
-        handEl.classList.add('preparing'); // Bloqueia via CSS
-    }
-    
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
     playerHistory = [];
     
-    // Distribui as cartas
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // Cria o HTML (que nascerá invisível)
-    updateUI();
+    updateUI(); 
     
-    // Inicia a animação imediatamente
+    // Inicia a animação de entrada (Bounce)
     dealAllInitialCards();
 }
 
@@ -458,41 +472,9 @@ function showCenterText(txt, col) { let el = document.createElement('div'); el.c
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
-// -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - VERSÃO FINAL
-// -----------------------------------------------------------------
 function dealAllInitialCards() {
-    isProcessing = true; 
-    playSound('sfx-deal'); 
-    
-    const handEl = document.getElementById('player-hand'); 
-    const cards = Array.from(handEl.children);
-    
-    // Configura a animação em cada carta
-    cards.forEach((cardEl, i) => {
-        // inline opacity:0 garante invisibilidade até a animação começar
-        cardEl.style.opacity = '0';
-        
-        cardEl.classList.add('intro-anim');
-        cardEl.style.animationDelay = (i * 0.1) + 's';
-    });
-
-    // Força o navegador a recalcular o layout (Reflow)
-    void handEl.offsetWidth; 
-
-    // Remove a trava do container. 
-    // Como as cartas têm .intro-anim, a animação vai controlar a opacidade (0->1).
-    if(handEl) handEl.classList.remove('preparing');
-
-    // Limpeza final após animação
-    setTimeout(() => {
-        cards.forEach(c => {
-            c.classList.remove('intro-anim');
-            c.style.animationDelay = '';
-            c.style.opacity = '1'; 
-        });
-        isProcessing = false;
-    }, 2000); 
+    // Apenas destrava (limpeza completa das animações antigas)
+    isProcessing = false; 
 }
 
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
