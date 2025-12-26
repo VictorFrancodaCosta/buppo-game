@@ -299,7 +299,6 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     width: 100vw; 
     height: 100vh;
     
-    /* Fundo escuro transparente (65%) + Blur */
     background: rgba(0, 0, 0, 0.65); 
     backdrop-filter: blur(12px);
     
@@ -307,14 +306,31 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     
     display: none; 
     flex-direction: column;
-    justify-content: flex-start; /* Alinhamento ao topo */
+    justify-content: flex-start; 
     align-items: center;
     
-    padding-top: 8vh; 
+    /* ALTERADO: De 8vh para 2vh para subir tudo para o topo */
+    padding-top: 2vh; 
     box-sizing: border-box;
     
     opacity: 0;
     transition: opacity 0.5s ease;
+}
+
+/* Contêiner da Imagem do Título */
+.titulo-selecao {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    
+    /* ALTERADO: De 40px para 5px para aproximar das cartas */
+    margin-bottom: 5px; 
+    
+    padding: 0 20px;
+    
+    /* Opcional: Se a imagem da placa tiver muito espaço vazio em cima, 
+       podemos usar margem negativa para subir mais ainda */
+    /* margin-top: -20px; */ 
 }
 
 #deck-selection-screen.active {
@@ -439,4 +455,12 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     border-color: #fff;
     background: rgba(255,255,255,0.1);
     box-shadow: 0 0 15px rgba(255,255,255,0.2);
+}
+
+/* Ajuste de escala para telas menores (opcional) */
+@media (max-height: 800px) {
+    .deck-option {
+        transform: scale(0.8); /* Diminui as cartas em 20% */
+        margin-top: -20px;     /* Compensa o espaço perdido */
+    }
 }
