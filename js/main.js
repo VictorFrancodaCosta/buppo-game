@@ -76,7 +76,6 @@ function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
         return MAGE_ASSETS[cardKey];
     }
-    // Padrão (Cavaleiro/Monstro)
     return CARDS_DB[cardKey].img;
 }
 
@@ -181,28 +180,62 @@ window.openDeckSelector = function() {
     window.showScreen('deck-selection-screen');
 };
 
+// =======================
+// LÓGICA DE SELEÇÃO DE DECK (APRIMORADA)
+// =======================
+
 window.selectDeck = function(deckType) {
     window.playNavSound();
     window.currentDeck = deckType; // Armazena a escolha ('knight' ou 'mage')
     
-    // Animação no item clicado
-    // Como não passamos o 'event', vamos procurar pelo deck-option correto via JS ou
-    // simplificar e animar todos para sair.
+    // 1. Captura as opções visuais
+    const options = document.querySelectorAll('.deck-option');
     
-    // Simplificação visual para não quebrar: fade out na tela inteira de seleção
-    const selectionScreen = document.getElementById('deck-selection-screen');
-    selectionScreen.style.transition = "opacity 0.5s";
-    selectionScreen.style.opacity = "0";
+    // 2. Aplica efeito visual de escolha
+    options.forEach(opt => {
+        // Verifica se é a opção clicada baseada no atributo onclick
+        if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
+            // A ESCOLHIDA: Cresce, brilha e remove filtro cinza (se houver)
+            opt.style.transition = "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+            opt.style.transform = "scale(1.15) translateY(-20px)";
+            opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))";
+            opt.style.zIndex = "100";
+            
+            // Força a imagem dentro dela a ficar colorida (caso esteja P&B por padrão)
+            const img = opt.querySelector('img');
+            if(img) img.style.filter = "grayscale(0%) brightness(1.2)";
+        } else {
+            // A REJEITADA: Diminui, fica escura e transparente
+            opt.style.transition = "all 0.3s ease";
+            opt.style.transform = "scale(0.8) translateY(10px)";
+            opt.style.opacity = "0.2";
+            opt.style.filter = "grayscale(100%)";
+        }
+    });
 
+    // 3. Aguarda o efeito visual antes de trocar de tela
     setTimeout(() => {
-        window.transitionToGame();
-        // Reseta para a próxima vez
-        setTimeout(() => {
-             selectionScreen.style.opacity = "1";
-        }, 1000);
-    }, 500);
-};
+        // Fade out da tela inteira
+        const selectionScreen = document.getElementById('deck-selection-screen');
+        selectionScreen.style.transition = "opacity 0.5s";
+        selectionScreen.style.opacity = "0";
 
+        setTimeout(() => {
+            window.transitionToGame();
+            
+            // 4. Limpeza (Reset) silenciosa para a próxima vez que abrir
+            setTimeout(() => {
+                selectionScreen.style.opacity = "1";
+                // Reseta os estilos inline que aplicamos acima
+                options.forEach(opt => {
+                    opt.style = "";
+                    const img = opt.querySelector('img');
+                    if(img) img.style = "";
+                });
+            }, 500);
+        }, 500); // Tempo do fade out da tela
+    }, 400); // Tempo do "zoom" na carta escolhida
+};
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
