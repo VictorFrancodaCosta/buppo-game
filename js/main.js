@@ -176,15 +176,15 @@ window.playNavSound = function() {
     if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
 };
 
-// === CORREÇÃO FUNDAMENTAL ===
-// Removemos a verificação de '!isProcessing'.
-// Sons de UI devem tocar SEMPRE, mesmo se o jogo estiver processando algo.
+// === SOLUÇÃO DEFINITIVA PARA MIXAGEM DE SOM ===
+// Usamos cloneNode() para criar uma instância nova do som a cada hover.
+// Isso impede que o som do botão 'roube' o canal da música de fundo.
 window.playUIHoverSound = function() {
-    let s = audios['sfx-ui-hover'];
-    if(s) { 
-        // Volume 30% em relação ao volume mestre
+    let base = audios['sfx-ui-hover'];
+    if(base && !window.isMuted) { 
+        // CLONAGEM: O segredo para tocar sons simultâneos sem cortar a BGM
+        let s = base.cloneNode();
         s.volume = 0.3 * (window.masterVol || 1.0);
-        s.currentTime = 0; 
         s.play().catch(()=>{}); 
     }
 };
@@ -294,9 +294,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         return;
     }
 
-    // === CORREÇÃO IMPORTANTE ===
-    // Resetamos a flag de processamento ao voltar ao Lobby
-    // Isso garante que se o jogador saiu no meio de uma animação, o jogo destrava
+    // Resetamos a flag de processamento para garantir que sons funcionem
     isProcessing = false;
 
     let bg = document.getElementById('game-background');
