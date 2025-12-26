@@ -183,12 +183,12 @@ body {
 .card { 
     --rx: 0;
     --ry: 0;
-    /* Transições padrão */
     transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; 
     pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; 
     color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
     transform-style: preserve-3d; background-color: #111; 
+    
     /* Visibilidade normal */
     opacity: 1; 
     visibility: visible; 
@@ -277,54 +277,18 @@ body.tension-active #game-background, body.tension-active .middle-area, body.ten
 body.focus-hand .hand-wrapper .card:not(:hover) { transform: scale(0.95); filter: brightness(0.8); }
 body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-area, body.focus-xp #p-deck-container, body.focus-xp .hand-wrapper { filter: blur(5px) brightness(0.5); opacity: 0.6; }
 
-@media (max-width: 768px) {
-    .game-logo { max-width: 80%; }
-    #btn-login { padding: 15px 40px; font-size: 20px; }
-    #end-title { font-size: 50px; }
-    #lobby-screen { align-items: center !important; padding-left: 0; }
-    .lobby-frame-container { height: 70vh; }
-    .lobby-ui-overlay { padding: 25% 15% 15% 15%; }
-    .lobby-logo-right { position: relative; left: auto; top: auto; transform: none; width: 60%; margin-bottom: 20px; order: -1; }
-    .middle-area { gap: 20px; flex-direction: column; top: 5%; height: 60%; padding-bottom: 0; } 
-    .turn-display { top: 2%; font-size: 12px; left: 5px; transform: none; writing-mode: vertical-rl; }
-    .slot { width: 120px; height: 170px; transform: rotateX(15deg); border-width: 0; }
-    #m-stats-cluster { top: 10px; right: 10px; }
-    #p-stats-cluster { bottom: 190px; left: 10px; }
-    .avatar-cluster { min-width: 180px; padding: 8px 15px; transform: scale(0.9); transform-origin: center; border-width: 3px; }
-    .lvl-circle { width: 50px; height: 50px; font-size: 20px; top: auto !important; left: auto !important; border-width: 2px; }
-    .unit-name { font-size: 14px; width: auto; top: auto !important; left: auto !important; }
-    .hp-tube { height: 20px; width: 100%; top: auto !important; left: auto !important; border-width: 2px; }
-    .mastery-row { top: auto !important; left: auto !important; margin-top: 6px; }
-    .xp-area { min-width: 160px; height: 55px; border-width: 3px; }
-    #m-xp { top: 120px; } #p-xp { bottom: 260px; } .xp-mini { width: 26px; height: 36px; border-width: 1px; }
-    .deck-area { transform: scale(0.7); border-width: 2px; } #m-deck { top: 10px; left: -10px; }
-    #p-deck-container { bottom: 170px; right: 0; transform: scale(0.7); transform-origin: bottom right; }
-    .hand-wrapper { height: 140px; bottom: 0; }
-    .card { width: 90px; height: 130px; margin: 0 -6px; border-width: 2px; }
-    .hand-card:not(.disabled-card):hover { margin: 0 15px; transform: scale(1.15) translateY(-50px); }
-    #tooltip-box { width: 180px; font-size: 11px; }
-    #tt-title { font-size: 16px; }
-}
-
-#lobby-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
-.lobby-flare { position: absolute; background: radial-gradient(circle, #fff 10%, var(--gold) 60%, transparent 100%); border-radius: 50%; opacity: 0; box-shadow: 0 0 15px var(--gold); filter: blur(2px); animation: flareFloat linear infinite both; }
-@keyframes flareFloat { 0% { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); } 10% { opacity: 0.8; } 80% { opacity: 0.6; } 100% { opacity: 0; transform: translateY(-150px) scale(0) rotate(45deg); } }
-#transition-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; opacity: 0; pointer-events: none; transition: opacity 0.5s ease-in-out; }
-#transition-overlay.active { opacity: 1; pointer-events: auto; }
-.trans-logo { max-width: 300px; width: 60%; height: auto; filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.4)); animation: transPulse 1s infinite alternate; }
-.trans-text { font-family: 'Russo One', sans-serif; color: var(--txt-secondary); font-size: 14px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.7; }
-@keyframes transPulse { from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); } to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); } }
-
 /* --- CORREÇÃO DA ANIMAÇÃO INICIAL (BOUNCE) --- */
 @keyframes introBounce {
-    0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 
-    60% { transform: translateY(-40px) scale(1.1); opacity: 1; }
+    /* 0% tem opacity 0 !important para garantir que comece invisível */
+    0% { transform: translateY(120vh) scale(0.5); opacity: 0 !important; } 
+    60% { transform: translateY(-40px) scale(1.1); opacity: 1 !important; }
     80% { transform: translateY(10px) scale(0.95); }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1 !important; }
 }
 
 .intro-anim {
     /* Força a animação a rodar e manter o estado final */
     animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     pointer-events: none;
+    /* SEM OPACITY 0 AQUI NO ROOT DA CLASSE PARA EVITAR CONFLITO */
 }
