@@ -74,7 +74,8 @@ const ASSETS_TO_LOAD = {
 
         // --- SONS GLOBAIS ---
         { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' },       
-        { id: 'sfx-train', src: 'https://files.catbox.moe/sk5zrj.mp3' }, // NOVO: Som de Treinar
+        { id: 'sfx-train', src: 'https://files.catbox.moe/f4hy7e.mp3' }, // ATUALIZADO
+        { id: 'sfx-disarm', src: 'https://files.catbox.moe/udd2sz.mp3' }, // NOVO
         { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' },    
         
         { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
@@ -547,7 +548,7 @@ document.addEventListener('click', function(e) { const panel = document.getEleme
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
-    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-train', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
+    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-train', 'sfx-disarm', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) audios[k].volume = 0.8 * (window.masterVol || 1.0); 
     }); 
 }
@@ -558,7 +559,7 @@ initAmbientParticles();
 
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
-// --- FUNÇÃO DE DANO (COM SUPORTE A SOM VARIÁVEL) ---
+// --- FUNÇÃO DE DANO ---
 function triggerDamageEffect(isPlayer, soundKey = 'sfx-hit') { 
     try { 
         if(soundKey) playSound(soundKey); 
@@ -578,7 +579,7 @@ function triggerDamageEffect(isPlayer, soundKey = 'sfx-hit') {
 function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
 function triggerHealEffect(isPlayer) { try { let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } let ov = document.getElementById('heal-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } } catch(e) {} }
 
-// --- FUNÇÃO DE BLOQUEIO ATUALIZADA (COM SOM VARIÁVEL) ---
+// --- FUNÇÃO DE BLOQUEIO ---
 function triggerBlockEffect(soundKey = 'sfx-block') { 
     try { 
         playSound(soundKey); 
@@ -723,14 +724,10 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     
     if(pBlocks || mBlocks) { 
         clash = true; 
-        // --- LÓGICA DE SOM DE BLOQUEIO ---
-        let blockSound = 'sfx-block'; // Padrão
-        
-        // Se o Jogador bloqueou usando Mago, toca som do Mago
+        let blockSound = 'sfx-block'; 
         if (pBlocks && window.currentDeck === 'mage') {
             blockSound = 'sfx-block-mage';
         }
-        
         triggerBlockEffect(blockSound); 
     }
 
@@ -741,6 +738,11 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
 
     player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
     if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
+
+    // --- NOVO GATILHO DE SOM PARA DESARMAR ---
+    if(pAct === 'DESARMAR' || mAct === 'DESARMAR') {
+        playSound('sfx-disarm');
+    }
 
     if(pDmg > 0) { 
         player.hp -= pDmg; 
@@ -765,7 +767,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
-    // --- NOVA LÓGICA: SOM DE TREINAR ---
+    // --- SOM DE TREINAR ---
     function handleExtraXP(u) { 
         if(u.deck.length > 0) { 
             let card = u.deck.pop(); 
@@ -777,11 +779,10 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     
     if(!pDead && pAct === 'TREINAR') { 
         handleExtraXP(player); 
-        playSound('sfx-train'); // Toca som
+        playSound('sfx-train'); 
     } 
     if(!mDead && mAct === 'TREINAR') { 
         handleExtraXP(monster); 
-        // Se ambos treinam, toca o som também (o if evita tocar 2x muito rápido se quiser, mas aqui é ok tocar)
         if(pAct !== 'TREINAR') playSound('sfx-train'); 
     }
 
