@@ -51,9 +51,6 @@ window.masterVol = 1.0;
 let isLethalHover = false; 
 let mixerInterval = null;
 
-// --- VARIAVEL DE CONTROLE PARA EVITAR O FLASH ---
-let isInitialSetup = false;
-
 // =======================
 // CONTROLLER DE MÚSICA
 // =======================
@@ -223,19 +220,20 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA (CORRIGIDA COM ESTADO)
+// LÓGICA DE PARTIDA (CORRIGIDA)
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // ATIVA O MODO DE SETUP INICIAL
-    // Isso avisa o updateUI para criar cartas invisíveis
-    isInitialSetup = true;
-    
+    // --- 1. Oculta visualmente o container da mão ---
+    // Isso garante que quando o updateUI desenhar as cartas, elas não apareçam
     const handEl = document.getElementById('player-hand');
-    if (handEl) handEl.innerHTML = '';
+    if (handEl) {
+        handEl.innerHTML = '';
+        handEl.style.opacity = '0'; // Esconde tudo
+    }
     
     resetUnit(player); 
     resetUnit(monster); 
@@ -245,9 +243,9 @@ function startGameFlow() {
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    updateUI(); // Cria as cartas (invisíveis por causa do flag)
+    updateUI(); 
     
-    dealAllInitialCards(); // Anima a entrada
+    dealAllInitialCards();
 }
 
 function checkEndGame(){ 
@@ -457,7 +455,7 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 // -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE)
+// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - VERSÃO FINAL
 // -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
@@ -466,21 +464,25 @@ function dealAllInitialCards() {
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // Configura a animação
+    // 2. Aplica a classe de animação em cada carta
     cards.forEach((cardEl, i) => {
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
     });
 
-    // Desliga o modo Setup - Agora o updateUI vai criar cartas visíveis
-    isInitialSetup = false;
+    // 3. Devolve a opacidade do container.
+    // Como as cartas têm a classe .intro-anim, e a animação começa
+    // com transform:translateY(120vh), elas estarão invisíveis (fora da tela)
+    // até começarem a subir.
+    setTimeout(() => {
+        handEl.style.opacity = '1';
+    }, 100);
 
-    // Limpeza final após animação
+    // 4. Limpeza final após animação
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
             c.style.animationDelay = '';
-            c.style.opacity = '1'; 
         });
         isProcessing = false;
     }, 2000); 
@@ -565,7 +567,7 @@ function playCardFlow(index, pDisarmChoice) {
         realCardEl.style.boxShadow = 'none';
     }
     
-    // ANIMAÇÃO DE VOO COM FLIP 3D
+    // ANIMAÇÃO DE VOO (AGORA COM FLIP)
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
         renderTable(cardKey, 'p-slot'); 
         updateUI(); 
@@ -712,14 +714,7 @@ function updateUnit(u) {
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
-            
-            // --- CONTROLE DE OPACIDADE VIA ESTADO (CORREÇÃO) ---
-            if(isInitialSetup) {
-                c.style.opacity = '0'; // Se estamos no setup, nasce invisível
-            } else {
-                c.style.opacity = '1'; // Senão, nasce normal
-            }
-
+            c.style.opacity = '1';
             let lethalType = checkCardLethality(k); 
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
