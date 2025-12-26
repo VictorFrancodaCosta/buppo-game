@@ -31,7 +31,9 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png'
     ],
     audio: [
+        // --- NOVA MÚSICA DO SAGUÃO ---
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
+        
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
         { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
@@ -220,20 +222,12 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA
+// LÓGICA DE PARTIDA (VERSÃO ESTÁVEL)
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
-    
-    // Limpa a mão e deixa ela visível (o container)
-    // O truque agora está na animação CSS (backwards) que esconde as cartas
-    const handEl = document.getElementById('player-hand');
-    if (handEl) {
-        handEl.innerHTML = '';
-        handEl.style.opacity = '1';
-    }
     
     resetUnit(player); 
     resetUnit(monster); 
@@ -245,6 +239,7 @@ function startGameFlow() {
     
     updateUI(); 
     
+    // Inicia a animação de entrada (Bounce)
     dealAllInitialCards();
 }
 
@@ -455,7 +450,7 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 // -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE)
+// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE - SIMPLIFICADA)
 // -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
@@ -464,14 +459,13 @@ function dealAllInitialCards() {
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // Aplica a animação
-    // O CSS 'animation-fill-mode: backwards' já garante que elas nasçam invisíveis
+    // Aplica a animação (com backwards para evitar flash)
     cards.forEach((cardEl, i) => {
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
     });
 
-    // Limpeza final após animação
+    // Limpa após terminar
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
@@ -521,9 +515,6 @@ function getBestAIMove() {
     return moves[0];
 }
 
-// ============================================
-// ANIMAÇÃO DE VOO COM GIRO 3D (FLIP)
-// ============================================
 function playCardFlow(index, pDisarmChoice) {
     isProcessing = true; 
     let cardKey = player.hand.splice(index, 1)[0]; 
@@ -563,7 +554,7 @@ function playCardFlow(index, pDisarmChoice) {
         realCardEl.style.boxShadow = 'none';
     }
     
-    // ANIMAÇÃO DE VOO (AGORA COM FLIP)
+    // ANIMAÇÃO DE VOO (VOLTOU AO SIMPLES - SEM FLIP QUEBRA-LAYOUT)
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
         renderTable(cardKey, 'p-slot'); 
         updateUI(); 
@@ -664,14 +655,11 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
     let e = { top: 0, left: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
 
     const fly = document.createElement('div');
-    fly.className = `flying-card`; 
-    fly.innerHTML = `
-        <div class="flying-inner">
-            <div class="face-front" style="background-image: url('${CARDS_DB[cardKey].img}')"></div>
-            <div class="face-back" style="background-image: url('https://i.ibb.co/jdZmTHC/CARDBACK.png')"></div>
-        </div>
-    `;
-
+    // VOLTAMOS AO SIMPLES: Sem flying-inner, sem face-front/back.
+    // Apenas a carta voadora com a imagem de fundo.
+    fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
+    fly.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[cardKey].img}')"></div>`;
+    
     if (isToTable) fly.classList.add('card-bounce');
 
     if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; } 
