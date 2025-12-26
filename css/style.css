@@ -455,7 +455,29 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 /* É importante verificar o contêiner pai também.
    Se o texto antigo tinha padding ou margens grandes, a imagem pode parecer deslocada.
    Você talvez precise ajustar o contêiner onde o texto estava. Exemplo genérico: */
+/* CSS CORRIGIDO */
+
+/* Este é o contêiner onde a imagem está dentro.
+   É importante que ele tenha uma largura definida ou que se adapte à tela. */
 .titulo-selecao {
-    text-align: center; /* Garante que o conteúdo fique centralizado */
-    padding: 20px 0;    /* Ajuste o espaçamento conforme necessário */
+    width: 100%;           /* Ocupa toda a largura disponível */
+    max-width: 800px;      /* (OPCIONAL) Define uma largura máxima para não ficar gigante em telas grandes. Ajuste este valor conforme necessário. */
+    margin: 0 auto;        /* Centraliza o contêiner na página */
+    text-align: center;    /* Centraliza o conteúdo interno */
+    padding: 20px 0;       /* Um pouco de espaço acima e abaixo */
+}
+
+/* Esta é a classe da sua imagem */
+.img-titulo-placa {
+    /* A REGRA MAIS IMPORTANTE: */
+    max-width: 100%;       /* Garante que a imagem NUNCA seja mais larga que o contêiner (.titulo-selecao) */
+    
+    /* Mantém a proporção original */
+    height: auto;
+    
+    /* Remove espaços extras abaixo da imagem e permite centralizar com margin */
+    display: block;
+    
+    /* Centraliza a imagem horizontalmente dentro do contêiner */
+    margin: 0 auto;
 }
