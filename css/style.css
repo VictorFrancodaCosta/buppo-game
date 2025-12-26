@@ -380,7 +380,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     padding: 0;
     
     /* ALTERADO: De 320px para 420px (Decks muito maiores) */
-    width: 420px; 
+    width: 520px; 
     
     display: flex;
     justify-content: center;
