@@ -75,7 +75,7 @@ body {
 }
 #btn-login:hover { transform: scale(1.05); box-shadow: 0 0 30px #9b59b6; background: #9b59b6; }
 
-/* TELA SAGUÃO */
+/* TELA SAGUÃO - ESSENCIAIS, NÃO MEXER */
 #lobby-screen { justify-content: center !important; align-items: flex-start !important; padding-left: 5%; z-index: 10000; position: relative; }
 .lobby-logo-right {
     position: fixed; left: 62%; top: 50%; transform: translate(-50%, -50%);
@@ -180,68 +180,29 @@ body {
 .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 
-/* --- TRAVA DE SEGURANÇA VISUAL ---
-   Enquanto a classe .preparing estiver na mão, todas as cartas
-   ficam invisíveis. Isso garante que a animação comece do zero. */
-#player-hand.preparing .card {
-    opacity: 0 !important;
-    visibility: hidden !important;
-}
-
+/* CARTAS NA MÃO (NORMAL) */
 .card { 
-    --rx: 0;
-    --ry: 0;
-    
-    /* Transições padrão */
+    --rx: 0; --ry: 0;
     transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; 
-    
     pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; 
     color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
     transform-style: preserve-3d; background-color: #111; 
     
-    /* REMOVIDO O !IMPORTANT DA OPACIDADE.
-       Isso permite que o Javascript (e nossa trava) controlem a visibilidade. */
-    opacity: 1; 
+    opacity: 1; /* Visível por padrão */
     visibility: visible; 
 }
 
 /* --- EFEITO FOIL HOLOGRÁFICO (SUAVIZADO) --- */
 .card::after {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 10px;
-    pointer-events: none;
-    z-index: 15;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-
-    /* GRADIENTE RECALIBRADO PARA NÃO ESCONDER A ARTE:
-       Reduzi as cores para 0.15 (15%) e o branco para 0.25 (25%).
-       Agora é uma "película" fina, não uma luz forte.
-    */
-    background: linear-gradient(
-        115deg,
-        transparent 25%,
-        rgba(255, 215, 0, 0.15) 35%,  /* Dourado bem leve */
-        rgba(255, 0, 150, 0.15) 45%,  /* Magenta leve */
-        rgba(0, 255, 255, 0.15) 55%,  /* Ciano leve */
-        rgba(255, 255, 255, 0.25) 70%, /* Branco suave (Reflexo de vidro) */
-        transparent 80%
-    );
-
-    background-size: 300% 300%;
-    background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%));
-
-    /* Mantemos color-dodge para o aspecto metálico, mas com cores fracas ele não estoura */
+    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 10px; pointer-events: none; z-index: 15;
+    opacity: 0; transition: opacity 0.2s ease;
+    background: linear-gradient(115deg, transparent 25%, rgba(255, 215, 0, 0.15) 35%, rgba(255, 0, 150, 0.15) 45%, rgba(0, 255, 255, 0.15) 55%, rgba(255, 255, 255, 0.25) 70%, transparent 80%);
+    background-size: 300% 300%; background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%));
     mix-blend-mode: color-dodge; 
 }
-
-/* Reduzi a opacidade máxima para 0.8 para garantir transparência */
-.card:hover::after {
-    opacity: 0.8;
-}
+.card:hover::after { opacity: 0.8; }
 
 .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
 .flares-container { position: absolute; top: 50%; left: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
@@ -274,12 +235,20 @@ body {
 .cartoon-purple { color: #a29bfe; }
 .tt-text { font-size: 11px; color: #d7ccc8; line-height: 1.3; }
 .dynamic-val { display: inline-block; background: #000; color: var(--gold); border: 2px solid var(--gold); border-radius: 4px; padding: 0px 6px; font-family: 'Russo One', sans-serif; font-size: 14px; vertical-align: middle; box-shadow: 0 2px 5px rgba(0,0,0,0.5); margin: 0 2px; }
-.highlight-card { font-weight: 900; font-family: 'Russo One', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Base do destaque */
+.highlight-card { 
+    font-weight: 900; /* Fonte bem grossa */
+    font-family: 'Russo One', sans-serif; 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
 .hc-red { color: #ff4757; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-blue { color: #00cec9; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-green { color: #2ed573; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-yellow { color: #ffa502; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-purple { color: #a29bfe; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+
 .modal-overlay { position: fixed; top:0;left:0;width:100%;height:100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(8px); }
 .modal-box { background: var(--wood-light); padding: 40px; border-radius: 20px; border: 4px solid var(--wood-dark); text-align: center; min-width: 350px; box-shadow: 0 30px 60px rgba(0,0,0,1); }
 #modal-title { color: var(--gold) !important; font-weight: 900; font-size: 26px; margin-bottom: 15px; } 
@@ -291,35 +260,6 @@ body.cinematic-active #game-background, body.cinematic-active .middle-area, body
 body.tension-active #game-background, body.tension-active .middle-area, body.tension-active .avatar-cluster, body.tension-active .deck-area, body.tension-active #p-deck-container, body.tension-active .xp-area { filter: blur(8px) grayscale(100%) brightness(0.2); }
 body.focus-hand .hand-wrapper .card:not(:hover) { transform: scale(0.95); filter: brightness(0.8); }
 body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-area, body.focus-xp #p-deck-container, body.focus-xp .hand-wrapper { filter: blur(5px) brightness(0.5); opacity: 0.6; }
-
-@media (max-width: 768px) {
-    .game-logo { max-width: 80%; }
-    #btn-login { padding: 15px 40px; font-size: 20px; }
-    #end-title { font-size: 50px; }
-    #lobby-screen { align-items: center !important; padding-left: 0; }
-    .lobby-frame-container { height: 70vh; }
-    .lobby-ui-overlay { padding: 25% 15% 15% 15%; }
-    .lobby-logo-right { position: relative; left: auto; top: auto; transform: none; width: 60%; margin-bottom: 20px; order: -1; }
-    .middle-area { gap: 20px; flex-direction: column; top: 5%; height: 60%; padding-bottom: 0; } 
-    .turn-display { top: 2%; font-size: 12px; left: 5px; transform: none; writing-mode: vertical-rl; }
-    .slot { width: 120px; height: 170px; transform: rotateX(15deg); border-width: 0; }
-    #m-stats-cluster { top: 10px; right: 10px; }
-    #p-stats-cluster { bottom: 190px; left: 10px; }
-    .avatar-cluster { min-width: 180px; padding: 8px 15px; transform: scale(0.9); transform-origin: center; border-width: 3px; }
-    .lvl-circle { width: 50px; height: 50px; font-size: 20px; top: auto !important; left: auto !important; border-width: 2px; }
-    .unit-name { font-size: 14px; width: auto; top: auto !important; left: auto !important; }
-    .hp-tube { height: 20px; width: 100%; top: auto !important; left: auto !important; border-width: 2px; }
-    .mastery-row { top: auto !important; left: auto !important; margin-top: 6px; }
-    .xp-area { min-width: 160px; height: 55px; border-width: 3px; }
-    #m-xp { top: 120px; } #p-xp { bottom: 260px; } .xp-mini { width: 26px; height: 36px; border-width: 1px; }
-    .deck-area { transform: scale(0.7); border-width: 2px; } #m-deck { top: 10px; left: -10px; }
-    #p-deck-container { bottom: 170px; right: 0; transform: scale(0.7); transform-origin: bottom right; }
-    .hand-wrapper { height: 140px; bottom: 0; }
-    .card { width: 90px; height: 130px; margin: 0 -6px; border-width: 2px; }
-    .hand-card:not(.disabled-card):hover { margin: 0 15px; transform: scale(1.15) translateY(-50px); }
-    #tooltip-box { width: 180px; font-size: 11px; }
-    #tt-title { font-size: 16px; }
-}
 
 #lobby-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
 .lobby-flare { position: absolute; background: radial-gradient(circle, #fff 10%, var(--gold) 60%, transparent 100%); border-radius: 50%; opacity: 0; box-shadow: 0 0 15px var(--gold); filter: blur(2px); animation: flareFloat linear infinite both; }
@@ -340,10 +280,72 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 .intro-anim {
     /* Força a animação a rodar e manter o estado final */
-    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    /* Backwards é importante para começar invisível */
+    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
     pointer-events: none;
-    
-    /* REMOVI O OPACITY: 0 !IMPORTANT */
-    /* E GARANTIMOS QUE A TRANSIÇÃO NÃO INTERFIRA */
-    transition: none !important;
 }
+
+/* =========================================
+   NOVA TELA: SELEÇÃO DE DECK
+   Adicionado no final para não quebrar o resto
+========================================= */
+#deck-selection-screen {
+    justify-content: center; align-items: center; z-index: 15000;
+    /* Usa flex para centralizar tudo */
+    display: none; /* Oculto por padrão, classe .active ativa */
+}
+.deck-title {
+    font-family: 'Russo One', sans-serif; color: #fff; font-size: 40px; 
+    text-shadow: 0 5px 15px rgba(0,0,0,0.8); margin-bottom: 40px; letter-spacing: 2px;
+    text-align: center;
+}
+.deck-container {
+    display: flex; gap: 40px; flex-wrap: wrap; justify-content: center;
+}
+.deck-card {
+    display: flex; flex-direction: column; align-items: center; cursor: pointer; 
+    transition: transform 0.3s;
+}
+.deck-card img {
+    width: 280px; height: auto; border-radius: 15px; border: 4px solid var(--wood-dark);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    /* EFEITO PRETO E BRANCO INICIAL */
+    filter: grayscale(100%) brightness(0.7);
+    transition: all 0.4s ease;
+}
+.deck-name {
+    margin-top: 15px; font-family: 'Russo One', sans-serif; color: #777; font-size: 18px; 
+    text-transform: uppercase; transition: color 0.3s;
+}
+
+/* EFEITO AO PASSAR O MOUSE */
+.deck-card:hover img {
+    filter: grayscale(0%) brightness(1.1); /* Fica colorido */
+    transform: scale(1.05);
+    border-color: var(--gold);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+}
+.deck-card:hover .deck-name { color: var(--gold); }
+
+/* ANIMAÇÃO AO CLICAR */
+.deck-selected img {
+    animation: deckSelectAnim 0.6s forwards ease-in;
+}
+@keyframes deckSelectAnim {
+    0% { transform: scale(1.05); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(3); opacity: 0; }
+}
+
+.return-btn {
+    margin-top: 40px;
+    padding: 10px 30px;
+    background: rgba(0,0,0,0.6);
+    border: 2px solid #fff;
+    color: #fff;
+    font-family: 'Russo One', sans-serif;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.return-btn:hover { background: #fff; color: #000; }
