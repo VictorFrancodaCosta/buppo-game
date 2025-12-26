@@ -176,11 +176,10 @@ window.playNavSound = function() {
     if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
 };
 
-// ATUALIZADO: Volume reduzido no som de hover
 window.playUIHoverSound = function() {
     let s = audios['sfx-ui-hover'];
     if(s && !isProcessing) { 
-        // Define volume específico mais baixo para hover (30% do master)
+        // Volume 30% em relação ao volume mestre
         s.volume = 0.3 * (window.masterVol || 1.0);
         s.currentTime = 0; 
         s.play().catch(()=>{}); 
@@ -191,11 +190,6 @@ window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
     
-    // GARANTIA: Se for para o Lobby, reativa os sons de hover
-    if(screenId === 'lobby-screen') {
-        attachUIHoverSounds();
-    }
-
     const configBtn = document.getElementById('btn-config-toggle');
     const surrenderBtn = document.getElementById('btn-surrender');
     if(screenId === 'game-screen') {
@@ -211,8 +205,6 @@ window.showScreen = function(screenId) {
 
 window.openDeckSelector = function() {
     window.showScreen('deck-selection-screen');
-    // Reanexar sons para garantir que a tela de seleção tenha som
-    attachUIHoverSounds();
 };
 
 window.selectDeck = function(deckType) {
@@ -295,7 +287,6 @@ window.transitionToLobby = function() {
 window.goToLobby = async function(isAutoLogin = false) {
     if(!currentUser) {
         window.showScreen('start-screen');
-        attachUIHoverSounds(); // Garante som na tela de login também
         MusicController.play('bgm-menu'); 
         return;
     }
@@ -326,15 +317,9 @@ window.goToLobby = async function(isAutoLogin = false) {
         });
         html += '</tbody></table>';
         document.getElementById('ranking-content').innerHTML = html;
-        
-        // REANEXA SONS: O ranking é conteúdo dinâmico, se tivesse botões nele, precisaria disso.
-        // Mas mal não faz garantir que o resto da tela esteja ok.
-        attachUIHoverSounds();
     });
     
     window.showScreen('lobby-screen');
-    // GARANTIA EXTRA: Chama novamente ao final
-    attachUIHoverSounds();
     document.getElementById('end-screen').classList.remove('visible'); 
 };
 
@@ -359,9 +344,6 @@ function startGameFlow() {
     drawCardLogic(player, 6); 
     updateUI(); 
     dealAllInitialCards();
-    
-    // Reanexa sons nos botões de UI do jogo (Config, Surrender, etc)
-    attachUIHoverSounds();
 }
 
 function checkEndGame(){ 
@@ -383,9 +365,6 @@ function checkEndGame(){
             if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(); } 
             else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
             document.getElementById('end-screen').classList.add('visible'); 
-            
-            // Reanexa sons nos botões da tela de fim de jogo
-            attachUIHoverSounds();
         }, 1000); 
     } else { isProcessing = false; } 
 }
@@ -402,7 +381,6 @@ onAuthStateChanged(auth, (user) => {
         const btnTxt = document.getElementById('btn-text');
         if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
         MusicController.play('bgm-menu'); 
-        attachUIHoverSounds();
     }
 });
 
@@ -518,8 +496,10 @@ function updateLoader() {
                 loading.style.opacity = '0';
                 setTimeout(() => loading.style.display = 'none', 500);
             }
-            // Anexar sons de UI
-            attachUIHoverSounds();
+            
+            // INICIA O SISTEMA DE SOM DE HOVER GLOBAL
+            initGlobalHoverLogic();
+            
         }, 800); 
         
         document.body.addEventListener('click', () => { 
@@ -530,15 +510,27 @@ function updateLoader() {
     }
 }
 
-// FUNÇÃO PARA ANEXAR SOM DE HOVER NOS ELEMENTOS DE UI
-function attachUIHoverSounds() {
-    // Seleciona botões padrão, botões circulares, ícone fullscreen e opções de deck
-    const uiElements = document.querySelectorAll('button, .circle-btn, #btn-fullscreen, .deck-option');
+// ===============================================
+// SISTEMA DE HOVER GLOBAL (SOLUÇÃO DEFINITIVA)
+// ===============================================
+function initGlobalHoverLogic() {
+    let lastTarget = null;
     
-    uiElements.forEach(el => {
-        // Remove listener antigo para evitar duplicidade
-        el.removeEventListener('mouseenter', window.playUIHoverSound);
-        el.addEventListener('mouseenter', window.playUIHoverSound);
+    // Usa delegação de eventos no document.body
+    document.body.addEventListener('mouseover', (e) => {
+        // Verifica se o alvo (ou seu pai) é um elemento interativo
+        const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn';
+        const target = e.target.closest(selector);
+
+        // Se encontrou um alvo novo que não é o mesmo de antes
+        if (target && target !== lastTarget) {
+            lastTarget = target;
+            window.playUIHoverSound();
+        } 
+        // Se o mouse saiu para um lugar vazio, reseta o alvo
+        else if (!target) {
+            lastTarget = null;
+        }
     });
 }
 
