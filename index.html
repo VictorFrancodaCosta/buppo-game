@@ -15,92 +15,164 @@
             <p>Estratégia e Conquista</p>
             <button id="btn-login-google" class="btn-google interactive">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G">
-                Entrar com Google
+                <span id="btn-text">Entrar com Google</span>
             </button>
         </div>
     </div>
 
+    <div id="loading-screen" class="screen" style="z-index: 9999; background: #000; display:flex;">
+        <h1 style="color:var(--primary)">CARREGANDO...</h1>
+        <div style="width: 300px; height: 4px; background: #333; margin-top: 20px;">
+            <div id="loader-fill" style="width: 0%; height: 100%; background: #d4af37; transition: width 0.2s;"></div>
+        </div>
+    </div>
+
     <div id="lobby-screen" class="screen">
+        <div id="lobby-particles"></div>
         <header class="top-bar">
             <div class="user-info">
                 <img id="user-avatar" src="" alt="Avatar">
-                <span id="user-name">Jogador</span>
+                <span id="lobby-username">JOGADOR</span>
             </div>
             <div class="top-icons">
-                <button class="icon-btn interactive" id="btn-config">⚙️</button>
+                <button class="icon-btn interactive" id="btn-config-toggle">⚙️</button>
                 <button class="icon-btn interactive" id="btn-logout">Sair</button>
             </div>
         </header>
 
+        <div id="config-panel" class="config-panel">
+            <h3>CONFIGURAÇÕES</h3>
+            <div class="config-row">
+                <span>Volume Geral</span>
+                <input type="range" min="0" max="1" step="0.1" value="1" onchange="window.updateVol('master', this.value)">
+            </div>
+            <button onclick="window.toggleConfig()" class="btn-secondary">FECHAR</button>
+        </div>
+
         <div class="lobby-content">
             <div class="rank-box">
                 <h2>Seu Ranking</h2>
-                <div class="points">1250 MMR</div>
+                <div class="points" id="lobby-stats">...</div>
             </div>
             
-            <button id="btn-start-match" class="btn-main interactive">ENCONTRAR PARTIDA</button>
-            <button class="btn-secondary interactive">MINHA COLEÇÃO</button>
+            <div id="ranking-content" class="ranking-list">
+                </div>
+
+            <div class="lobby-actions">
+                <button id="btn-start-match" class="btn-main interactive">ENCONTRAR PARTIDA</button>
+                <button class="btn-secondary interactive">MINHA COLEÇÃO</button>
+            </div>
         </div>
     </div>
 
     <div id="deck-selection-screen" class="screen">
         <h2>Escolha seu Deck</h2>
         <div class="decks-container">
-            <div class="deck-choice interactive" data-class="knight">
-                <img src="https://img.freepik.com/fotos-gratis/cavaleiro-medieval-em-uma-armadura-brilhante_23-2150735398.jpg" alt="Cavaleiro">
+            <div class="deck-choice interactive" onclick="window.selectDeck('knight')">
+                <img src="https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png" alt="Cavaleiro">
                 <h3>Cavaleiro</h3>
             </div>
-            <div class="deck-choice interactive" data-class="mage">
-                <img src="https://img.freepik.com/fotos-gratis/feiticeiro-no-fundo-do-fogo-generativo-ai_169016-28867.jpg" alt="Mago">
+            <div class="deck-choice interactive" onclick="window.selectDeck('mage')">
+                <img src="https://i.ibb.co/twXH1h46/DECK-MAGO.png" alt="Mago">
                 <h3>Mago</h3>
             </div>
         </div>
-        <button class="btn-secondary interactive" onclick="backToLobby()">Voltar</button>
+        <button class="btn-secondary interactive" onclick="window.transitionToLobby()">Voltar</button>
+    </div>
+
+    <div id="transition-overlay">
+        <div class="trans-content">
+            <h1 class="trans-text">PREPARANDO BATALHA...</h1>
+        </div>
     </div>
 
     <div id="game-screen" class="screen">
+        <div id="game-background"></div>
+        <div id="ambient-particles"></div>
+        
+        <div id="dmg-overlay"></div>
+        <div id="heal-overlay"></div>
+        <div id="crit-overlay"></div>
+        <div id="block-overlay"></div>
+
         <header class="game-header">
             <div class="player-stats">
-                <span>Você</span>
-                <div class="health-bar"><div class="fill" style="width: 100%;"></div></div>
+                <div class="stats-box">
+                    <span class="p-name">Você (Nv.<span id="p-lvl">1</span>)</span>
+                    <div class="health-bar"><div id="p-hp-fill" class="fill" style="width: 100%;"></div></div>
+                    <span id="p-hp-txt" class="hp-text">6/6</span>
+                </div>
             </div>
             
             <div class="game-controls">
-                <button class="icon-btn interactive" id="btn-sound-toggle">🔊</button>
+                <div class="turn-indicator" id="turn-txt">TURNO 1</div>
+                <button class="icon-btn interactive" id="btn-sound">🔊</button>
                 <button class="icon-btn interactive" id="btn-fullscreen">⛶</button>
             </div>
 
             <div class="enemy-stats">
-                <span>Oponente</span>
-                <div class="health-bar"><div class="fill" style="width: 100%;"></div></div>
+                <div class="stats-box">
+                    <span class="p-name">Oponente (Nv.<span id="m-lvl">1</span>)</span>
+                    <div class="health-bar"><div id="m-hp-fill" class="fill" style="width: 100%;"></div></div>
+                    <span id="m-hp-txt" class="hp-text">6/6</span>
+                </div>
             </div>
         </header>
 
         <div class="game-board">
-            <div class="board-area">
-                <p style="color:white; opacity:0.5;">Tabuleiro de Batalha</p>
+            <div class="board-side enemy-side">
+                <div id="m-xp" class="xp-area"></div>
+                <div class="active-slot" id="m-slot"></div>
+                <div class="deck-pile">
+                    <img src="https://i.ibb.co/jdZmTHC/CARDBACK.png" class="deck-img">
+                    <div class="deck-count" id="m-deck-count">15</div>
+                </div>
+                <div id="m-masteries" class="mastery-row"></div>
+            </div>
+
+            <div class="board-side player-side">
+                <div id="p-masteries" class="mastery-row"></div>
+                <div class="deck-pile" id="p-deck-container">
+                    <img id="p-deck-img" src="https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png" class="deck-img">
+                    <div class="deck-count" id="p-deck-count">15</div>
+                </div>
+                <div class="active-slot" id="p-slot"></div>
+                <div id="p-xp" class="xp-area"></div>
             </div>
         </div>
 
         <footer class="game-footer">
             <button class="btn-danger interactive" id="btn-surrender">ABANDONAR</button>
-            <div class="hand-area">
+            <div class="hand-area" id="player-hand">
                 </div>
-            <button class="btn-turn interactive">PASSAR TURNO</button>
         </footer>
     </div>
 
-    <div id="game-over-modal" class="modal">
+    <div id="modal-overlay" class="modal">
         <div class="modal-content">
-            <h2 id="match-result">VITÓRIA!</h2>
-            <p>+25 Pontos</p>
+            <h2 id="modal-title">TÍTULO</h2>
+            <p id="modal-desc">Descrição da escolha...</p>
+            <div id="modal-btns" class="modal-actions"></div>
+            <button onclick="window.cancelModal()" class="btn-secondary" style="margin-top:10px;">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="end-screen" class="modal">
+        <div class="modal-content">
+            <h1 id="end-title">VITÓRIA</h1>
             <div class="modal-actions">
-                <button class="btn-main interactive" id="btn-play-again">JOGAR NOVAMENTE</button>
-                <button class="btn-secondary interactive" id="btn-lobby-return">SAGUÃO</button>
+                <button onclick="window.restartMatch()" class="btn-main interactive">JOGAR NOVAMENTE</button>
+                <button onclick="window.transitionToLobby()" class="btn-secondary interactive">VOLTAR AO MENU</button>
             </div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <div id="tooltip-box">
+        <div id="tt-title">TÍTULO</div>
+        <div id="tt-content">Descrição...</div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+
 </body>
 </html>
