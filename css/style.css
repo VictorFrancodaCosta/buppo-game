@@ -180,29 +180,68 @@ body {
 .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 
-/* CARTAS NA MÃO (NORMAL) */
+/* --- TRAVA DE SEGURANÇA VISUAL ---
+   Enquanto a classe .preparing estiver na mão, todas as cartas
+   ficam invisíveis. Isso garante que a animação comece do zero. */
+#player-hand.preparing .card {
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
 .card { 
-    --rx: 0; --ry: 0;
+    --rx: 0;
+    --ry: 0;
+    
+    /* Transições padrão */
     transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; 
+    
     pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; 
     color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
     transform-style: preserve-3d; background-color: #111; 
     
-    opacity: 1; /* Visível por padrão */
+    /* REMOVIDO O !IMPORTANT DA OPACIDADE.
+       Isso permite que o Javascript (e nossa trava) controlem a visibilidade. */
+    opacity: 1; 
     visibility: visible; 
 }
 
 /* --- EFEITO FOIL HOLOGRÁFICO (SUAVIZADO) --- */
 .card::after {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 10px; pointer-events: none; z-index: 15;
-    opacity: 0; transition: opacity 0.2s ease;
-    background: linear-gradient(115deg, transparent 25%, rgba(255, 215, 0, 0.15) 35%, rgba(255, 0, 150, 0.15) 45%, rgba(0, 255, 255, 0.15) 55%, rgba(255, 255, 255, 0.25) 70%, transparent 80%);
-    background-size: 300% 300%; background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%));
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 10px;
+    pointer-events: none;
+    z-index: 15;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+    /* GRADIENTE RECALIBRADO PARA NÃO ESCONDER A ARTE:
+       Reduzi as cores para 0.15 (15%) e o branco para 0.25 (25%).
+       Agora é uma "película" fina, não uma luz forte.
+    */
+    background: linear-gradient(
+        115deg,
+        transparent 25%,
+        rgba(255, 215, 0, 0.15) 35%,  /* Dourado bem leve */
+        rgba(255, 0, 150, 0.15) 45%,  /* Magenta leve */
+        rgba(0, 255, 255, 0.15) 55%,  /* Ciano leve */
+        rgba(255, 255, 255, 0.25) 70%, /* Branco suave (Reflexo de vidro) */
+        transparent 80%
+    );
+
+    background-size: 300% 300%;
+    background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%));
+
+    /* Mantemos color-dodge para o aspecto metálico, mas com cores fracas ele não estoura */
     mix-blend-mode: color-dodge; 
 }
-.card:hover::after { opacity: 0.8; }
+
+/* Reduzi a opacidade máxima para 0.8 para garantir transparência */
+.card:hover::after {
+    opacity: 0.8;
+}
 
 .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
 .flares-container { position: absolute; top: 50%; left: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
@@ -235,7 +274,14 @@ body {
 .cartoon-purple { color: #a29bfe; }
 .tt-text { font-size: 11px; color: #d7ccc8; line-height: 1.3; }
 .dynamic-val { display: inline-block; background: #000; color: var(--gold); border: 2px solid var(--gold); border-radius: 4px; padding: 0px 6px; font-family: 'Russo One', sans-serif; font-size: 14px; vertical-align: middle; box-shadow: 0 2px 5px rgba(0,0,0,0.5); margin: 0 2px; }
-.highlight-card { font-weight: 900; font-family: 'Russo One', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Base do destaque */
+.highlight-card { 
+    font-weight: 900; /* Fonte bem grossa */
+    font-family: 'Russo One', sans-serif; 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
 .hc-red { color: #ff4757; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-blue { color: #00cec9; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-green { color: #2ed573; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
@@ -263,7 +309,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 .trans-text { font-family: 'Russo One', sans-serif; color: var(--txt-secondary); font-size: 14px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.7; }
 @keyframes transPulse { from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.2)); } to { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6)); } }
 
-/* --- CORREÇÃO DA ANIMAÇÃO INICIAL (BOUNCE) --- */
+/* --- ANIMAÇÃO DE ENTRADA INICIAL (BOUNCE) --- */
 @keyframes introBounce {
     0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 
     60% { transform: translateY(-40px) scale(1.1); opacity: 1; }
@@ -273,14 +319,14 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 .intro-anim {
     /* Força a animação a rodar e manter o estado final */
-    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
-    pointer-events: none;
+    animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    pointer-events: none; 
 }
 
 
 /* =========================================
-   NOVA TELA DE SELEÇÃO DE DECK (CSS ISOLADO)
-   Adicionado apenas aqui no final para não afetar o lobby
+   NOVA TELA: SELEÇÃO DE DECK (CSS ISOLADO)
+   Fundo mais claro, imagens flutuantes.
 ========================================= */
 
 #deck-selection-screen {
@@ -291,11 +337,11 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     width: 100vw; 
     height: 100vh;
     
-    /* Fundo Escuro para tapar o Lobby */
-    background: rgba(0, 0, 0, 0.95); 
-    backdrop-filter: blur(10px);
+    /* Fundo Desfocado e Levemente Escuro (Ajustado: 0.6 e 15px) */
+    background: rgba(0, 0, 0, 0.6); 
+    backdrop-filter: blur(15px);
     
-    z-index: 15000; /* Acima do lobby (10000) mas abaixo de overlays (50000+) */
+    z-index: 15000; /* Acima do lobby (10000) */
     
     /* Layout */
     display: none; /* Controlado pelo JS */
@@ -320,14 +366,14 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     color: #fff; 
     font-size: 40px; 
     text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); 
-    margin-bottom: 40px; 
+    margin-bottom: 50px; 
     letter-spacing: 3px;
     text-align: center;
 }
 
 .deck-options-container {
     display: flex; 
-    gap: 40px; 
+    gap: 60px; /* Mais espaço entre as cartas flutuantes */
     flex-wrap: wrap; 
     justify-content: center;
     max-width: 1200px;
@@ -339,49 +385,34 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     flex-direction: column; 
     align-items: center; 
     cursor: pointer; 
-    transition: transform 0.3s;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
 }
 
-/* A imagem do deck */
+/* A imagem do deck - Estilo "Solto" */
 .deck-option img {
-    /* IMPORTANTE: Tamanho fixo para não estourar */
     width: 280px; 
     height: auto; 
     
-    border-radius: 15px; 
-    border: 4px solid var(--wood-dark);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    /* Sem borda grossa, apenas arredondada */
+    border-radius: 20px; 
+    
+    /* Sombra suave para dar profundidade */
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
     
     /* Preto e Branco por padrão */
-    filter: grayscale(100%) brightness(0.6);
+    filter: grayscale(100%) brightness(0.7);
     transition: all 0.4s ease;
 }
 
-.deck-label {
-    margin-top: 15px; 
-    font-family: 'Russo One', sans-serif; 
-    color: #555; 
-    font-size: 20px; 
-    text-transform: uppercase; 
-    transition: color 0.3s, text-shadow 0.3s;
-    letter-spacing: 1px;
-}
-
-/* --- HOVER EFFECTS --- */
+/* --- HOVER EFFECTS (Juiciness) --- */
 .deck-option:hover {
-    transform: scale(1.05);
+    transform: translateY(-10px) scale(1.05); /* Flutua pra cima */
 }
 
 .deck-option:hover img {
-    filter: grayscale(0%) brightness(1.1); /* Fica colorido */
-    border-color: var(--gold);
-    box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
-}
-
-.deck-option:hover .deck-label { 
-    color: var(--gold); 
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    filter: grayscale(0%) brightness(1.1); /* Fica colorido e brilhante */
+    box-shadow: 0 25px 50px rgba(255, 215, 0, 0.4); /* Glow Dourado */
 }
 
 /* --- CLICADO (Selecionado) --- */
@@ -397,7 +428,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 /* Botão Voltar */
 .return-btn {
-    margin-top: 40px;
+    margin-top: 50px;
     padding: 12px 35px;
     background: transparent;
     border: 2px solid rgba(255,255,255,0.3);
