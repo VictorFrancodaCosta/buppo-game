@@ -31,7 +31,7 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png'
     ],
     audio: [
-        // --- NOVA MÚSICA DO SAGUÃO ---
+        // --- MÚSICA DO SAGUÃO ALTERADA AQUI ---
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
         
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
@@ -222,24 +222,33 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA (VERSÃO ESTÁVEL)
+// LÓGICA DE PARTIDA
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
+    // --- 1. Oculta visualmente o container da mão ---
+    const handEl = document.getElementById('player-hand');
+    if (handEl) {
+        handEl.innerHTML = '';
+        handEl.classList.add('preparing'); // Bloqueia via CSS
+    }
+    
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
     playerHistory = [];
     
+    // Distribui as cartas
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    updateUI(); 
+    // Cria o HTML (que nascerá invisível)
+    updateUI();
     
-    // Inicia a animação de entrada (Bounce)
+    // Inicia a animação imediatamente
     dealAllInitialCards();
 }
 
@@ -450,7 +459,7 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 // -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE - SIMPLIFICADA)
+// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - VERSÃO FINAL
 // -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
@@ -459,17 +468,28 @@ function dealAllInitialCards() {
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // Aplica a animação (com backwards para evitar flash)
+    // Configura a animação em cada carta
     cards.forEach((cardEl, i) => {
+        // inline opacity:0 garante invisibilidade até a animação começar
+        cardEl.style.opacity = '0';
+        
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
     });
 
-    // Limpa após terminar
+    // Força o navegador a recalcular o layout (Reflow)
+    void handEl.offsetWidth; 
+
+    // Remove a trava do container. 
+    // Como as cartas têm .intro-anim, a animação vai controlar a opacidade (0->1).
+    if(handEl) handEl.classList.remove('preparing');
+
+    // Limpeza final após animação
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
             c.style.animationDelay = '';
+            c.style.opacity = '1'; 
         });
         isProcessing = false;
     }, 2000); 
@@ -554,7 +574,6 @@ function playCardFlow(index, pDisarmChoice) {
         realCardEl.style.boxShadow = 'none';
     }
     
-    // ANIMAÇÃO DE VOO (VOLTOU AO SIMPLES - SEM FLIP QUEBRA-LAYOUT)
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
         renderTable(cardKey, 'p-slot'); 
         updateUI(); 
@@ -655,11 +674,8 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
     let e = { top: 0, left: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
 
     const fly = document.createElement('div');
-    // VOLTAMOS AO SIMPLES: Sem flying-inner, sem face-front/back.
-    // Apenas a carta voadora com a imagem de fundo.
     fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
     fly.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[cardKey].img}')"></div>`;
-    
     if (isToTable) fly.classList.add('card-bounce');
 
     if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; } 
