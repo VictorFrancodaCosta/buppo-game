@@ -310,7 +310,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     align-items: center;
     
     /* ALTERADO: De 8vh para 2vh para subir tudo para o topo */
-    padding-top: 2vh; 
+    padding-top: 1vh; 
     box-sizing: border-box;
     
     opacity: 0;
@@ -326,7 +326,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     /* ALTERADO: De 40px para 5px para aproximar das cartas */
     margin-bottom: 5px; 
     
-    padding: 0 20px;
+    padding: 0 5px;
     
     /* Opcional: Se a imagem da placa tiver muito espaço vazio em cima, 
        podemos usar margem negativa para subir mais ainda */
