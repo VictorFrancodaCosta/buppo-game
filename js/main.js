@@ -823,7 +823,7 @@ function updateUnit(u) {
         if(window.currentDeck === 'mage') {
             deckImgEl.src = MAGE_ASSETS.DECK_IMG;
         } else {
-            deckImgEl.src = 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png';
+            deckImgEl.src = 'https://i.ibb.co/cSVw71Wy/DECK-CAVALEIRO.png';
         }
     }
 
