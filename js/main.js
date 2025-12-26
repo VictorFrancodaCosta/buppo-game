@@ -65,17 +65,17 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, 
         { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
         { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, 
-        { id: 'sfx-hit-mage', src: 'https://files.catbox.moe/y0x72c.mp3' }, // NOVO: Dano Mago
-        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
-        { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, // NOVO: Bloqueio Mago
-        { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' }, // ATUALIZADO
-        { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' }, // ATUALIZADO
-        { id: 'sfx-train', src: 'https://files.catbox.moe/f4hy7e.mp3' }, // NOVO
-        { id: 'sfx-disarm', src: 'https://files.catbox.moe/udd2sz.mp3' }, // NOVO
+        { id: 'sfx-hit-mage', src: 'https://files.catbox.moe/y0x72c.mp3' }, 
+        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' }, // SOM ORIGINAL DO CAVALEIRO
+        { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, // SOM NOVO DO MAGO
+        { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' }, 
+        { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' }, 
+        { id: 'sfx-train', src: 'https://files.catbox.moe/f4hy7e.mp3' }, 
+        { id: 'sfx-disarm', src: 'https://files.catbox.moe/udd2sz.mp3' }, 
         { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
-        { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' }, // Hover Cartas
-        { id: 'sfx-ui-hover', src: 'https://files.catbox.moe/gzjf9y.mp3' }, // NOVO: Hover UI
-        { id: 'sfx-deck-select', src: 'https://files.catbox.moe/993lma.mp3' }, // NOVO: Select Deck
+        { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' }, 
+        { id: 'sfx-ui-hover', src: 'https://files.catbox.moe/gzjf9y.mp3' }, 
+        { id: 'sfx-deck-select', src: 'https://files.catbox.moe/993lma.mp3' }, 
         { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, 
         { id: 'sfx-lose', src: 'https://files.catbox.moe/n7nyck.mp3' },
         { id: 'sfx-tie', src: 'https://files.catbox.moe/sb18ja.mp3' }
@@ -586,7 +586,7 @@ function triggerDamageEffect(isPlayer, playAudio = true) {
     try { 
         if(playAudio) {
             // Se quem está atacando (a fonte do dano) for Mago, usa som de fogo
-            // Se isPlayer é true, quem apanha é o player, logo quem bate é o Monstro (assumimos deck padrao pro monstro por enquanto ou espelho)
+            // Se isPlayer é true, quem apanha é o player, logo quem bate é o Monstro
             // Se isPlayer é false, quem apanha é o Monstro, logo quem bate é o Player (verifica deck do player)
             
             if(!isPlayer && window.currentDeck === 'mage') {
@@ -624,9 +624,12 @@ function triggerHealEffect(isPlayer) {
     } catch(e) {} 
 }
 
-function triggerBlockEffect() { 
+// ATUALIZADO: Agora aceita o argumento 'isPlayer' para saber quem bloqueou
+function triggerBlockEffect(isPlayer) { 
     try { 
-        if(window.currentDeck === 'mage') {
+        // Se quem bloqueou foi o Jogador E o deck é Mago = Som Mago
+        // Se quem bloqueou foi o Monstro OU o Jogador (mas deck não é Mago) = Som Padrão
+        if(isPlayer && window.currentDeck === 'mage') {
              playSound('sfx-block-mage');
         } else {
              playSound('sfx-block'); 
@@ -780,7 +783,10 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let clash = false;
     let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); 
     let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
-    if(pBlocks || mBlocks) { clash = true; triggerBlockEffect(); }
+    
+    // ATUALIZADO: Chama o trigger passando QUEM bloqueou (true para player, false para monstro)
+    if(pBlocks) { clash = true; triggerBlockEffect(true); }
+    else if(mBlocks) { clash = true; triggerBlockEffect(false); }
 
     let nextPlayerDisabled = null; let nextMonsterDisabled = null;
     if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
