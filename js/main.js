@@ -23,7 +23,8 @@ let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
 
-// --- BANCO DE IMAGENS DO MAGO (NOVO) ---
+// --- LISTA MESTRA DE TODOS OS RECURSOS VISUAIS ---
+// (Adicionei aqui as imagens de interface, logos e seleção que estavam faltando)
 const MAGE_ASSETS = {
     'ATAQUE': 'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png',
     'BLOQUEIO': 'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
@@ -36,29 +37,58 @@ const MAGE_ASSETS = {
 
 const ASSETS_TO_LOAD = {
     images: [
-        'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png', 'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png', 
-        'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png', 'https://i.ibb.co/jdZmTHC/CARDBACK.png', 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
-        'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png', 'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png', 'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png',
-        'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png', 'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
-        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',
-        // NOVAS IMAGENS DO MAGO
-        MAGE_ASSETS.ATAQUE, MAGE_ASSETS.BLOQUEIO, MAGE_ASSETS.DESCANSAR, MAGE_ASSETS.DESARMAR, MAGE_ASSETS.TREINAR, MAGE_ASSETS.DECK_IMG, MAGE_ASSETS.DECK_SELECT,
-        'https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png'
+        // --- UI GERAL E BACKGROUNDS ---
+        'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png',       // Logo Principal
+        'https://i.ibb.co/KzVqKR6D/MESA-DE-JOGO.png',             // Fundo Jogo
+        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png',              // Fundo Saguão
+        'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',         // Quadro Saguão
+        'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png', // Fallback/Extras
+
+        // --- TELA DE SELEÇÃO DE DECK (CRUCIAL PARA NÃO PISCAR) ---
+        'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',              // Placa de Madeira do Título
+        'https://i.ibb.co/fzr36qbR/SELE-O-DE-DECK-CAVALEIRO.png', // Opção Cavaleiro
+        'https://i.ibb.co/bjBcKN6c/SELE-O-DE-DECK-MAGO.png',      // Opção Mago (alternativa)
+
+        // --- CARTAS E EFEITOS (CAVALEIRO / PADRÃO) ---
+        'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',           // Verso da Carta / Deck Cavaleiro
+        'https://i.ibb.co/jdZmTHC/CARDBACK.png',                  // Cardback genérico
+        'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png',
+        'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png',
+        'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png',
+        'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png',
+        'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
+        'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png',
+        'https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png',
+
+        // --- ASSETS DO MAGO ---
+        MAGE_ASSETS.ATAQUE, 
+        MAGE_ASSETS.BLOQUEIO, 
+        MAGE_ASSETS.DESCANSAR, 
+        MAGE_ASSETS.DESARMAR, 
+        MAGE_ASSETS.TREINAR, 
+        MAGE_ASSETS.DECK_IMG, 
+        MAGE_ASSETS.DECK_SELECT
     ],
     audio: [
-        // --- MÚSICA DO SAGUÃO (WAV) ---
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
-        { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
-        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
-        { id: 'sfx-heal', src: 'https://files.catbox.moe/uegibx.mp3' }, { id: 'sfx-levelup', src: 'https://files.catbox.moe/sm8cce.mp3' },
-        { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' },
-        { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, { id: 'sfx-lose', src: 'https://files.catbox.moe/n7nyck.mp3' },
+        { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, 
+        { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
+        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, 
+        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
+        { id: 'sfx-heal', src: 'https://files.catbox.moe/uegibx.mp3' }, 
+        { id: 'sfx-levelup', src: 'https://files.catbox.moe/sm8cce.mp3' },
+        { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
+        { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' },
+        { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, 
+        { id: 'sfx-lose', src: 'https://files.catbox.moe/n7nyck.mp3' },
         { id: 'sfx-tie', src: 'https://files.catbox.moe/sb18ja.mp3' }
     ]
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
+
+// ... O RESTO DO CÓDIGO CONTINUA IGUAL ...
 
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
