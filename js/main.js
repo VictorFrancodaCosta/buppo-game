@@ -176,9 +176,12 @@ window.playNavSound = function() {
     if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
 };
 
+// === CORREÇÃO FUNDAMENTAL ===
+// Removemos a verificação de '!isProcessing'.
+// Sons de UI devem tocar SEMPRE, mesmo se o jogo estiver processando algo.
 window.playUIHoverSound = function() {
     let s = audios['sfx-ui-hover'];
-    if(s && !isProcessing) { 
+    if(s) { 
         // Volume 30% em relação ao volume mestre
         s.volume = 0.3 * (window.masterVol || 1.0);
         s.currentTime = 0; 
@@ -290,6 +293,12 @@ window.goToLobby = async function(isAutoLogin = false) {
         MusicController.play('bgm-menu'); 
         return;
     }
+
+    // === CORREÇÃO IMPORTANTE ===
+    // Resetamos a flag de processamento ao voltar ao Lobby
+    // Isso garante que se o jogador saiu no meio de uma animação, o jogo destrava
+    isProcessing = false;
+
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
     MusicController.play('bgm-menu'); 
