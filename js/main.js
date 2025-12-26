@@ -851,28 +851,98 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
+// ARQUIVO: js/main.js
+
+// ... (Mantenha o código anterior até chegar na função checkLevelUp)
+
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
-        let xpContainer = document.getElementById(u.id + '-xp'); let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
+        let xpContainer = document.getElementById(u.id + '-xp'); 
+        let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
+        
+        // Animação das cartas de XP voando
         minis.forEach(realCard => {
-            let rect = realCard.getBoundingClientRect(); let clone = document.createElement('div'); clone.className = 'xp-anim-clone';
-            clone.style.left = rect.left + 'px'; clone.style.top = rect.top + 'px'; clone.style.width = rect.width + 'px'; clone.style.height = rect.height + 'px'; clone.style.backgroundImage = realCard.style.backgroundImage;
-            if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down');
+            let rect = realCard.getBoundingClientRect(); 
+            let clone = document.createElement('div'); 
+            clone.className = 'xp-anim-clone';
+            clone.style.left = rect.left + 'px'; 
+            clone.style.top = rect.top + 'px'; 
+            clone.style.width = rect.width + 'px'; 
+            clone.style.height = rect.height + 'px'; 
+            clone.style.backgroundImage = realCard.style.backgroundImage;
+            
+            if (u.id === 'p') clone.classList.add('xp-fly-up'); 
+            else clone.classList.add('xp-fly-down');
+            
             document.body.appendChild(clone);
         });
+        
         minis.forEach(m => m.style.opacity = '0');
+
         setTimeout(() => {
-            let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = []; for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
+            let counts = {}; 
+            u.xp.forEach(x => counts[x] = (counts[x]||0)+1); 
+            let triggers = []; 
+            for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
+            
             processMasteries(u, triggers, () => {
-                let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; lvlEl.classList.add('level-up-anim'); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
-                u.xp.forEach(x => u.deck.push(x)); u.xp = []; shuffle(u.deck); 
-                let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
-                updateUI(); doneCb();
+                let lvlEl = document.getElementById(u.id+'-lvl'); 
+                u.lvl++; 
+                
+                // --- AQUI ESTÁ A NOVA CHAMADA DA ANIMAÇÃO ---
+                triggerLevelUpVisuals(u.id); 
+                // --------------------------------------------
+
+                lvlEl.classList.add('level-up-anim'); 
+                playSound('sfx-levelup'); 
+                
+                setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
+                
+                u.xp.forEach(x => u.deck.push(x)); 
+                u.xp = []; 
+                shuffle(u.deck); 
+                
+                let clones = document.getElementsByClassName('xp-anim-clone'); 
+                while(clones.length > 0) clones[0].remove();
+                
+                updateUI(); 
+                doneCb();
             });
         }, 1000); 
     } else { doneCb(); }
 }
 
+// === NOVA FUNÇÃO: CRIA O TEXTO DE LEVEL UP FLUTUANTE ===
+function triggerLevelUpVisuals(unitId) {
+    // Identifica onde injetar o texto (no cluster do jogador ou do monstro)
+    // No index.html, os clusters são as divs pais de 'p-lvl' e 'm-lvl'
+    let lvlCircle = document.getElementById(unitId + '-lvl');
+    if(!lvlCircle) return;
+    
+    let cluster = lvlCircle.parentElement; // Pega a div .player-cluster ou .opponent-cluster
+    
+    // Cria o elemento de texto
+    const text = document.createElement('div');
+    text.innerText = "LEVEL UP!";
+    text.classList.add('levelup-text');
+
+    // Define a direção da animação
+    if (unitId === 'p') {
+        text.classList.add('lvl-anim-up'); // Jogador: Sobe
+    } else {
+        text.classList.add('lvl-anim-down'); // Oponente: Desce
+    }
+
+    // Adiciona ao HTML
+    cluster.appendChild(text);
+
+    // Remove após 2 segundos (tempo da animação CSS)
+    setTimeout(() => {
+        text.remove();
+    }, 2000);
+}
+
+// ... (Restante do código main.js permanece igual)
 function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
     if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); } 
