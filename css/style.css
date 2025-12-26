@@ -325,8 +325,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 
 /* =========================================
-   NOVA TELA: SELEÇÃO DE DECK (ESTILO IMERSIVO)
-   Sem janelas, apenas atmosfera e artes flutuantes.
+   SELEÇÃO DE DECK - VERSÃO "CLEAN" E ALTA
 ========================================= */
 
 #deck-selection-screen {
@@ -336,16 +335,22 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     width: 100vw; 
     height: 100vh;
     
-    /* Atmosfera: Escurece muito o saguão e aplica blur pesado */
-    background: rgba(5, 5, 5, 0.90); 
-    backdrop-filter: blur(20px);
+    /* CORREÇÃO 1: Fundo mais claro (0.65) para ver o saguão atrás */
+    background: rgba(0, 0, 0, 0.65); 
+    backdrop-filter: blur(12px); /* Blur um pouco mais leve também */
     
     z-index: 15000;
     
+    /* CORREÇÃO 2: Alinhamento para cima */
+    /* Removemos o 'center' vertical e usamos flex-start com padding */
     display: none; 
     flex-direction: column;
-    justify-content: center; 
+    justify-content: flex-start; /* Começa do topo */
     align-items: center;
+    
+    padding-top: 8vh; /* Empurra um pouco para baixo (8% da altura da tela) */
+    box-sizing: border-box;
+    
     opacity: 0;
     transition: opacity 0.5s ease;
 }
@@ -357,10 +362,10 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 .deck-select-title {
     font-family: 'Russo One', sans-serif; 
-    color: transparent; /* Texto vazado */
-    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+    color: transparent; 
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4); /* Traço um pouco mais forte */
     font-size: 50px; 
-    margin-bottom: 60px; 
+    margin-bottom: 40px; /* Menos margem para aproximar as cartas */
     letter-spacing: 10px;
     text-align: center;
     text-transform: uppercase;
@@ -369,68 +374,61 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 .deck-options-container {
     display: flex; 
-    gap: 100px; /* Bastante espaço entre as artes */
+    gap: 120px; 
     align-items: center;
     justify-content: center;
-    perspective: 1000px; /* Para efeitos 3D sutis se necessário */
+    perspective: 1000px; 
 }
 
 .deck-option {
     position: relative;
     cursor: pointer; 
     transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    /* Removemos qualquer borda ou background container */
     background: transparent;
-    padding: 0;
     border: none;
     outline: none;
+    padding: 0; /* Garante tamanho zero extra */
 }
 
 /* A IMAGEM (ARTE) */
 .deck-option img {
-    width: 320px; /* Tamanho generoso */
+    width: 320px; 
     height: auto; 
     display: block;
     
-    /* Estado Inicial: Apagado e "Frio" */
-    filter: grayscale(100%) brightness(0.4) contrast(1.2);
+    /* Estado Inicial */
+    /* Usamos drop-shadow leve em vez de box-shadow para não marcar o quadrado */
+    filter: grayscale(100%) brightness(0.6) drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+    
     transform: scale(0.95);
+    transition: all 0.4s ease-out;
     
-    /* Recorte suave na borda da imagem, opcional */
-    border-radius: 15px;
-    
-    /* Transição suave para física de movimento */
-    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    
-    /* Sombra discreta apenas para separar do fundo preto */
-    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    /* Removemos border-radius do CSS para não cortar a arte */
+    border-radius: 0; 
+    box-shadow: none !important; /* Força remoção de sombra de caixa */
 }
 
-/* --- HOVER (O MOMENTO DE ESCOLHA) --- */
+/* --- HOVER (CORREÇÃO DO BOX) --- */
 
-/* O container sobe um pouco */
 .deck-option:hover {
-    z-index: 10; /* Garante que fique por cima de tudo */
+    z-index: 10;
 }
 
-/* A imagem ganha vida */
 .deck-option:hover img {
-    filter: grayscale(0%) brightness(1.1) contrast(1.1); /* Cor total */
-    transform: scale(1.15) translateY(-20px); /* Cresce e flutua */
+    transform: scale(1.1) translateY(-10px); /* Zoom e sobe um pouquinho */
     
-    /* Glow Dourado Intenso atrás da arte */
-    box-shadow: 
-        0 20px 50px rgba(0,0,0,0.8), /* Sombra de profundidade */
-        0 0 40px rgba(255, 215, 0, 0.25); /* Brilho Dourado */
+    /* A MÁGICA: Usamos drop-shadow colorido. 
+       Isso cria o brilho em volta da imagem, não do quadrado da div. */
+    filter: grayscale(0%) brightness(1.1) drop-shadow(0 0 30px rgba(255, 215, 0, 0.5));
 }
 
-/* --- NOME DO DECK (APARECE SÓ NO HOVER) --- */
+/* TÍTULO DO DECK (No Hover) */
 .deck-option::after {
-    content: attr(data-name); /* Pega o nome do HTML */
+    content: attr(data-name);
     position: absolute;
-    bottom: -60px;
+    bottom: -50px; /* Ajustado */
     left: 50%;
-    transform: translateX(-50%) translateY(20px);
+    transform: translateX(-50%) translateY(10px);
     
     font-family: 'Russo One', sans-serif;
     font-size: 24px;
@@ -450,14 +448,13 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     transform: translateX(-50%) translateY(0);
 }
 
-/* BOTÃO VOLTAR (Minimalista) */
+/* BOTÃO VOLTAR */
 .return-btn {
-    position: absolute;
-    bottom: 50px;
-    padding: 15px 40px;
+    margin-top: 80px; /* Mais espaço para separar das cartas */
+    padding: 12px 35px;
     background: transparent;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.4);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.5);
     font-family: 'Montserrat', sans-serif;
     font-weight: 600;
     font-size: 12px;
@@ -470,6 +467,6 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 .return-btn:hover {
     color: #fff;
     border-color: #fff;
-    background: rgba(255,255,255,0.05);
-    box-shadow: 0 0 20px rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.1);
+    box-shadow: 0 0 15px rgba(255,255,255,0.2);
 }
