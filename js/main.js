@@ -2,7 +2,6 @@
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-// VOLTANDO PARA POPUP (Melhor para Desktop/Browser)
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -24,7 +23,8 @@ let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
 
-// --- COFRE DE ASSETS (Mantido para garantir carregamento real) ---
+// --- COFRE DE ASSETS ---
+// (Evita que o navegador jogue fora o cache)
 window.gameAssets = []; 
 
 const MAGE_ASSETS = {
@@ -301,12 +301,15 @@ function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
+    
+    // ATIVA TRAVA DE SEGURANÇA
     window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.style.opacity = '';
+        handEl.classList.add('preparing'); // Oculta tudo via CSS
     }
+    
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
@@ -360,7 +363,6 @@ window.googleLogin = async function() {
     const btnText = document.getElementById('btn-text');
     btnText.innerText = "CONECTANDO...";
     try {
-        // --- RESTAURADO PARA POPUP ---
         await signInWithPopup(auth, provider);
     } catch (error) {
         console.error(error);
@@ -560,12 +562,19 @@ function dealAllInitialCards() {
     const cards = Array.from(handEl.children);
     
     cards.forEach((cardEl, i) => {
+        // --- ORDEM CRÍTICA: ---
+        // 1. Adiciona a animação (ela agora tem 'both' e segura a invisibilidade)
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
+        
+        // 2. Remove o style inline (mas o 'intro-anim' segura o opacity:0)
         cardEl.style.opacity = '';
     });
 
     window.isMatchStarting = false;
+    
+    // --- REMOVE A TRAVA DE SEGURANÇA GERAL ---
+    if(handEl) handEl.classList.remove('preparing');
 
     setTimeout(() => {
         cards.forEach(c => {
