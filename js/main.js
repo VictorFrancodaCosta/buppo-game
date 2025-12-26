@@ -106,12 +106,12 @@ const MusicController = {
     currentTrackId: null,
     fadeTimer: null,
     play(trackId) {
-        // CORREÇÃO: Verifica se a música já deveria estar tocando, mas está pausada (bug do autoplay)
-        // Se for o caso, força o play novamente sem reiniciar o fade
+        // --- CORREÇÃO DE ÁUDIO ---
+        // Se a música já é a atual, mas está pausada (bloqueio do navegador), forçamos o play
         if (this.currentTrackId === trackId) {
             if (audios[trackId] && audios[trackId].paused && !window.isMuted) {
                 const audio = audios[trackId];
-                audio.volume = 0; // Reinicia volume para fade in suave
+                audio.volume = 0; // Reinicia para fade
                 audio.play().catch(e => console.warn("Autoplay prevent", e));
                 this.fadeIn(audio, 0.5 * window.masterVol);
             }
@@ -187,9 +187,8 @@ window.playNavSound = function() {
     if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
 };
 
-// --- CONTROLE DE COOLDOWN PARA NÃO FICAR "MACHINE GUN" ---
+// --- SOM DE HOVER: CLONE NODE PARA NÃO CORTAR O FUNDO ---
 let lastHoverTime = 0;
-
 window.playUIHoverSound = function() {
     let now = Date.now();
     if (now - lastHoverTime < 50) return;
@@ -311,8 +310,7 @@ window.goToLobby = async function(isAutoLogin = false) {
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
     
-    // Toca música do menu (se já não estiver tocando ou estiver bloqueada, o novo MusicController resolve)
-    MusicController.play('bgm-menu'); 
+    MusicController.play('bgm-menu'); // Tenta tocar
     
     createLobbyFlares();
     const userRef = doc(db, "players", currentUser.uid);
@@ -522,9 +520,7 @@ function updateLoader() {
             
         }, 800); 
         
-        // --- CORREÇÃO DO SOM DE FUNDO ---
-        // Verifica se a música 'bgm-menu' está pausada (bloqueada pelo navegador) 
-        // e tenta tocar novamente no primeiro clique do usuário.
+        // --- DESBLOQUEIO DE ÁUDIO NO PRIMEIRO CLIQUE ---
         document.body.addEventListener('click', () => { 
             if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) {
                 MusicController.play('bgm-menu');
@@ -607,6 +603,7 @@ document.addEventListener('click', function(e) { const panel = document.getEleme
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
+    // Atualiza volume de todos os efeitos
     ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 
      'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 
      'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
@@ -692,13 +689,18 @@ function dealAllInitialCards() {
     const cards = Array.from(handEl.children);
     
     cards.forEach((cardEl, i) => {
+        // --- ORDEM CRÍTICA: ---
+        // 1. Adiciona a animação (ela agora tem 'both' e segura a invisibilidade)
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
+        
+        // 2. Remove o style inline (mas o 'intro-anim' segura o opacity:0)
         cardEl.style.opacity = '';
     });
 
     window.isMatchStarting = false;
     
+    // --- REMOVE A TRAVA DE SEGURANÇA GERAL ---
     if(handEl) handEl.classList.remove('preparing');
 
     setTimeout(() => {
