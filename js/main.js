@@ -675,22 +675,39 @@ function showCenterText(txt, col) { let el = document.createElement('div'); el.c
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
+// ARQUIVO: js/main.js (Substitua apenas esta função)
+
 function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
     
     const handEl = document.getElementById('player-hand'); 
+    
+    // --- CORREÇÃO DE VISIBILIDADE ---
+    // Removemos a classe 'preparing' IMEDIATAMENTE para o container aparecer
+    if(handEl) {
+        handEl.classList.remove('preparing');
+        handEl.style.opacity = '1'; 
+    }
+
     const cards = Array.from(handEl.children);
     
     cards.forEach((cardEl, i) => {
+        // 1. Adiciona a classe de animação (agora definida no CSS)
         cardEl.classList.add('intro-anim');
+        
+        // 2. Define o atraso em cascata (efeito leque)
         cardEl.style.animationDelay = (i * 0.1) + 's';
-        cardEl.style.opacity = '';
+        
+        // 3. REMOVE opacidade inline antiga e FORÇA visibilidade
+        // Isso garante que a carta apareça mesmo se a animação falhar
+        cardEl.style.removeProperty('opacity');
+        cardEl.style.opacity = '1'; 
     });
 
     window.isMatchStarting = false;
-    if(handEl) handEl.classList.remove('preparing');
 
+    // Limpeza após a animação terminar
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
