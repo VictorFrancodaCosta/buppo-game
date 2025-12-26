@@ -75,7 +75,7 @@ body {
 }
 #btn-login:hover { transform: scale(1.05); box-shadow: 0 0 30px #9b59b6; background: #9b59b6; }
 
-/* TELA SAGUÃO - ESSENCIAIS, NÃO MEXER */
+/* TELA SAGUÃO */
 #lobby-screen { justify-content: center !important; align-items: flex-start !important; padding-left: 5%; z-index: 10000; position: relative; }
 .lobby-logo-right {
     position: fixed; left: 62%; top: 50%; transform: translate(-50%, -50%);
@@ -235,14 +235,7 @@ body {
 .cartoon-purple { color: #a29bfe; }
 .tt-text { font-size: 11px; color: #d7ccc8; line-height: 1.3; }
 .dynamic-val { display: inline-block; background: #000; color: var(--gold); border: 2px solid var(--gold); border-radius: 4px; padding: 0px 6px; font-family: 'Russo One', sans-serif; font-size: 14px; vertical-align: middle; box-shadow: 0 2px 5px rgba(0,0,0,0.5); margin: 0 2px; }
-
-/* Base do destaque */
-.highlight-card { 
-    font-weight: 900; /* Fonte bem grossa */
-    font-family: 'Russo One', sans-serif; 
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
+.highlight-card { font-weight: 900; font-family: 'Russo One', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
 .hc-red { color: #ff4757; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-blue { color: #00cec9; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-green { color: #2ed573; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
@@ -280,72 +273,146 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 .intro-anim {
     /* Força a animação a rodar e manter o estado final */
-    /* Backwards é importante para começar invisível */
     animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
     pointer-events: none;
 }
 
+
 /* =========================================
-   NOVA TELA: SELEÇÃO DE DECK
-   Adicionado no final para não quebrar o resto
+   NOVA TELA DE SELEÇÃO DE DECK (CSS ISOLADO)
+   Adicionado apenas aqui no final para não afetar o lobby
 ========================================= */
+
 #deck-selection-screen {
-    justify-content: center; align-items: center; z-index: 15000;
-    /* Usa flex para centralizar tudo */
-    display: none; /* Oculto por padrão, classe .active ativa */
+    /* Posicionamento Fixo e Sobreposto */
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh;
+    
+    /* Fundo Escuro para tapar o Lobby */
+    background: rgba(0, 0, 0, 0.95); 
+    backdrop-filter: blur(10px);
+    
+    z-index: 15000; /* Acima do lobby (10000) mas abaixo de overlays (50000+) */
+    
+    /* Layout */
+    display: none; /* Controlado pelo JS */
+    flex-direction: column;
+    justify-content: center; 
+    align-items: center;
 }
-.deck-title {
-    font-family: 'Russo One', sans-serif; color: #fff; font-size: 40px; 
-    text-shadow: 0 5px 15px rgba(0,0,0,0.8); margin-bottom: 40px; letter-spacing: 2px;
+
+/* Quando ativo, vira flex */
+#deck-selection-screen.active {
+    display: flex !important;
+    animation: fadeInDeck 0.5s ease-out;
+}
+
+@keyframes fadeInDeck {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.deck-select-title {
+    font-family: 'Russo One', sans-serif; 
+    color: #fff; 
+    font-size: 40px; 
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); 
+    margin-bottom: 40px; 
+    letter-spacing: 3px;
     text-align: center;
 }
-.deck-container {
-    display: flex; gap: 40px; flex-wrap: wrap; justify-content: center;
+
+.deck-options-container {
+    display: flex; 
+    gap: 40px; 
+    flex-wrap: wrap; 
+    justify-content: center;
+    max-width: 1200px;
+    padding: 20px;
 }
-.deck-card {
-    display: flex; flex-direction: column; align-items: center; cursor: pointer; 
+
+.deck-option {
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    cursor: pointer; 
     transition: transform 0.3s;
+    position: relative;
 }
-.deck-card img {
-    width: 280px; height: auto; border-radius: 15px; border: 4px solid var(--wood-dark);
+
+/* A imagem do deck */
+.deck-option img {
+    /* IMPORTANTE: Tamanho fixo para não estourar */
+    width: 280px; 
+    height: auto; 
+    
+    border-radius: 15px; 
+    border: 4px solid var(--wood-dark);
     box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    /* EFEITO PRETO E BRANCO INICIAL */
-    filter: grayscale(100%) brightness(0.7);
+    
+    /* Preto e Branco por padrão */
+    filter: grayscale(100%) brightness(0.6);
     transition: all 0.4s ease;
 }
-.deck-name {
-    margin-top: 15px; font-family: 'Russo One', sans-serif; color: #777; font-size: 18px; 
-    text-transform: uppercase; transition: color 0.3s;
+
+.deck-label {
+    margin-top: 15px; 
+    font-family: 'Russo One', sans-serif; 
+    color: #555; 
+    font-size: 20px; 
+    text-transform: uppercase; 
+    transition: color 0.3s, text-shadow 0.3s;
+    letter-spacing: 1px;
 }
 
-/* EFEITO AO PASSAR O MOUSE */
-.deck-card:hover img {
-    filter: grayscale(0%) brightness(1.1); /* Fica colorido */
+/* --- HOVER EFFECTS --- */
+.deck-option:hover {
     transform: scale(1.05);
+}
+
+.deck-option:hover img {
+    filter: grayscale(0%) brightness(1.1); /* Fica colorido */
     border-color: var(--gold);
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.3);
 }
-.deck-card:hover .deck-name { color: var(--gold); }
 
-/* ANIMAÇÃO AO CLICAR */
+.deck-option:hover .deck-label { 
+    color: var(--gold); 
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+/* --- CLICADO (Selecionado) --- */
 .deck-selected img {
-    animation: deckSelectAnim 0.6s forwards ease-in;
-}
-@keyframes deckSelectAnim {
-    0% { transform: scale(1.05); opacity: 1; }
-    50% { transform: scale(1.3); opacity: 1; }
-    100% { transform: scale(3); opacity: 0; }
+    animation: deckSelectZoom 0.5s forwards ease-in-out;
 }
 
+@keyframes deckSelectZoom {
+    0% { transform: scale(1.05); opacity: 1; }
+    40% { transform: scale(0.95); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* Botão Voltar */
 .return-btn {
     margin-top: 40px;
-    padding: 10px 30px;
-    background: rgba(0,0,0,0.6);
-    border: 2px solid #fff;
-    color: #fff;
+    padding: 12px 35px;
+    background: transparent;
+    border: 2px solid rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.6);
     font-family: 'Russo One', sans-serif;
     border-radius: 30px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.3s;
+    font-size: 14px;
+    text-transform: uppercase;
 }
-.return-btn:hover { background: #fff; color: #000; }
+
+.return-btn:hover { 
+    background: #fff; 
+    color: #000; 
+    border-color: #fff;
+    box-shadow: 0 0 20px rgba(255,255,255,0.4);
+}
