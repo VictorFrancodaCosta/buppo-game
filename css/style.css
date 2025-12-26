@@ -289,7 +289,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 }
 
 /* =========================================
-   SELEÇÃO DE DECK - VERSÃO FINAL (RPG FANTASY)
+   SELEÇÃO DE DECK - VERSÃO CORRIGIDA E COMPACTA
 ========================================= */
 
 #deck-selection-screen {
@@ -305,32 +305,19 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     z-index: 15000;
     
     display: none; 
+    /* ALTERAÇÃO: Usar coluna centralizada para aproximar tudo */
     flex-direction: column;
-    justify-content: flex-start; 
+    justify-content: center; /* Centraliza tudo verticalmente na tela */
     align-items: center;
     
-    /* ALTERADO: De 8vh para 2vh para subir tudo para o topo */
-    padding-top: 1vh; 
+    /* Gap controla a distância exata entre Titulo, Cartas e Botão */
+    gap: 30px; 
+    
+    padding: 20px;
     box-sizing: border-box;
     
     opacity: 0;
     transition: opacity 0.5s ease;
-}
-
-/* Contêiner da Imagem do Título */
-.titulo-selecao {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    
-    /* ALTERADO: De 40px para 5px para aproximar das cartas */
-    margin-bottom: 5px; 
-    
-    padding: 0 5px;
-    
-    /* Opcional: Se a imagem da placa tiver muito espaço vazio em cima, 
-       podemos usar margem negativa para subir mais ainda */
-    /* margin-top: -20px; */ 
 }
 
 #deck-selection-screen.active {
@@ -338,30 +325,39 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     opacity: 1;
 }
 
-/* Contêiner da Imagem do Título (Correção) */
+/* Animação Floating para o Título */
+@keyframes titleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Contêiner da Imagem do Título */
 .titulo-selecao {
     width: 100%;
     display: flex;
     justify-content: center;
-    margin-bottom: 40px; 
-    padding: 0 20px;
+    margin: 0; /* Remove margens extras, o 'gap' do pai resolve */
 }
 
-/* A Imagem da Placa (Correção Final) */
+/* A Imagem da Placa (Com animação) */
 .img-titulo-placa {
     width: 100%;
-    max-width: 600px; /* TRAVA O TAMANHO MAXIMO EM 600PX */
+    max-width: 600px;
     height: auto;
     display: block;
     filter: drop-shadow(0px 5px 10px rgba(0,0,0,0.5));
+    
+    /* EFEITO FLUTUANTE ADICIONADO */
+    animation: titleFloat 3s ease-in-out infinite;
 }
 
 .deck-options-container {
     display: flex; 
-    gap: 120px; 
+    gap: 80px; 
     align-items: center;
     justify-content: center;
     perspective: 1000px; 
+    margin: 0; /* Remove margens para ficar compacto */
 }
 
 .deck-option {
@@ -383,13 +379,9 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     width: 100%; 
     height: auto; 
     display: block;
-    
-    /* P&B e Drop Shadow "Solto" */
     filter: grayscale(100%) brightness(0.6) drop-shadow(0 10px 10px rgba(0,0,0,0.5));
-    
     transform: scale(0.95);
     transition: all 0.4s ease-out;
-    
     border-radius: 0; 
     box-shadow: none !important;
 }
@@ -407,24 +399,19 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 /* SLOGAN DO DECK */
 .deck-option::after {
     content: attr(data-name);
-    
     position: absolute;
     top: 100%;
     left: 50%;
     transform: translateX(-50%) translateY(20px);
-    
     font-family: 'Montserrat', sans-serif; 
     font-weight: 400;
     font-size: 14px; 
     color: #ecf0f1;
-    
     text-align: center;
     width: 160%; 
-    
     opacity: 0;
     transition: all 0.3s ease;
     pointer-events: none;
-    
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
@@ -435,7 +422,9 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 /* BOTÃO VOLTAR */
 .return-btn {
-    margin-top: 100px;
+    /* IMPORTANTE: Margem removida para não cortar a tela */
+    margin-top: 0; 
+    
     padding: 12px 35px;
     background: transparent;
     border: 1px solid rgba(255,255,255,0.2);
@@ -457,10 +446,9 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     box-shadow: 0 0 15px rgba(255,255,255,0.2);
 }
 
-/* Ajuste de escala para telas menores (opcional) */
+/* Ajuste para telas menores (Notebooks) */
 @media (max-height: 800px) {
-    .deck-option {
-        transform: scale(0.8); /* Diminui as cartas em 20% */
-        margin-top: -20px;     /* Compensa o espaço perdido */
-    }
+    .deck-option { width: 250px; }
+    .img-titulo-placa { max-width: 450px; }
+    #deck-selection-screen { gap: 15px; }
 }
