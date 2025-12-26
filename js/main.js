@@ -106,7 +106,18 @@ const MusicController = {
     currentTrackId: null,
     fadeTimer: null,
     play(trackId) {
-        if (this.currentTrackId === trackId) return; 
+        // CORREÇÃO: Verifica se a música já deveria estar tocando, mas está pausada (bug do autoplay)
+        // Se for o caso, força o play novamente sem reiniciar o fade
+        if (this.currentTrackId === trackId) {
+            if (audios[trackId] && audios[trackId].paused && !window.isMuted) {
+                const audio = audios[trackId];
+                audio.volume = 0; // Reinicia volume para fade in suave
+                audio.play().catch(e => console.warn("Autoplay prevent", e));
+                this.fadeIn(audio, 0.5 * window.masterVol);
+            }
+            return; 
+        }
+
         const maxVol = 0.5 * window.masterVol;
         if (this.currentTrackId && audios[this.currentTrackId]) {
             const oldAudio = audios[this.currentTrackId];
@@ -176,16 +187,19 @@ window.playNavSound = function() {
     if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
 };
 
-// === SOLUÇÃO DEFINITIVA PARA MIXAGEM DE SOM ===
-// Usamos cloneNode() para criar uma instância nova do som a cada hover.
-// Isso impede que o som do botão 'roube' o canal da música de fundo.
+// --- CONTROLE DE COOLDOWN PARA NÃO FICAR "MACHINE GUN" ---
+let lastHoverTime = 0;
+
 window.playUIHoverSound = function() {
+    let now = Date.now();
+    if (now - lastHoverTime < 50) return;
+
     let base = audios['sfx-ui-hover'];
     if(base && !window.isMuted) { 
-        // CLONAGEM: O segredo para tocar sons simultâneos sem cortar a BGM
         let s = base.cloneNode();
         s.volume = 0.3 * (window.masterVol || 1.0);
         s.play().catch(()=>{}); 
+        lastHoverTime = now;
     }
 };
 
@@ -293,13 +307,13 @@ window.goToLobby = async function(isAutoLogin = false) {
         MusicController.play('bgm-menu'); 
         return;
     }
-
-    // Resetamos a flag de processamento para garantir que sons funcionem
     isProcessing = false;
-
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
+    
+    // Toca música do menu (se já não estiver tocando ou estiver bloqueada, o novo MusicController resolve)
     MusicController.play('bgm-menu'); 
+    
     createLobbyFlares();
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
@@ -334,15 +348,12 @@ function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
-    
-    // ATIVA TRAVA DE SEGURANÇA
     window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.classList.add('preparing'); // Oculta tudo via CSS
+        handEl.classList.add('preparing'); 
     }
-    
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
@@ -504,13 +515,18 @@ function updateLoader() {
                 setTimeout(() => loading.style.display = 'none', 500);
             }
             
-            // INICIA O SISTEMA DE SOM DE HOVER GLOBAL
-            initGlobalHoverLogic();
+            if (!window.hoverLogicInitialized) {
+                initGlobalHoverLogic();
+                window.hoverLogicInitialized = true;
+            }
             
         }, 800); 
         
+        // --- CORREÇÃO DO SOM DE FUNDO ---
+        // Verifica se a música 'bgm-menu' está pausada (bloqueada pelo navegador) 
+        // e tenta tocar novamente no primeiro clique do usuário.
         document.body.addEventListener('click', () => { 
-            if (!MusicController.currentTrackId) {
+            if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) {
                 MusicController.play('bgm-menu');
             }
         }, { once: true });
@@ -523,18 +539,14 @@ function updateLoader() {
 function initGlobalHoverLogic() {
     let lastTarget = null;
     
-    // Usa delegação de eventos no document.body
     document.body.addEventListener('mouseover', (e) => {
-        // Verifica se o alvo (ou seu pai) é um elemento interativo
         const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn';
         const target = e.target.closest(selector);
 
-        // Se encontrou um alvo novo que não é o mesmo de antes
         if (target && target !== lastTarget) {
             lastTarget = target;
             window.playUIHoverSound();
         } 
-        // Se o mouse saiu para um lugar vazio, reseta o alvo
         else if (!target) {
             lastTarget = null;
         }
@@ -595,12 +607,10 @@ document.addEventListener('click', function(e) { const panel = document.getEleme
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
-    // Atualiza volume de todos os efeitos
     ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 
      'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 
      'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) {
-            // Se for o hover de UI, mantém o volume mais baixo
             if(k === 'sfx-ui-hover') {
                 audios[k].volume = 0.3 * (window.masterVol || 1.0);
             } else {
@@ -682,18 +692,13 @@ function dealAllInitialCards() {
     const cards = Array.from(handEl.children);
     
     cards.forEach((cardEl, i) => {
-        // --- ORDEM CRÍTICA: ---
-        // 1. Adiciona a animação (ela agora tem 'both' e segura a invisibilidade)
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
-        
-        // 2. Remove o style inline (mas o 'intro-anim' segura o opacity:0)
         cardEl.style.opacity = '';
     });
 
     window.isMatchStarting = false;
     
-    // --- REMOVE A TRAVA DE SEGURANÇA GERAL ---
     if(handEl) handEl.classList.remove('preparing');
 
     setTimeout(() => {
@@ -798,7 +803,6 @@ function playCardFlow(index, pDisarmChoice) {
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
     
-    // SONS ESPECÍFICOS DE AÇÃO
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
 
@@ -864,13 +868,33 @@ function checkLevelUp(u, doneCb) {
         setTimeout(() => {
             let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = []; for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
             processMasteries(u, triggers, () => {
-                let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; lvlEl.classList.add('level-up-anim'); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
+                let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; 
+                triggerLevelUpVisuals(u.id); 
+                lvlEl.classList.add('level-up-anim'); 
+                playSound('sfx-levelup'); 
+                setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
                 u.xp.forEach(x => u.deck.push(x)); u.xp = []; shuffle(u.deck); 
                 let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
                 updateUI(); doneCb();
             });
         }, 1000); 
     } else { doneCb(); }
+}
+
+function triggerLevelUpVisuals(unitId) {
+    let lvlCircle = document.getElementById(unitId + '-lvl');
+    if(!lvlCircle) return;
+    let cluster = lvlCircle.parentElement; 
+    const text = document.createElement('div');
+    text.innerText = "LEVEL UP!";
+    text.classList.add('levelup-text');
+    if (unitId === 'p') {
+        text.classList.add('lvl-anim-up'); 
+    } else {
+        text.classList.add('lvl-anim-down'); 
+    }
+    cluster.appendChild(text);
+    setTimeout(() => { text.remove(); }, 2000);
 }
 
 function processMasteries(u, triggers, cb) {
@@ -1029,68 +1053,6 @@ function addMI(parent, key, value, col, ownerId){
     d.onmouseenter = handlers.onmouseenter;
     d.onmouseleave = () => { tt.style.display = 'none'; }; 
     parent.appendChild(d); 
-}
-
-function showFloatingText(eid, txt, col) { 
-    let el = document.createElement('div'); 
-    el.className='floating-text'; 
-    el.innerText=txt; 
-    el.style.color=col; 
-    let parent = document.getElementById(eid);
-    if(parent) {
-        let rect = parent.getBoundingClientRect();
-        el.style.left = (rect.left + rect.width/2) + 'px';
-        el.style.top = (rect.top) + 'px';
-        document.body.appendChild(el); 
-    } else {
-         document.body.appendChild(el);
-    }
-    setTimeout(()=>el.remove(), 2000); 
-}
-
-window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
-window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
-const tt=document.getElementById('tooltip-box');
-
-function bindFixedTooltip(el,k) { 
-    const updatePos = () => { 
-        let rect = el.getBoundingClientRect(); 
-        tt.style.left = (rect.left + rect.width / 2) + 'px'; 
-    }; 
-    return { 
-        onmouseenter: (e) => { 
-            showTT(k); 
-            tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
-            tt.style.top = 'auto'; 
-            
-            tt.classList.remove('tooltip-anim-up'); 
-            tt.classList.remove('tooltip-anim-down'); 
-            tt.classList.add('tooltip-anim-up'); 
-            updatePos(); 
-            el.addEventListener('mousemove', updatePos); 
-        } 
-    }; 
-}
-
-function showTT(k) {
-    let db = CARDS_DB[k];
-    document.getElementById('tt-title').innerHTML = k; 
-    if (db.customTooltip) {
-        let content = db.customTooltip;
-        let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
-        content = content.replace('{PLAYER_LVL}', currentLvl);
-        let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
-        let reflectDmg = 1 + bonusBlock;
-        content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
-        document.getElementById('tt-content').innerHTML = content;
-    } else {
-        document.getElementById('tt-content').innerHTML = `
-            <span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span>
-            <span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>
-            <span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>
-        `;
-    }
-    tt.style.display = 'block';
 }
 
 function apply3DTilt(element, isHand = false) { 
