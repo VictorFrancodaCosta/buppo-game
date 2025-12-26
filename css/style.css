@@ -466,3 +466,55 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     #deck-selection-screen { gap: 15px; }
 }
  
+/* --- ARQUIVO: css/style.css (Adicione ao final) --- */
+
+/* Import da fonte Bangers para o Level Up ficar igual ao seu exemplo */
+@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
+
+/* O container do cluster precisa ser relativo para o texto nascer nele */
+.player-cluster, .opponent-cluster {
+    position: relative !important; 
+}
+
+.levelup-text {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    font-family: 'Bangers', cursive; /* Fonte estilo HQ */
+    font-size: 3.5rem;
+    color: #FFD700; /* Amarelo Ouro */
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 999;
+    
+    /* Borda Cartoon Grossa e Sombra */
+    -webkit-text-stroke: 1.5px black;
+    text-shadow: 4px 4px 0px #000;
+}
+
+/* Animação para o JOGADOR (Indo para CIMA) */
+.lvl-anim-up {
+    bottom: 80%; /* Nasce acima do avatar */
+    animation: floatLevelUp 2s ease-out forwards;
+}
+
+/* Animação para o MONSTRO (Indo para BAIXO) */
+.lvl-anim-down {
+    top: 80%; /* Nasce abaixo do avatar inimigo */
+    animation: floatLevelDown 2s ease-out forwards;
+}
+
+@keyframes floatLevelUp {
+    0% { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.5); }
+    15% { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.2); } /* Pulo elástico */
+    30% { transform: translateX(-50%) translateY(-20px) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-100px) scale(1); } /* Sobe e some */
+}
+
+@keyframes floatLevelDown {
+    0% { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.5); }
+    15% { opacity: 1; transform: translateX(-50%) translateY(10px) scale(1.2); } /* Pulo elástico invertido */
+    30% { transform: translateX(-50%) translateY(20px) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(100px) scale(1); } /* Desce e some */
+}
