@@ -289,7 +289,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 }
 
 /* =========================================
-   SELEÇÃO DE DECK - VERSÃO CORRIGIDA E COMPACTA
+   SELEÇÃO DE DECK - VERSÃO CORRIGIDA (ZOOM FIX)
 ========================================= */
 
 #deck-selection-screen {
@@ -305,15 +305,17 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     z-index: 15000;
     
     display: none; 
-    /* ALTERAÇÃO: Usar coluna centralizada para aproximar tudo */
+    /* Coluna Centralizada */
     flex-direction: column;
-    justify-content: center; /* Centraliza tudo verticalmente na tela */
+    justify-content: center; 
     align-items: center;
     
-    /* Gap controla a distância exata entre Titulo, Cartas e Botão */
-    gap: 30px; 
+    gap: 20px; 
     
     padding: 20px;
+    /* TRUQUE: Adiciona espaço invisível embaixo para empurrar o centro visual para CIMA */
+    padding-bottom: 10vh; 
+    
     box-sizing: border-box;
     
     opacity: 0;
@@ -336,7 +338,10 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     width: 100%;
     display: flex;
     justify-content: center;
-    margin: 0; /* Remove margens extras, o 'gap' do pai resolve */
+    
+    /* ALTERAÇÃO: Puxa o título bem para cima, "fugindo" do centro */
+    margin-top: -80px; 
+    margin-bottom: 10px;
 }
 
 /* A Imagem da Placa (Com animação) */
@@ -357,7 +362,9 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     align-items: center;
     justify-content: center;
     perspective: 1000px; 
-    margin: 0; /* Remove margens para ficar compacto */
+    
+    /* ALTERAÇÃO CRUCIAL: Empurra o botão para baixo, criando o espaço pro zoom */
+    margin-bottom: 80px; 
 }
 
 .deck-option {
@@ -422,7 +429,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 /* BOTÃO VOLTAR */
 .return-btn {
-    /* IMPORTANTE: Margem removida para não cortar a tela */
+    /* IMPORTANTE: Margem zerada, posição controlada pelo margin-bottom do container acima */
     margin-top: 0; 
     
     padding: 12px 35px;
