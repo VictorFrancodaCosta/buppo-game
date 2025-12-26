@@ -797,6 +797,7 @@ function playCardFlow(index, pDisarmChoice) {
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
     
+    // SONS ESPECÍFICOS DE AÇÃO
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
 
