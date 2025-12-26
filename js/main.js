@@ -2,8 +2,8 @@
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-// ADICIONADO: signInWithRedirect
-import { getAuth, signInWithRedirect, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// VOLTANDO PARA POPUP (Melhor para Desktop/Browser)
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -24,7 +24,7 @@ let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
 
-// --- COFRE DE ASSETS (IMPEDE O NAVEGADOR DE JOGAR FORA O CACHE) ---
+// --- COFRE DE ASSETS (Mantido para garantir carregamento real) ---
 window.gameAssets = []; 
 
 const MAGE_ASSETS = {
@@ -355,16 +355,13 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// ============================================
-// LOGIN MODIFICADO PARA REDIRECIONAMENTO (MOBILE)
-// ============================================
 window.googleLogin = async function() {
     window.playNavSound(); 
     const btnText = document.getElementById('btn-text');
-    btnText.innerText = "REDIRECIONANDO...";
+    btnText.innerText = "CONECTANDO...";
     try {
-        // MUDANÇA CRUCIAL: De Popup para Redirect
-        await signInWithRedirect(auth, provider);
+        // --- RESTAURADO PARA POPUP ---
+        await signInWithPopup(auth, provider);
     } catch (error) {
         console.error(error);
         btnText.innerText = "ERRO - TENTE NOVAMENTE";
