@@ -66,15 +66,16 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
         
         // --- SONS DE COMBATE ---
-        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' },      // Hit Físico
-        { id: 'sfx-hit-mage', src: 'https://files.catbox.moe/y0x72c.mp3' }, // Hit Mágico (Novo)
+        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' },      
+        { id: 'sfx-hit-mage', src: 'https://files.catbox.moe/y0x72c.mp3' }, 
         
-        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },      // Block Físico
-        { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, // Block Mágico (Novo)
+        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },      
+        { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, 
 
-        // --- SONS GLOBAIS ATUALIZADOS ---
-        { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' },       // Heal Universal (Novo)
-        { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' },    // Level Up Universal (Novo)
+        // --- SONS GLOBAIS ---
+        { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' },       
+        { id: 'sfx-train', src: 'https://files.catbox.moe/sk5zrj.mp3' }, // NOVO: Som de Treinar
+        { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' },    
         
         { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
         { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' },
@@ -546,7 +547,7 @@ document.addEventListener('click', function(e) { const panel = document.getEleme
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
-    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
+    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-train', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) audios[k].volume = 0.8 * (window.masterVol || 1.0); 
     }); 
 }
@@ -729,7 +730,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         if (pBlocks && window.currentDeck === 'mage') {
             blockSound = 'sfx-block-mage';
         }
-        // Se o Monstro bloqueou, por enquanto usa o som padrão (ou podemos criar lógica pra ele depois)
         
         triggerBlockEffect(blockSound); 
     }
@@ -765,6 +765,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
+    // --- NOVA LÓGICA: SOM DE TREINAR ---
     function handleExtraXP(u) { 
         if(u.deck.length > 0) { 
             let card = u.deck.pop(); 
@@ -773,7 +774,17 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
             }, false, false, (u.id === 'p')); 
         } 
     }
-    if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
+    
+    if(!pDead && pAct === 'TREINAR') { 
+        handleExtraXP(player); 
+        playSound('sfx-train'); // Toca som
+    } 
+    if(!mDead && mAct === 'TREINAR') { 
+        handleExtraXP(monster); 
+        // Se ambos treinam, toca o som também (o if evita tocar 2x muito rápido se quiser, mas aqui é ok tocar)
+        if(pAct !== 'TREINAR') playSound('sfx-train'); 
+    }
+
     if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
 
     setTimeout(() => {
