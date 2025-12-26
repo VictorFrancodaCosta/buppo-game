@@ -181,11 +181,12 @@ let lastHoverTime = 0;
 
 window.playUIHoverSound = function() {
     let now = Date.now();
-    // Se tocou há menos de 50ms, ignora (evita trepidações extremas)
+    // Se tocou há menos de 50ms, ignora
     if (now - lastHoverTime < 50) return;
 
     let base = audios['sfx-ui-hover'];
     if(base && !window.isMuted) { 
+        // CLONAGEM: Permite som simultâneo sem cortar a música
         let s = base.cloneNode();
         s.volume = 0.3 * (window.masterVol || 1.0);
         s.play().catch(()=>{}); 
@@ -336,11 +337,14 @@ function startGameFlow() {
     isProcessing = false; 
     startCinematicLoop(); 
     window.isMatchStarting = true;
+    
+    // --- LIMPEZA DO CONTAINER DA MÃO ---
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.classList.add('preparing'); 
+        // Não usamos mais classes de ocultação aqui, as cartas nascem opacas e animam
     }
+    
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
@@ -502,8 +506,7 @@ function updateLoader() {
                 setTimeout(() => loading.style.display = 'none', 500);
             }
             
-            // --- CORREÇÃO CRÍTICA DO SOM DUPLICADO ---
-            // Verifica se já inicializamos o hover para não adicionar 100 listeners
+            // --- INICIALIZA SOM DE HOVER APENAS UMA VEZ ---
             if (!window.hoverLogicInitialized) {
                 initGlobalHoverLogic();
                 window.hoverLogicInitialized = true;
@@ -596,12 +599,10 @@ document.addEventListener('click', function(e) { const panel = document.getEleme
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
-    // Atualiza volume de todos os efeitos
     ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 
      'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 
      'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) {
-            // Se for o hover de UI, mantém o volume mais baixo
             if(k === 'sfx-ui-hover') {
                 audios[k].volume = 0.3 * (window.masterVol || 1.0);
             } else {
@@ -675,39 +676,21 @@ function showCenterText(txt, col) { let el = document.createElement('div'); el.c
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
-// ARQUIVO: js/main.js (Substitua apenas esta função)
-
 function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
     
     const handEl = document.getElementById('player-hand'); 
-    
-    // --- CORREÇÃO DE VISIBILIDADE ---
-    // Removemos a classe 'preparing' IMEDIATAMENTE para o container aparecer
-    if(handEl) {
-        handEl.classList.remove('preparing');
-        handEl.style.opacity = '1'; 
-    }
-
     const cards = Array.from(handEl.children);
     
     cards.forEach((cardEl, i) => {
-        // 1. Adiciona a classe de animação (agora definida no CSS)
         cardEl.classList.add('intro-anim');
-        
-        // 2. Define o atraso em cascata (efeito leque)
         cardEl.style.animationDelay = (i * 0.1) + 's';
-        
-        // 3. REMOVE opacidade inline antiga e FORÇA visibilidade
-        // Isso garante que a carta apareça mesmo se a animação falhar
-        cardEl.style.removeProperty('opacity');
-        cardEl.style.opacity = '1'; 
+        cardEl.style.opacity = ''; // Deixa o CSS controlar
     });
 
     window.isMatchStarting = false;
 
-    // Limpeza após a animação terminar
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
