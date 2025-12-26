@@ -176,16 +176,20 @@ window.playNavSound = function() {
     if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
 };
 
-// === SOLUÇÃO DEFINITIVA PARA MIXAGEM DE SOM ===
-// Usamos cloneNode() para criar uma instância nova do som a cada hover.
-// Isso impede que o som do botão 'roube' o canal da música de fundo.
+// --- CONTROLE DE COOLDOWN PARA NÃO FICAR "MACHINE GUN" ---
+let lastHoverTime = 0;
+
 window.playUIHoverSound = function() {
+    let now = Date.now();
+    // Se tocou há menos de 50ms, ignora (evita trepidações extremas)
+    if (now - lastHoverTime < 50) return;
+
     let base = audios['sfx-ui-hover'];
     if(base && !window.isMuted) { 
-        // CLONAGEM: O segredo para tocar sons simultâneos sem cortar a BGM
         let s = base.cloneNode();
         s.volume = 0.3 * (window.masterVol || 1.0);
         s.play().catch(()=>{}); 
+        lastHoverTime = now;
     }
 };
 
@@ -293,10 +297,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         MusicController.play('bgm-menu'); 
         return;
     }
-
-    // Resetamos a flag de processamento para garantir que sons funcionem
     isProcessing = false;
-
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
     MusicController.play('bgm-menu'); 
@@ -334,15 +335,12 @@ function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
-    
-    // ATIVA TRAVA DE SEGURANÇA
     window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.classList.add('preparing'); // Oculta tudo via CSS
+        handEl.classList.add('preparing'); 
     }
-    
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
@@ -504,8 +502,12 @@ function updateLoader() {
                 setTimeout(() => loading.style.display = 'none', 500);
             }
             
-            // INICIA O SISTEMA DE SOM DE HOVER GLOBAL
-            initGlobalHoverLogic();
+            // --- CORREÇÃO CRÍTICA DO SOM DUPLICADO ---
+            // Verifica se já inicializamos o hover para não adicionar 100 listeners
+            if (!window.hoverLogicInitialized) {
+                initGlobalHoverLogic();
+                window.hoverLogicInitialized = true;
+            }
             
         }, 800); 
         
@@ -523,7 +525,6 @@ function updateLoader() {
 function initGlobalHoverLogic() {
     let lastTarget = null;
     
-    // Usa delegação de eventos no document.body
     document.body.addEventListener('mouseover', (e) => {
         // Verifica se o alvo (ou seu pai) é um elemento interativo
         const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn';
@@ -682,18 +683,12 @@ function dealAllInitialCards() {
     const cards = Array.from(handEl.children);
     
     cards.forEach((cardEl, i) => {
-        // --- ORDEM CRÍTICA: ---
-        // 1. Adiciona a animação (ela agora tem 'both' e segura a invisibilidade)
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
-        
-        // 2. Remove o style inline (mas o 'intro-anim' segura o opacity:0)
         cardEl.style.opacity = '';
     });
 
     window.isMatchStarting = false;
-    
-    // --- REMOVE A TRAVA DE SEGURANÇA GERAL ---
     if(handEl) handEl.classList.remove('preparing');
 
     setTimeout(() => {
@@ -798,7 +793,6 @@ function playCardFlow(index, pDisarmChoice) {
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
     
-    // SONS ESPECÍFICOS DE AÇÃO
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
 
@@ -851,98 +845,48 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
-// ARQUIVO: js/main.js
-
-// ... (Mantenha o código anterior até chegar na função checkLevelUp)
-
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
-        let xpContainer = document.getElementById(u.id + '-xp'); 
-        let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
-        
-        // Animação das cartas de XP voando
+        let xpContainer = document.getElementById(u.id + '-xp'); let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
         minis.forEach(realCard => {
-            let rect = realCard.getBoundingClientRect(); 
-            let clone = document.createElement('div'); 
-            clone.className = 'xp-anim-clone';
-            clone.style.left = rect.left + 'px'; 
-            clone.style.top = rect.top + 'px'; 
-            clone.style.width = rect.width + 'px'; 
-            clone.style.height = rect.height + 'px'; 
-            clone.style.backgroundImage = realCard.style.backgroundImage;
-            
-            if (u.id === 'p') clone.classList.add('xp-fly-up'); 
-            else clone.classList.add('xp-fly-down');
-            
+            let rect = realCard.getBoundingClientRect(); let clone = document.createElement('div'); clone.className = 'xp-anim-clone';
+            clone.style.left = rect.left + 'px'; clone.style.top = rect.top + 'px'; clone.style.width = rect.width + 'px'; clone.style.height = rect.height + 'px'; clone.style.backgroundImage = realCard.style.backgroundImage;
+            if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down');
             document.body.appendChild(clone);
         });
-        
         minis.forEach(m => m.style.opacity = '0');
-
         setTimeout(() => {
-            let counts = {}; 
-            u.xp.forEach(x => counts[x] = (counts[x]||0)+1); 
-            let triggers = []; 
-            for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
-            
+            let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = []; for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
             processMasteries(u, triggers, () => {
-                let lvlEl = document.getElementById(u.id+'-lvl'); 
-                u.lvl++; 
-                
-                // --- AQUI ESTÁ A NOVA CHAMADA DA ANIMAÇÃO ---
+                let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; 
                 triggerLevelUpVisuals(u.id); 
-                // --------------------------------------------
-
                 lvlEl.classList.add('level-up-anim'); 
                 playSound('sfx-levelup'); 
-                
                 setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
-                
-                u.xp.forEach(x => u.deck.push(x)); 
-                u.xp = []; 
-                shuffle(u.deck); 
-                
-                let clones = document.getElementsByClassName('xp-anim-clone'); 
-                while(clones.length > 0) clones[0].remove();
-                
-                updateUI(); 
-                doneCb();
+                u.xp.forEach(x => u.deck.push(x)); u.xp = []; shuffle(u.deck); 
+                let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
+                updateUI(); doneCb();
             });
         }, 1000); 
     } else { doneCb(); }
 }
 
-// === NOVA FUNÇÃO: CRIA O TEXTO DE LEVEL UP FLUTUANTE ===
 function triggerLevelUpVisuals(unitId) {
-    // Identifica onde injetar o texto (no cluster do jogador ou do monstro)
-    // No index.html, os clusters são as divs pais de 'p-lvl' e 'm-lvl'
     let lvlCircle = document.getElementById(unitId + '-lvl');
     if(!lvlCircle) return;
-    
-    let cluster = lvlCircle.parentElement; // Pega a div .player-cluster ou .opponent-cluster
-    
-    // Cria o elemento de texto
+    let cluster = lvlCircle.parentElement; 
     const text = document.createElement('div');
     text.innerText = "LEVEL UP!";
     text.classList.add('levelup-text');
-
-    // Define a direção da animação
     if (unitId === 'p') {
-        text.classList.add('lvl-anim-up'); // Jogador: Sobe
+        text.classList.add('lvl-anim-up'); 
     } else {
-        text.classList.add('lvl-anim-down'); // Oponente: Desce
+        text.classList.add('lvl-anim-down'); 
     }
-
-    // Adiciona ao HTML
     cluster.appendChild(text);
-
-    // Remove após 2 segundos (tempo da animação CSS)
-    setTimeout(() => {
-        text.remove();
-    }, 2000);
+    setTimeout(() => { text.remove(); }, 2000);
 }
 
-// ... (Restante do código main.js permanece igual)
 function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
     if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); } 
@@ -1099,68 +1043,6 @@ function addMI(parent, key, value, col, ownerId){
     d.onmouseenter = handlers.onmouseenter;
     d.onmouseleave = () => { tt.style.display = 'none'; }; 
     parent.appendChild(d); 
-}
-
-function showFloatingText(eid, txt, col) { 
-    let el = document.createElement('div'); 
-    el.className='floating-text'; 
-    el.innerText=txt; 
-    el.style.color=col; 
-    let parent = document.getElementById(eid);
-    if(parent) {
-        let rect = parent.getBoundingClientRect();
-        el.style.left = (rect.left + rect.width/2) + 'px';
-        el.style.top = (rect.top) + 'px';
-        document.body.appendChild(el); 
-    } else {
-         document.body.appendChild(el);
-    }
-    setTimeout(()=>el.remove(), 2000); 
-}
-
-window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
-window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
-const tt=document.getElementById('tooltip-box');
-
-function bindFixedTooltip(el,k) { 
-    const updatePos = () => { 
-        let rect = el.getBoundingClientRect(); 
-        tt.style.left = (rect.left + rect.width / 2) + 'px'; 
-    }; 
-    return { 
-        onmouseenter: (e) => { 
-            showTT(k); 
-            tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
-            tt.style.top = 'auto'; 
-            
-            tt.classList.remove('tooltip-anim-up'); 
-            tt.classList.remove('tooltip-anim-down'); 
-            tt.classList.add('tooltip-anim-up'); 
-            updatePos(); 
-            el.addEventListener('mousemove', updatePos); 
-        } 
-    }; 
-}
-
-function showTT(k) {
-    let db = CARDS_DB[k];
-    document.getElementById('tt-title').innerHTML = k; 
-    if (db.customTooltip) {
-        let content = db.customTooltip;
-        let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
-        content = content.replace('{PLAYER_LVL}', currentLvl);
-        let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
-        let reflectDmg = 1 + bonusBlock;
-        content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
-        document.getElementById('tt-content').innerHTML = content;
-    } else {
-        document.getElementById('tt-content').innerHTML = `
-            <span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span>
-            <span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>
-            <span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>
-        `;
-    }
-    tt.style.display = 'block';
 }
 
 function apply3DTilt(element, isHand = false) { 
