@@ -46,6 +46,7 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png'
     ],
     audio: [
+        // --- MÚSICA DO SAGUÃO (WAV) ---
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
@@ -94,7 +95,10 @@ const MusicController = {
         }
         if (trackId && audios[trackId]) {
             const newAudio = audios[trackId];
-            newAudio.currentTime = 0; // Toca do inicio
+            
+            // --- CORREÇÃO DA MÚSICA: COMEÇA SEMPRE DO ZERO ---
+            newAudio.currentTime = 0;
+            
             if (!window.isMuted) {
                 newAudio.volume = 0; 
                 newAudio.play().catch(e => console.warn("Autoplay prevent", e));
@@ -181,20 +185,28 @@ window.selectDeck = function(deckType) {
     window.playNavSound();
     window.currentDeck = deckType; // Armazena a escolha ('knight' ou 'mage')
     
+    // Animação no item clicado
     const options = document.querySelectorAll('.deck-option');
-    // Adiciona classe para animação no clicado
-    // (Simplificado: adiciona em todos pois só tem o clicado visivel na prática ou todos somem)
-    // Mas vamos tentar achar o certo. Como não passei 'this', vamos adicionar em todos para o efeito de fade out.
     options.forEach(opt => {
-        opt.classList.add('deck-selected');
+        // Remove seleção de todos primeiro (segurança)
+        opt.classList.remove('deck-selected');
     });
+    
+    // Adiciona ao clicado (truque: como o click foi dentro da div, usamos event.currentTarget se tivessmos passado evento, 
+    // mas aqui vamos simplificar assumindo que a animação de "sair" da tela é global).
+    // Para simplificar e evitar bugs: Fade out na tela inteira.
+    
+    const selectionScreen = document.getElementById('deck-selection-screen');
+    selectionScreen.style.transition = "opacity 0.5s";
+    selectionScreen.style.opacity = "0";
 
     setTimeout(() => {
         window.transitionToGame();
+        // Reseta para a próxima vez
         setTimeout(() => {
-             options.forEach(opt => opt.classList.remove('deck-selected'));
+             selectionScreen.style.opacity = "1";
         }, 1000);
-    }, 600);
+    }, 500);
 };
 
 window.transitionToGame = function() {
@@ -269,19 +281,22 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA
+// LÓGICA DE PARTIDA (COM CORREÇÃO DO BOUNCE)
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
+    // --- 1. ATIVAR MODO DE INÍCIO DE PARTIDA ---
+    // Isso é vital para as cartas nascerem invisíveis no updateUI
     window.isMatchStarting = true;
     
+    // Limpa a mão antes de qualquer coisa
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.style.opacity = ''; 
+        handEl.style.opacity = ''; // Remove qualquer opacidade manual
     }
     
     resetUnit(player); 
@@ -292,8 +307,11 @@ function startGameFlow() {
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
+    // O updateUI vai desenhar as cartas.
+    // Como isMatchStarting = true, elas terão opacity: 0 (invisíveis)
     updateUI(); 
     
+    // Inicia a animação que vai revelar as cartas (Bounce)
     dealAllInitialCards();
 }
 
@@ -503,6 +521,9 @@ function showCenterText(txt, col) { let el = document.createElement('div'); el.c
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
+// -----------------------------------------------------------------
+// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - REATIVADA
+// -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
@@ -510,15 +531,21 @@ function dealAllInitialCards() {
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
+    // Configura a animação em cada carta
     cards.forEach((cardEl, i) => {
+        // Adiciona a classe que faz o bounce e mantém invisível até começar
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
         
+        // Remove a opacidade 0 que forçamos no updateUI, 
+        // deixando o CSS da animação (intro-anim) controlar a visibilidade
         cardEl.style.opacity = '';
     });
 
+    // Desliga a flag de início de jogo para as próximas atualizações
     window.isMatchStarting = false;
 
+    // Limpeza final após animação terminar
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
@@ -592,6 +619,7 @@ function playCardFlow(index, pDisarmChoice) {
         else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } 
     }
 
+    // --- CORREÇÃO DO FANTASMA / DUPLICAÇÃO ---
     let handContainer = document.getElementById('player-hand'); 
     let realCardEl = handContainer.children[index]; 
     let startRect = null;
@@ -606,7 +634,7 @@ function playCardFlow(index, pDisarmChoice) {
         realCardEl.style.boxShadow = 'none';
     }
     
-    // --- USA IMAGEM CORRETA NA ANIMAÇÃO ---
+    // ANIMAÇÃO DE VOO (AGORA COM FLIP)
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
         renderTable(cardKey, 'p-slot', true); // TRUE indica que é carta do jogador
         updateUI(); 
