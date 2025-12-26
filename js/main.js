@@ -23,8 +23,9 @@ let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
 
-// --- LISTA MESTRA DE TODOS OS RECURSOS VISUAIS ---
-// (Adicionei aqui as imagens de interface, logos e seleção que estavam faltando)
+// --- COFRE DE ASSETS (IMPEDE O NAVEGADOR DE JOGAR FORA O CACHE) ---
+window.gameAssets = []; 
+
 const MAGE_ASSETS = {
     'ATAQUE': 'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png',
     'BLOQUEIO': 'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
@@ -37,30 +38,30 @@ const MAGE_ASSETS = {
 
 const ASSETS_TO_LOAD = {
     images: [
-        // --- UI GERAL E BACKGROUNDS ---
-        'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png',       // Logo Principal
-        'https://i.ibb.co/KzVqKR6D/MESA-DE-JOGO.png',             // Fundo Jogo
-        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png',              // Fundo Saguão
-        'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',         // Quadro Saguão
-        'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png', // Fallback/Extras
+        // UI e Backgrounds
+        'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png',
+        'https://i.ibb.co/KzVqKR6D/MESA-DE-JOGO.png',
+        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png',
+        'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',
+        'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png',
 
-        // --- TELA DE SELEÇÃO DE DECK (CRUCIAL PARA NÃO PISCAR) ---
-        'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',              // Placa de Madeira do Título
-        'https://i.ibb.co/fzr36qbR/SELE-O-DE-DECK-CAVALEIRO.png', // Opção Cavaleiro
-        'https://i.ibb.co/bjBcKN6c/SELE-O-DE-DECK-MAGO.png',      // Opção Mago (alternativa)
+        // Tela de Seleção
+        'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',
+        'https://i.ibb.co/fzr36qbR/SELE-O-DE-DECK-CAVALEIRO.png',
+        'https://i.ibb.co/bjBcKN6c/SELE-O-DE-DECK-MAGO.png',
+        'https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png',
 
-        // --- CARTAS E EFEITOS (CAVALEIRO / PADRÃO) ---
-        'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',           // Verso da Carta / Deck Cavaleiro
-        'https://i.ibb.co/jdZmTHC/CARDBACK.png',                  // Cardback genérico
+        // Deck Cavaleiro
+        'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
+        'https://i.ibb.co/jdZmTHC/CARDBACK.png',
         'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png',
         'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png',
         'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png',
         'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png',
         'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
         'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png',
-        'https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png',
 
-        // --- ASSETS DO MAGO ---
+        // Deck Mago
         MAGE_ASSETS.ATAQUE, 
         MAGE_ASSETS.BLOQUEIO, 
         MAGE_ASSETS.DESCANSAR, 
@@ -73,22 +74,15 @@ const ASSETS_TO_LOAD = {
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
-        { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, 
-        { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
-        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, 
-        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
-        { id: 'sfx-heal', src: 'https://files.catbox.moe/uegibx.mp3' }, 
-        { id: 'sfx-levelup', src: 'https://files.catbox.moe/sm8cce.mp3' },
-        { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
-        { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' },
-        { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, 
-        { id: 'sfx-lose', src: 'https://files.catbox.moe/n7nyck.mp3' },
+        { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
+        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
+        { id: 'sfx-heal', src: 'https://files.catbox.moe/uegibx.mp3' }, { id: 'sfx-levelup', src: 'https://files.catbox.moe/sm8cce.mp3' },
+        { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' },
+        { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, { id: 'sfx-lose', src: 'https://files.catbox.moe/n7nyck.mp3' },
         { id: 'sfx-tie', src: 'https://files.catbox.moe/sb18ja.mp3' }
     ]
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
-
-// ... O RESTO DO CÓDIGO CONTINUA IGUAL ...
 
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
@@ -99,7 +93,7 @@ let mixerInterval = null;
 
 // --- ESTADOS GLOBAIS ---
 window.isMatchStarting = false;
-window.currentDeck = 'knight'; // 'knight' ou 'mage'
+window.currentDeck = 'knight';
 
 // --- HELPER: RETORNA ARTE CORRETA BASEADA NO DECK DO JOGADOR ---
 function getCardArt(cardKey, isPlayer) {
@@ -124,10 +118,7 @@ const MusicController = {
         }
         if (trackId && audios[trackId]) {
             const newAudio = audios[trackId];
-            
-            // --- CORREÇÃO DA MÚSICA: COMEÇA SEMPRE DO ZERO ---
             newAudio.currentTime = 0;
-            
             if (!window.isMuted) {
                 newAudio.volume = 0; 
                 newAudio.play().catch(e => console.warn("Autoplay prevent", e));
@@ -205,37 +196,29 @@ window.showScreen = function(screenId) {
     }
 }
 
-// --- SELEÇÃO DE DECK ---
+// =======================
+// LÓGICA DE SELEÇÃO DE DECK (APRIMORADA)
+// =======================
 window.openDeckSelector = function() {
     window.showScreen('deck-selection-screen');
 };
 
-// =======================
-// LÓGICA DE SELEÇÃO DE DECK (APRIMORADA)
-// =======================
-
 window.selectDeck = function(deckType) {
     window.playNavSound();
-    window.currentDeck = deckType; // Armazena a escolha ('knight' ou 'mage')
+    window.currentDeck = deckType; 
     
-    // 1. Captura as opções visuais
     const options = document.querySelectorAll('.deck-option');
-    
-    // 2. Aplica efeito visual de escolha
     options.forEach(opt => {
-        // Verifica se é a opção clicada baseada no atributo onclick
         if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
-            // A ESCOLHIDA: Cresce, brilha e remove filtro cinza (se houver)
+            // Efeito na escolhida
             opt.style.transition = "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
             opt.style.transform = "scale(1.15) translateY(-20px)";
             opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))";
             opt.style.zIndex = "100";
-            
-            // Força a imagem dentro dela a ficar colorida (caso esteja P&B por padrão)
             const img = opt.querySelector('img');
             if(img) img.style.filter = "grayscale(0%) brightness(1.2)";
         } else {
-            // A REJEITADA: Diminui, fica escura e transparente
+            // Efeito na não escolhida
             opt.style.transition = "all 0.3s ease";
             opt.style.transform = "scale(0.8) translateY(10px)";
             opt.style.opacity = "0.2";
@@ -243,29 +226,25 @@ window.selectDeck = function(deckType) {
         }
     });
 
-    // 3. Aguarda o efeito visual antes de trocar de tela
     setTimeout(() => {
-        // Fade out da tela inteira
         const selectionScreen = document.getElementById('deck-selection-screen');
         selectionScreen.style.transition = "opacity 0.5s";
         selectionScreen.style.opacity = "0";
 
         setTimeout(() => {
             window.transitionToGame();
-            
-            // 4. Limpeza (Reset) silenciosa para a próxima vez que abrir
             setTimeout(() => {
                 selectionScreen.style.opacity = "1";
-                // Reseta os estilos inline que aplicamos acima
                 options.forEach(opt => {
                     opt.style = "";
                     const img = opt.querySelector('img');
                     if(img) img.style = "";
                 });
             }, 500);
-        }, 500); // Tempo do fade out da tela
-    }, 400); // Tempo do "zoom" na carta escolhida
+        }, 500);
+    }, 400);
 };
+
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
@@ -337,38 +316,23 @@ window.goToLobby = async function(isAutoLogin = false) {
     document.getElementById('end-screen').classList.remove('visible'); 
 };
 
-// ============================================
-// LÓGICA DE PARTIDA (COM CORREÇÃO DO BOUNCE)
-// ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
-    
-    // ATIVA O MODO DE INÍCIO DE PARTIDA
-    // Isso é vital para as cartas nascerem invisíveis no updateUI
     window.isMatchStarting = true;
-    
-    // Limpa a mão antes de qualquer coisa
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.style.opacity = ''; // Remove qualquer opacidade manual
+        handEl.style.opacity = '';
     }
-    
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
     playerHistory = [];
-    
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
-    
-    // O updateUI vai desenhar as cartas.
-    // Como isMatchStarting = true, elas terão opacity: 0 (invisíveis)
     updateUI(); 
-    
-    // Inicia a animação que vai revelar as cartas (Bounce)
     dealAllInitialCards();
 }
 
@@ -396,13 +360,7 @@ function checkEndGame(){
 }
 
 onAuthStateChanged(auth, (user) => {
-    setTimeout(() => {
-        const loading = document.getElementById('loading-screen');
-        if(loading) {
-            loading.style.opacity = '0';
-            setTimeout(() => loading.style.display = 'none', 500);
-        }
-    }, 500);
+    // A tela de loading agora é controlada pelo updateLoader, não aqui.
     if (user) {
         currentUser = user;
         window.goToLobby(true); 
@@ -480,23 +438,64 @@ window.abandonMatch = function() {
      }
 }
 
+// --- FUNÇÃO PRELOAD REESCRITA ---
 function preloadGame() {
-    ASSETS_TO_LOAD.images.forEach(src => { let img = new Image(); img.src = src; img.onload = () => updateLoader(); img.onerror = () => updateLoader(); });
-    ASSETS_TO_LOAD.audio.forEach(a => { let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; audios[a.id] = s; s.onloadedmetadata = () => updateLoader(); s.onerror = () => updateLoader(); setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); });
+    console.log("Iniciando Preload de " + totalAssets + " recursos...");
+    
+    // Carrega Imagens
+    ASSETS_TO_LOAD.images.forEach(src => { 
+        let img = new Image(); 
+        img.src = src; 
+        // IMPORTANTE: Adiciona ao cofre para não ser deletado pelo Garbage Collector
+        window.gameAssets.push(img);
+        
+        img.onload = () => updateLoader(); 
+        img.onerror = () => {
+            console.warn("Erro ao carregar imagem: " + src);
+            updateLoader(); // Conta como carregado pra não travar o jogo
+        }; 
+    });
+
+    // Carrega Áudio
+    ASSETS_TO_LOAD.audio.forEach(a => { 
+        let s = new Audio(); 
+        s.src = a.src; 
+        s.preload = 'auto'; 
+        if(a.loop) s.loop = true; 
+        audios[a.id] = s; 
+        // Também adiciona ao cofre, por segurança
+        window.gameAssets.push(s);
+
+        s.onloadedmetadata = () => updateLoader(); 
+        s.onerror = () => {
+            console.warn("Erro ao carregar áudio: " + a.src);
+            updateLoader();
+        }; 
+        
+        // Timeout de segurança para áudios que demoram demais
+        setTimeout(() => { 
+            if(s.readyState === 0) updateLoader(); 
+        }, 3000); 
+    });
 }
 
 function updateLoader() {
-    assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
+    assetsLoaded++; 
+    let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
     const fill = document.getElementById('loader-fill');
     if(fill) fill.style.width = pct + '%';
+    
+    // Só fecha a tela se TUDO carregou
     if(assetsLoaded >= totalAssets) {
+        console.log("Preload completo!");
         setTimeout(() => {
             const loading = document.getElementById('loading-screen');
             if(loading) {
                 loading.style.opacity = '0';
                 setTimeout(() => loading.style.display = 'none', 500);
             }
-        }, 1000); 
+        }, 800); 
+        
         document.body.addEventListener('click', () => { 
             if (!MusicController.currentTrackId) {
                 MusicController.play('bgm-menu');
@@ -505,8 +504,11 @@ function updateLoader() {
     }
 }
 
+// Inicia o preload IMEDIATAMENTE (não espera window.onload)
+preloadGame();
+
 window.onload = function() {
-    preloadGame();
+    // window.onload agora serve apenas para binding de eventos de UI
     const btnSound = document.getElementById('btn-sound');
     if (btnSound) {
         btnSound.onclick = null; 
@@ -578,9 +580,6 @@ function showCenterText(txt, col) { let el = document.createElement('div'); el.c
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
-// -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - VERSÃO RESTAURADA
-// -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
@@ -588,21 +587,14 @@ function dealAllInitialCards() {
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // Configura a animação
     cards.forEach((cardEl, i) => {
-        // Adiciona a classe que faz o bounce e mantém invisível até começar
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
-        
-        // Remove a opacidade 0 que forçamos no updateUI, 
-        // deixando o CSS da animação (intro-anim) controlar a visibilidade
         cardEl.style.opacity = '';
     });
 
-    // Desliga a flag de início de jogo para as próximas atualizações
     window.isMatchStarting = false;
 
-    // Limpeza final após animação terminar
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
@@ -676,7 +668,6 @@ function playCardFlow(index, pDisarmChoice) {
         else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } 
     }
 
-    // --- CORREÇÃO DO FANTASMA / DUPLICAÇÃO ---
     let handContainer = document.getElementById('player-hand'); 
     let realCardEl = handContainer.children[index]; 
     let startRect = null;
@@ -691,11 +682,10 @@ function playCardFlow(index, pDisarmChoice) {
         realCardEl.style.boxShadow = 'none';
     }
     
-    // ANIMAÇÃO DE VOO (AGORA COM FLIP)
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
-        renderTable(cardKey, 'p-slot', true); // TRUE indica que é carta do jogador
+        renderTable(cardKey, 'p-slot', true); 
         updateUI(); 
-    }, false, true, true); // Último true indica "isPlayer"
+    }, false, true, true); 
 
     const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
     animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { 
@@ -736,17 +726,15 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     function handleExtraXP(u) { 
         if(u.deck.length > 0) { 
             let card = u.deck.pop(); 
-            // XP Animations: Deck -> XP Area
             animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
                 u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
-            }, false, false, (u.id === 'p')); // Passa isPlayer = true se for player
+            }, false, false, (u.id === 'p')); 
         } 
     }
     if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
     if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
 
     setTimeout(() => {
-        // Slot -> XP Animations
         animateFly('p-slot', 'p-xp', pAct, () => { if(!pDead) { player.xp.push(pAct); triggerXPGlow('p'); updateUI(); } checkLevelUp(player, () => { if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); }); }, false, false, true);
         
         animateFly('m-slot', 'm-xp', mAct, () => { if(!mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); } checkLevelUp(monster, () => { if(!mDead) drawCardLogic(monster, 1); checkEndGame(); }); }, false, false, false);
@@ -798,7 +786,6 @@ function processMasteries(u, triggers, cb) {
 function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
-// --- ANIMATE FLY ATUALIZADA ---
 function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false, isPlayer = false) {
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
     let e = { top: 0, left: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
@@ -806,7 +793,6 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
     const fly = document.createElement('div');
     fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
     
-    // USA A FUNÇÃO GET CARD ART
     let imgUrl = getCardArt(cardKey, isPlayer);
     fly.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
     
@@ -836,7 +822,6 @@ function renderTable(key, slotId, isPlayer = false) {
     el.innerHTML = ''; 
     let card = document.createElement('div'); 
     card.className = `card ${CARDS_DB[key].color} card-on-table`; 
-    // USA A FUNÇÃO GET CARD ART
     let imgUrl = getCardArt(key, isPlayer);
     card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`; 
     el.appendChild(card); 
@@ -852,7 +837,6 @@ function updateUnit(u) {
     if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
     document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
     
-    // --- ATUALIZA A IMAGEM DO DECK (CANTO DA TELA) ---
     if(u === player) {
         let deckImgEl = document.getElementById('p-deck-img');
         if(window.currentDeck === 'mage') {
@@ -878,7 +862,6 @@ function updateUnit(u) {
             let lethalType = checkCardLethality(k); 
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             
-            // --- USA A FUNÇÃO GET CARD ART ---
             let imgUrl = getCardArt(k, true);
             c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
             
@@ -889,12 +872,10 @@ function updateUnit(u) {
         });
     }
     
-    // --- ATUALIZA A ÁREA DE XP COM A ARTE CORRETA ---
     let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
     u.xp.forEach(k=>{ 
         let d=document.createElement('div'); 
         d.className='xp-mini'; 
-        // USA A FUNÇÃO GET CARD ART - Passa true se for player
         let imgUrl = getCardArt(k, (u === player));
         d.style.backgroundImage = `url('${imgUrl}')`; 
         d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; 
@@ -971,7 +952,6 @@ function bindFixedTooltip(el,k) {
     return { 
         onmouseenter: (e) => { 
             showTT(k); 
-            // AJUSTE DE POSIÇÃO (LIVRA O ZOOM)
             tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
             tt.style.top = 'auto'; 
             
@@ -1012,18 +992,13 @@ function apply3DTilt(element, isHand = false) {
         const rect = element.getBoundingClientRect(); 
         const x = e.clientX - rect.left; 
         const y = e.clientY - rect.top; 
-        
-        // Calcula a posição do mouse em porcentagem (-0.5 a 0.5)
         const xPct = (x / rect.width) - 0.5; 
         const yPct = (y / rect.height) - 0.5; 
         
-        // --- NOVO: Envia a posição para o CSS criar o brilho ---
         element.style.setProperty('--rx', xPct);
         element.style.setProperty('--ry', yPct);
 
-        // Zoom 2.3 e Translate -140px
         let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
-        
         let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
         if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
         
@@ -1037,8 +1012,6 @@ function apply3DTilt(element, isHand = false) {
         element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
         let art = element.querySelector('.card-art'); 
         if(art) art.style.backgroundPosition = 'center'; 
-        
-        // Reseta o brilho quando tira o mouse
         element.style.setProperty('--rx', 0);
         element.style.setProperty('--ry', 0);
     }); 
