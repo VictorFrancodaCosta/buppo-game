@@ -1,5 +1,8 @@
 /* ARQUIVO: css/style.css */
 
+/* IMPORTANTE: FONTE RPG NO TOPO */
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+
 :root {
     --bg-app: #050505;
     --txt-primary: #ecf0f1; --txt-secondary: #d7ccc8;
@@ -180,9 +183,7 @@ body {
 .card-on-table { box-shadow: 0 7px 0 rgba(0,0,0,0.4) !important; transform: translateY(-2px); }
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 
-/* --- TRAVA DE SEGURANÇA VISUAL ---
-   Enquanto a classe .preparing estiver na mão, todas as cartas
-   ficam invisíveis. Isso garante que a animação comece do zero. */
+/* --- TRAVA DE SEGURANÇA VISUAL --- */
 #player-hand.preparing .card {
     opacity: 0 !important;
     visibility: hidden !important;
@@ -191,57 +192,23 @@ body {
 .card { 
     --rx: 0;
     --ry: 0;
-    
-    /* Transições padrão */
     transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; 
-    
     pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; 
     color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; 
     transform-style: preserve-3d; background-color: #111; 
-    
-    /* REMOVIDO O !IMPORTANT DA OPACIDADE.
-       Isso permite que o Javascript (e nossa trava) controlem a visibilidade. */
-    opacity: 1; 
-    visibility: visible; 
+    opacity: 1; visibility: visible; 
 }
 
 /* --- EFEITO FOIL HOLOGRÁFICO (SUAVIZADO) --- */
 .card::after {
     content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 10px;
-    pointer-events: none;
-    z-index: 15;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-
-    /* GRADIENTE RECALIBRADO PARA NÃO ESCONDER A ARTE:
-       Reduzi as cores para 0.15 (15%) e o branco para 0.25 (25%).
-       Agora é uma "película" fina, não uma luz forte.
-    */
-    background: linear-gradient(
-        115deg,
-        transparent 25%,
-        rgba(255, 215, 0, 0.15) 35%,  /* Dourado bem leve */
-        rgba(255, 0, 150, 0.15) 45%,  /* Magenta leve */
-        rgba(0, 255, 255, 0.15) 55%,  /* Ciano leve */
-        rgba(255, 255, 255, 0.25) 70%, /* Branco suave (Reflexo de vidro) */
-        transparent 80%
-    );
-
-    background-size: 300% 300%;
-    background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%));
-
-    /* Mantemos color-dodge para o aspecto metálico, mas com cores fracas ele não estoura */
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 10px; pointer-events: none; z-index: 15; opacity: 0; transition: opacity 0.2s ease;
+    background: linear-gradient(115deg, transparent 25%, rgba(255, 215, 0, 0.15) 35%, rgba(255, 0, 150, 0.15) 45%, rgba(0, 255, 255, 0.15) 55%, rgba(255, 255, 255, 0.25) 70%, transparent 80%);
+    background-size: 300% 300%; background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%));
     mix-blend-mode: color-dodge; 
 }
-
-/* Reduzi a opacidade máxima para 0.8 para garantir transparência */
-.card:hover::after {
-    opacity: 0.8;
-}
+.card:hover::after { opacity: 0.8; }
 
 .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
 .flares-container { position: absolute; top: 50%; left: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
@@ -277,7 +244,7 @@ body {
 
 /* Base do destaque */
 .highlight-card { 
-    font-weight: 900; /* Fonte bem grossa */
+    font-weight: 900; 
     font-family: 'Russo One', sans-serif; 
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -316,20 +283,14 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     80% { transform: translateY(10px) scale(0.95); }
     100% { transform: translateY(0) scale(1); opacity: 1; }
 }
-
 .intro-anim {
-    /* Força a animação a rodar e manter o estado final */
     animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     pointer-events: none; 
 }
 
-
 /* =========================================
-   SELEÇÃO DE DECK - VERSÃO "RPG FANTASY"
+   SELEÇÃO DE DECK - VERSÃO FINAL (RPG FANTASY)
 ========================================= */
-
-/* Importando fonte de RPG Medieval */
-@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
 
 #deck-selection-screen {
     position: fixed; 
@@ -338,7 +299,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     width: 100vw; 
     height: 100vh;
     
-    /* Fundo levemente transparente (0.65) + Blur */
+    /* Fundo escuro transparente (65%) + Blur */
     background: rgba(0, 0, 0, 0.65); 
     backdrop-filter: blur(12px);
     
@@ -346,10 +307,10 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     
     display: none; 
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: flex-start; /* Alinhamento ao topo */
     align-items: center;
     
-    padding-top: 8vh;
+    padding-top: 8vh; 
     box-sizing: border-box;
     
     opacity: 0;
@@ -362,10 +323,10 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 }
 
 .deck-select-title {
-    /* FONTE NOVA: MedievalSharp */
+    /* Fonte estilo RPG */
     font-family: 'MedievalSharp', cursive; 
     
-    /* Estilo "Título de RPG": Dourado com borda preta */
+    /* Dourado com borda preta */
     color: #ffd700; 
     text-shadow: 2px 2px 0 #000, 0 0 25px rgba(255, 215, 0, 0.4);
     
@@ -394,7 +355,6 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     outline: none;
     padding: 0;
     
-    /* Garante que o texto longo do slogan fique centralizado na largura da carta */
     width: 320px; 
     display: flex;
     justify-content: center;
@@ -402,19 +362,21 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 /* A IMAGEM (ARTE) */
 .deck-option img {
-    width: 100%; /* Ocupa a largura do container (320px) */
+    width: 100%; 
     height: auto; 
     display: block;
     
+    /* P&B e Drop Shadow "Solto" */
     filter: grayscale(100%) brightness(0.6) drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+    
     transform: scale(0.95);
     transition: all 0.4s ease-out;
+    
     border-radius: 0; 
     box-shadow: none !important;
 }
 
 /* --- HOVER --- */
-
 .deck-option:hover {
     z-index: 10;
 }
@@ -424,41 +386,38 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     filter: grayscale(0%) brightness(1.1) drop-shadow(0 0 30px rgba(255, 215, 0, 0.5));
 }
 
-/* SLOGAN DO DECK (Texto Sutil em Baixo) */
+/* SLOGAN DO DECK */
 .deck-option::after {
     content: attr(data-name);
-    position: absolute;
     
-    /* Posição ajustada para o texto ficar bem abaixo da carta flutuando */
-    top: 100%; 
+    position: absolute;
+    top: 100%;
     left: 50%;
     transform: translateX(-50%) translateY(20px);
     
-    /* Estilo Sutil */
-    font-family: 'Montserrat', sans-serif; /* Fonte limpa para leitura */
+    font-family: 'Montserrat', sans-serif; 
     font-weight: 400;
-    font-size: 14px; /* Pequeno e elegante */
-    color: #ecf0f1; /* Branco suave */
+    font-size: 14px; 
+    color: #ecf0f1;
     
     text-align: center;
-    width: 150%; /* Permite que o texto seja mais largo que a carta se precisar */
+    width: 160%; 
     
     opacity: 0;
     transition: all 0.3s ease;
     pointer-events: none;
     
-    /* Sombra leve para leitura */
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
 .deck-option:hover::after {
     opacity: 1;
-    transform: translateX(-50%) translateY(10px); /* Sobe um pouco suavemente */
+    transform: translateX(-50%) translateY(10px);
 }
 
 /* BOTÃO VOLTAR */
 .return-btn {
-    margin-top: 100px; /* Mais afastado pois o texto do slogan ocupa espaço */
+    margin-top: 100px;
     padding: 12px 35px;
     background: transparent;
     border: 1px solid rgba(255,255,255,0.2);
@@ -470,6 +429,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     cursor: pointer;
     transition: 0.3s;
     border-radius: 50px;
+    text-transform: uppercase;
 }
 
 .return-btn:hover {
