@@ -22,17 +22,31 @@ const provider = new GoogleAuthProvider();
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
+
+// --- BANCO DE IMAGENS DO MAGO (NOVO) ---
+const MAGE_ASSETS = {
+    'ATAQUE': 'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png',
+    'BLOQUEIO': 'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
+    'DESCANSAR': 'https://i.ibb.co/sv98P3JK/03-DESCANSAR-MAGO.png',
+    'DESARMAR': 'https://i.ibb.co/Q7SmhYQk/04-DESARMAR-MAGO.png',
+    'TREINAR': 'https://i.ibb.co/8LGTJCn4/05-TREINAR-MAGO.png',
+    'DECK_IMG': 'https://i.ibb.co/XZ8qc166/DECK-MAGO.png',
+    'DECK_SELECT': 'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png'
+};
+
 const ASSETS_TO_LOAD = {
     images: [
         'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png', 'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png', 
         'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png', 'https://i.ibb.co/jdZmTHC/CARDBACK.png', 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
         'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png', 'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png', 'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png',
         'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png', 'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
-        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png'
+        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',
+        // NOVAS IMAGENS DO MAGO
+        MAGE_ASSETS.ATAQUE, MAGE_ASSETS.BLOQUEIO, MAGE_ASSETS.DESCANSAR, MAGE_ASSETS.DESARMAR, MAGE_ASSETS.TREINAR, MAGE_ASSETS.DECK_IMG, MAGE_ASSETS.DECK_SELECT,
+        'https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png'
     ],
     audio: [
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
-        
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
         { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
@@ -52,8 +66,18 @@ window.masterVol = 1.0;
 let isLethalHover = false; 
 let mixerInterval = null;
 
-// --- VARIAVEL DE CONTROLE PARA EVITAR O FLASH DAS CARTAS ---
+// --- ESTADOS GLOBAIS ---
 window.isMatchStarting = false;
+window.currentDeck = 'knight'; // 'knight' ou 'mage'
+
+// --- HELPER: RETORNA ARTE CORRETA BASEADA NO DECK DO JOGADOR ---
+function getCardArt(cardKey, isPlayer) {
+    if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
+        return MAGE_ASSETS[cardKey];
+    }
+    // Padrão (Cavaleiro/Monstro)
+    return CARDS_DB[cardKey].img;
+}
 
 // =======================
 // CONTROLLER DE MÚSICA
@@ -70,10 +94,7 @@ const MusicController = {
         }
         if (trackId && audios[trackId]) {
             const newAudio = audios[trackId];
-            
-            // --- CORREÇÃO DA MÚSICA: COMEÇA SEMPRE DO ZERO ---
-            newAudio.currentTime = 0;
-            
+            newAudio.currentTime = 0; // Toca do inicio
             if (!window.isMuted) {
                 newAudio.volume = 0; 
                 newAudio.play().catch(e => console.warn("Autoplay prevent", e));
@@ -151,15 +172,19 @@ window.showScreen = function(screenId) {
     }
 }
 
-// --- FUNÇÃO PARA ABRIR SELEÇÃO DE DECK ---
+// --- SELEÇÃO DE DECK ---
 window.openDeckSelector = function() {
     window.showScreen('deck-selection-screen');
 };
 
-// --- FUNÇÃO PARA SELECIONAR E ANIMAR O DECK ---
 window.selectDeck = function(deckType) {
     window.playNavSound();
-    const options = document.querySelectorAll('.deck-card');
+    window.currentDeck = deckType; // Armazena a escolha ('knight' ou 'mage')
+    
+    const options = document.querySelectorAll('.deck-option');
+    // Adiciona classe para animação no clicado
+    // (Simplificado: adiciona em todos pois só tem o clicado visivel na prática ou todos somem)
+    // Mas vamos tentar achar o certo. Como não passei 'this', vamos adicionar em todos para o efeito de fade out.
     options.forEach(opt => {
         opt.classList.add('deck-selected');
     });
@@ -171,7 +196,6 @@ window.selectDeck = function(deckType) {
         }, 1000);
     }, 600);
 };
-
 
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
@@ -245,22 +269,19 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA (CORRIGIDA)
+// LÓGICA DE PARTIDA
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // --- 1. ATIVAR MODO DE INÍCIO DE PARTIDA ---
-    // Isso garante que as cartas nasçam invisíveis no updateUI
     window.isMatchStarting = true;
     
-    // Limpa a mão antes de qualquer coisa
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.style.opacity = ''; // Remove qualquer opacidade manual
+        handEl.style.opacity = ''; 
     }
     
     resetUnit(player); 
@@ -271,10 +292,8 @@ function startGameFlow() {
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // O updateUI vai desenhar as cartas. Se isMatchStarting for true, elas terão opacity: 0
     updateUI(); 
     
-    // Inicia a animação que vai revelar as cartas
     dealAllInitialCards();
 }
 
@@ -484,9 +503,6 @@ function showCenterText(txt, col) { let el = document.createElement('div'); el.c
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
-// -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - REATIVADA
-// -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
@@ -494,21 +510,15 @@ function dealAllInitialCards() {
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // Configura a animação em cada carta
     cards.forEach((cardEl, i) => {
-        // Adiciona a classe que faz o bounce e mantém invisível até começar
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
         
-        // Remove a opacidade 0 que forçamos no updateUI, 
-        // deixando o CSS da animação (intro-anim) controlar a visibilidade
         cardEl.style.opacity = '';
     });
 
-    // Desliga a flag de início de jogo para as próximas atualizações
     window.isMatchStarting = false;
 
-    // Limpeza final após animação terminar
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
@@ -582,7 +592,6 @@ function playCardFlow(index, pDisarmChoice) {
         else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } 
     }
 
-    // --- CORREÇÃO DO FANTASMA / DUPLICAÇÃO ---
     let handContainer = document.getElementById('player-hand'); 
     let realCardEl = handContainer.children[index]; 
     let startRect = null;
@@ -597,16 +606,17 @@ function playCardFlow(index, pDisarmChoice) {
         realCardEl.style.boxShadow = 'none';
     }
     
+    // --- USA IMAGEM CORRETA NA ANIMAÇÃO ---
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
-        renderTable(cardKey, 'p-slot'); 
+        renderTable(cardKey, 'p-slot', true); // TRUE indica que é carta do jogador
         updateUI(); 
-    }, false, true); 
+    }, false, true, true); // Último true indica "isPlayer"
 
     const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
     animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { 
-        renderTable(mCardKey, 'm-slot'); 
+        renderTable(mCardKey, 'm-slot', false); 
         setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); 
-    }, false, true);
+    }, false, true, false);
 }
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
@@ -638,13 +648,24 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
-    function handleExtraXP(u) { if(u.deck.length > 0) { let card = u.deck.pop(); animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }); } }
+    function handleExtraXP(u) { 
+        if(u.deck.length > 0) { 
+            let card = u.deck.pop(); 
+            // XP Animations: Deck -> XP Area
+            animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
+                u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
+            }, false, false, (u.id === 'p')); // Passa isPlayer = true se for player
+        } 
+    }
     if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
     if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
 
     setTimeout(() => {
-        animateFly('p-slot', 'p-xp', pAct, () => { if(!pDead) { player.xp.push(pAct); triggerXPGlow('p'); updateUI(); } checkLevelUp(player, () => { if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); }); });
-        animateFly('m-slot', 'm-xp', mAct, () => { if(!mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); } checkLevelUp(monster, () => { if(!mDead) drawCardLogic(monster, 1); checkEndGame(); }); });
+        // Slot -> XP Animations
+        animateFly('p-slot', 'p-xp', pAct, () => { if(!pDead) { player.xp.push(pAct); triggerXPGlow('p'); updateUI(); } checkLevelUp(player, () => { if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); }); }, false, false, true);
+        
+        animateFly('m-slot', 'm-xp', mAct, () => { if(!mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); } checkLevelUp(monster, () => { if(!mDead) drawCardLogic(monster, 1); checkEndGame(); }); }, false, false, false);
+        
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
     }, 700);
 }
@@ -692,13 +713,18 @@ function processMasteries(u, triggers, cb) {
 function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
-function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false) {
+// --- ANIMATE FLY ATUALIZADA ---
+function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false, isPlayer = false) {
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
     let e = { top: 0, left: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
 
     const fly = document.createElement('div');
     fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
-    fly.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[cardKey].img}')"></div>`;
+    
+    // USA A FUNÇÃO GET CARD ART
+    let imgUrl = getCardArt(cardKey, isPlayer);
+    fly.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
+    
     if (isToTable) fly.classList.add('card-bounce');
 
     if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; } 
@@ -717,11 +743,20 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
 }
 
 function drawCardAnimated(unit, deckId, handId, cb) { 
-    // LIMPEZA COMPLETA:
     if(cb) cb(); 
 }
 
-function renderTable(key, slotId) { let el = document.getElementById(slotId); el.innerHTML = ''; let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`; card.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[key].img}')"></div>`; el.appendChild(card); }
+function renderTable(key, slotId, isPlayer = false) { 
+    let el = document.getElementById(slotId); 
+    el.innerHTML = ''; 
+    let card = document.createElement('div'); 
+    card.className = `card ${CARDS_DB[key].color} card-on-table`; 
+    // USA A FUNÇÃO GET CARD ART
+    let imgUrl = getCardArt(key, isPlayer);
+    card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`; 
+    el.appendChild(card); 
+}
+
 function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
 
 function updateUnit(u) {
@@ -731,6 +766,17 @@ function updateUnit(u) {
     let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
     if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
     document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
+    
+    // --- ATUALIZA A IMAGEM DO DECK (CANTO DA TELA) ---
+    if(u === player) {
+        let deckImgEl = document.getElementById('p-deck-img');
+        if(window.currentDeck === 'mage') {
+            deckImgEl.src = MAGE_ASSETS.DECK_IMG;
+        } else {
+            deckImgEl.src = 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png';
+        }
+    }
+
     if(u===player) {
         let hc=document.getElementById('player-hand'); hc.innerHTML='';
         u.hand.forEach((k,i)=>{
@@ -738,25 +784,39 @@ function updateUnit(u) {
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
             
-            // --- AQUI ESTAVA O PROBLEMA DO BOUNCE ---
-            // Se estiver começando a partida, a carta nasce invisível
             if(window.isMatchStarting) {
                 c.style.opacity = '0';
             } else {
                 c.style.opacity = '1';
             }
-            
+
             let lethalType = checkCardLethality(k); 
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
-            c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
+            
+            // --- USA A FUNÇÃO GET CARD ART ---
+            let imgUrl = getCardArt(k, true);
+            c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
+            
             c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
             c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
             c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
             hc.appendChild(c); apply3DTilt(c, true);
         });
     }
+    
+    // --- ATUALIZA A ÁREA DE XP COM A ARTE CORRETA ---
     let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
-    u.xp.forEach(k=>{ let d=document.createElement('div'); d.className='xp-mini'; d.style.backgroundImage = `url('${CARDS_DB[k].img}')`; d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; xc.appendChild(d); });
+    u.xp.forEach(k=>{ 
+        let d=document.createElement('div'); 
+        d.className='xp-mini'; 
+        // USA A FUNÇÃO GET CARD ART - Passa true se for player
+        let imgUrl = getCardArt(k, (u === player));
+        d.style.backgroundImage = `url('${imgUrl}')`; 
+        d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; 
+        d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; 
+        xc.appendChild(d); 
+    });
+    
     let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
     if(u.bonusAtk>0) addMI(mc, 'ATAQUE', u.bonusAtk, '#e74c3c', u.id); 
     if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
