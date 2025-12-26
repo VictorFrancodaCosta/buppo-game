@@ -24,7 +24,6 @@ const audios = {};
 let assetsLoaded = 0; 
 
 // --- COFRE DE ASSETS ---
-// (Evita que o navegador jogue fora o cache)
 window.gameAssets = []; 
 
 const MAGE_ASSETS = {
@@ -63,11 +62,22 @@ const ASSETS_TO_LOAD = {
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
         { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
         { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
-        { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
-        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
-        { id: 'sfx-heal', src: 'https://files.catbox.moe/uegibx.mp3' }, { id: 'sfx-levelup', src: 'https://files.catbox.moe/sm8cce.mp3' },
-        { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' },
-        { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, { id: 'sfx-lose', src: 'https://files.catbox.moe/n7nyck.mp3' },
+        { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, 
+        { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
+        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, 
+        { id: 'sfx-hit-mage', src: 'https://files.catbox.moe/y0x72c.mp3' }, // NOVO: Dano Mago
+        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' },
+        { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, // NOVO: Bloqueio Mago
+        { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' }, // ATUALIZADO
+        { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' }, // ATUALIZADO
+        { id: 'sfx-train', src: 'https://files.catbox.moe/f4hy7e.mp3' }, // NOVO
+        { id: 'sfx-disarm', src: 'https://files.catbox.moe/udd2sz.mp3' }, // NOVO
+        { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
+        { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' }, // Hover Cartas
+        { id: 'sfx-ui-hover', src: 'https://files.catbox.moe/gzjf9y.mp3' }, // NOVO: Hover UI
+        { id: 'sfx-deck-select', src: 'https://files.catbox.moe/993lma.mp3' }, // NOVO: Select Deck
+        { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, 
+        { id: 'sfx-lose', src: 'https://files.catbox.moe/n7nyck.mp3' },
         { id: 'sfx-tie', src: 'https://files.catbox.moe/sb18ja.mp3' }
     ]
 };
@@ -166,6 +176,11 @@ window.playNavSound = function() {
     if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
 };
 
+window.playUIHoverSound = function() {
+    let s = audios['sfx-ui-hover'];
+    if(s && !isProcessing) { s.currentTime = 0; s.play().catch(()=>{}); }
+};
+
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
@@ -187,7 +202,12 @@ window.openDeckSelector = function() {
 };
 
 window.selectDeck = function(deckType) {
-    window.playNavSound();
+    // TOCA O SOM ESPECÍFICO DO DECK SELECT
+    if(audios['sfx-deck-select']) {
+        audios['sfx-deck-select'].currentTime = 0;
+        audios['sfx-deck-select'].play().catch(()=>{});
+    }
+
     window.currentDeck = deckType; 
     
     const options = document.querySelectorAll('.deck-option');
@@ -470,6 +490,8 @@ function updateLoader() {
                 loading.style.opacity = '0';
                 setTimeout(() => loading.style.display = 'none', 500);
             }
+            // Anexar sons de UI
+            attachUIHoverSounds();
         }, 800); 
         
         document.body.addEventListener('click', () => { 
@@ -478,6 +500,18 @@ function updateLoader() {
             }
         }, { once: true });
     }
+}
+
+// FUNÇÃO PARA ANEXAR SOM DE HOVER NOS ELEMENTOS DE UI
+function attachUIHoverSounds() {
+    // Seleciona botões padrão, botões circulares, ícone fullscreen e opções de deck
+    const uiElements = document.querySelectorAll('button, .circle-btn, #btn-fullscreen, .deck-option');
+    
+    uiElements.forEach(el => {
+        // Remove listener antigo para evitar duplicidade (se houver reload)
+        el.removeEventListener('mouseenter', window.playUIHoverSound);
+        el.addEventListener('mouseenter', window.playUIHoverSound);
+    });
 }
 
 preloadGame();
@@ -534,7 +568,10 @@ document.addEventListener('click', function(e) { const panel = document.getEleme
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
-    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-block', 'sfx-heal', 'sfx-levelup', 'sfx-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
+    // Atualiza volume de todos os efeitos
+    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 
+     'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 
+     'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) audios[k].volume = 0.8 * (window.masterVol || 1.0); 
     }); 
 }
@@ -545,10 +582,63 @@ initAmbientParticles();
 
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
-function triggerDamageEffect(isPlayer, playAudio = true) { try { if(playAudio) playSound('sfx-hit'); let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); let ov = document.getElementById('dmg-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } } catch(e) {} }
+function triggerDamageEffect(isPlayer, playAudio = true) { 
+    try { 
+        if(playAudio) {
+            // Se quem está atacando (a fonte do dano) for Mago, usa som de fogo
+            // Se isPlayer é true, quem apanha é o player, logo quem bate é o Monstro (assumimos deck padrao pro monstro por enquanto ou espelho)
+            // Se isPlayer é false, quem apanha é o Monstro, logo quem bate é o Player (verifica deck do player)
+            
+            if(!isPlayer && window.currentDeck === 'mage') {
+                playSound('sfx-hit-mage');
+            } else {
+                playSound('sfx-hit'); 
+            }
+        } 
+        
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
+        let slot = document.getElementById(elId); 
+        if(slot) { 
+            let r = slot.getBoundingClientRect(); 
+            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); 
+        } 
+        document.body.classList.add('shake-screen'); 
+        setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
+        let ov = document.getElementById('dmg-overlay'); 
+        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
+    } catch(e) {} 
+}
+
 function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
-function triggerHealEffect(isPlayer) { try { let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } let ov = document.getElementById('heal-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } } catch(e) {} }
-function triggerBlockEffect() { try { playSound('sfx-block'); let ov = document.getElementById('block-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); } catch(e) {} }
+
+function triggerHealEffect(isPlayer) { 
+    try { 
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
+        let slot = document.getElementById(elId); 
+        if(slot) { 
+            let r = slot.getBoundingClientRect(); 
+            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); 
+        } 
+        let ov = document.getElementById('heal-overlay'); 
+        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
+    } catch(e) {} 
+}
+
+function triggerBlockEffect() { 
+    try { 
+        if(window.currentDeck === 'mage') {
+             playSound('sfx-block-mage');
+        } else {
+             playSound('sfx-block'); 
+        }
+        
+        let ov = document.getElementById('block-overlay'); 
+        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
+        document.body.classList.add('shake-screen'); 
+        setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+    } catch(e) {} 
+}
+
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
@@ -677,6 +767,11 @@ function playCardFlow(index, pDisarmChoice) {
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
+    
+    // SONS ESPECÍFICOS DE AÇÃO
+    if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
+    if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
+
     if(mAct === 'ATAQUE') { pDmg += monster.lvl; }
     if(pAct === 'ATAQUE') { mDmg += player.lvl; }
     if(pAct === 'BLOQUEIO') { pDmg = 0; if(mAct === 'ATAQUE') { mDmg += (1 + player.bonusBlock); } }
