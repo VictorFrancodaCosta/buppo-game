@@ -51,9 +51,6 @@ window.masterVol = 1.0;
 let isLethalHover = false; 
 let mixerInterval = null;
 
-// --- VARIAVEL DE CONTROLE PARA O FLASH ---
-window.isInitialSetup = false;
-
 // =======================
 // CONTROLLER DE MÚSICA
 // =======================
@@ -223,18 +220,20 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 // ============================================
-// LÓGICA DE PARTIDA (CORRIGIDA COM ESTADO)
+// LÓGICA DE PARTIDA
 // ============================================
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // ATIVA O MODO DE SETUP INICIAL
-    window.isInitialSetup = true;
-    
+    // Limpa a mão e deixa ela visível (o container)
+    // O truque agora está na animação CSS (backwards) que esconde as cartas
     const handEl = document.getElementById('player-hand');
-    if (handEl) handEl.innerHTML = '';
+    if (handEl) {
+        handEl.innerHTML = '';
+        handEl.style.opacity = '1';
+    }
     
     resetUnit(player); 
     resetUnit(monster); 
@@ -244,10 +243,8 @@ function startGameFlow() {
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
     
-    // O updateUI vai ler o isInitialSetup e criar cartas invisíveis
     updateUI(); 
     
-    // Inicia a animação
     dealAllInitialCards();
 }
 
@@ -458,7 +455,7 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 // -----------------------------------------------------------------
-// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE) - VERSÃO FINAL
+// FUNÇÃO QUE CONTROLA A ANIMAÇÃO INICIAL (BOUNCE)
 // -----------------------------------------------------------------
 function dealAllInitialCards() {
     isProcessing = true; 
@@ -467,17 +464,12 @@ function dealAllInitialCards() {
     const handEl = document.getElementById('player-hand'); 
     const cards = Array.from(handEl.children);
     
-    // Configura a animação
+    // Aplica a animação
+    // O CSS 'animation-fill-mode: backwards' já garante que elas nasçam invisíveis
     cards.forEach((cardEl, i) => {
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
-        
-        // Remove a invisibilidade forçada, a animação assume o controle
-        cardEl.style.opacity = ''; 
     });
-
-    // Desliga o modo Setup para as próximas vezes
-    window.isInitialSetup = false;
 
     // Limpeza final após animação
     setTimeout(() => {
@@ -529,6 +521,9 @@ function getBestAIMove() {
     return moves[0];
 }
 
+// ============================================
+// ANIMAÇÃO DE VOO COM GIRO 3D (FLIP)
+// ============================================
 function playCardFlow(index, pDisarmChoice) {
     isProcessing = true; 
     let cardKey = player.hand.splice(index, 1)[0]; 
@@ -715,15 +710,7 @@ function updateUnit(u) {
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
-            
-            // --- CONTROLE DE OPACIDADE NO MOMENTO DA CRIAÇÃO ---
-            // Se estamos no setup inicial, a carta NASCE invisível.
-            if(window.isInitialSetup) {
-                c.style.opacity = '0';
-            } else {
-                c.style.opacity = '1';
-            }
-
+            c.style.opacity = '1';
             let lethalType = checkCardLethality(k); 
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             c.innerHTML = `<div class="card-art" style="background-image: url('${CARDS_DB[k].img}')"></div><div class="flares-container">${flaresHTML}</div>`;
