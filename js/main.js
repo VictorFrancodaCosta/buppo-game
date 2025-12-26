@@ -66,8 +66,8 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
         { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, 
         { id: 'sfx-hit-mage', src: 'https://files.catbox.moe/y0x72c.mp3' }, 
-        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' }, // SOM ORIGINAL DO CAVALEIRO
-        { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, // SOM NOVO DO MAGO
+        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' }, 
+        { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, 
         { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' }, 
         { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' }, 
         { id: 'sfx-train', src: 'https://files.catbox.moe/f4hy7e.mp3' }, 
@@ -176,14 +176,26 @@ window.playNavSound = function() {
     if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
 };
 
+// ATUALIZADO: Volume reduzido no som de hover
 window.playUIHoverSound = function() {
     let s = audios['sfx-ui-hover'];
-    if(s && !isProcessing) { s.currentTime = 0; s.play().catch(()=>{}); }
+    if(s && !isProcessing) { 
+        // Define volume específico mais baixo para hover (30% do master)
+        s.volume = 0.3 * (window.masterVol || 1.0);
+        s.currentTime = 0; 
+        s.play().catch(()=>{}); 
+    }
 };
 
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
+    
+    // GARANTIA: Se for para o Lobby, reativa os sons de hover
+    if(screenId === 'lobby-screen') {
+        attachUIHoverSounds();
+    }
+
     const configBtn = document.getElementById('btn-config-toggle');
     const surrenderBtn = document.getElementById('btn-surrender');
     if(screenId === 'game-screen') {
@@ -199,10 +211,11 @@ window.showScreen = function(screenId) {
 
 window.openDeckSelector = function() {
     window.showScreen('deck-selection-screen');
+    // Reanexar sons para garantir que a tela de seleção tenha som
+    attachUIHoverSounds();
 };
 
 window.selectDeck = function(deckType) {
-    // TOCA O SOM ESPECÍFICO DO DECK SELECT
     if(audios['sfx-deck-select']) {
         audios['sfx-deck-select'].currentTime = 0;
         audios['sfx-deck-select'].play().catch(()=>{});
@@ -282,6 +295,7 @@ window.transitionToLobby = function() {
 window.goToLobby = async function(isAutoLogin = false) {
     if(!currentUser) {
         window.showScreen('start-screen');
+        attachUIHoverSounds(); // Garante som na tela de login também
         MusicController.play('bgm-menu'); 
         return;
     }
@@ -312,8 +326,15 @@ window.goToLobby = async function(isAutoLogin = false) {
         });
         html += '</tbody></table>';
         document.getElementById('ranking-content').innerHTML = html;
+        
+        // REANEXA SONS: O ranking é conteúdo dinâmico, se tivesse botões nele, precisaria disso.
+        // Mas mal não faz garantir que o resto da tela esteja ok.
+        attachUIHoverSounds();
     });
+    
     window.showScreen('lobby-screen');
+    // GARANTIA EXTRA: Chama novamente ao final
+    attachUIHoverSounds();
     document.getElementById('end-screen').classList.remove('visible'); 
 };
 
@@ -338,6 +359,9 @@ function startGameFlow() {
     drawCardLogic(player, 6); 
     updateUI(); 
     dealAllInitialCards();
+    
+    // Reanexa sons nos botões de UI do jogo (Config, Surrender, etc)
+    attachUIHoverSounds();
 }
 
 function checkEndGame(){ 
@@ -359,6 +383,9 @@ function checkEndGame(){
             if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(); } 
             else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
             document.getElementById('end-screen').classList.add('visible'); 
+            
+            // Reanexa sons nos botões da tela de fim de jogo
+            attachUIHoverSounds();
         }, 1000); 
     } else { isProcessing = false; } 
 }
@@ -375,6 +402,7 @@ onAuthStateChanged(auth, (user) => {
         const btnTxt = document.getElementById('btn-text');
         if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
         MusicController.play('bgm-menu'); 
+        attachUIHoverSounds();
     }
 });
 
@@ -508,7 +536,7 @@ function attachUIHoverSounds() {
     const uiElements = document.querySelectorAll('button, .circle-btn, #btn-fullscreen, .deck-option');
     
     uiElements.forEach(el => {
-        // Remove listener antigo para evitar duplicidade (se houver reload)
+        // Remove listener antigo para evitar duplicidade
         el.removeEventListener('mouseenter', window.playUIHoverSound);
         el.addEventListener('mouseenter', window.playUIHoverSound);
     });
@@ -572,7 +600,14 @@ window.updateVol = function(type, val) {
     ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 
      'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 
      'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
-        if(audios[k]) audios[k].volume = 0.8 * (window.masterVol || 1.0); 
+        if(audios[k]) {
+            // Se for o hover de UI, mantém o volume mais baixo
+            if(k === 'sfx-ui-hover') {
+                audios[k].volume = 0.3 * (window.masterVol || 1.0);
+            } else {
+                audios[k].volume = 0.8 * (window.masterVol || 1.0); 
+            }
+        }
     }); 
 }
 function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[key].play().catch(e => console.log("Audio prevented:", e)); } }
@@ -585,10 +620,6 @@ function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = documen
 function triggerDamageEffect(isPlayer, playAudio = true) { 
     try { 
         if(playAudio) {
-            // Se quem está atacando (a fonte do dano) for Mago, usa som de fogo
-            // Se isPlayer é true, quem apanha é o player, logo quem bate é o Monstro
-            // Se isPlayer é false, quem apanha é o Monstro, logo quem bate é o Player (verifica deck do player)
-            
             if(!isPlayer && window.currentDeck === 'mage') {
                 playSound('sfx-hit-mage');
             } else {
@@ -624,11 +655,8 @@ function triggerHealEffect(isPlayer) {
     } catch(e) {} 
 }
 
-// ATUALIZADO: Agora aceita o argumento 'isPlayer' para saber quem bloqueou
 function triggerBlockEffect(isPlayer) { 
     try { 
-        // Se quem bloqueou foi o Jogador E o deck é Mago = Som Mago
-        // Se quem bloqueou foi o Monstro OU o Jogador (mas deck não é Mago) = Som Padrão
         if(isPlayer && window.currentDeck === 'mage') {
              playSound('sfx-block-mage');
         } else {
@@ -784,7 +812,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); 
     let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
     
-    // ATUALIZADO: Chama o trigger passando QUEM bloqueou (true para player, false para monstro)
     if(pBlocks) { clash = true; triggerBlockEffect(true); }
     else if(mBlocks) { clash = true; triggerBlockEffect(false); }
 
