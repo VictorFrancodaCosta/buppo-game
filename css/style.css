@@ -438,3 +438,24 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     background: rgba(255,255,255,0.1);
     box-shadow: 0 0 15px rgba(255,255,255,0.2);
 }
+
+/* Estilo para a placa de título */
+.img-titulo-placa {
+    max-width: 100%;  /* Garante que ela não estoure a largura do contêiner pai */
+    height: auto;     /* Mantém a proporção original automaticamente */
+    display: block;   /* Garante que ela se comporte como um bloco, facilitando alinhamento */
+    margin: 0 auto;   /* Centraliza a imagem horizontalmente (opcional) */
+    
+    /* Se você achar que a imagem ficou muito grande na tela, 
+       você pode limitar a largura máxima manualmente aqui. 
+       Por exemplo, descomente a linha abaixo: */
+    /* max-width: 400px; */ 
+}
+
+/* É importante verificar o contêiner pai também.
+   Se o texto antigo tinha padding ou margens grandes, a imagem pode parecer deslocada.
+   Você talvez precise ajustar o contêiner onde o texto estava. Exemplo genérico: */
+.titulo-selecao {
+    text-align: center; /* Garante que o conteúdo fique centralizado */
+    padding: 20px 0;    /* Ajuste o espaçamento conforme necessário */
+}
