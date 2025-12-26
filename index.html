@@ -76,20 +76,20 @@
         </div>
 
         <div id="deck-selection-screen" class="screen">
-            <h1 class="deck-select-title">ESCOLHA SEU DECK</h1>
-            <div class="deck-options-container">
-                
-                <div class="deck-option" onclick="selectDeck('knight')">
-                    <img src="https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png" alt="Deck Cavaleiro">
-                </div>
-
-                <div class="deck-option" onclick="selectDeck('mage')">
-                    <img src="https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png" alt="Deck Mago">
-                </div>
-
-            </div>
-            <button class="return-btn" onclick="playNavSound(); window.goToLobby()">VOLTAR</button>
+    <h1 class="deck-select-title">SELECIONE</h1>
+    <div class="deck-options-container">
+        
+        <div class="deck-option" onclick="selectDeck('knight')" data-name="CAVALEIRO">
+            <img src="https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png" alt="Deck Cavaleiro">
         </div>
+
+        <div class="deck-option" onclick="selectDeck('mage')" data-name="MAGO">
+            <img src="https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png" alt="Deck Mago">
+        </div>
+
+    </div>
+    <button class="return-btn" onclick="playNavSound(); window.goToLobby()">VOLTAR AO SAGUÃO</button>
+</div>
 
         <div id="end-screen">
             <div class="end-content">
@@ -140,3 +140,4 @@
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
+
