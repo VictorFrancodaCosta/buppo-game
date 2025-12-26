@@ -325,125 +325,151 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 
 /* =========================================
-   NOVA TELA: SELEÇÃO DE DECK (CSS ISOLADO)
-   Fundo mais claro, imagens flutuantes.
+   NOVA TELA: SELEÇÃO DE DECK (ESTILO IMERSIVO)
+   Sem janelas, apenas atmosfera e artes flutuantes.
 ========================================= */
 
 #deck-selection-screen {
-    /* Posicionamento Fixo e Sobreposto */
     position: fixed; 
     top: 0; 
     left: 0; 
     width: 100vw; 
     height: 100vh;
     
-    /* Fundo Desfocado e Levemente Escuro (Ajustado: 0.6 e 15px) */
-    background: rgba(0, 0, 0, 0.6); 
-    backdrop-filter: blur(15px);
+    /* Atmosfera: Escurece muito o saguão e aplica blur pesado */
+    background: rgba(5, 5, 5, 0.90); 
+    backdrop-filter: blur(20px);
     
-    z-index: 15000; /* Acima do lobby (10000) */
+    z-index: 15000;
     
-    /* Layout */
-    display: none; /* Controlado pelo JS */
+    display: none; 
     flex-direction: column;
     justify-content: center; 
     align-items: center;
+    opacity: 0;
+    transition: opacity 0.5s ease;
 }
 
-/* Quando ativo, vira flex */
 #deck-selection-screen.active {
     display: flex !important;
-    animation: fadeInDeck 0.5s ease-out;
-}
-
-@keyframes fadeInDeck {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    opacity: 1;
 }
 
 .deck-select-title {
     font-family: 'Russo One', sans-serif; 
-    color: #fff; 
-    font-size: 40px; 
-    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); 
-    margin-bottom: 50px; 
-    letter-spacing: 3px;
+    color: transparent; /* Texto vazado */
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+    font-size: 50px; 
+    margin-bottom: 60px; 
+    letter-spacing: 10px;
     text-align: center;
+    text-transform: uppercase;
+    pointer-events: none;
 }
 
 .deck-options-container {
     display: flex; 
-    gap: 60px; /* Mais espaço entre as cartas flutuantes */
-    flex-wrap: wrap; 
+    gap: 100px; /* Bastante espaço entre as artes */
+    align-items: center;
     justify-content: center;
-    max-width: 1200px;
-    padding: 20px;
+    perspective: 1000px; /* Para efeitos 3D sutis se necessário */
 }
 
 .deck-option {
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    cursor: pointer; 
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
-}
-
-/* A imagem do deck - Estilo "Solto" */
-.deck-option img {
-    width: 280px; 
-    height: auto; 
-    
-    /* Sem borda grossa, apenas arredondada */
-    border-radius: 20px; 
-    
-    /* Sombra suave para dar profundidade */
-    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-    
-    /* Preto e Branco por padrão */
-    filter: grayscale(100%) brightness(0.7);
-    transition: all 0.4s ease;
-}
-
-/* --- HOVER EFFECTS (Juiciness) --- */
-.deck-option:hover {
-    transform: translateY(-10px) scale(1.05); /* Flutua pra cima */
-}
-
-.deck-option:hover img {
-    filter: grayscale(0%) brightness(1.1); /* Fica colorido e brilhante */
-    box-shadow: 0 25px 50px rgba(255, 215, 0, 0.4); /* Glow Dourado */
-}
-
-/* --- CLICADO (Selecionado) --- */
-.deck-selected img {
-    animation: deckSelectZoom 0.5s forwards ease-in-out;
-}
-
-@keyframes deckSelectZoom {
-    0% { transform: scale(1.05); opacity: 1; }
-    40% { transform: scale(0.95); opacity: 1; }
-    100% { transform: scale(1.5); opacity: 0; }
-}
-
-/* Botão Voltar */
-.return-btn {
-    margin-top: 50px;
-    padding: 12px 35px;
+    cursor: pointer; 
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    /* Removemos qualquer borda ou background container */
     background: transparent;
-    border: 2px solid rgba(255,255,255,0.3);
-    color: rgba(255,255,255,0.6);
+    padding: 0;
+    border: none;
+    outline: none;
+}
+
+/* A IMAGEM (ARTE) */
+.deck-option img {
+    width: 320px; /* Tamanho generoso */
+    height: auto; 
+    display: block;
+    
+    /* Estado Inicial: Apagado e "Frio" */
+    filter: grayscale(100%) brightness(0.4) contrast(1.2);
+    transform: scale(0.95);
+    
+    /* Recorte suave na borda da imagem, opcional */
+    border-radius: 15px;
+    
+    /* Transição suave para física de movimento */
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    /* Sombra discreta apenas para separar do fundo preto */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
+/* --- HOVER (O MOMENTO DE ESCOLHA) --- */
+
+/* O container sobe um pouco */
+.deck-option:hover {
+    z-index: 10; /* Garante que fique por cima de tudo */
+}
+
+/* A imagem ganha vida */
+.deck-option:hover img {
+    filter: grayscale(0%) brightness(1.1) contrast(1.1); /* Cor total */
+    transform: scale(1.15) translateY(-20px); /* Cresce e flutua */
+    
+    /* Glow Dourado Intenso atrás da arte */
+    box-shadow: 
+        0 20px 50px rgba(0,0,0,0.8), /* Sombra de profundidade */
+        0 0 40px rgba(255, 215, 0, 0.25); /* Brilho Dourado */
+}
+
+/* --- NOME DO DECK (APARECE SÓ NO HOVER) --- */
+.deck-option::after {
+    content: attr(data-name); /* Pega o nome do HTML */
+    position: absolute;
+    bottom: -60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    
     font-family: 'Russo One', sans-serif;
-    border-radius: 30px;
+    font-size: 24px;
+    color: #ffd700;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.deck-option:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* BOTÃO VOLTAR (Minimalista) */
+.return-btn {
+    position: absolute;
+    bottom: 50px;
+    padding: 15px 40px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.4);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 2px;
     cursor: pointer;
     transition: 0.3s;
-    font-size: 14px;
-    text-transform: uppercase;
+    border-radius: 50px;
 }
 
-.return-btn:hover { 
-    background: #fff; 
-    color: #000; 
+.return-btn:hover {
+    color: #fff;
     border-color: #fff;
-    box-shadow: 0 0 20px rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.05);
+    box-shadow: 0 0 20px rgba(255,255,255,0.1);
 }
