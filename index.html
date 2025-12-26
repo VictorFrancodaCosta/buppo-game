@@ -76,12 +76,19 @@
         </div>
 
         <div id="deck-selection-screen" class="screen" style="justify-content: center; align-items: center;">
-            <h1 class="deck-title">ESCOLHA SEU DECK</h1>
-            <div class="deck-container">
-                <div class="deck-card" onclick="selectDeck('knight')">
-                    <img src="https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png" alt="Cavaleiro">
-                    <div class="deck-name">CAVALEIRO</div>
+            <h1 class="deck-select-title">ESCOLHA SEU DECK</h1>
+            <div class="deck-options-container">
+                
+                <div class="deck-option" onclick="selectDeck('knight')">
+                    <img src="https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png" alt="Deck Cavaleiro">
+                    <div class="deck-label">CAVALEIRO</div>
                 </div>
+
+                <div class="deck-option" onclick="selectDeck('mage')">
+                    <img src="https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png" alt="Deck Mago">
+                    <div class="deck-label" style="color: #a29bfe;">MAGO</div>
+                </div>
+
             </div>
             <button class="return-btn" onclick="playNavSound(); window.goToLobby()">VOLTAR</button>
         </div>
