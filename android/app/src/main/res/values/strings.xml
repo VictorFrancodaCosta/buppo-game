@@ -3,5 +3,5 @@
     <string name="app_name">Buppo</string>
     <string name="title_activity_main">Buppo</string>
     <string name="package_name">com.buppo.game</string>
-    <string name="custom_url_scheme">com.buppo.game</string>
+    <string name="server_client_id">950871979140-4scl9644ch2mma7753mdhffoo3g779qe.apps.googleusercontent.com</string>
 </resources>
