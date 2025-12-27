@@ -506,6 +506,10 @@ function updateLoader() {
     
     if(assetsLoaded >= totalAssets) {
         console.log("Preload completo!");
+        
+        // --- FIX AUDIO VOLUME: Força a mixagem correta no início ---
+        if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
+        
         setTimeout(() => {
             const loading = document.getElementById('loading-screen');
             if(loading) {
@@ -603,10 +607,15 @@ window.updateVol = function(type, val) {
      'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 
      'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) {
+            let vol = window.masterVol || 1.0;
+            // --- NOVA MIXAGEM DE ÁUDIO ---
             if(k === 'sfx-ui-hover') {
-                audios[k].volume = 0.3 * (window.masterVol || 1.0);
+                audios[k].volume = 0.3 * vol;
+            } else if (k === 'sfx-levelup') {
+                 // VOLUME BOOST: Mantém em 100% do master, destaque sobre os outros (80%)
+                audios[k].volume = 1.0 * vol;
             } else {
-                audios[k].volume = 0.8 * (window.masterVol || 1.0); 
+                audios[k].volume = 0.8 * vol;
             }
         }
     }); 
