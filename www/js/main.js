@@ -1,8 +1,7 @@
-// ARQUIVO: js/main.js
+// ARQUIVO: js/main.js (VERSÃO FINAL CORRIGIDA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-// ADICIONEI 'signInWithCredential' NA LISTA ABAIXO:
 import { getAuth, signInWithPopup, signInWithCredential, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -15,33 +14,46 @@ const firebaseConfig = {
     appId: "1:950871979140:web:f2dba12900500c52053ed1"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+// --- BLOCO DE INICIALIZAÇÃO BLINDADO (A VACINA) ---
+let app, auth, db, provider, GoogleAuthPlugin;
 
-// --- CORREÇÃO PARA ANDROID: ACESSO AO PLUGIN ---
-// Tenta pegar o plugin do Google se estiver no celular
-const GoogleAuthPlugin = (window.Capacitor && window.Capacitor.Plugins) ? window.Capacitor.Plugins.GoogleAuth : null;
-
-// --- INICIALIZAÇÃO DO LOGIN NATIVO ---
-if (window.Capacitor && window.Capacitor.isNative && GoogleAuthPlugin) {
-    GoogleAuthPlugin.initialize({
-        // !!! ATENÇÃO: COLE SEU ID ABAIXO DENTRO DAS ASPAS !!!
-        clientId: '950871979140-4scl9644ch2mma7753mdhffoo3g779qe.apps.googleusercontent.com'
-        scopes: ['profile', 'email'],
-        grantOfflineAccess: true,
-    });
-    console.log("Google Auth Nativo Inicializado!");
+try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    provider = new GoogleAuthProvider();
+    
+    // Tenta detectar o plugin do Capacitor com segurança
+    if (window.Capacitor && window.Capacitor.Plugins) {
+        GoogleAuthPlugin = window.Capacitor.Plugins.GoogleAuth;
+    }
+} catch (e) {
+    console.error("ERRO CRÍTICO NA INICIALIZAÇÃO:", e);
+    // O jogo continuará rodando, mas sem banco de dados
 }
 
+// Inicializa o Login Nativo (se estiver no celular)
+try {
+    if (window.Capacitor && window.Capacitor.isNative && GoogleAuthPlugin) {
+        GoogleAuthPlugin.initialize({
+            // SEU ID (CONFIRA SE ESTÁ CERTO)
+            clientId: '950871979140-4scl9644ch2mma7753mdhffoo3g779qe.apps.googleusercontent.com', 
+            scopes: ['profile', 'email'],
+            grantOfflineAccess: true,
+        });
+        console.log("Google Auth Nativo Inicializado");
+    }
+} catch (error) {
+    console.warn("Aviso: Plugin Google não iniciou (Isso é normal no PC):", error);
+}
+
+// --- VARIÁVEIS GLOBAIS ---
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
-
-// --- COFRE DE ASSETS ---
 window.gameAssets = []; 
 
+// --- ASSETS ---
 const MAGE_ASSETS = {
     'ATAQUE': 'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png',
     'BLOQUEIO': 'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
@@ -412,7 +424,7 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// --- FUNÇÃO DE LOGIN HÍBRIDA (CORRIGIDA) ---
+// --- FUNÇÃO DE LOGIN HÍBRIDA (BLINDADA) ---
 window.googleLogin = async function() {
     window.playNavSound(); 
     const btnText = document.getElementById('btn-text');
@@ -422,16 +434,16 @@ window.googleLogin = async function() {
         const isNative = window.Capacitor && window.Capacitor.isNative && GoogleAuthPlugin;
 
         if (isNative) {
-            // --- CAMINHO ANDROID (PLUGIN) ---
-            console.log("Tentando Login Nativo...");
+            // --- CELULAR (PLUGIN) ---
+            console.log("Login Nativo iniciado...");
             const googleUser = await GoogleAuthPlugin.signIn();
             const idToken = googleUser.authentication.idToken;
             const credential = GoogleAuthProvider.credential(idToken);
             await signInWithCredential(auth, credential);
 
         } else {
-            // --- CAMINHO WEB (POPUP) ---
-            console.log("Tentando Login Web...");
+            // --- PC (POPUP) ---
+            console.log("Login Web iniciado...");
             await signInWithPopup(auth, provider);
         }
 
@@ -440,7 +452,7 @@ window.googleLogin = async function() {
         btnText.innerText = "ERRO - TENTE NOVAMENTE";
         
         if(window.Capacitor && window.Capacitor.isNative) {
-            alert("Erro detalhado: " + JSON.stringify(error));
+            alert("Erro Login: " + JSON.stringify(error));
         }
 
         setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000);
@@ -450,7 +462,7 @@ window.googleLogin = async function() {
 window.handleLogout = function() {
     window.playNavSound();
     
-    // Logout Híbrido
+    // Tenta logout nativo, mas não trava se der erro
     const isNative = window.Capacitor && window.Capacitor.isNative && GoogleAuthPlugin;
     if(isNative) {
         GoogleAuthPlugin.signOut().catch(e => console.log(e));
