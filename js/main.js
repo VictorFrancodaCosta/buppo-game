@@ -637,7 +637,7 @@ initAmbientParticles();
 
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
-// === MODIFICADO: CHAMADA PARA EFFECTS.JS ===
+// === MODIFICADO: CHAMADA PARA EFFECTS.JS APENAS SE FOR JOGADOR ===
 function triggerDamageEffect(isPlayer, playAudio = true) { 
     try { 
         if(playAudio) {
@@ -657,9 +657,9 @@ function triggerDamageEffect(isPlayer, playAudio = true) {
 
         // CHAMADA PARA O NOVO SISTEMA VISUAL
         if(isPlayer && window.triggerMassiveDamage) {
-            window.triggerMassiveDamage(); // Chama do effects.js
+            window.triggerMassiveDamage(); // Chama do effects.js (SÓ JOGADOR)
         } else {
-            // Fallback para o inimigo
+            // Fallback para o inimigo (Tremor simples)
             document.body.classList.add('shake-screen'); 
             setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
             let ov = document.getElementById('dmg-overlay'); 
@@ -671,14 +671,14 @@ function triggerDamageEffect(isPlayer, playAudio = true) {
 
 function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
 
-// === MODIFICADO: CHAMADA PARA EFFECTS.JS ===
+// === MODIFICADO: CHAMADA PARA EFFECTS.JS APENAS SE FOR JOGADOR ===
 function triggerHealEffect(isPlayer) { 
     try { 
         if(isPlayer && window.triggerHealEffect) {
-            window.triggerHealEffect();
+            window.triggerHealEffect(); // Luz sagrada (SÓ JOGADOR)
             playSound('sfx-heal');
         } else {
-            // Fallback
+            // Fallback Inimigo
             let elId = isPlayer ? 'p-slot' : 'm-slot'; 
             let slot = document.getElementById(elId); 
             if(slot) { 
@@ -692,94 +692,34 @@ function triggerHealEffect(isPlayer) {
     } catch(e) {} 
 }
 
-// === MODIFICADO: CHAMADA PARA EFFECTS.JS ===
-function triggerBlockEffect(isPlayer) { 
+// === MODIFICADO: LOGICA DO BLOQUEIO ===
+// Esta função agora recebe:
+// isPlayerBlocking = true -> Jogador Bloqueia (Ataque Inimigo Falha)
+// isPlayerBlocking = false -> Inimigo Bloqueia (Ataque Jogador Falha)
+function triggerBlockEffect(isPlayerBlocking) { 
     try { 
-        if(isPlayer && window.currentDeck === 'mage') {
+        // Som toca sempre
+        if(isPlayerBlocking && window.currentDeck === 'mage') {
              playSound('sfx-block-mage');
         } else {
              playSound('sfx-block'); 
         }
         
-        if(isPlayer && window.triggerBlockEffect) {
-            window.triggerBlockEffect();
+        // --- JUICY FX: SÓ QUANDO O JOGADOR É BLOQUEADO ---
+        // "SOMENTE quando o usuário tem seu ataque bloqueado pelo inimigo"
+        // Isso significa: isPlayerBlocking == false (Inimigo está bloqueando)
+        if(!isPlayerBlocking && window.triggerBlockEffect) {
+            window.triggerBlockEffect(); // Tela recua, onda de choque
         } else {
-            let ov = document.getElementById('block-overlay'); 
-            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
-            document.body.classList.add('shake-screen'); 
-            setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+            // Se o Jogador bloqueou (isPlayerBlocking == true), 
+            // NÃO chama o efeito visual grande, talvez apenas um shake leve ou nada.
+            // O usuario pediu: "(Não quando o usuário bloqueia)"
+            
+            // Mantemos um feedback visual mínimo ou nada se preferir. 
+            // Vamos deixar apenas o shake leve padrão se for o inimigo bloqueando (fallback)
+            // Mas como estamos no 'else' (Jogador bloqueou), não fazemos nada visual agressivo.
         }
     } catch(e) {} 
-}
-
-function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
-function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
-function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
-function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
-
-function dealAllInitialCards() {
-    isProcessing = true; 
-    playSound('sfx-deal'); 
-    
-    const handEl = document.getElementById('player-hand'); 
-    const cards = Array.from(handEl.children);
-    
-    cards.forEach((cardEl, i) => {
-        cardEl.classList.add('intro-anim');
-        cardEl.style.animationDelay = (i * 0.1) + 's';
-        cardEl.style.opacity = ''; 
-    });
-
-    window.isMatchStarting = false;
-    if(handEl) handEl.classList.remove('preparing');
-
-    setTimeout(() => {
-        cards.forEach(c => {
-            c.classList.remove('intro-anim');
-            c.style.animationDelay = '';
-        });
-        isProcessing = false;
-    }, 2000); 
-}
-
-function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
-
-function onCardClick(index) {
-    if(isProcessing) return; if (!player.hand[index]) return;
-    playSound('sfx-play'); document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active');
-    document.getElementById('tooltip-box').style.display = 'none'; isLethalHover = false; 
-    let cardKey = player.hand[index];
-    if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
-    if(cardKey === 'DESARMAR') { window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => playCardFlow(index, choice)); } 
-    else { playCardFlow(index, null); }
-}
-
-function getBestAIMove() {
-    let moves = []; 
-    monster.hand.forEach((card, index) => { 
-        if(card !== monster.disabled) {
-            moves.push({ card: card, index: index, score: 0 }); 
-        }
-    });
-    if(moves.length === 0) return null;
-    let recentHistory = playerHistory.slice(-5);
-    let attackCount = recentHistory.filter(c => c === 'ATAQUE').length;
-    let playerAggro = recentHistory.length > 0 ? (attackCount / recentHistory.length) : 0.5;
-    let threatLvl = player.lvl + player.bonusAtk;
-    let amIDying = monster.hp <= threatLvl;
-    let myDmg = monster.lvl + monster.bonusAtk;
-    let canKill = player.hp <= myDmg;
-    moves.forEach(m => {
-        let score = 50; 
-        if (m.card === 'ATAQUE') { if (canKill) score += 500; if (playerAggro < 0.4) score += 40; if (amIDying) score -= 30; }
-        else if (m.card === 'BLOQUEIO') { if (amIDying) score += 100; if (playerAggro > 0.6) score += 60; if (threatLvl >= 3) score += 40; }
-        else if (m.card === 'DESCANSAR') { if (monster.hp === monster.maxHp) score -= 100; else if (monster.hp <= 3) score += 50; if (playerAggro > 0.7) score -= 40; }
-        else if (m.card === 'DESARMAR') { if (amIDying) score += 120; if (playerAggro > 0.8) score += 50; }
-        else if (m.card === 'TREINAR') { if (turnCount < 5) score += 30; if (amIDying || monster.hp <= 3) score -= 200; }
-        m.score = score + Math.random() * 15; 
-    });
-    moves.sort((a, b) => b.score - a.score);
-    return moves[0];
 }
 
 function playCardFlow(index, pDisarmChoice) {
@@ -847,8 +787,17 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); 
     let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
     
-    if(pBlocks) { clash = true; triggerBlockEffect(true); }
-    else if(mBlocks) { clash = true; triggerBlockEffect(false); }
+    // === LÓGICA DE BLOQUEIO AJUSTADA ===
+    if(pBlocks) { 
+        clash = true; 
+        // Jogador Bloqueou: true -> triggerBlockEffect(true) -> SEM ANIMAÇÃO VISUAL (Só som)
+        triggerBlockEffect(true); 
+    }
+    else if(mBlocks) { 
+        clash = true; 
+        // Inimigo Bloqueou: false -> triggerBlockEffect(false) -> COM ANIMAÇÃO VISUAL (Recuo + Onda)
+        triggerBlockEffect(false); 
+    }
 
     let nextPlayerDisabled = null; let nextMonsterDisabled = null;
     if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
@@ -858,14 +807,37 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
     if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
 
-    if(pDmg > 0) { player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); let soundOn = !(clash && mAct === 'BLOQUEIO'); triggerDamageEffect(true, soundOn); }
-    if(mDmg > 0) { monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn); }
+    if(pDmg > 0) { 
+        player.hp -= pDmg; 
+        showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); 
+        let soundOn = !(clash && mAct === 'BLOQUEIO'); 
+        // Dano no Jogador -> triggerDamageEffect(true) -> ANIMAÇÃO DE SANGUE
+        triggerDamageEffect(true, soundOn); 
+    }
+    if(mDmg > 0) { 
+        monster.hp -= mDmg; 
+        showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); 
+        let soundOn = !(clash && pAct === 'BLOQUEIO'); 
+        // Dano no Inimigo -> triggerDamageEffect(false) -> SEM SANGUE (Só tremor)
+        triggerDamageEffect(false, soundOn); 
+    }
     
     updateUI();
     let pDead = player.hp <= 0, mDead = monster.hp <= 0;
     
-    if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
-    if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
+    if(!pDead && pAct === 'DESCANSAR') { 
+        let healAmount = (pDmg === 0) ? 3 : 2; 
+        player.hp = Math.min(player.maxHp, player.hp + healAmount); 
+        showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); 
+        // Cura no Jogador -> triggerHealEffect(true) -> ANIMAÇÃO DE LUZ
+        triggerHealEffect(true); 
+    }
+    if(!mDead && mAct === 'DESCANSAR') { 
+        let healAmount = (mDmg === 0) ? 3 : 2; 
+        monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); 
+        // Cura no Inimigo -> triggerHealEffect(false) -> SEM LUZ (Só partículas)
+        triggerHealEffect(false); 
+    }
 
     function handleExtraXP(u) { 
         if(u.deck.length > 0) { 
@@ -885,326 +857,4 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
     }, 700);
-}
-
-function checkLevelUp(u, doneCb) {
-    if(u.xp.length >= 5) {
-        let xpContainer = document.getElementById(u.id + '-xp'); 
-        let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
-        
-        minis.forEach(realCard => {
-            let rect = realCard.getBoundingClientRect(); 
-            let clone = document.createElement('div'); 
-            clone.className = 'xp-anim-clone';
-            clone.style.left = rect.left + 'px'; 
-            clone.style.top = rect.top + 'px'; 
-            clone.style.width = rect.width + 'px'; 
-            clone.style.height = rect.height + 'px'; 
-            clone.style.backgroundImage = realCard.style.backgroundImage;
-            if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down');
-            document.body.appendChild(clone);
-        });
-        minis.forEach(m => m.style.opacity = '0');
-
-        setTimeout(() => {
-            let counts = {}; 
-            u.xp.forEach(x => counts[x] = (counts[x]||0)+1); 
-            let triggers = []; 
-            for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
-            
-            processMasteries(u, triggers, () => {
-                let lvlEl = document.getElementById(u.id+'-lvl'); 
-                u.lvl++; 
-                
-                lvlEl.classList.add('level-up-anim'); 
-                triggerLevelUpVisuals(u.id); 
-                
-                playSound('sfx-levelup'); 
-                
-                setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
-
-                u.xp.forEach(x => u.deck.push(x)); 
-                u.xp = []; 
-                shuffle(u.deck); 
-                
-                let clones = document.getElementsByClassName('xp-anim-clone'); 
-                while(clones.length > 0) clones[0].remove();
-                
-                updateUI(); 
-                doneCb();
-            });
-        }, 1000); 
-    } else { doneCb(); }
-}
-
-function triggerLevelUpVisuals(unitId) {
-    let clusterId = (unitId === 'p') ? 'p-stats-cluster' : 'm-stats-cluster';
-    let cluster = document.getElementById(clusterId);
-    
-    if(!cluster) return;
-
-    const text = document.createElement('div');
-    text.innerText = "LEVEL UP!";
-    text.className = 'levelup-text';
-
-    if (unitId === 'p') {
-        text.classList.add('lvl-anim-up'); 
-    } else {
-        text.classList.add('lvl-anim-down'); 
-    }
-
-    cluster.appendChild(text);
-    setTimeout(() => { text.remove(); }, 2000);
-}
-
-function processMasteries(u, triggers, cb) {
-    if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
-    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); } 
-    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } 
-    else if(type === 'TREINAR' && u.id === 'm') {
-        let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR' && x !== 'DESCANSAR'))]; 
-        if(opts.length > 0) {
-            let choice = opts[0];
-            if(u.hp <= 4 && opts.includes('DESCANSAR')) choice = 'DESCANSAR';
-            else if(opts.includes('ATAQUE')) choice = 'ATAQUE';
-            else if(opts.includes('BLOQUEIO')) choice = 'BLOQUEIO';
-            if(choice === 'DESARMAR') { let target = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE'; player.disabled = target; showFloatingText('p-lvl', "BLOQUEADO!", "#fab1a0"); } else { applyMastery(u, choice); }
-        }
-        processMasteries(u, triggers, cb);
-    }
-    else if(type === 'DESARMAR' && u.id === 'm') { let target = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE'; player.disabled = target; showFloatingText('p-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }
-    else { applyMastery(u, type); processMasteries(u, triggers, cb); }
-}
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
-function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
-
-function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false, isPlayer = false) {
-    let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
-    let e = { top: 0, left: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
-
-    const fly = document.createElement('div');
-    fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
-    
-    let imgUrl = getCardArt(cardKey, isPlayer);
-    fly.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
-    
-    if (isToTable) fly.classList.add('card-bounce');
-
-    if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; } 
-    else { let w = window.innerWidth < 768 ? '84px' : '105px'; let h = window.innerWidth < 768 ? '120px' : '150px'; fly.style.width=w; fly.style.height=h; }
-
-    let tableW = window.innerWidth < 768 ? '110px' : '180px';
-    let tableH = window.innerWidth < 768 ? '170px' : '260px';
-
-    fly.style.top=s.top+'px'; fly.style.left=s.left+'px';
-    if(endId.includes('xp')) fly.style.transform='scale(0.3)';
-    document.body.appendChild(fly); fly.offsetHeight;
-    
-    if(isToTable) { fly.style.width=tableW; fly.style.height=tableH; }
-    fly.style.top=e.top+'px'; fly.style.left=e.left+'px';
-    setTimeout(() => { fly.remove(); if(cb) cb(); }, 250);
-}
-
-function drawCardAnimated(unit, deckId, handId, cb) { 
-    if(cb) cb(); 
-}
-
-function renderTable(key, slotId, isPlayer = false) { 
-    let el = document.getElementById(slotId); 
-    el.innerHTML = ''; 
-    let card = document.createElement('div'); 
-    card.className = `card ${CARDS_DB[key].color} card-on-table`; 
-    let imgUrl = getCardArt(key, isPlayer);
-    card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`; 
-    el.appendChild(card); 
-}
-
-function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
-
-function updateUnit(u) {
-    document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
-    document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
-    let hpPct = (Math.max(0,u.hp)/u.maxHp)*100;
-    let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
-    if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
-    document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
-    
-    if(u === player) {
-        let deckImgEl = document.getElementById('p-deck-img');
-        if(window.currentDeck === 'mage') {
-            deckImgEl.src = MAGE_ASSETS.DECK_IMG;
-        } else {
-            deckImgEl.src = 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png';
-        }
-    }
-
-    if(u===player) {
-        let hc=document.getElementById('player-hand'); hc.innerHTML='';
-        u.hand.forEach((k,i)=>{
-            let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
-            c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
-            if(u.disabled===k) c.classList.add('disabled-card');
-            
-            if(window.isMatchStarting) {
-                c.style.opacity = '0';
-            } else {
-                c.style.opacity = '1';
-            }
-
-            let lethalType = checkCardLethality(k); 
-            let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
-            
-            let imgUrl = getCardArt(k, true);
-            c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
-            
-            c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
-            c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
-            c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
-            hc.appendChild(c); apply3DTilt(c, true);
-        });
-    }
-    
-    let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
-    u.xp.forEach(k=>{ 
-        let d=document.createElement('div'); 
-        d.className='xp-mini'; 
-        let imgUrl = getCardArt(k, (u === player));
-        d.style.backgroundImage = `url('${imgUrl}')`; 
-        d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; 
-        d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; 
-        xc.appendChild(d); 
-    });
-    
-    let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
-    if(u.bonusAtk>0) addMI(mc, 'ATAQUE', u.bonusAtk, '#e74c3c', u.id); 
-    if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
-}
-
-function bindMasteryTooltip(el, key, value, ownerId) {
-    return {
-        onmouseenter: (e) => {
-            let db=CARDS_DB[key];
-            document.getElementById('tt-title').innerHTML = key; 
-            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
-            tt.style.display = 'block';
-            tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); 
-            void tt.offsetWidth; 
-            let rect = el.getBoundingClientRect();
-            if(ownerId === 'p') {
-                tt.classList.add('tooltip-anim-up');
-                tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
-                tt.style.top = 'auto';
-            } else {
-                tt.classList.add('tooltip-anim-down');
-                tt.style.top = (rect.bottom + 10) + 'px';
-                tt.style.bottom = 'auto';
-            }
-            tt.style.left = (rect.left + rect.width/2) + 'px';
-            tt.style.transform = "translateX(-50%)"; 
-        }
-    };
-}
-
-function addMI(parent, key, value, col, ownerId){ 
-    let d = document.createElement('div'); d.className = 'mastery-icon'; 
-    d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`;
-    d.style.borderColor = col; 
-    let handlers = bindMasteryTooltip(d, key, value, ownerId);
-    d.onmouseenter = handlers.onmouseenter;
-    d.onmouseleave = () => { tt.style.display = 'none'; }; 
-    parent.appendChild(d); 
-}
-
-function showFloatingText(eid, txt, col) { 
-    let el = document.createElement('div'); 
-    el.className='floating-text'; 
-    el.innerText=txt; 
-    el.style.color=col; 
-    let parent = document.getElementById(eid);
-    if(parent) {
-        let rect = parent.getBoundingClientRect();
-        el.style.left = (rect.left + rect.width/2) + 'px';
-        el.style.top = (rect.top) + 'px';
-        document.body.appendChild(el); 
-    } else {
-         document.body.appendChild(el);
-    }
-    setTimeout(()=>el.remove(), 2000); 
-}
-
-window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
-window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
-const tt=document.getElementById('tooltip-box');
-
-function bindFixedTooltip(el,k) { 
-    const updatePos = () => { 
-        let rect = el.getBoundingClientRect(); 
-        tt.style.left = (rect.left + rect.width / 2) + 'px'; 
-    }; 
-    return { 
-        onmouseenter: (e) => { 
-            showTT(k); 
-            tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
-            tt.style.top = 'auto'; 
-            
-            tt.classList.remove('tooltip-anim-up'); 
-            tt.classList.remove('tooltip-anim-down'); 
-            tt.classList.add('tooltip-anim-up'); 
-            updatePos(); 
-            el.addEventListener('mousemove', updatePos); 
-        } 
-    }; 
-}
-
-function showTT(k) {
-    let db = CARDS_DB[k];
-    document.getElementById('tt-title').innerHTML = k; 
-    if (db.customTooltip) {
-        let content = db.customTooltip;
-        let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
-        content = content.replace('{PLAYER_LVL}', currentLvl);
-        let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
-        let reflectDmg = 1 + bonusBlock;
-        content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
-        document.getElementById('tt-content').innerHTML = content;
-    } else {
-        document.getElementById('tt-content').innerHTML = `
-            <span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span>
-            <span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>
-            <span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>
-        `;
-    }
-    tt.style.display = 'block';
-}
-
-function apply3DTilt(element, isHand = false) { 
-    if(window.innerWidth < 768) return; 
-    
-    element.addEventListener('mousemove', (e) => { 
-        const rect = element.getBoundingClientRect(); 
-        const x = e.clientX - rect.left; 
-        const y = e.clientY - rect.top; 
-        const xPct = (x / rect.width) - 0.5; 
-        const yPct = (y / rect.height) - 0.5; 
-        
-        element.style.setProperty('--rx', xPct);
-        element.style.setProperty('--ry', yPct);
-
-        let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
-        let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
-        if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
-        
-        element.style.transform = `${lift} ${rotate}`; 
-        
-        let art = element.querySelector('.card-art'); 
-        if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
-    }); 
-    
-    element.addEventListener('mouseleave', () => { 
-        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
-        let art = element.querySelector('.card-art'); 
-        if(art) art.style.backgroundPosition = 'center'; 
-        element.style.setProperty('--rx', 0);
-        element.style.setProperty('--ry', 0);
-    }); 
 }
