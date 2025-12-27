@@ -152,163 +152,146 @@ body {
 #p-deck-img:hover { transform: scale(1.05); }
 #p-deck-count { margin-top: -30px; z-index: 31; font-size: 18px; text-shadow: 0 2px 4px #000; }
 
-/* --- BASE DO HUD (Compartilhado) --- */
-.avatar-cluster {
-    position: absolute;
-    z-index: 30;
-    
-    /* Dimensões fixas para manter a proporção da arte (320x120) */
-    width: 320px;
-    height: 120px;
-    
-    /* Removemos o estilo antigo (caixa marrom) */
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    border-radius: 0;
-    padding: 0; /* Vamos controlar o espaçamento manualmente nos filhos */
-    
-    display: flex;
-    align-items: center;
-    
-    /* Sombra suave para o objeto inteiro flutuar */
-    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.6));
-    
-    /* Mantém a animação de flutuar */
-    animation: hudFloat 4s ease-in-out infinite;
-}
-
-/* --- HUD DO JOGADOR (Canto Inferior Esquerdo) --- */
+/* ----------------------------------------------------------------- */
+/* --- HUD DO JOGADOR (Totalmente Recalibrado e Aumentado) --- */
+/* ----------------------------------------------------------------- */
 #p-stats-cluster {
-    bottom: 30px; 
-    left: 30px;
+    position: absolute;
+    bottom: 25px; 
+    left: 20px;
     
-    /* IMAGEM DE FUNDO */
+    /* AUMENTADO: de 320px para 440px de largura */
+    width: 440px;
+    height: 165px;
+    
     background-image: url('https://i.ibb.co/v6whjh6v/Gemini-Generated-Image-7rbpnm7rbpnm7rbp.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
-    /* MUDANÇA CRÍTICA: display block para permitir posicionamento livre */
-    display: block; 
+    display: block; /* Importante para o position absolute dos filhos funcionar */
+    z-index: 100;
+    
+    filter: drop-shadow(0 10px 25px rgba(0,0,0,0.8));
+    animation: hudFloat 4s ease-in-out infinite;
 }
 
-/* --- POSICIONAMENTO ABSOLUTO DOS ELEMENTOS (Coordenadas Exatas) --- */
-
-/* 1. NÚMERO DO NÍVEL (Dentro do Medalhão do Dragão) */
+/* 1. NÚMERO DO NÍVEL (Círculo da Esquerda) */
 #p-stats-cluster .lvl-circle {
     position: absolute;
-    left: 42px;  /* Coordenada X do centro do medalhão */
-    top: 42px;   /* Coordenada Y do centro do medalhão */
-    width: 40px;
-    height: 40px;
+    /* Ajuste fino para cair no centro do medalhão da nova escala */
+    left: 55px;  
+    top: 55px;
+    width: 60px;
+    height: 60px;
     
-    /* Removemos bordas e fundos antigos */
-    background: transparent; 
-    border: none; 
-    box-shadow: none;
+    background: transparent; border: none; box-shadow: none;
     
-    /* Estilo do Texto */
-    color: #00cec9; /* Azul ciano brilhante para contrastar com o marrom */
-    font-size: 28px;
-    text-shadow: 0 0 10px #00cec9, 2px 2px 0 #000;
-    margin: 0; /* Remove margens antigas */
-}
-
-/* Oculta o container genérico para podermos posicionar os filhos soltos */
-#p-stats-cluster .unit-info {
-    display: contents; /* Isso faz o container "desaparecer" e deixa os filhos livres */
-}
-
-/* 2. NOME DO JOGADOR (Dentro do Pergaminho Superior) */
-#p-stats-cluster .unit-name {
-    position: absolute;
-    left: 135px; /* Início do pergaminho */
-    top: 26px;   /* Altura do pergaminho */
-    width: 160px; /* Largura da área do pergaminho */
+    color: #00cec9;
+    font-family: 'Russo One', sans-serif;
+    font-size: 34px; /* Aumentado */
+    text-shadow: 0 0 15px #00cec9, 2px 2px 0 #000;
     
-    text-align: center; /* Centraliza o nome no papel */
-    font-size: 14px;
-    color: #3e2723; /* Cor de tinta escura para parecer escrito no papel */
-    text-shadow: none;
-    font-weight: 800;
+    display: flex; justify-content: center; align-items: center;
     margin: 0;
 }
 
-/* 3. BARRA DE VIDA (Dentro do Trilho Escuro) */
+/* 2. NOME DO JOGADOR (Pergaminho Superior) */
+#p-stats-cluster .unit-name {
+    position: absolute;
+    /* Ajustado para a tira de papel superior */
+    left: 180px; 
+    top: 38px;
+    width: 200px;
+    
+    font-family: 'MedievalSharp', cursive; /* Fonte mais temática */
+    font-size: 16px;
+    color: #3e2723; /* Marrom escuro para tinta */
+    font-weight: 900;
+    text-align: center;
+    text-transform: uppercase;
+    text-shadow: none; /* Tinta não tem sombra brilhante */
+    margin: 0;
+}
+
+/* 3. BARRA DE VIDA (Tubo Escuro Central) */
 #p-stats-cluster .hp-tube {
     position: absolute;
-    left: 147px; /* Início do buraco da barra */
-    top: 54px;   /* Altura exata do buraco */
-    width: 145px; /* Comprimento exato do buraco */
-    height: 11px; /* Espessura */
+    /* Encaixe exato no tubo escuro */
+    left: 195px;
+    top: 78px;
+    width: 200px;
+    height: 16px;
     
     background: transparent;
     border: none;
     box-shadow: inset 0 0 5px #000;
-    border-radius: 4px;
+    border-radius: 6px;
     margin: 0;
 }
 
-/* Texto da vida (Ex: 6/6) centralizado na barra */
+/* Texto da vida dentro da barra */
 #p-stats-cluster .hp-txt {
-    font-size: 10px;
-    top: -1px; /* Pequeno ajuste vertical */
+    font-size: 11px;
+    top: -1px;
+    font-weight: bold;
     text-shadow: 1px 1px 0 #000;
 }
 
-/* 4. MAESTRIAS (Nos Quadrados Inferiores) */
+/* 4. MAESTRIAS (Quadrados Inferiores) */
 #p-stats-cluster .mastery-row {
     position: absolute;
-    left: 153px; /* Posição do primeiro quadrado */
-    top: 76px;   /* Altura dos quadrados */
+    /* Alinhado com os primeiros quadrados da direita */
+    left: 198px; 
+    top: 108px;
     
     display: flex;
-    gap: 22px; /* Distância exata entre um quadrado e outro */
-    margin: 0;
-    padding: 0;
+    gap: 20px; /* Distância exata entre os slots */
+    margin: 0; padding: 0;
 }
 
-/* Ícone da Maestria */
 #p-stats-cluster .mastery-icon {
-    width: 26px;  /* Tamanho para caber dentro do quadrado desenhado */
-    height: 26px;
+    width: 34px;
+    height: 34px;
     border: none;
     background: transparent;
     box-shadow: none;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-/* --- HUD DO INIMIGO (Mantendo funcional sem imagem por enquanto) --- */
-#m-stats-cluster {
-    top: 30px; 
-    right: 30px; 
-    flex-direction: row-reverse; 
-    text-align: right;
-    
-    /* Fallback visual temporário para o inimigo não sumir */
-    background: rgba(62, 39, 35, 0.9);
-    border: 3px solid #ffd700;
-    border-radius: 12px;
-    width: auto; height: auto; padding: 10px 20px; /* Reseta tamanho fixo */
+    display: flex; justify-content: center; align-items: center;
 }
 
-/* --- FIM DO BLOCO CLUSTER --- */
+/* Oculta o container intermediário */
+#p-stats-cluster .unit-info { display: contents; }
+
+
+/* --- HUD DO INIMIGO (Mantido Simples para não quebrar) --- */
+#m-stats-cluster {
+    position: absolute;
+    top: 30px; 
+    right: 30px; 
+    
+    /* Fallback visual funcional */
+    background: rgba(62, 39, 35, 0.95);
+    border: 3px solid #ffd700;
+    border-radius: 12px;
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 15px;
+    flex-direction: row-reverse; 
+    text-align: right;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    min-width: 250px;
+}
+/* Estilos padrão para o inimigo (já que ele não usa a imagem do jogador) */
+#m-stats-cluster .lvl-circle { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #ffd700, #cfaa00); color: #000; font-size: 24px; display: flex; justify-content: center; align-items: center; border: 2px solid #8c7200; }
+#m-stats-cluster .hp-tube { width: 100%; height: 18px; background: #222; border-radius: 10px; border: 2px solid #3e2723; overflow: hidden; position: relative; }
+
+/* ----------------------------------------------------------------- */
+
+/* ANIMAÇÃO DE FLUTUAR DOS HUDS */
+@keyframes hudFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
 .unit-info { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
 .unit-name { font-family: 'Russo One', sans-serif; font-size: 16px; margin-bottom: 8px; display: block; text-transform: uppercase; text-shadow: 2px 2px 0 #000; letter-spacing: 1px; }
-.lvl-circle { position: relative; width: 60px; height: 60px; flex-shrink: 0; background: linear-gradient(135deg, var(--gold), #cfaa00); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-family: 'Russo One', sans-serif; font-size: 26px; border: 3px solid #8c7200; color: #4a3b2a; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-.level-up-anim { animation: levelPulse 0.4s ease-out; color: #fff !important; background: var(--gold) !important; box-shadow: 0 0 50px var(--gold); }
-@keyframes levelPulse { 0% { transform: scale(1); } 50% { transform: scale(1.6); } 100% { transform: scale(1); } }
-.hp-tube { width: 100%; height: 22px; background: #222; border-radius: 12px; overflow: hidden; position: relative; border: 3px solid var(--wood-dark); box-shadow: inset 0 5px 10px rgba(0,0,0,0.8); }
-.hp-liquid { height: 100%; width: 100%; border-radius: 12px; transition: width 0.4s ease-out, background 0.4s ease; position: relative; }
-.hp-liquid::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background-image: linear-gradient(-45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.2) 75%, transparent 75%, transparent); background-size: 20px 20px; animation: moveLiquid 1s linear infinite; opacity: 0.4; }
-@keyframes moveLiquid { 0% { background-position: 0 0; } 100% { background-position: 20px 20px; } }
-.hp-txt { position: absolute; width: 100%; top:0; left:0; height: 100%; display: flex; justify-content: center; align-items: center; font-family: 'Russo One', sans-serif; font-size: 12px; color: #fff; text-shadow: 0 1px 3px #000; z-index: 5; }
-.mastery-row { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-start; }
-.mastery-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--wood-dark); border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; font-size: 16px; position: relative; cursor: help; box-shadow: 0 3px 6px rgba(0,0,0,0.5); transition: transform 0.2s; }
-.mastery-icon:hover { transform: scale(1.2); z-index: 10; border-color: #fff !important; }
-.mastery-lvl { position: absolute; bottom: -5px; right: -5px; background: var(--gold); color: #000; font-family: 'Russo One', sans-serif; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid #000; }
+
+/* XP AREA E OUTROS ELEMENTOS */
 .xp-area { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; height: 70px; min-width: 200px; padding: 0 15px; background: var(--wood-light); border: 4px solid var(--wood-dark); border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); z-index: 50; }
 .xp-glow { box-shadow: 0 0 40px rgba(255, 215, 0, 0.6) !important; border-color: var(--gold) !important; }
 #m-xp { top: 30px; } #p-xp { bottom: 170px; } 
