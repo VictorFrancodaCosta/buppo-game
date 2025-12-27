@@ -1172,3 +1172,30 @@ function apply3DTilt(element, isHand = false) {
         element.style.setProperty('--ry', 0);
     }); 
 }
+
+// ARQUIVO: js/main.js
+
+function triggerLevelUpVisuals(unitId) {
+    // Seleciona o cluster correto (Caixa de stats do jogador ou inimigo)
+    let clusterId = (unitId === 'p') ? 'p-stats-cluster' : 'm-stats-cluster';
+    let cluster = document.getElementById(clusterId);
+    
+    if(!cluster) return;
+
+    // Cria o elemento de texto
+    const text = document.createElement('div');
+    text.innerText = "LEVEL UP!";
+    text.className = 'levelup-text'; // Classe base do CSS novo
+
+    // Define a direção baseada em quem upou
+    if (unitId === 'p') {
+        text.classList.add('lvl-anim-up'); // Jogador: Sobe
+    } else {
+        text.classList.add('lvl-anim-down'); // Inimigo: Desce
+    }
+
+    cluster.appendChild(text);
+
+    // Remove do HTML após a animação acabar (2 segundos)
+    setTimeout(() => { text.remove(); }, 2000);
+}
