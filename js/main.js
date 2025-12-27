@@ -615,7 +615,7 @@ window.updateVol = function(type, val) {
                  // VOLUME BOOST: Mantém em 100% do master, destaque sobre os outros (80%)
                 audios[k].volume = 1.0 * vol;
             } else {
-                audios[k].volume = 0.8 * vol;
+                audios[k].volume = 0.2 * vol;
             }
         }
     }); 
