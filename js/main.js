@@ -876,23 +876,24 @@ function checkLevelUp(u, doneCb) {
             let triggers = []; 
             for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
             
-            processMasteries(u, triggers, () => {
+processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); 
                 u.lvl++; 
                 
-                // --- MANTIDO: O círculo pulsa ---
+                // Círculo pulsa (mantido)
                 lvlEl.classList.add('level-up-anim'); 
                 
-                // --- REMOVIDO: O texto flutuante (triggerLevelUpVisuals) ---
+                // >>> NOVA CHAMADA AQUI <<<
+                triggerLevelUpVisuals(u.id); 
+                // >>>>>>>>>>>><<<<<<<<<<<<
                 
                 playSound('sfx-levelup'); 
                 
-                // Remove a classe de pulso após 1 segundo
                 setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
 
                 u.xp.forEach(x => u.deck.push(x)); 
                 u.xp = []; 
-                shuffle(u.deck); 
+                shuffle(u.deck);
                 
                 let clones = document.getElementsByClassName('xp-anim-clone'); 
                 while(clones.length > 0) clones[0].remove();
