@@ -474,7 +474,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     transform: translateX(-50%);
     font-family: 'Bangers', cursive; /* Fonte Cartoon */
     font-size: 48px;
-    color: #ffeaa7; /* Amarelo Cartoon Claro */
+    color: #fac32d; /* Amarelo Cartoon Claro */
     
     /* Borda Preta Grossa (Outline) */
     -webkit-text-stroke: 2px #000;
