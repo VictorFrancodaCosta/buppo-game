@@ -466,3 +466,53 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     #deck-selection-screen { gap: 15px; }
 }
  
+/* ARQUIVO: css/style.css - Adicione ao FINAL do arquivo */
+
+/* 1. Importando a fonte Bangers para o efeito cartoon */
+@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
+
+/* 2. Estilo do Texto LEVEL UP */
+.levelup-text {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Bangers', cursive; /* Fonte Cartoon */
+    font-size: 48px;
+    color: #ffeaa7; /* Amarelo Cartoon Claro */
+    
+    /* Borda Preta Grossa (Outline) */
+    -webkit-text-stroke: 2px #000;
+    paint-order: stroke fill;
+    
+    /* Sombra dura para dar profundidade 3D */
+    text-shadow: 4px 4px 0 #000;
+    
+    white-space: nowrap;
+    z-index: 500;
+    pointer-events: none;
+    opacity: 0;
+}
+
+/* 3. Animação para o JOGADOR (Sobe) */
+.lvl-anim-up {
+    top: -20px;
+    animation: floatLvlUp 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes floatLvlUp {
+    0% { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.5) rotate(-5deg); }
+    20% { opacity: 1; transform: translateX(-50%) translateY(-30px) scale(1.2) rotate(0deg); } /* Pop! */
+    100% { opacity: 0; transform: translateX(-50%) translateY(-120px) scale(1.0); } /* Fade out subindo */
+}
+
+/* 4. Animação para o INIMIGO (Desce) */
+.lvl-anim-down {
+    bottom: -20px;
+    animation: floatLvlDown 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes floatLvlDown {
+    0% { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.5) rotate(5deg); }
+    20% { opacity: 1; transform: translateX(-50%) translateY(30px) scale(1.2) rotate(0deg); } /* Pop! */
+    100% { opacity: 0; transform: translateX(-50%) translateY(120px) scale(1.0); } /* Fade out descendo */
+}
