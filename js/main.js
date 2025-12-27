@@ -70,7 +70,10 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, 
         { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' }, 
         { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' }, 
-        { id: 'sfx-train', src: 'https://files.catbox.moe/f4hy7e.mp3' }, 
+        
+        // --- SOM DE TREINAR ATUALIZADO ---
+        { id: 'sfx-train', src: 'https://files.catbox.moe/fqsgr1.mp3' }, 
+        
         { id: 'sfx-disarm', src: 'https://files.catbox.moe/udd2sz.mp3' }, 
         { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
         { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' }, 
@@ -614,6 +617,9 @@ window.updateVol = function(type, val) {
             } else if (k === 'sfx-levelup') {
                  // VOLUME BOOST: Mantém em 100% do master, destaque sobre os outros (80%)
                 audios[k].volume = 1.0 * vol;
+            } else if (k === 'sfx-train') {
+                // VOLUME REDUZIDO: 50% para não estourar
+                audios[k].volume = 0.5 * vol;
             } else {
                 audios[k].volume = 0.8 * vol;
             }
