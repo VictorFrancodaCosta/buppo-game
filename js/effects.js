@@ -59,56 +59,55 @@ window.triggerHealEffect = function() {
 window.triggerDamageEffect = function() {
     const body = document.body;
     const bloodContainer = document.getElementById('blood-container');
-    const cutLine = document.getElementById('cut-line');
+    // const cutLine = document.getElementById('cut-line'); // Removido referência ao corte
 
-    // 1. Tremor
+    // 1. Tremor (Mantido)
     body.classList.remove('shake-screen-hard');
     void body.offsetWidth; 
     body.classList.add('shake-screen-hard');
 
-    // 2. Corte
-    cutLine.classList.remove('active');
-    void cutLine.offsetWidth;
-    cutLine.classList.add('active');
+    // 2. O CORTE FOI REMOVIDO DAQUI
 
-    // 3. Sangue
-    bloodContainer.innerHTML = ''; 
-    // Manchas Grandes
-    for(let i=0; i<4; i++) {
-        const bigSpot = document.createElement('div');
-        bigSpot.classList.add('blood-spot', 'big-splatter');
-        const size = Math.random() * 100 + 100; 
-        bigSpot.style.width = size + 'px';
-        bigSpot.style.height = size + 'px';
-        bigSpot.style.left = (Math.random() * 100 - 10) + '%';
-        bigSpot.style.top = (Math.random() * 100 - 10) + '%';
-        bigSpot.style.animationDelay = (Math.random() * 0.1) + 's';
-        bloodContainer.appendChild(bigSpot);
-    }
-    // Gotas
-    const drops = Math.floor(Math.random() * 10 + 20);
-    for(let i=0; i < drops; i++) {
-        const drop = document.createElement('div');
-        drop.classList.add('blood-spot');
-        const size = Math.random() * 25 + 10;
-        drop.style.width = size + 'px';
-        drop.style.height = size + 'px';
-        drop.style.left = Math.random() * 100 + 'vw';
-        drop.style.top = Math.random() * 100 + 'vh';
-        const deform = Math.random() * 20 + 40; 
-        drop.style.borderRadius = `${deform}% ${100-deform}% ${deform}% ${100-deform}%`;
-        drop.style.animationDelay = (Math.random() * 0.2 + 0.1) + 's';
-        bloodContainer.appendChild(drop);
+    // 3. Sangue (Mantido)
+    if (bloodContainer) {
+        bloodContainer.innerHTML = ''; 
+        
+        // A) Manchas GRANDES
+        for(let i=0; i<4; i++) {
+            const bigSpot = document.createElement('div');
+            bigSpot.classList.add('blood-spot', 'big-splatter');
+            const size = Math.random() * 100 + 100; 
+            bigSpot.style.width = size + 'px';
+            bigSpot.style.height = size + 'px';
+            bigSpot.style.left = (Math.random() * 100 - 10) + '%';
+            bigSpot.style.top = (Math.random() * 100 - 10) + '%';
+            bigSpot.style.animationDelay = (Math.random() * 0.1) + 's';
+            bloodContainer.appendChild(bigSpot);
+        }
+        
+        // B) Gotas
+        const drops = Math.floor(Math.random() * 10 + 20);
+        for(let i=0; i < drops; i++) {
+            const drop = document.createElement('div');
+            drop.classList.add('blood-spot');
+            const size = Math.random() * 25 + 10;
+            drop.style.width = size + 'px';
+            drop.style.height = size + 'px';
+            drop.style.left = Math.random() * 100 + 'vw';
+            drop.style.top = Math.random() * 100 + 'vh';
+            const deform = Math.random() * 20 + 40; 
+            drop.style.borderRadius = `${deform}% ${100-deform}% ${deform}% ${100-deform}%`;
+            drop.style.animationDelay = (Math.random() * 0.2 + 0.1) + 's';
+            bloodContainer.appendChild(drop);
+        }
     }
 
     // Limpeza
     setTimeout(() => {
         body.classList.remove('shake-screen-hard');
-        cutLine.classList.remove('active');
-        bloodContainer.innerHTML = '';
+        if(bloodContainer) bloodContainer.innerHTML = '';
     }, 2600);
 }
-
 // 3. EFEITO DE BLOQUEIO
 window.triggerBlockEffect = function() {
     const body = document.body;
