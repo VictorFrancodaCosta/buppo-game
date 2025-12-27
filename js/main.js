@@ -858,3 +858,378 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
     }, 700);
 }
+
+// --- CÓDIGO QUE FALTAVA (COLE NO FINAL DO MAIN.JS) ---
+
+function resetUnit(u) {
+    u.hp = u.maxHp;
+    u.xp = [];
+    u.hand = [];
+    u.deck = [];
+    u.disabled = null;
+    u.bonusBlock = 0;
+    u.bonusAtk = 0;
+    
+    // Reconstrói o deck baseado no template
+    for (let key in DECK_TEMPLATE) {
+        let count = DECK_TEMPLATE[key];
+        for (let i = 0; i < count; i++) u.deck.push(key);
+    }
+    // Embaralha
+    for (let i = u.deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [u.deck[i], u.deck[j]] = [u.deck[j], u.deck[i]];
+    }
+}
+
+function drawCardLogic(u, amount) {
+    for(let i=0; i<amount; i++) {
+        if(u.deck.length === 0) {
+            // Recicla XP se o deck acabar
+            if(u.xp.length > 0) {
+                u.deck = [...u.xp];
+                u.xp = [];
+                // Re-embaralha
+                for (let k = u.deck.length - 1; k > 0; k--) {
+                    const j = Math.floor(Math.random() * (k + 1));
+                    [u.deck[k], u.deck[j]] = [u.deck[j], u.deck[k]];
+                }
+            } else {
+                // Se não tem XP nem deck, cria cartas básicas (failsafe)
+                u.deck = ['ATAQUE', 'BLOQUEIO', 'DESCANSAR'];
+            }
+        }
+        if(u.deck.length > 0) {
+            u.hand.push(u.deck.pop());
+        }
+    }
+}
+
+function updateUI() {
+    // 1. Atualiza Barras de Vida e Texto
+    const pHpPct = (player.hp / player.maxHp) * 100;
+    const mHpPct = (monster.hp / monster.maxHp) * 100;
+    
+    const pBar = document.getElementById('p-hp-bar');
+    const mBar = document.getElementById('m-hp-bar');
+    if(pBar) pBar.style.width = Math.max(0, pHpPct) + '%';
+    if(mBar) mBar.style.width = Math.max(0, mHpPct) + '%';
+
+    const pText = document.getElementById('p-hp-text');
+    const mText = document.getElementById('m-hp-text');
+    if(pText) pText.innerText = `${player.hp}/${player.maxHp}`;
+    if(mText) mText.innerText = `${monster.hp}/${monster.maxHp}`;
+
+    const pLvl = document.getElementById('p-lvl');
+    const mLvl = document.getElementById('m-lvl');
+    if(pLvl) pLvl.innerText = `NV ${player.lvl}`;
+    if(mLvl) mLvl.innerText = `NV ${monster.lvl}`;
+
+    // 2. Atualiza Pilhas de XP
+    const pXpCont = document.getElementById('p-xp');
+    const mXpCont = document.getElementById('m-xp');
+    
+    // Função auxiliar para desenhar XP empilhado
+    const renderXP = (container, unit) => {
+        if(!container) return;
+        container.innerHTML = '';
+        unit.xp.forEach((cardKey, index) => {
+            const d = document.createElement('div');
+            d.className = 'xp-card';
+            // Ajuste visual para empilhamento
+            d.style.transform = `translateY(-${index * 2}px) translateZ(0)`;
+            d.style.backgroundColor = getCardColor(cardKey); 
+            container.appendChild(d);
+        });
+    };
+    renderXP(pXpCont, player);
+    renderXP(mXpCont, monster);
+
+    // 3. RENDERIZA A MÃO DO JOGADOR (A PARTE QUE ESTAVA SUMIDA)
+    const handContainer = document.getElementById('player-hand');
+    if(handContainer && !window.isMatchStarting && !isProcessing) {
+        handContainer.innerHTML = '';
+        player.hand.forEach((cardKey, index) => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            
+            // Verifica se está desabilitada
+            if (player.disabled && player.disabled === cardKey) {
+                cardEl.classList.add('disabled');
+            }
+
+            // Conteúdo da carta
+            const artUrl = getCardArt(cardKey, true);
+            cardEl.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-front" style="background-image: url('${artUrl}');">
+                        <div class="card-name">${cardKey}</div>
+                    </div>
+                    <div class="card-back"></div>
+                </div>
+            `;
+
+            // Evento de clique
+            cardEl.onclick = () => {
+                if(!isProcessing && (!player.disabled || player.disabled !== cardKey)) {
+                    if(cardKey === 'DESARMAR') {
+                        // Lógica especial para DESARMAR
+                        // Simplesmente abre um prompt ou define automaticamente
+                        // Para simplificar, vamos assumir 'ATAQUE' como alvo ou aleatório
+                        // Ou implementamos um mini-menu rápido. 
+                        // Versão simplificada:
+                        let choice = 'ATAQUE'; 
+                        if(confirm("Desarmar o que? OK para ATAQUE, Cancelar para BLOQUEIO")) {
+                            choice = 'ATAQUE';
+                        } else {
+                            choice = 'BLOQUEIO';
+                        }
+                        playCardFlow(index, choice);
+                    } else {
+                        playCardFlow(index, null);
+                    }
+                } else if (player.disabled === cardKey) {
+                    showFloatingText('player-hand', "BLOQUEADO!", "#fff");
+                }
+            };
+            
+            // Efeito Hover Sonoro
+            cardEl.onmouseenter = () => window.playUIHoverSound();
+
+            handContainer.appendChild(cardEl);
+        });
+    }
+}
+
+function getCardColor(key) {
+    if(key === 'ATAQUE') return '#e74c3c';
+    if(key === 'BLOQUEIO') return '#3498db';
+    if(key === 'DESCANSAR') return '#2ecc71';
+    if(key === 'TREINAR') return '#f1c40f';
+    if(key === 'DESARMAR') return '#9b59b6';
+    return '#95a5a6';
+}
+
+function dealAllInitialCards() {
+    const handContainer = document.getElementById('player-hand');
+    if(!handContainer) return;
+    handContainer.innerHTML = '';
+    handContainer.classList.remove('preparing'); // Remove estado de preparação
+
+    let delay = 0;
+    // Cria elementos visuais para animação
+    player.hand.forEach((cardKey, i) => {
+        setTimeout(() => {
+            playSound('sfx-deal');
+            const card = document.createElement('div');
+            card.className = 'card deal-anim'; // Classe CSS para animação de entrada
+            const artUrl = getCardArt(cardKey, true);
+            
+            card.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-front" style="background-image: url('${artUrl}');"></div>
+                </div>
+            `;
+            handContainer.appendChild(card);
+
+            // Após a animação, atualiza a UI real para tornar clicável
+            if(i === player.hand.length - 1) {
+                setTimeout(() => {
+                    window.isMatchStarting = false;
+                    updateUI();
+                }, 600);
+            }
+        }, delay);
+        delay += 150;
+    });
+}
+
+function getBestAIMove() {
+    // IA Simples
+    // 1. Se pode matar, ATACA
+    const killMove = monster.hand.findIndex(c => c === 'ATAQUE' && (player.hp <= (monster.lvl + (monster.bonusAtk||0))));
+    if(killMove !== -1) return { index: killMove, card: 'ATAQUE' };
+
+    // 2. Se vida baixa (< 3), tenta BLOQUEIO ou DESCANSAR
+    if(monster.hp < 3) {
+        const heal = monster.hand.findIndex(c => c === 'DESCANSAR');
+        if(heal !== -1) return { index: heal, card: 'DESCANSAR' };
+        const block = monster.hand.findIndex(c => c === 'BLOQUEIO');
+        if(block !== -1) return { index: block, card: 'BLOQUEIO' };
+    }
+
+    // 3. Aleatório inteligente
+    // Prefere usar cartas que tem em excesso ou usar TREINAR se tiver vida cheia
+    if(monster.hp === monster.maxHp) {
+        const train = monster.hand.findIndex(c => c === 'TREINAR');
+        if(train !== -1) return { index: train, card: 'TREINAR' };
+    }
+
+    // Fallback: Pega a primeira
+    if(monster.hand.length > 0) return { index: 0, card: monster.hand[0] };
+    return null;
+}
+
+function renderTable(cardKey, slotId, isPlayer) {
+    const slot = document.getElementById(slotId);
+    if(!slot) return;
+    const artUrl = getCardArt(cardKey, isPlayer);
+    slot.innerHTML = `
+        <div class="card in-play">
+            <div class="card-inner">
+                 <div class="card-front" style="background-image: url('${artUrl}');"></div>
+            </div>
+        </div>
+    `;
+    playSound('sfx-play');
+}
+
+// Animação genérica de voo de elemento
+function animateFly(fromId, toId, cardKey, callback, isReverse, isCard, isPlayer) {
+    // Cria um elemento fantasma para voar
+    const flyer = document.createElement('div');
+    flyer.className = 'card flyer';
+    const artUrl = getCardArt(cardKey, isPlayer);
+    flyer.style.backgroundImage = `url('${artUrl}')`;
+    
+    // Posição Inicial
+    let startRect;
+    if(typeof fromId === 'object') { // Coordenadas manuais
+        startRect = fromId;
+    } else {
+        const fromEl = document.getElementById(fromId);
+        if(fromEl) startRect = fromEl.getBoundingClientRect();
+        else startRect = { top: window.innerHeight/2, left: window.innerWidth/2 };
+    }
+
+    // Posição Final
+    const toEl = document.getElementById(toId);
+    let endRect = toEl ? toEl.getBoundingClientRect() : { top: 0, left: 0 };
+
+    flyer.style.left = startRect.left + 'px';
+    flyer.style.top = startRect.top + 'px';
+    flyer.style.width = '100px'; // Tamanho fixo para animação
+    flyer.style.height = '140px';
+    flyer.style.position = 'fixed';
+    flyer.style.zIndex = '9999';
+    flyer.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    
+    document.body.appendChild(flyer);
+
+    // Trigger Animation
+    setTimeout(() => {
+        flyer.style.left = endRect.left + 'px';
+        flyer.style.top = endRect.top + 'px';
+        if(!isCard) { // Se for XP indo pra pilha
+            flyer.style.transform = 'scale(0.2) rotate(360deg)';
+            flyer.style.opacity = '0.5';
+        }
+    }, 50);
+
+    setTimeout(() => {
+        flyer.remove();
+        if(callback) callback();
+    }, 550);
+}
+
+function drawCardAnimated(unit, fromId, toId, cb) {
+    // Simula carta saindo do deck para a mão
+    const deckEl = document.getElementById(fromId);
+    if(!deckEl) { if(cb) cb(); return; }
+    
+    const flyer = document.createElement('div');
+    flyer.className = 'card-back flyer'; // Verso da carta
+    const r = deckEl.getBoundingClientRect();
+    
+    flyer.style.left = r.left + 'px';
+    flyer.style.top = r.top + 'px';
+    flyer.style.position = 'fixed';
+    flyer.style.zIndex = '1000';
+    flyer.style.transition = 'all 0.4s ease-out';
+    document.body.appendChild(flyer);
+
+    // Destino: mão (aprox) ou centro
+    const handEl = document.getElementById(toId);
+    const dest = handEl ? handEl.getBoundingClientRect() : {top: window.innerHeight, left: window.innerWidth/2};
+
+    setTimeout(() => {
+        flyer.style.left = (dest.left + 50) + 'px';
+        flyer.style.top = dest.top + 'px';
+        flyer.style.opacity = '0';
+    }, 50);
+
+    setTimeout(() => {
+        flyer.remove();
+        if(cb) cb();
+    }, 450);
+}
+
+function checkLevelUp(u, cb) {
+    // Lógica simples: 3 cartas iguais = Level Up
+    const counts = {};
+    u.xp.forEach(x => counts[x] = (counts[x] || 0) + 1);
+    
+    let leveledUp = false;
+    for (let key in counts) {
+        if (counts[key] >= 3) {
+            u.lvl++;
+            u.maxHp += 2; // Bônus HP
+            u.hp = u.maxHp; // Cura total no level up
+            // Remove 3 cartas do XP
+            let removed = 0;
+            u.xp = u.xp.filter(c => {
+                if(c === key && removed < 3) { removed++; return false; }
+                return true;
+            });
+            
+            showFloatingText(u.id === 'p' ? 'p-lvl' : 'm-lvl', "LEVEL UP!", "#f1c40f");
+            playSound('sfx-levelup');
+            leveledUp = true;
+            break; // Apenas um level up por vez
+        }
+    }
+    
+    updateUI();
+    if(cb) cb();
+}
+
+function showFloatingText(targetId, text, color) {
+    const el = document.getElementById(targetId);
+    if(!el) return;
+    const r = el.getBoundingClientRect();
+    
+    const float = document.createElement('div');
+    float.innerText = text;
+    float.style.position = 'fixed';
+    float.style.left = (r.left + r.width/2) + 'px';
+    float.style.top = (r.top) + 'px';
+    float.style.color = color || '#fff';
+    float.style.fontWeight = 'bold';
+    float.style.fontSize = '2rem';
+    float.style.textShadow = '0 0 5px #000';
+    float.style.pointerEvents = 'none';
+    float.style.zIndex = '2000';
+    float.style.transition = 'all 1s ease-out';
+    
+    document.body.appendChild(float);
+    
+    setTimeout(() => {
+        float.style.top = (r.top - 50) + 'px';
+        float.style.opacity = '0';
+    }, 50);
+    
+    setTimeout(() => float.remove(), 1000);
+}
+
+function showCenterText(text, color) {
+    // Pode usar o overlay de transição ou criar um novo rápido
+    showFloatingText('game-screen', text, color); // Reusa o floating no centro se game-screen for o alvo
+}
+
+function triggerXPGlow(uid) {
+    const el = document.getElementById(uid+'-xp');
+    if(el) {
+        el.style.filter = "brightness(2) drop-shadow(0 0 10px gold)";
+        setTimeout(() => el.style.filter = "none", 300);
+    }
+}
