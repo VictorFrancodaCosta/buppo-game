@@ -70,10 +70,7 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, 
         { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' }, 
         { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' }, 
-        
-        // --- SOM DE TREINAR ATUALIZADO (NOVO LINK) ---
         { id: 'sfx-train', src: 'https://files.catbox.moe/rnndcv.mp3' }, 
-        
         { id: 'sfx-disarm', src: 'https://files.catbox.moe/udd2sz.mp3' }, 
         { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
         { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' }, 
@@ -110,7 +107,6 @@ const MusicController = {
     fadeTimer: null,
     play(trackId) {
         if (this.currentTrackId === trackId) {
-            // FIX: Se já estiver na faixa mas pausada (bloqueio navegador), tenta tocar
             if (audios[trackId] && audios[trackId].paused && !window.isMuted) {
                 const audio = audios[trackId];
                 audio.volume = 0;
@@ -188,15 +184,14 @@ window.playNavSound = function() {
     if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
 };
 
-// --- SOM HOVER COM CLONE (PARA NÃO CORTAR MÚSICA) ---
 let lastHoverTime = 0;
 window.playUIHoverSound = function() {
     let now = Date.now();
-    if (now - lastHoverTime < 50) return; // Cooldown anti-spam
+    if (now - lastHoverTime < 50) return; 
 
     let base = audios['sfx-ui-hover'];
     if(base && !window.isMuted) { 
-        let s = base.cloneNode(); // Clone permite som sobreposto
+        let s = base.cloneNode(); 
         s.volume = 0.3 * (window.masterVol || 1.0);
         s.play().catch(()=>{}); 
         lastHoverTime = now;
@@ -347,12 +342,12 @@ function startGameFlow() {
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // ATIVA TRAVA DE SEGURANÇA (Isso aqui é o que faz as cartas esperarem)
+    // ATIVA TRAVA DE SEGURANÇA
     window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.classList.add('preparing'); // Oculta tudo via CSS (conforme backup)
+        handEl.classList.add('preparing'); 
     }
     
     resetUnit(player); 
@@ -519,14 +514,12 @@ function updateLoader() {
                 loading.style.opacity = '0';
                 setTimeout(() => loading.style.display = 'none', 500);
             }
-            // Inicializa sons de Hover Globais
             if(!window.hoverLogicInitialized) {
                 initGlobalHoverLogic();
                 window.hoverLogicInitialized = true;
             }
         }, 800); 
         
-        // --- FIX AUDIO BLOQUEADO: Tenta desbloquear no clique ---
         document.body.addEventListener('click', () => { 
             if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) {
                 MusicController.play('bgm-menu');
@@ -535,9 +528,6 @@ function updateLoader() {
     }
 }
 
-// ===============================================
-// SISTEMA DE HOVER GLOBAL (SOLUÇÃO DEFINITIVA)
-// ===============================================
 function initGlobalHoverLogic() {
     let lastTarget = null;
     document.body.addEventListener('mouseover', (e) => {
@@ -615,10 +605,10 @@ window.updateVol = function(type, val) {
             if(k === 'sfx-ui-hover') {
                 audios[k].volume = 0.3 * vol;
             } else if (k === 'sfx-levelup') {
-                 // VOLUME BOOST: Mantém em 100% do master, destaque sobre os outros (80%)
+                 // VOLUME BOOST: Mantém em 100% do master
                 audios[k].volume = 1.0 * vol;
             } else if (k === 'sfx-train') {
-                // VOLUME REDUZIDO: 50% para não estourar
+                // VOLUME REDUZIDO: 50%
                 audios[k].volume = 0.5 * vol;
             } else {
                 audios[k].volume = 0.8 * vol;
@@ -628,21 +618,14 @@ window.updateVol = function(type, val) {
 }
 function playSound(key) { 
     if(audios[key]) { 
-        // --- SISTEMA DE BOOST PARA LEVEL UP ---
         if (key === 'sfx-levelup') {
-            // Garante volume máximo relativo ao mestre
             audios[key].volume = 1.0 * (window.masterVol || 1.0);
-            
-            // Toca o original
             audios[key].currentTime = 0; 
             audios[key].play().catch(e => console.log("Audio prevented:", e));
-            
-            // Toca o CLONE para dobrar a amplitude (Juiciness!)
             let clone = audios[key].cloneNode();
             clone.volume = audios[key].volume;
             clone.play().catch(()=>{});
         } else {
-            // Toca normal
             audios[key].currentTime = 0; 
             audios[key].play().catch(e => console.log("Audio prevented:", e)); 
         }
@@ -654,6 +637,7 @@ initAmbientParticles();
 
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
+// === MODIFICADO: CHAMADA PARA EFFECTS.JS ===
 function triggerDamageEffect(isPlayer, playAudio = true) { 
     try { 
         if(playAudio) {
@@ -670,28 +654,45 @@ function triggerDamageEffect(isPlayer, playAudio = true) {
             let r = slot.getBoundingClientRect(); 
             if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); 
         } 
-        document.body.classList.add('shake-screen'); 
-        setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
-        let ov = document.getElementById('dmg-overlay'); 
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
-    } catch(e) {} 
+
+        // CHAMADA PARA O NOVO SISTEMA VISUAL
+        if(isPlayer && window.triggerMassiveDamage) {
+            window.triggerMassiveDamage(); // Chama do effects.js
+        } else {
+            // Fallback para o inimigo
+            document.body.classList.add('shake-screen'); 
+            setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
+            let ov = document.getElementById('dmg-overlay'); 
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
+        }
+
+    } catch(e) { console.error(e); } 
 }
 
 function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
 
+// === MODIFICADO: CHAMADA PARA EFFECTS.JS ===
 function triggerHealEffect(isPlayer) { 
     try { 
-        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
-        let slot = document.getElementById(elId); 
-        if(slot) { 
-            let r = slot.getBoundingClientRect(); 
-            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); 
-        } 
-        let ov = document.getElementById('heal-overlay'); 
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
+        if(isPlayer && window.triggerHealEffect) {
+            window.triggerHealEffect();
+            playSound('sfx-heal');
+        } else {
+            // Fallback
+            let elId = isPlayer ? 'p-slot' : 'm-slot'; 
+            let slot = document.getElementById(elId); 
+            if(slot) { 
+                let r = slot.getBoundingClientRect(); 
+                if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); 
+            } 
+            let ov = document.getElementById('heal-overlay'); 
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
+            playSound('sfx-heal'); 
+        }
     } catch(e) {} 
 }
 
+// === MODIFICADO: CHAMADA PARA EFFECTS.JS ===
 function triggerBlockEffect(isPlayer) { 
     try { 
         if(isPlayer && window.currentDeck === 'mage') {
@@ -700,10 +701,14 @@ function triggerBlockEffect(isPlayer) {
              playSound('sfx-block'); 
         }
         
-        let ov = document.getElementById('block-overlay'); 
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
-        document.body.classList.add('shake-screen'); 
-        setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+        if(isPlayer && window.triggerBlockEffect) {
+            window.triggerBlockEffect();
+        } else {
+            let ov = document.getElementById('block-overlay'); 
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
+            document.body.classList.add('shake-screen'); 
+            setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+        }
     } catch(e) {} 
 }
 
@@ -712,7 +717,6 @@ function showCenterText(txt, col) { let el = document.createElement('div'); el.c
 function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.deck = []; u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
-// --- FUNÇÃO CRÍTICA RESTAURADA (BACKUP) ---
 function dealAllInitialCards() {
     isProcessing = true; 
     playSound('sfx-deal'); 
@@ -723,12 +727,10 @@ function dealAllInitialCards() {
     cards.forEach((cardEl, i) => {
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
-        cardEl.style.opacity = ''; // CSS controla isso
+        cardEl.style.opacity = ''; 
     });
 
     window.isMatchStarting = false;
-    
-    // REMOÇÃO DA CLASSE DE OCULTAÇÃO (CRUCIAL)
     if(handEl) handEl.classList.remove('preparing');
 
     setTimeout(() => {
@@ -914,9 +916,8 @@ function checkLevelUp(u, doneCb) {
                 let lvlEl = document.getElementById(u.id+'-lvl'); 
                 u.lvl++; 
                 
-                // --- Animação Visual ---
                 lvlEl.classList.add('level-up-anim'); 
-                triggerLevelUpVisuals(u.id); // Nova animação cartoon
+                triggerLevelUpVisuals(u.id); 
                 
                 playSound('sfx-levelup'); 
                 
@@ -937,27 +938,22 @@ function checkLevelUp(u, doneCb) {
 }
 
 function triggerLevelUpVisuals(unitId) {
-    // Seleciona o cluster correto (Caixa de stats do jogador ou inimigo)
     let clusterId = (unitId === 'p') ? 'p-stats-cluster' : 'm-stats-cluster';
     let cluster = document.getElementById(clusterId);
     
     if(!cluster) return;
 
-    // Cria o elemento de texto
     const text = document.createElement('div');
     text.innerText = "LEVEL UP!";
-    text.className = 'levelup-text'; // Classe base do CSS novo
+    text.className = 'levelup-text';
 
-    // Define a direção baseada em quem upou
     if (unitId === 'p') {
-        text.classList.add('lvl-anim-up'); // Jogador: Sobe
+        text.classList.add('lvl-anim-up'); 
     } else {
-        text.classList.add('lvl-anim-down'); // Inimigo: Desce
+        text.classList.add('lvl-anim-down'); 
     }
 
     cluster.appendChild(text);
-
-    // Remove do HTML após a animação acabar (2 segundos)
     setTimeout(() => { text.remove(); }, 2000);
 }
 
@@ -1025,7 +1021,6 @@ function renderTable(key, slotId, isPlayer = false) {
 
 function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
 
-// --- FUNÇÃO CRÍTICA RESTAURADA (BACKUP) ---
 function updateUnit(u) {
     document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
     document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
@@ -1050,7 +1045,6 @@ function updateUnit(u) {
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
             
-            // LÓGICA DE OPACIDADE DO BACKUP (ESSENCIAL)
             if(window.isMatchStarting) {
                 c.style.opacity = '0';
             } else {
