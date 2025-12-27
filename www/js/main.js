@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL CORRIGIDA)
+// ARQUIVO: js/main.js (VERSÃO FINAL BLINDADA MOBILE/PC)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -14,36 +14,20 @@ const firebaseConfig = {
     appId: "1:950871979140:web:f2dba12900500c52053ed1"
 };
 
-// --- BLOCO DE INICIALIZAÇÃO BLINDADO (A VACINA) ---
-let app, auth, db, provider, GoogleAuthPlugin;
+// --- CLIENT ID DO GOOGLE (IMPORTANTE: DEVE SER O CLIENT ID TIPO WEB, MESMO NO ANDROID) ---
+const GOOGLE_WEB_CLIENT_ID = '950871979140-4scl9644ch2mma7753mdhffoo3g779qe.apps.googleusercontent.com';
+
+// --- BLOCO DE INICIALIZAÇÃO FIREBASE ---
+let app, auth, db, provider;
 
 try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
     provider = new GoogleAuthProvider();
-    
-    // Tenta detectar o plugin do Capacitor com segurança
-    if (window.Capacitor && window.Capacitor.Plugins) {
-        GoogleAuthPlugin = window.Capacitor.Plugins.GoogleAuth;
-    }
+    console.log("Firebase Inicializado com Sucesso.");
 } catch (e) {
-    console.error("ERRO CRÍTICO NA INICIALIZAÇÃO:", e);
-    // O jogo continuará rodando, mas sem banco de dados
-}
-
-// Inicializa o Login Nativo (se estiver no celular)
-try {
-    if (window.Capacitor && window.Capacitor.isNative && GoogleAuthPlugin) {
-        GoogleAuthPlugin.initialize({
-            // SEU ID (CONFIRA SE ESTÁ CERTO)
-            clientId: '950871979140-4scl9644ch2mma7753mdhffoo3g779qe.apps.googleusercontent.com', 
-            scopes: ['profile', 'email'],
-        });
-        console.log("Google Auth Nativo Inicializado");
-    }
-} catch (error) {
-    console.warn("Aviso: Plugin Google não iniciou (Isso é normal no PC):", error);
+    console.error("ERRO CRÍTICO FIREBASE:", e);
 }
 
 // --- VARIÁVEIS GLOBAIS ---
@@ -82,8 +66,13 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png',
         'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
         'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png',
-        MAGE_ASSETS.ATAQUE, MAGE_ASSETS.BLOQUEIO, MAGE_ASSETS.DESCANSAR, 
-        MAGE_ASSETS.DESARMAR, MAGE_ASSETS.TREINAR, MAGE_ASSETS.DECK_IMG, MAGE_ASSETS.DECK_SELECT
+        'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png',
+        'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
+        'https://i.ibb.co/sv98P3JK/03-DESCANSAR-MAGO.png',
+        'https://i.ibb.co/Q7SmhYQk/04-DESARMAR-MAGO.png',
+        'https://i.ibb.co/8LGTJCn4/05-TREINAR-MAGO.png',
+        'https://i.ibb.co/XZ8qc166/DECK-MAGO.png',
+        'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png'
     ],
     audio: [
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
@@ -408,6 +397,7 @@ function checkEndGame(){
     } else { isProcessing = false; } 
 }
 
+// Listener de Auth Global
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
@@ -423,37 +413,59 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// --- FUNÇÃO DE LOGIN HÍBRIDA (BLINDADA) ---
+// --- FUNÇÃO DE LOGIN MELHORADA (A CORREÇÃO PRINCIPAL) ---
 window.googleLogin = async function() {
     window.playNavSound(); 
     const btnText = document.getElementById('btn-text');
     btnText.innerText = "CONECTANDO...";
 
-    try {
-        const isNative = window.Capacitor && window.Capacitor.isNative && GoogleAuthPlugin;
+    // Verifica se é ambiente nativo (Celular)
+    const isNative = window.Capacitor && window.Capacitor.isNative;
 
+    try {
         if (isNative) {
-            // --- CELULAR (PLUGIN) ---
-            console.log("Login Nativo iniciado...");
-            const googleUser = await GoogleAuthPlugin.signIn();
+            // --- FLUXO MOBILE (PLUGIN) ---
+            console.log("Iniciando Login Nativo...");
+
+            // Recupera o plugin dinamicamente para garantir que o Capacitor carregou
+            const GoogleAuth = window.Capacitor.Plugins.GoogleAuth;
+            
+            if (!GoogleAuth) {
+                throw new Error("Plugin GoogleAuth não encontrado no Capacitor.");
+            }
+
+            // Inicialização de segurança (caso não tenha ocorrido)
+            // IMPORTANTE: Passamos o CLIENT ID aqui para garantir
+            await GoogleAuth.initialize({
+                clientId: GOOGLE_WEB_CLIENT_ID,
+                scopes: ['profile', 'email'],
+                grantOfflineAccess: true,
+            });
+
+            const googleUser = await GoogleAuth.signIn();
+            
+            // O plugin retorna o idToken que trocamos por credencial Firebase
             const idToken = googleUser.authentication.idToken;
             const credential = GoogleAuthProvider.credential(idToken);
+            
             await signInWithCredential(auth, credential);
 
         } else {
-            // --- PC (POPUP) ---
-            console.log("Login Web iniciado...");
+            // --- FLUXO WEB (POPUP) ---
+            console.log("Iniciando Login Web...");
             await signInWithPopup(auth, provider);
         }
 
     } catch (error) {
         console.error("Erro no Login:", error);
-        btnText.innerText = "ERRO - TENTE NOVAMENTE";
         
-        if(window.Capacitor && window.Capacitor.isNative) {
-            alert("Erro Login: " + JSON.stringify(error));
+        // --- VISUALIZAÇÃO DE ERRO NO CELULAR ---
+        if(isNative) {
+            // Mostra um alerta com o erro real para debug
+            alert("Erro Mobile Detalhado:\n" + JSON.stringify(error, Object.getOwnPropertyNames(error)));
         }
 
+        btnText.innerText = "FALHA - TENTE NOVAMENTE";
         setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000);
     }
 };
@@ -461,10 +473,9 @@ window.googleLogin = async function() {
 window.handleLogout = function() {
     window.playNavSound();
     
-    // Tenta logout nativo, mas não trava se der erro
-    const isNative = window.Capacitor && window.Capacitor.isNative && GoogleAuthPlugin;
-    if(isNative) {
-        GoogleAuthPlugin.signOut().catch(e => console.log(e));
+    const isNative = window.Capacitor && window.Capacitor.isNative;
+    if(isNative && window.Capacitor.Plugins.GoogleAuth) {
+        window.Capacitor.Plugins.GoogleAuth.signOut().catch(e => console.log(e));
     }
     
     signOut(auth).then(() => { location.reload(); });
@@ -605,6 +616,15 @@ window.onload = function() {
             e.stopPropagation(); 
             window.toggleMute();
         });
+    }
+
+    // Tenta inicializar o plugin assim que o window carrega (Backup)
+    if(window.Capacitor && window.Capacitor.isNative && window.Capacitor.Plugins.GoogleAuth) {
+         window.Capacitor.Plugins.GoogleAuth.initialize({
+            clientId: GOOGLE_WEB_CLIENT_ID,
+            scopes: ['profile', 'email'],
+            grantOfflineAccess: true,
+         }).catch(e => console.warn("Auto-init error (ignorable):", e));
     }
 };
 
