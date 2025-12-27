@@ -849,8 +849,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
-// ARQUIVO: js/main.js
-
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         let xpContainer = document.getElementById(u.id + '-xp'); 
@@ -876,16 +874,13 @@ function checkLevelUp(u, doneCb) {
             let triggers = []; 
             for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
             
-processMasteries(u, triggers, () => {
+            processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); 
                 u.lvl++; 
                 
-                // Círculo pulsa (mantido)
+                // --- Animação Visual ---
                 lvlEl.classList.add('level-up-anim'); 
-                
-                // >>> NOVA CHAMADA AQUI <<<
-                triggerLevelUpVisuals(u.id); 
-                // >>>>>>>>>>>><<<<<<<<<<<<
+                triggerLevelUpVisuals(u.id); // Nova animação cartoon
                 
                 playSound('sfx-levelup'); 
                 
@@ -893,7 +888,7 @@ processMasteries(u, triggers, () => {
 
                 u.xp.forEach(x => u.deck.push(x)); 
                 u.xp = []; 
-                shuffle(u.deck);
+                shuffle(u.deck); 
                 
                 let clones = document.getElementsByClassName('xp-anim-clone'); 
                 while(clones.length > 0) clones[0].remove();
@@ -904,6 +899,32 @@ processMasteries(u, triggers, () => {
         }, 1000); 
     } else { doneCb(); }
 }
+
+function triggerLevelUpVisuals(unitId) {
+    // Seleciona o cluster correto (Caixa de stats do jogador ou inimigo)
+    let clusterId = (unitId === 'p') ? 'p-stats-cluster' : 'm-stats-cluster';
+    let cluster = document.getElementById(clusterId);
+    
+    if(!cluster) return;
+
+    // Cria o elemento de texto
+    const text = document.createElement('div');
+    text.innerText = "LEVEL UP!";
+    text.className = 'levelup-text'; // Classe base do CSS novo
+
+    // Define a direção baseada em quem upou
+    if (unitId === 'p') {
+        text.classList.add('lvl-anim-up'); // Jogador: Sobe
+    } else {
+        text.classList.add('lvl-anim-down'); // Inimigo: Desce
+    }
+
+    cluster.appendChild(text);
+
+    // Remove do HTML após a animação acabar (2 segundos)
+    setTimeout(() => { text.remove(); }, 2000);
+}
+
 function triggerLevelUpVisuals(unitId) {
     let lvlCircle = document.getElementById(unitId + '-lvl');
     if(!lvlCircle) return;
@@ -1172,31 +1193,4 @@ function apply3DTilt(element, isHand = false) {
         element.style.setProperty('--rx', 0);
         element.style.setProperty('--ry', 0);
     }); 
-}
-
-// ARQUIVO: js/main.js
-
-function triggerLevelUpVisuals(unitId) {
-    // Seleciona o cluster correto (Caixa de stats do jogador ou inimigo)
-    let clusterId = (unitId === 'p') ? 'p-stats-cluster' : 'm-stats-cluster';
-    let cluster = document.getElementById(clusterId);
-    
-    if(!cluster) return;
-
-    // Cria o elemento de texto
-    const text = document.createElement('div');
-    text.innerText = "LEVEL UP!";
-    text.className = 'levelup-text'; // Classe base do CSS novo
-
-    // Define a direção baseada em quem upou
-    if (unitId === 'p') {
-        text.classList.add('lvl-anim-up'); // Jogador: Sobe
-    } else {
-        text.classList.add('lvl-anim-down'); // Inimigo: Desce
-    }
-
-    cluster.appendChild(text);
-
-    // Remove do HTML após a animação acabar (2 segundos)
-    setTimeout(() => { text.remove(); }, 2000);
 }
