@@ -925,22 +925,6 @@ function triggerLevelUpVisuals(unitId) {
     setTimeout(() => { text.remove(); }, 2000);
 }
 
-function triggerLevelUpVisuals(unitId) {
-    let lvlCircle = document.getElementById(unitId + '-lvl');
-    if(!lvlCircle) return;
-    let cluster = lvlCircle.parentElement; 
-    const text = document.createElement('div');
-    text.innerText = "LEVEL UP!";
-    text.classList.add('levelup-text');
-    if (unitId === 'p') {
-        text.classList.add('lvl-anim-up'); 
-    } else {
-        text.classList.add('lvl-anim-down'); 
-    }
-    cluster.appendChild(text);
-    setTimeout(() => { text.remove(); }, 2000);
-}
-
 function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
     if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); } 
