@@ -1,26 +1,91 @@
 // ARQUIVO: js/effects.js
 
-// 1. EFEITO DE CURA
+// 1. EFEITO DE DANO MASSIVO (Sangue + Corte + Tremor)
+window.triggerMassiveDamage = function() {
+    const body = document.body;
+    const bloodContainer = document.getElementById('blood-container');
+
+    // --- 1. TREMOR ---
+    body.classList.remove('shake-screen');
+    void body.offsetWidth; 
+    body.classList.add('shake-screen');
+
+    // --- 2. O CORTE ---
+    const slash = document.createElement('div');
+    slash.classList.add('screen-cut-line');
+    document.body.appendChild(slash);
+    setTimeout(() => { slash.remove(); }, 450);
+
+    // --- 3. SANGUE ---
+    if (bloodContainer) {
+        bloodContainer.innerHTML = ''; 
+
+        // A) Manchas GRANDES
+        for(let i=0; i<4; i++) {
+            const bigSpot = document.createElement('div');
+            bigSpot.classList.add('blood-spot', 'big-splatter');
+            
+            const size = Math.random() * 100 + 100; 
+            
+            bigSpot.style.width = size + 'px';
+            bigSpot.style.height = size + 'px';
+            bigSpot.style.left = (Math.random() * 100 - 10) + '%';
+            bigSpot.style.top = (Math.random() * 100 - 10) + '%';
+            bigSpot.style.animationDelay = (Math.random() * 0.1) + 's';
+
+            bloodContainer.appendChild(bigSpot);
+        }
+
+        // B) Gotículas
+        const minDrops = 20;
+        const maxDrops = 30;
+        const numberOfDrops = Math.floor(Math.random() * (maxDrops - minDrops + 1)) + minDrops;
+        
+        for(let i=0; i < numberOfDrops; i++) {
+            const drop = document.createElement('div');
+            drop.classList.add('blood-spot');
+
+            const size = Math.random() * 25 + 10;
+            drop.style.width = size + 'px';
+            drop.style.height = size + 'px';
+
+            drop.style.left = Math.random() * 100 + 'vw';
+            drop.style.top = Math.random() * 100 + 'vh';
+
+            const deform = Math.random() * 20 + 40; 
+            drop.style.borderRadius = `${deform}% ${100-deform}% ${deform}% ${100-deform}%`;
+            drop.style.animationDelay = (Math.random() * 0.2 + 0.1) + 's';
+
+            bloodContainer.appendChild(drop);
+        }
+
+        // Limpeza do container
+        setTimeout(() => {
+            bloodContainer.innerHTML = '';
+        }, 2600);
+    }
+
+    // Limpeza da classe de tremor
+    setTimeout(() => {
+        body.classList.remove('shake-screen');
+    }, 500);
+}
+
+// 2. EFEITO DE CURA (Luz + Partículas)
 window.triggerHealEffect = function() {
     const body = document.body;
     const overlay = document.getElementById('heal-overlay');
     const light = document.getElementById('holy-light');
     const particlesContainer = document.getElementById('particles-container');
 
-    // Som (Se existir no main.js, isso toca lá, mas podemos garantir aqui se quiser)
-    // Por enquanto, só visual:
-
     // 1. Respiro
     body.classList.remove('screen-breathe');
-    void body.offsetWidth; // Reset
+    void body.offsetWidth; 
     body.classList.add('screen-breathe');
 
     // 2. Aura e Luz
-    overlay.classList.remove('active');
-    light.classList.remove('active');
-    void overlay.offsetWidth; 
-    overlay.classList.add('active');
-    light.classList.add('active');
+    if(overlay) { overlay.classList.remove('active'); void overlay.offsetWidth; overlay.classList.add('active'); }
+    if(light) { light.classList.remove('active'); void light.offsetWidth; light.classList.add('active'); }
 
     // 3. Partículas
     if (particlesContainer) {
@@ -35,7 +100,6 @@ window.triggerHealEffect = function() {
                 particle.style.fontSize = size + 'rem';
             } else {
                 particle.classList.add('sparkle-particle');
-                // Partícula branca/verde
             }
             particle.style.left = Math.random() * 100 + 'vw';
             const duration = Math.random() * 1 + 1.5;
@@ -49,67 +113,13 @@ window.triggerHealEffect = function() {
     // Limpeza
     setTimeout(() => {
         body.classList.remove('screen-breathe');
-        overlay.classList.remove('active');
-        light.classList.remove('active');
+        if(overlay) overlay.classList.remove('active');
+        if(light) light.classList.remove('active');
         if(particlesContainer) particlesContainer.innerHTML = '';
     }, 2500);
 }
 
-// 2. EFEITO DE DANO
-window.triggerDamageEffect = function() {
-    const body = document.body;
-    const bloodContainer = document.getElementById('blood-container');
-    const cutLine = document.getElementById('cut-line');
-
-    // 1. Tremor
-    body.classList.remove('shake-screen-hard');
-    void body.offsetWidth; 
-    body.classList.add('shake-screen-hard');
-
-    // 2. Corte
-    cutLine.classList.remove('active');
-    void cutLine.offsetWidth;
-    cutLine.classList.add('active');
-
-    // 3. Sangue
-    bloodContainer.innerHTML = ''; 
-    // Manchas Grandes
-    for(let i=0; i<4; i++) {
-        const bigSpot = document.createElement('div');
-        bigSpot.classList.add('blood-spot', 'big-splatter');
-        const size = Math.random() * 100 + 100; 
-        bigSpot.style.width = size + 'px';
-        bigSpot.style.height = size + 'px';
-        bigSpot.style.left = (Math.random() * 100 - 10) + '%';
-        bigSpot.style.top = (Math.random() * 100 - 10) + '%';
-        bigSpot.style.animationDelay = (Math.random() * 0.1) + 's';
-        bloodContainer.appendChild(bigSpot);
-    }
-    // Gotas
-    const drops = Math.floor(Math.random() * 10 + 20);
-    for(let i=0; i < drops; i++) {
-        const drop = document.createElement('div');
-        drop.classList.add('blood-spot');
-        const size = Math.random() * 25 + 10;
-        drop.style.width = size + 'px';
-        drop.style.height = size + 'px';
-        drop.style.left = Math.random() * 100 + 'vw';
-        drop.style.top = Math.random() * 100 + 'vh';
-        const deform = Math.random() * 20 + 40; 
-        drop.style.borderRadius = `${deform}% ${100-deform}% ${deform}% ${100-deform}%`;
-        drop.style.animationDelay = (Math.random() * 0.2 + 0.1) + 's';
-        bloodContainer.appendChild(drop);
-    }
-
-    // Limpeza
-    setTimeout(() => {
-        body.classList.remove('shake-screen-hard');
-        cutLine.classList.remove('active');
-        bloodContainer.innerHTML = '';
-    }, 2600);
-}
-
-// 3. EFEITO DE BLOQUEIO
+// 3. EFEITO DE BLOQUEIO (Escudo + Onda)
 window.triggerBlockEffect = function() {
     const body = document.body;
     const overlay = document.getElementById('block-overlay');
@@ -117,20 +127,17 @@ window.triggerBlockEffect = function() {
 
     // 1. Recuo
     body.classList.remove('screen-recoil');
-    void body.offsetWidth; 
+    void body.offsetWidth;
     body.classList.add('screen-recoil');
 
     // 2. Overlay e Onda
-    overlay.classList.remove('active');
-    shockwave.classList.remove('active');
-    void overlay.offsetWidth;
-    overlay.classList.add('active');
-    shockwave.classList.add('active');
+    if(overlay) { overlay.classList.remove('active'); void overlay.offsetWidth; overlay.classList.add('active'); }
+    if(shockwave) { shockwave.classList.remove('active'); void shockwave.offsetWidth; shockwave.classList.add('active'); }
 
     // 3. Limpeza
     setTimeout(() => {
         body.classList.remove('screen-recoil');
-        overlay.classList.remove('active');
-        shockwave.classList.remove('active');
+        if(overlay) overlay.classList.remove('active');
+        if(shockwave) shockwave.classList.remove('active');
     }, 700);
 }
