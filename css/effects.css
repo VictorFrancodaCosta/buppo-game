@@ -1,67 +1,7 @@
 /* ARQUIVO: css/effects.css */
 
 /* =========================================
-   1. EFEITO DE DANO (VERMELHO + TREMOR + CORTE)
-========================================= */
-
-/* O TREMOR */
-.shake-screen {
-    animation: violentShake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-    transform: translate3d(0, 0, 0);
-}
-
-@keyframes violentShake {
-    10%, 90% { transform: translate3d(-4px, -2px, 0) rotate(-0.5deg); }
-    20%, 80% { transform: translate3d(6px, 4px, 0) rotate(0.5deg); }
-    30%, 50%, 70% { transform: translate3d(-8px, -6px, 0) rotate(-1deg); }
-    40%, 60% { transform: translate3d(8px, 6px, 0) rotate(1deg); }
-}
-
-/* O CORTE (Slash) */
-.screen-cut-line {
-    position: fixed; top: 50%; left: 50%; width: 150vw; height: 8px; background: #fff;
-    transform: translate(-50%, -50%) rotate(-35deg) scaleX(0);
-    z-index: 10000; pointer-events: none;
-    box-shadow: 0 0 15px rgba(255,255,255,0.9), 0 0 30px rgba(255, 255, 255, 0.6);
-    clip-path: polygon(0 40%, 100% 0, 95% 100%, 5% 60%);
-    animation: slashAnimation 0.4s ease-out forwards;
-}
-
-@keyframes slashAnimation {
-    0% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(0); opacity: 0; }
-    10% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(1); opacity: 1; }
-    40% { opacity: 1; }
-    100% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(1); opacity: 0; }
-}
-
-/* SANGUE (Blood Spots) */
-#blood-container {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    pointer-events: none; z-index: 9998; mix-blend-mode: multiply; 
-}
-
-.blood-spot {
-    position: absolute;
-    background: radial-gradient(circle at 30% 30%, #8b0000 20%, #500000 70%, transparent 80%);
-    border-radius: 50%; opacity: 0;
-    animation: bloodFadeIn 2.5s ease-out forwards;
-}
-
-.big-splatter {
-    filter: blur(1px);
-    border-radius: 40% 60% 50% 50% / 50% 40% 60% 50%;
-}
-
-@keyframes bloodFadeIn {
-    0% { transform: scale(0.5); opacity: 0; }
-    5% { transform: scale(1.05); opacity: 1; }
-    10% { transform: scale(1); opacity: 0.9; }
-    70% { opacity: 0.9; }
-    100% { opacity: 0; } 
-}
-
-/* =========================================
-   2. EFEITO DE CURA (VERDE + LUZ)
+   1. EFEITO DE CURA (VERDE + LUZ)
 ========================================= */
 
 /* Respiro da tela: Zoom suave */
@@ -110,13 +50,49 @@
     animation: floatUp 2s ease-out forwards;
 }
 
-/* Partículas de Brilho Genéricas */
-.sparkle-particle {
-    position: absolute; width: 10px; height: 10px;
-    background: #fff; border-radius: 50%;
-    box-shadow: 0 0 10px #fff, 0 0 20px #2ecc71;
+/* =========================================
+   2. EFEITO DE DANO (VERMELHO + TREMOR)
+========================================= */
+
+/* Tremor Forte */
+.shake-screen-hard {
+    animation: violentShake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    transform: translate3d(0, 0, 0);
+}
+@keyframes violentShake {
+    10%, 90% { transform: translate3d(-4px, -2px, 0) rotate(-0.5deg); }
+    20%, 80% { transform: translate3d(6px, 4px, 0) rotate(0.5deg); }
+    30%, 50%, 70% { transform: translate3d(-8px, -6px, 0) rotate(-1deg); }
+    40%, 60% { transform: translate3d(8px, 6px, 0) rotate(1deg); }
+}
+
+/* Linha de Corte */
+.screen-cut-line {
+    position: fixed; top: 50%; left: 50%; width: 150vw; height: 8px; background: #fff;
+    transform: translate(-50%, -50%) rotate(-35deg) scaleX(0);
+    z-index: 10000; pointer-events: none;
+    box-shadow: 0 0 15px rgba(255,255,255,0.9), 0 0 30px rgba(255, 255, 255, 0.6);
+    clip-path: polygon(0 40%, 100% 0, 95% 100%, 5% 60%);
     opacity: 0;
-    animation: floatUpSparkle 1.5s ease-out forwards;
+}
+.screen-cut-line.active {
+    animation: slashAnimation 0.4s ease-out forwards;
+}
+
+/* Sangue */
+#blood-container {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 9998; mix-blend-mode: multiply; 
+}
+.blood-spot {
+    position: absolute;
+    background: radial-gradient(circle at 30% 30%, #8b0000 20%, #500000 70%, transparent 80%);
+    border-radius: 50%; opacity: 0;
+    animation: bloodFadeIn 2.5s ease-out forwards;
+}
+.big-splatter {
+    filter: blur(1px);
+    border-radius: 40% 60% 50% 50% / 50% 40% 60% 50%;
 }
 
 /* =========================================
@@ -159,16 +135,25 @@
     animation: shockwaveExpand 0.5s ease-out forwards;
 }
 
-/* Partículas Específicas de Partículas */
+/* Partículas Gerais (Brilhos) */
 #particles-container {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     pointer-events: none; z-index: 9001;
 }
+.sparkle-particle {
+    position: absolute; width: 10px; height: 10px;
+    background: #fff; border-radius: 50%;
+    box-shadow: 0 0 10px #fff, 0 0 20px #2ecc71;
+    opacity: 0;
+    animation: floatUpSparkle 1.5s ease-out forwards;
+}
 
-/* === KEYFRAMES GERAIS === */
+/* === TODAS AS ANIMAÇÕES (KEYFRAMES) === */
 @keyframes glowPulse { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes lightBeam { 0% { opacity: 0; transform: translateX(-50%) scaleX(0.5); } 50% { opacity: 1; transform: translateX(-50%) scaleX(1); } 100% { opacity: 0; transform: translateX(-50%) scaleX(0.8); } }
 @keyframes floatUp { 0% { transform: translateY(100vh) scale(0.5) rotate(0deg); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-10vh) scale(1.2) rotate(20deg); opacity: 0; } }
+@keyframes slashAnimation { 0% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(0); opacity: 0; } 10% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(1); opacity: 1; } 40% { opacity: 1; } 100% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(1); opacity: 0; } }
+@keyframes bloodFadeIn { 0% { transform: scale(0.5); opacity: 0; } 5% { transform: scale(1.05); opacity: 1; } 10% { transform: scale(1); opacity: 0.9; } 70% { opacity: 0.9; } 100% { opacity: 0; } }
 @keyframes flashBlue { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes shockwaveExpand { 0% { width: 0vw; height: 0vw; border-width: 40px; opacity: 1; } 100% { width: 150vw; height: 150vw; border-width: 0px; opacity: 0; } }
 @keyframes floatUpSparkle { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 30% { opacity: 0.8; transform: translateY(60vh) scale(1); } 100% { transform: translateY(20vh) scale(0); opacity: 0; } }
