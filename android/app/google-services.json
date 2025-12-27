@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "950871979140",
+    "project_id": "buppo-game",
+    "storage_bucket": "buppo-game.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:950871979140:android:ad8e37c1b3591304053ed1",
+        "android_client_info": {
+          "package_name": "com.buppo.game"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "950871979140-4scl9644ch2mma7753mdhffoo3g779qe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsrsSkxj0J7zQsYLliyzByS2lEUm7iwQk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "950871979140-4scl9644ch2mma7753mdhffoo3g779qe.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
