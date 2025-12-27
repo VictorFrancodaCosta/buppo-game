@@ -858,6 +858,8 @@ function playCardFlow(index, pDisarmChoice) {
     }, false, true, false);
 }
 
+// ARQUIVO: js/main.js
+
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
     
@@ -871,8 +873,9 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
 
     let clash = false;
     let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); 
-    let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
+    let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE'); // Inimigo bloqueou você
     
+    // Dispara animação de bloqueio
     if(pBlocks) { clash = true; triggerBlockEffect(true); }
     else if(mBlocks) { clash = true; triggerBlockEffect(false); }
 
@@ -884,8 +887,25 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
     if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
 
-    if(pDmg > 0) { player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); let soundOn = !(clash && mAct === 'BLOQUEIO'); triggerDamageEffect(true, soundOn); }
-    if(mDmg > 0) { monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn); }
+    if(pDmg > 0) { 
+        player.hp -= pDmg; 
+        showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); 
+        
+        let soundOn = !(clash && mAct === 'BLOQUEIO'); 
+        
+        // --- CORREÇÃO AQUI ---
+        // Se mBlocks for true (Inimigo bloqueou), NÃO chama o efeito de sangue
+        if (!mBlocks) {
+            triggerDamageEffect(true, soundOn); 
+        }
+    }
+
+    if(mDmg > 0) { 
+        monster.hp -= mDmg; 
+        showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); 
+        let soundOn = !(clash && pAct === 'BLOQUEIO'); 
+        triggerDamageEffect(false, soundOn); 
+    }
     
     updateUI();
     let pDead = player.hp <= 0, mDead = monster.hp <= 0;
@@ -912,7 +932,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
     }, 700);
 }
-
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         let xpContainer = document.getElementById(u.id + '-xp'); 
