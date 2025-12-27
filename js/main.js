@@ -656,6 +656,7 @@ function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = documen
 
 function triggerDamageEffect(isPlayer, playAudio = true) { 
     try { 
+        // O áudio continua tocando para ambos (feedback sonoro é importante)
         if(playAudio) {
             if(!isPlayer && window.currentDeck === 'mage') {
                 playSound('sfx-hit-mage');
@@ -664,16 +665,27 @@ function triggerDamageEffect(isPlayer, playAudio = true) {
             }
         } 
         
+        // Partículas pequenas nas cartas continuam (feedback tático)
         let elId = isPlayer ? 'p-slot' : 'm-slot'; 
         let slot = document.getElementById(elId); 
         if(slot) { 
             let r = slot.getBoundingClientRect(); 
             if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); 
         } 
-        document.body.classList.add('shake-screen'); 
-        setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
-        let ov = document.getElementById('dmg-overlay'); 
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
+
+        // --- AQUI ESTÁ A MUDANÇA: SÓ TREME/PISCA SE FOR O JOGADOR ---
+        if (isPlayer) {
+            document.body.classList.add('shake-screen'); 
+            setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
+            
+            // Chama o efeito avançado de sangue (se existir no effects.js)
+            if(window.triggerDamageEffect) window.triggerDamageEffect(); 
+            
+            // Fallback para overlay simples
+            let ov = document.getElementById('dmg-overlay'); 
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
+        }
+
     } catch(e) {} 
 }
 
@@ -681,29 +693,45 @@ function triggerCritEffect() { let ov = document.getElementById('crit-overlay');
 
 function triggerHealEffect(isPlayer) { 
     try { 
+        // Partículas na carta continuam
         let elId = isPlayer ? 'p-slot' : 'm-slot'; 
         let slot = document.getElementById(elId); 
         if(slot) { 
             let r = slot.getBoundingClientRect(); 
             if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); 
         } 
-        let ov = document.getElementById('heal-overlay'); 
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
+        
+        // --- AQUI ESTÁ A MUDANÇA: OVERLAY APENAS SE FOR JOGADOR ---
+        if (isPlayer) {
+            // Chama efeito avançado (se existir)
+            if(window.triggerHealEffect) window.triggerHealEffect();
+
+            let ov = document.getElementById('heal-overlay'); 
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
+        }
     } catch(e) {} 
 }
 
 function triggerBlockEffect(isPlayer) { 
     try { 
+        // Som toca sempre
         if(isPlayer && window.currentDeck === 'mage') {
              playSound('sfx-block-mage');
         } else {
              playSound('sfx-block'); 
         }
         
-        let ov = document.getElementById('block-overlay'); 
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
-        document.body.classList.add('shake-screen'); 
-        setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+        // --- AQUI ESTÁ A MUDANÇA: EFEITO VISUAL SÓ SE O INIMIGO BLOQUEOU ---
+        // Se isPlayer for false, significa que o Inimigo usou Bloqueio contra você.
+        if (!isPlayer) {
+             // Chama efeito avançado (se existir)
+             if(window.triggerBlockEffect) window.triggerBlockEffect();
+
+             let ov = document.getElementById('block-overlay'); 
+             if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
+             document.body.classList.add('shake-screen'); 
+             setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+        }
     } catch(e) {} 
 }
 
