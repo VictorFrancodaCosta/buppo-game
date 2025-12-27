@@ -1,7 +1,8 @@
 /* ARQUIVO: css/style.css */
 
-/* IMPORTANTE: FONTE RPG NO TOPO */
+/* IMPORTANTE: FONTES */
 @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap'); /* NOVA FONTE CARTOON */
 
 :root {
     --bg-app: #050505;
@@ -465,13 +466,8 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     .img-titulo-placa { max-width: 450px; }
     #deck-selection-screen { gap: 15px; }
 }
- 
-/* ARQUIVO: css/style.css - Adicione ao FINAL do arquivo */
 
-/* 1. Importando a fonte Bangers para o efeito cartoon */
-@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
-
-/* 2. Estilo do Texto LEVEL UP */
+/* --- NOVO ESTILO LEVEL UP (CARTOON) --- */
 .levelup-text {
     position: absolute;
     left: 50%;
@@ -493,7 +489,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     opacity: 0;
 }
 
-/* 3. Animação para o JOGADOR (Sobe) */
+/* Animação para o JOGADOR (Sobe) */
 .lvl-anim-up {
     top: -20px;
     animation: floatLvlUp 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
@@ -505,7 +501,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     100% { opacity: 0; transform: translateX(-50%) translateY(-120px) scale(1.0); } /* Fade out subindo */
 }
 
-/* 4. Animação para o INIMIGO (Desce) */
+/* Animação para o INIMIGO (Desce) */
 .lvl-anim-down {
     bottom: -20px;
     animation: floatLvlDown 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
