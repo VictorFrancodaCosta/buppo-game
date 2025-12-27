@@ -29,11 +29,11 @@ jobs:
       - name: Instalar Dependências
         run: npm install --legacy-peer-deps
 
-      - name: REVELAR O SHA-1 VERDADEIRO
-        run: cd android && ./gradlew signingReport
-
       - name: Sincronizar Capacitor
         run: npx cap sync
+
+      - name: REVELAR O SHA-1 VERDADEIRO
+        run: cd android && ./gradlew signingReport
 
       # --- CORREÇÃO DE PERMISSÃO ---
       - name: Dar permissão ao Gradlew
