@@ -1,10 +1,11 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL BLINDADA MOBILE/PC)
+// ARQUIVO: js/main.js (VERSÃO WEB PURA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithPopup, signInWithCredential, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
     authDomain: "buppo-game.firebaseapp.com",
@@ -14,10 +15,7 @@ const firebaseConfig = {
     appId: "1:950871979140:web:f2dba12900500c52053ed1"
 };
 
-// --- CLIENT ID DO GOOGLE (IMPORTANTE: DEVE SER O CLIENT ID TIPO WEB, MESMO NO ANDROID) ---
-const GOOGLE_WEB_CLIENT_ID = '950871979140-4scl9644ch2mma7753mdhffoo3g779qe.apps.googleusercontent.com';
-
-// --- BLOCO DE INICIALIZAÇÃO FIREBASE ---
+// --- INICIALIZAÇÃO SIMPLES ---
 let app, auth, db, provider;
 
 try {
@@ -25,12 +23,12 @@ try {
     auth = getAuth(app);
     db = getFirestore(app);
     provider = new GoogleAuthProvider();
-    console.log("Firebase Inicializado com Sucesso.");
+    console.log("Firebase Web Iniciado.");
 } catch (e) {
-    console.error("ERRO CRÍTICO FIREBASE:", e);
+    console.error("Erro Firebase:", e);
 }
 
-// --- VARIÁVEIS GLOBAIS ---
+// --- VARIÁVEIS GLOBAIS DO JOGO ---
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
@@ -397,7 +395,7 @@ function checkEndGame(){
     } else { isProcessing = false; } 
 }
 
-// Listener de Auth Global
+// --- AUTH LISTENER ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
@@ -413,71 +411,23 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// --- FUNÇÃO DE LOGIN MELHORADA (A CORREÇÃO PRINCIPAL) ---
+// --- FUNÇÃO DE LOGIN WEB SIMPLES ---
 window.googleLogin = async function() {
     window.playNavSound(); 
     const btnText = document.getElementById('btn-text');
     btnText.innerText = "CONECTANDO...";
 
-    // Verifica se é ambiente nativo (Celular)
-    const isNative = window.Capacitor && window.Capacitor.isNative;
-
     try {
-        if (isNative) {
-            // --- FLUXO MOBILE (PLUGIN) ---
-            console.log("Iniciando Login Nativo...");
-
-            // Recupera o plugin dinamicamente para garantir que o Capacitor carregou
-            const GoogleAuth = window.Capacitor.Plugins.GoogleAuth;
-            
-            if (!GoogleAuth) {
-                throw new Error("Plugin GoogleAuth não encontrado no Capacitor.");
-            }
-
-            // Inicialização de segurança (caso não tenha ocorrido)
-            // IMPORTANTE: Passamos o CLIENT ID aqui para garantir
-            await GoogleAuth.initialize({
-                clientId: GOOGLE_WEB_CLIENT_ID,
-                scopes: ['profile', 'email'],
-                grantOfflineAccess: true,
-            });
-
-            const googleUser = await GoogleAuth.signIn();
-            
-            // O plugin retorna o idToken que trocamos por credencial Firebase
-            const idToken = googleUser.authentication.idToken;
-            const credential = GoogleAuthProvider.credential(idToken);
-            
-            await signInWithCredential(auth, credential);
-
-        } else {
-            // --- FLUXO WEB (POPUP) ---
-            console.log("Iniciando Login Web...");
-            await signInWithPopup(auth, provider);
-        }
-
+        await signInWithPopup(auth, provider);
     } catch (error) {
         console.error("Erro no Login:", error);
-        
-        // --- VISUALIZAÇÃO DE ERRO NO CELULAR ---
-        if(isNative) {
-            // Mostra um alerta com o erro real para debug
-            alert("Erro Mobile Detalhado:\n" + JSON.stringify(error, Object.getOwnPropertyNames(error)));
-        }
-
-        btnText.innerText = "FALHA - TENTE NOVAMENTE";
+        btnText.innerText = "ERRO - TENTE NOVAMENTE";
         setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000);
     }
 };
 
 window.handleLogout = function() {
     window.playNavSound();
-    
-    const isNative = window.Capacitor && window.Capacitor.isNative;
-    if(isNative && window.Capacitor.Plugins.GoogleAuth) {
-        window.Capacitor.Plugins.GoogleAuth.signOut().catch(e => console.log(e));
-    }
-    
     signOut(auth).then(() => { location.reload(); });
 };
 
@@ -616,15 +566,6 @@ window.onload = function() {
             e.stopPropagation(); 
             window.toggleMute();
         });
-    }
-
-    // Tenta inicializar o plugin assim que o window carrega (Backup)
-    if(window.Capacitor && window.Capacitor.isNative && window.Capacitor.Plugins.GoogleAuth) {
-         window.Capacitor.Plugins.GoogleAuth.initialize({
-            clientId: GOOGLE_WEB_CLIENT_ID,
-            scopes: ['profile', 'email'],
-            grantOfflineAccess: true,
-         }).catch(e => console.warn("Auto-init error (ignorable):", e));
     }
 };
 
