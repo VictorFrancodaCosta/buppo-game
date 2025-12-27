@@ -70,10 +70,7 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, 
         { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' }, 
         { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' }, 
-        
-        // --- SOM DE TREINAR ATUALIZADO (NOVO LINK) ---
         { id: 'sfx-train', src: 'https://files.catbox.moe/rnndcv.mp3' }, 
-        
         { id: 'sfx-disarm', src: 'https://files.catbox.moe/udd2sz.mp3' }, 
         { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
         { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' }, 
@@ -654,6 +651,8 @@ initAmbientParticles();
 
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
+// --- NOVAS FUNÇÕES VISUAIS "JUICY" (Dano, Cura, Block) ---
+
 function triggerDamageEffect(isPlayer, playAudio = true) { 
     try { 
         if(playAudio) {
@@ -664,16 +663,118 @@ function triggerDamageEffect(isPlayer, playAudio = true) {
             }
         } 
         
+        // Efeito de partículas no slot (mantido para compatibilidade)
         let elId = isPlayer ? 'p-slot' : 'm-slot'; 
         let slot = document.getElementById(elId); 
         if(slot) { 
             let r = slot.getBoundingClientRect(); 
             if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); 
         } 
-        document.body.classList.add('shake-screen'); 
-        setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
-        let ov = document.getElementById('dmg-overlay'); 
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
+
+        // --- JUICY FX: DANO NO JOGADOR ---
+        if(isPlayer) {
+            const body = document.body;
+            const overlay = document.getElementById('damage-overlay');
+            const particlesContainer = document.getElementById('particles-container');
+            const cutLine = document.getElementById('cut-line');
+
+            // 1. Tremor Forte
+            body.classList.remove('screen-shake-hard');
+            void body.offsetWidth; 
+            body.classList.add('screen-shake-hard');
+
+            // 2. Vinheta Vermelha
+            if(overlay) {
+                overlay.classList.remove('active');
+                void overlay.offsetWidth;
+                overlay.classList.add('active');
+            }
+
+            // 3. Corte (Slash)
+            if(cutLine) {
+                cutLine.classList.remove('active');
+                void cutLine.offsetWidth;
+                cutLine.classList.add('active');
+            }
+
+            // 4. SANGUE (Blood Container)
+            const bloodContainer = document.getElementById('blood-container');
+            if(bloodContainer) {
+                bloodContainer.innerHTML = '';
+                // Manchas grandes
+                for(let i=0; i<4; i++) {
+                    const bigSpot = document.createElement('div');
+                    bigSpot.classList.add('blood-spot', 'big-splatter');
+                    const size = Math.random() * 100 + 100; 
+                    bigSpot.style.width = size + 'px';
+                    bigSpot.style.height = size + 'px';
+                    bigSpot.style.left = (Math.random() * 100 - 10) + '%';
+                    bigSpot.style.top = (Math.random() * 100 - 10) + '%';
+                    bigSpot.style.animationDelay = (Math.random() * 0.1) + 's';
+                    bloodContainer.appendChild(bigSpot);
+                }
+                // Gotículas
+                const drops = Math.floor(Math.random() * 10 + 20);
+                for(let i=0; i < drops; i++) {
+                    const drop = document.createElement('div');
+                    drop.classList.add('blood-spot');
+                    const size = Math.random() * 25 + 10;
+                    drop.style.width = size + 'px';
+                    drop.style.height = size + 'px';
+                    drop.style.left = Math.random() * 100 + 'vw';
+                    drop.style.top = Math.random() * 100 + 'vh';
+                    const deform = Math.random() * 20 + 40; 
+                    drop.style.borderRadius = `${deform}% ${100-deform}% ${deform}% ${100-deform}%`;
+                    drop.style.animationDelay = (Math.random() * 0.2 + 0.1) + 's';
+                    bloodContainer.appendChild(drop);
+                }
+            }
+
+            // 5. Partículas de Impacto
+            if(particlesContainer) {
+                particlesContainer.innerHTML = ''; 
+                for (let i = 0; i < 15; i++) {
+                    const particle = document.createElement('div');
+                    const isIcon = Math.random() > 0.5;
+                    if(isIcon) {
+                        particle.className = 'dmg-particle';
+                        particle.textContent = "💥"; 
+                        particle.style.fontSize = (Math.random() * 3 + 2) + 'rem';
+                    } else {
+                        particle.className = 'dmg-particle';
+                        particle.textContent = "🩸";
+                        particle.style.fontSize = (Math.random() * 2 + 1) + 'rem';
+                    }
+                    
+                    // Explosão do centro
+                    particle.style.left = '50%';
+                    particle.style.top = '50%';
+                    
+                    // Direção aleatória
+                    const angle = Math.random() * Math.PI * 2;
+                    const velocity = Math.random() * 300 + 100;
+                    const tx = Math.cos(angle) * velocity;
+                    const ty = Math.sin(angle) * velocity;
+                    
+                    particle.style.setProperty('--tx', tx + 'px');
+                    particle.style.setProperty('--ty', ty + 'px');
+                    
+                    particlesContainer.appendChild(particle);
+                }
+                
+                setTimeout(() => {
+                    body.classList.remove('screen-shake-hard');
+                    if(overlay) overlay.classList.remove('active');
+                    if(cutLine) cutLine.classList.remove('active');
+                    if(bloodContainer) bloodContainer.innerHTML = '';
+                    particlesContainer.innerHTML = '';
+                }, 2600);
+            }
+        } else {
+            // Tremor leve se for no inimigo
+            document.body.classList.add('shake-screen'); 
+            setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
+        }
     } catch(e) {} 
 }
 
@@ -681,14 +782,61 @@ function triggerCritEffect() { let ov = document.getElementById('crit-overlay');
 
 function triggerHealEffect(isPlayer) { 
     try { 
-        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
-        let slot = document.getElementById(elId); 
-        if(slot) { 
-            let r = slot.getBoundingClientRect(); 
-            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); 
-        } 
-        let ov = document.getElementById('heal-overlay'); 
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
+        // --- JUICY FX: CURA NO JOGADOR ---
+        if(isPlayer) {
+            const body = document.body;
+            const overlay = document.getElementById('heal-overlay');
+            const light = document.getElementById('holy-light');
+            const particlesContainer = document.getElementById('particles-container');
+
+            playSound('sfx-heal');
+
+            // 1. Respiro da Tela
+            body.classList.remove('screen-breathe');
+            void body.offsetWidth; 
+            body.classList.add('screen-breathe');
+
+            // 2. Aura e Luz
+            if(overlay) { overlay.classList.remove('active'); void overlay.offsetWidth; overlay.classList.add('active'); }
+            if(light) { light.classList.remove('active'); void light.offsetWidth; light.classList.add('active'); }
+
+            // 3. Partículas Subindo
+            if(particlesContainer) {
+                particlesContainer.innerHTML = ''; 
+                for (let i = 0; i < 20; i++) {
+                    const particle = document.createElement('div');
+                    const isCross = Math.random() > 0.3;
+                    if (isCross) {
+                        particle.classList.add('heal-particle');
+                        particle.textContent = "+";
+                        particle.style.fontSize = (Math.random() * 2 + 1.5) + 'rem';
+                    } else {
+                        particle.classList.add('sparkle-particle');
+                        particle.style.setProperty('--part-color', '#2ecc71');
+                    }
+                    particle.style.left = Math.random() * 100 + 'vw';
+                    particle.style.animationDuration = (Math.random() * 1 + 1.5) + 's';
+                    particle.style.animationDelay = (Math.random() * 0.5) + 's';
+                    particlesContainer.appendChild(particle);
+                }
+                
+                setTimeout(() => {
+                    body.classList.remove('screen-breathe');
+                    if(overlay) overlay.classList.remove('active');
+                    if(light) light.classList.remove('active');
+                    particlesContainer.innerHTML = '';
+                }, 2500);
+            }
+        } else {
+            // Cura simples no inimigo
+            let elId = 'm-slot'; 
+            let slot = document.getElementById(elId); 
+            if(slot) { 
+                let r = slot.getBoundingClientRect(); 
+                if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); 
+            } 
+            playSound('sfx-heal'); 
+        }
     } catch(e) {} 
 }
 
@@ -700,10 +848,57 @@ function triggerBlockEffect(isPlayer) {
              playSound('sfx-block'); 
         }
         
-        let ov = document.getElementById('block-overlay'); 
-        if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
-        document.body.classList.add('shake-screen'); 
-        setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+        // --- JUICY FX: BLOQUEIO DO JOGADOR ---
+        if(isPlayer) {
+            const body = document.body;
+            const overlay = document.getElementById('block-overlay-global');
+            const shockwave = document.getElementById('shockwave');
+            const particlesContainer = document.getElementById('particles-container');
+
+            // 1. Batida de Escudo (Bump)
+            body.classList.remove('screen-bump');
+            void body.offsetWidth;
+            body.classList.add('screen-bump');
+
+            // 2. Flash Azul e Onda de Choque
+            if(overlay) { overlay.classList.remove('active'); void overlay.offsetWidth; overlay.classList.add('active'); }
+            if(shockwave) { shockwave.classList.remove('active'); void shockwave.offsetWidth; shockwave.classList.add('active'); }
+
+            // 3. Partículas de Escudo
+            if(particlesContainer) {
+                particlesContainer.innerHTML = ''; 
+                for (let i = 0; i < 15; i++) {
+                    const particle = document.createElement('div');
+                    const isIcon = Math.random() > 0.4;
+                    if(isIcon) {
+                        particle.className = 'block-particle';
+                        particle.textContent = "🛡️"; 
+                        particle.style.fontSize = (Math.random() * 2 + 1) + 'rem';
+                    } else {
+                        particle.className = 'sparkle-particle';
+                        particle.style.setProperty('--part-color', '#00cec9');
+                    }
+                    
+                    particle.style.left = Math.random() * 100 + 'vw';
+                    particle.style.animationDuration = '1s';
+                    particlesContainer.appendChild(particle);
+                }
+                
+                setTimeout(() => {
+                    body.classList.remove('screen-bump');
+                    if(overlay) overlay.classList.remove('active');
+                    if(shockwave) shockwave.classList.remove('active');
+                    particlesContainer.innerHTML = '';
+                }, 1200);
+            }
+
+        } else {
+            // Block inimigo
+            let ov = document.getElementById('block-overlay'); // Esse é o antigo, local
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
+            document.body.classList.add('shake-screen'); 
+            setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+        }
     } catch(e) {} 
 }
 
@@ -862,8 +1057,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     updateUI();
     let pDead = player.hp <= 0, mDead = monster.hp <= 0;
     
-    if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
-    if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
+    if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); }
+    if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); }
 
     function handleExtraXP(u) { 
         if(u.deck.length > 0) { 
