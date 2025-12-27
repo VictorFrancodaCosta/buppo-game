@@ -108,28 +108,68 @@ window.triggerDamageEffect = function() {
         if(bloodContainer) bloodContainer.innerHTML = '';
     }, 2600);
 }
-// 3. EFEITO DE BLOQUEIO
+// 3. EFEITO DE BLOQUEIO (Escudo + Onda + Texto "BLOQUEADO")
 window.triggerBlockEffect = function() {
     const body = document.body;
     const overlay = document.getElementById('block-overlay');
     const shockwave = document.getElementById('shockwave');
 
-    // 1. Recuo
+    // 1. Recuo da Tela
     body.classList.remove('screen-recoil');
     void body.offsetWidth; 
     body.classList.add('screen-recoil');
 
     // 2. Overlay e Onda
-    overlay.classList.remove('active');
-    shockwave.classList.remove('active');
-    void overlay.offsetWidth;
-    overlay.classList.add('active');
-    shockwave.classList.add('active');
+    if(overlay) { 
+        overlay.classList.remove('active'); 
+        void overlay.offsetWidth; 
+        overlay.classList.add('active'); 
+    }
+    if(shockwave) { 
+        shockwave.classList.remove('active'); 
+        void shockwave.offsetWidth; 
+        shockwave.classList.add('active'); 
+    }
 
-    // 3. Limpeza
+    // 3. TEXTO "BLOQUEADO" (Novo)
+    const blockText = document.createElement('div');
+    blockText.innerText = "BLOQUEADO";
+    
+    // Estilos Inline para garantir o visual pedido
+    blockText.style.position = 'fixed';
+    blockText.style.top = '45%'; // Um pouco acima do centro exato
+    blockText.style.left = '50%';
+    blockText.style.transform = 'translate(-50%, -50%) scale(0.5)'; // Começa pequeno
+    blockText.style.fontFamily = "'Bangers', cursive";
+    blockText.style.fontSize = '5rem'; // Tamanho médio
+    blockText.style.color = '#3498db'; // Azul do bloqueio
+    blockText.style.webkitTextStroke = '2px black'; // Outline preto
+    blockText.style.textShadow = '0 0 10px rgba(52, 152, 219, 0.8)';
+    blockText.style.zIndex = '9005'; // Acima de tudo
+    blockText.style.pointerEvents = 'none';
+    blockText.style.opacity = '0';
+    blockText.style.transition = 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+
+    document.body.appendChild(blockText);
+
+    // Animação de Entrada (Pop)
+    requestAnimationFrame(() => {
+        blockText.style.opacity = '1';
+        blockText.style.transform = 'translate(-50%, -50%) scale(1)';
+    });
+
+    // Limpeza Geral
     setTimeout(() => {
+        // Saída do texto
+        blockText.style.opacity = '0';
+        blockText.style.transform = 'translate(-50%, -0%) scale(1.5)'; // Sobe e cresce sumindo
+        
+        // Remove classes
         body.classList.remove('screen-recoil');
-        overlay.classList.remove('active');
-        shockwave.classList.remove('active');
+        if(overlay) overlay.classList.remove('active');
+        if(shockwave) shockwave.classList.remove('active');
+        
+        // Remove elemento texto do DOM
+        setTimeout(() => blockText.remove(), 300);
     }, 700);
 }
