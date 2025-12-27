@@ -71,8 +71,8 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' }, 
         { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' }, 
         
-        // --- SOM DE TREINAR ATUALIZADO ---
-        { id: 'sfx-train', src: 'https://files.catbox.moe/fqsgr1.mp3' }, 
+        // --- SOM DE TREINAR ATUALIZADO (NOVO LINK) ---
+        { id: 'sfx-train', src: 'https://files.catbox.moe/rnndcv.mp3' }, 
         
         { id: 'sfx-disarm', src: 'https://files.catbox.moe/udd2sz.mp3' }, 
         { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
