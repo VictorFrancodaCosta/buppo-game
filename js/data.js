@@ -97,6 +97,3 @@ export const CARDS_DB = {
         mastery: 'Copia outra Maestria'
     }
 };
- 
- 
- 
