@@ -849,32 +849,60 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
+// ARQUIVO: js/main.js
+
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
-        let xpContainer = document.getElementById(u.id + '-xp'); let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
+        let xpContainer = document.getElementById(u.id + '-xp'); 
+        let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
+        
         minis.forEach(realCard => {
-            let rect = realCard.getBoundingClientRect(); let clone = document.createElement('div'); clone.className = 'xp-anim-clone';
-            clone.style.left = rect.left + 'px'; clone.style.top = rect.top + 'px'; clone.style.width = rect.width + 'px'; clone.style.height = rect.height + 'px'; clone.style.backgroundImage = realCard.style.backgroundImage;
+            let rect = realCard.getBoundingClientRect(); 
+            let clone = document.createElement('div'); 
+            clone.className = 'xp-anim-clone';
+            clone.style.left = rect.left + 'px'; 
+            clone.style.top = rect.top + 'px'; 
+            clone.style.width = rect.width + 'px'; 
+            clone.style.height = rect.height + 'px'; 
+            clone.style.backgroundImage = realCard.style.backgroundImage;
             if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down');
             document.body.appendChild(clone);
         });
         minis.forEach(m => m.style.opacity = '0');
+
         setTimeout(() => {
-            let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = []; for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
+            let counts = {}; 
+            u.xp.forEach(x => counts[x] = (counts[x]||0)+1); 
+            let triggers = []; 
+            for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
+            
             processMasteries(u, triggers, () => {
-                let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; 
-                triggerLevelUpVisuals(u.id); 
+                let lvlEl = document.getElementById(u.id+'-lvl'); 
+                u.lvl++; 
+                
+                // --- MANTIDO: O círculo pulsa ---
                 lvlEl.classList.add('level-up-anim'); 
+                
+                // --- REMOVIDO: O texto flutuante (triggerLevelUpVisuals) ---
+                
                 playSound('sfx-levelup'); 
+                
+                // Remove a classe de pulso após 1 segundo
                 setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
-                u.xp.forEach(x => u.deck.push(x)); u.xp = []; shuffle(u.deck); 
-                let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
-                updateUI(); doneCb();
+
+                u.xp.forEach(x => u.deck.push(x)); 
+                u.xp = []; 
+                shuffle(u.deck); 
+                
+                let clones = document.getElementsByClassName('xp-anim-clone'); 
+                while(clones.length > 0) clones[0].remove();
+                
+                updateUI(); 
+                doneCb();
             });
         }, 1000); 
     } else { doneCb(); }
 }
-
 function triggerLevelUpVisuals(unitId) {
     let lvlCircle = document.getElementById(unitId + '-lvl');
     if(!lvlCircle) return;
