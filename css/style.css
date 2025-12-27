@@ -2,7 +2,7 @@
 
 /* IMPORTANTE: FONTES */
 @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap'); /* NOVA FONTE CARTOON */
+@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
 
 :root {
     --bg-app: #050505;
@@ -511,4 +511,220 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     0% { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.5) rotate(5deg); }
     20% { opacity: 1; transform: translateX(-50%) translateY(30px) scale(1.2) rotate(0deg); } /* Pop! */
     100% { opacity: 0; transform: translateX(-50%) translateY(120px) scale(1.0); } /* Fade out descendo */
+}
+
+/* =========================================================
+   NOVOS EFEITOS GLOBAIS ("JUICINESS") - SOLICITADO
+========================================================= */
+
+/* --- EFEITO: RESPIRO DA TELA (Screen Breathe) --- */
+/* A tela dá um leve zoom in/out suave */
+.screen-breathe {
+    animation: breatheMotion 1s ease-in-out;
+}
+@keyframes breatheMotion {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); } /* Zoom leve */
+    100% { transform: scale(1); }
+}
+
+/* --- EFEITO: TREMOR FORTE (Screen Shake) --- */
+.screen-shake-hard {
+    animation: shakeHard 0.4s ease-in-out;
+}
+@keyframes shakeHard {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px) rotate(-1deg); }
+    20%, 40%, 60%, 80% { transform: translateX(8px) rotate(1deg); }
+}
+
+/* --- EFEITO: CORTE (Slash) --- */
+.screen-cut-line {
+    position: fixed; top: 50%; left: 50%; width: 150vw; height: 8px; background: #fff;
+    transform: translate(-50%, -50%) rotate(-35deg) scaleX(0);
+    z-index: 10000; pointer-events: none;
+    box-shadow: 0 0 15px rgba(255,255,255,0.9), 0 0 30px rgba(255, 255, 255, 0.6);
+    clip-path: polygon(0 40%, 100% 0, 95% 100%, 5% 60%);
+    opacity: 0;
+}
+.screen-cut-line.active {
+    animation: slashAnimation 0.4s ease-out forwards;
+}
+@keyframes slashAnimation {
+    0% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(0); opacity: 0; }
+    10% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(1); opacity: 1; }
+    40% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(1); opacity: 0; }
+}
+
+/* --- SANGUE (Blood Container) --- */
+#blood-container {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 9998; mix-blend-mode: multiply; 
+}
+.blood-spot {
+    position: absolute;
+    background: radial-gradient(circle at 30% 30%, #8b0000 20%, #500000 70%, transparent 80%);
+    border-radius: 50%; opacity: 0;
+    animation: bloodFadeIn 2.5s ease-out forwards;
+}
+.big-splatter {
+    filter: blur(1px);
+    border-radius: 40% 60% 50% 50% / 50% 40% 60% 50%;
+}
+@keyframes bloodFadeIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    5% { transform: scale(1.05); opacity: 1; }
+    10% { transform: scale(1); opacity: 0.9; }
+    70% { opacity: 0.9; }
+    100% { opacity: 0; } 
+}
+
+/* --- EFEITO: BATIDA DE ESCUDO (Screen Bump) --- */
+.screen-bump {
+    animation: bumpMotion 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes bumpMotion {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.97); } /* Encolhe rápido */
+    100% { transform: scale(1); }
+}
+
+/* --- ONDA DE CHOQUE (Shockwave) --- */
+.shockwave-ring {
+    position: fixed; top: 50%; left: 50%;
+    width: 0px; height: 0px; border-radius: 50%; background: transparent;
+    border: 30px solid rgba(255, 255, 255, 0.9); 
+    box-shadow: 0 0 30px #3498db, inset 0 0 20px #3498db;
+    transform: translate(-50%, -50%);
+    z-index: 9001; opacity: 0; pointer-events: none;
+}
+.shockwave-ring.active {
+    animation: shockwaveExpand 0.5s ease-out forwards;
+}
+@keyframes shockwaveExpand {
+    0% { width: 0vw; height: 0vw; border-width: 40px; opacity: 1; }
+    100% { width: 150vw; height: 150vw; border-width: 0px; opacity: 0; }
+}
+
+/* --- AURA DE CURA (Verde) --- */
+#heal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 9000;
+    background: radial-gradient(circle, transparent 40%, rgba(46, 204, 113, 0.6) 100%);
+    opacity: 0;
+    mix-blend-mode: screen; 
+}
+#heal-overlay.active { animation: glowPulse 1.5s ease-out forwards; }
+
+/* --- AURA DE DANO (Vermelha) --- */
+#damage-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 9000;
+    background: radial-gradient(circle, transparent 30%, rgba(231, 76, 60, 0.7) 100%);
+    opacity: 0;
+    mix-blend-mode: overlay; 
+}
+#damage-overlay.active { animation: flashPulse 0.5s ease-out forwards; }
+
+/* --- AURA DE BLOQUEIO (Azul/Ciano) --- */
+#block-overlay-global {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 9000;
+    background: radial-gradient(circle, transparent 40%, rgba(52, 152, 219, 0.8) 90%);
+    opacity: 0;
+    mix-blend-mode: screen; 
+}
+#block-overlay-global.active { animation: flashFast 0.3s ease-out forwards; }
+
+/* --- LUZ SAGRADA (Holy Beam) --- */
+.holy-light {
+    position: fixed; top: 0; left: 50%; width: 60vw; height: 100vh;
+    transform: translateX(-50%);
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 224, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none; z-index: 8999;
+    opacity: 0;
+}
+.holy-light.active { animation: lightBeam 1.2s ease-in-out forwards; }
+
+/* --- PARTÍCULAS (Cruzes e Brilhos) --- */
+#particles-container {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 9001;
+}
+
+/* Partícula de Cura (Verde) */
+.heal-particle {
+    position: absolute;
+    color: #2ecc71; 
+    font-family: 'Bangers', cursive; 
+    font-size: 2rem;
+    text-shadow: 0 0 5px #f1c40f; 
+    opacity: 0;
+    animation: floatUp 2s ease-out forwards;
+}
+
+/* Partícula de Dano (Vermelho/Sangue) */
+.dmg-particle {
+    position: absolute;
+    color: #c0392b; 
+    font-family: 'Bangers', cursive; 
+    font-size: 2rem;
+    text-shadow: 0 0 5px #000; 
+    opacity: 0;
+    animation: explodeOut 0.8s ease-out forwards;
+}
+
+/* Partícula de Bloqueio (Escudo/Azul) */
+.block-particle {
+    position: absolute;
+    color: #00cec9; 
+    font-family: 'Bangers', cursive; 
+    font-size: 2rem;
+    text-shadow: 0 0 10px #fff; 
+    opacity: 0;
+    animation: floatUpFast 1s ease-out forwards;
+}
+
+/* Variação: Partícula de Brilho (Bolinha) */
+.sparkle-particle {
+    position: absolute; width: 10px; height: 10px;
+    background: #fff; border-radius: 50%;
+    box-shadow: 0 0 10px #fff, 0 0 20px var(--part-color, #2ecc71);
+    opacity: 0;
+    animation: floatUpSparkle 1.5s ease-out forwards;
+}
+
+/* --- KEYFRAMES --- */
+@keyframes glowPulse { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes flashPulse { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes flashFast { 0% { opacity: 0; } 20% { opacity: 0.8; } 100% { opacity: 0; } }
+
+@keyframes lightBeam {
+    0% { opacity: 0; transform: translateX(-50%) scaleX(0.5); }
+    50% { opacity: 1; transform: translateX(-50%) scaleX(1); }
+    100% { opacity: 0; transform: translateX(-50%) scaleX(0.8); }
+}
+
+@keyframes floatUp {
+    0% { transform: translateY(100vh) scale(0.5) rotate(0deg); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translateY(-10vh) scale(1.2) rotate(20deg); opacity: 0; }
+}
+
+@keyframes explodeOut {
+    0% { transform: scale(0.5) translate(0,0); opacity: 1; }
+    100% { transform: scale(1.5) translate(var(--tx), var(--ty)); opacity: 0; }
+}
+
+@keyframes floatUpFast {
+    0% { transform: translateY(50vh) scale(0.5); opacity: 0; }
+    20% { opacity: 1; transform: translateY(40vh) scale(1.5); }
+    100% { transform: translateY(0vh) scale(1); opacity: 0; }
+}
+
+@keyframes floatUpSparkle {
+    0% { transform: translateY(100vh) scale(0); opacity: 0; }
+    30% { opacity: 0.8; transform: translateY(60vh) scale(1); }
+    100% { transform: translateY(20vh) scale(0); opacity: 0; }
 }
