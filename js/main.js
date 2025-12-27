@@ -615,12 +615,33 @@ window.updateVol = function(type, val) {
                  // VOLUME BOOST: Mantém em 100% do master, destaque sobre os outros (80%)
                 audios[k].volume = 1.0 * vol;
             } else {
-                audios[k].volume = 0.2 * vol;
+                audios[k].volume = 0.8 * vol;
             }
         }
     }); 
 }
-function playSound(key) { if(audios[key]) { audios[key].currentTime = 0; audios[key].play().catch(e => console.log("Audio prevented:", e)); } }
+function playSound(key) { 
+    if(audios[key]) { 
+        // --- SISTEMA DE BOOST PARA LEVEL UP ---
+        if (key === 'sfx-levelup') {
+            // Garante volume máximo relativo ao mestre
+            audios[key].volume = 1.0 * (window.masterVol || 1.0);
+            
+            // Toca o original
+            audios[key].currentTime = 0; 
+            audios[key].play().catch(e => console.log("Audio prevented:", e));
+            
+            // Toca o CLONE para dobrar a amplitude (Juiciness!)
+            let clone = audios[key].cloneNode();
+            clone.volume = audios[key].volume;
+            clone.play().catch(()=>{});
+        } else {
+            // Toca normal
+            audios[key].currentTime = 0; 
+            audios[key].play().catch(e => console.log("Audio prevented:", e)); 
+        }
+    } 
+}
 
 function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
 initAmbientParticles();
