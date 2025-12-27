@@ -39,7 +39,6 @@ try {
             // SEU ID (CONFIRA SE ESTÁ CERTO)
             clientId: '950871979140-4scl9644ch2mma7753mdhffoo3g779qe.apps.googleusercontent.com', 
             scopes: ['profile', 'email'],
-            grantOfflineAccess: true,
         });
         console.log("Google Auth Nativo Inicializado");
     }
