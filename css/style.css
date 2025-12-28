@@ -877,7 +877,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 }
 
 /* =========================================
-   AJUSTES PARA CELULAR (MOBILE RESPONSIVE)
+   AJUSTES PARA CELULAR (MOBILE RESPONSIVE) - VERSÃO V3 (AMPLIADA)
 ========================================= */
 @media (max-width: 768px) {
 
@@ -886,25 +886,27 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
         align-items: center !important;
         justify-content: center !important;
         padding-left: 0 !important;
+        overflow: hidden; /* Evita rolagens indesejadas */
     }
 
-    /* === MOLDURA DE MADEIRA BEM MENOR === */
+    /* === MOLDURA DE MADEIRA (AUMENTADA) === */
     .lobby-frame-container {
-        /* Define um tamanho máximo fixo e relativo para a caixa da moldura */
-        width: 85vw;         /* Ocupa 85% da largura da tela */
-        max-width: 380px;    /* Trava em 380px para não ficar gigante em celulares largos */
-        height: auto;        /* Mantém a proporção */
-        max-height: 65vh;    /* Limita a altura a 65% da tela para sobrar espaço */
-        margin-top: 50px;    /* Espaço para a logo em cima */
+        /* Ocupa quase toda a largura */
+        width: 95vw;         
+        /* Aumentei o limite para não travar em telas maiores de celular */
+        max-width: 550px;    
+        height: auto;       
+        /* Altura segura para caber na tela sem corte */
+        max-height: 80vh;    
+        /* Espaço no topo para a Logo */
+        margin-top: 80px;    
         
-        /* Garante que a imagem obedeça os limites acima */
         display: flex;
         justify-content: center;
         align-items: center;
     }
 
     .lobby-frame-img {
-        /* Força a imagem a caber dentro do container limitado acima */
         max-width: 100%;
         max-height: 100%;
         width: auto;
@@ -912,40 +914,41 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
         object-fit: contain; 
     }
 
-    /* === CONTEÚDO INTERNO REDUZIDO === */
-    /* Ajusta o padding para o texto ficar dentro da nova moldura menor */
+    /* === CONTEÚDO INTERNO (REAUSTADO PARA O TAMANHO MAIOR) === */
     .lobby-ui-overlay {
-        padding: 32% 12% 10% 12%; /* Mais padding no topo para empurrar o texto para baixo */
+        /* Padding ajustado para a nova escala */
+        padding: 28% 14% 12% 14%; 
     }
 
-    /* Textos e Botões menores para caber na nova escala */
-    .user-welcome { font-size: 16px; margin-bottom: 2px; }
-    .user-stats { font-size: 11px; margin-bottom: 8px; }
+    /* Fontes maiores para preencher melhor o quadro */
+    .user-welcome { font-size: 22px; margin-bottom: 5px; }
+    .user-stats { font-size: 13px; margin-bottom: 12px; }
     
-    /* Tabela bem compacta */
-    #ranking-table { font-size: 10px; }
-    #ranking-table th, #ranking-table td { padding: 3px 2px; }
-    .ranking-scroll { margin-bottom: 10px; }
+    /* Tabela legível */
+    #ranking-table { font-size: 13px; }
+    #ranking-table th, #ranking-table td { padding: 6px 4px; }
+    .ranking-scroll { margin-bottom: 15px; max-height: 180px; }
 
-    /* Botões menores */
+    /* Botão JOGAR maior e mais fácil de clicar */
     #btn-play-match {
-        font-size: 14px;
-        padding: 8px 0;
-        width: 80%;
-        margin-bottom: 5px;
+        font-size: 20px;
+        padding: 12px 0;
+        width: 90%;
+        margin-bottom: 8px;
     }
     
     #btn-logout {
-        font-size: 9px;
-        padding: 4px 12px;
+        font-size: 11px;
+        padding: 6px 18px;
     }
 
-    /* Logo do Topo */
+    /* === LOGO DO TOPO (BEM MAIOR) === */
     .lobby-logo-right {
         left: 50%;
-        top: 6%; 
+        top: 5%; /* Posição no topo */
         transform: translate(-50%, 0);
-        width: 130px; /* Um pouco menor */
+        width: 240px; /* Aumentado significativamente */
         position: absolute;
+        z-index: 20;
     }
 }
