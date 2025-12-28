@@ -222,7 +222,7 @@ body {
 #p-stats-cluster .lvl-circle {
     position: fixed;
     left: 30px;  /* Levemente mais para a esquerda que antes */
-    top: 99px;   /* Ajuste vertical */
+    top: 41px;   /* Ajuste vertical */
     width: 68px; /* Maior para preencher bem o medalhão */
     height: 68px;
     
