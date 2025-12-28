@@ -154,8 +154,8 @@ body {
 /* ---------------------------------------------------------------------- */
 #p-deck-container { 
     position: fixed; /* Fixo na tela */
-    bottom: 25px;    /* Alinhado com o botão fullscreen */
-    right: 60px;     /* À esquerda do botão fullscreen */
+    bottom: 35px;    /* Alinhado com o botão fullscreen */
+    right: 260px;     /* À esquerda do botão fullscreen */
     z-index: 20000;  /* Camada de UI */
     display: flex; 
     align-items: center;
