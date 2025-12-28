@@ -228,31 +228,39 @@ window.showScreen = function(screenId) {
     }
 }
 
-// --- SUBSTITUA A FUNÇÃO window.openDeckSelector NO SEU MAIN.JS POR ESTA: ---
+// --- ATUALIZAÇÃO NO js/main.js ---
 
 window.openDeckSelector = function() {
-    // 1. Tenta ativar TELA CHEIA
+    // 1. Marca o corpo da página para exigir modo paisagem via CSS
+    document.body.classList.add('force-landscape');
+
+    // 2. Tenta Fullscreen e Trava (Funciona bem no Android)
     try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen().catch(err => {
-                console.log("Fullscreen foi negado ou não é suportado neste momento:", err);
-            });
+            document.documentElement.requestFullscreen().catch(() => {});
         }
-    } catch (e) { console.log(e); }
-
-    // 2. Tenta forçar a ORIENTAÇÃO HORIZONTAL (Landscape)
-    try {
         if (screen.orientation && screen.orientation.lock) {
-            // 'landscape' força a tela a deitar
-            screen.orientation.lock('landscape').catch(err => {
-                console.log("Trava de orientação não suportada pelo dispositivo/navegador:", err);
-            });
+            screen.orientation.lock('landscape').catch(() => {});
         }
     } catch (e) { console.log(e); }
 
-    // 3. Segue o fluxo normal do jogo
+    // 3. Vai para a seleção
     window.showScreen('deck-selection-screen');
 };
+
+// --- IMPORTANTE: ADICIONE ISSO TAMBÉM NO FINAL DO ARQUIVO MAIN.JS ---
+// (Isso cria o aviso visual de "Gire o Celular" automaticamente no HTML)
+(function createRotateOverlay() {
+    if (!document.getElementById('rotate-overlay')) {
+        const div = document.createElement('div');
+        div.id = 'rotate-overlay';
+        div.innerHTML = `
+            <div style="font-size: 50px; margin-bottom: 20px;">↻</div>
+            <div>GIRE O CELULAR<br>PARA JOGAR</div>
+        `;
+        document.body.appendChild(div);
+    }
+})();
 
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
