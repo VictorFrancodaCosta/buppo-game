@@ -206,8 +206,8 @@ body {
     display: block !important;
     z-index: 100; /* Garante que fique acima de partículas de fundo */
     
-    /* Sombra da imagem em si */
-    filter: drop-shadow(0 10px 5px rgba(0,0,0,0.9));
+    /* === MUDANÇA: Sombra Sólida (Cartoon Style) === */
+    filter: drop-shadow(0 10px 0px #000); 
     animation: hudFloat 4s ease-in-out infinite;
 }
 
@@ -221,19 +221,19 @@ body {
 /* 2. Círculo de Nível */
 #p-stats-cluster .lvl-circle {
     position: fixed;
-    left: 30px;  /* Levemente mais para a esquerda que antes */
-    top: 41px;   /* Ajuste vertical */
-    width: 68px; /* Maior para preencher bem o medalhão */
+    left: 30px;  
+    top: 38px;   
+    width: 68px; 
     height: 68px;
     
     /* Remove estilos antigos */
     background: transparent; border: none; box-shadow: none;
     
-    /* Texto */
-    color: ffd800;
+    /* === MUDANÇA: Cor Amarela e Sombra Dura === */
+    color: #fbc531; 
     font-family: 'Russo One', sans-serif;
     font-size: 50px;
-    text-shadow: 0 0 0 #00cec9, 2px 2px 0 #2e1e10;
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
     
     display: flex; justify-content: center; align-items: center;
     margin: 0;
@@ -242,13 +242,12 @@ body {
 /* 3. Nome do Jogador */
 #p-stats-cluster .unit-name {
     position: fixed;
-    left: 100px; /* Ajuste fino */
+    left: 100px; 
     top: 17px;
-    width: 210px; /* Área do pergaminho */
+    width: 210px; 
     
     font-family: 'MedievalSharp', cursive;
     font-size: 18px;
-    /* FORÇA A COR MARROM (TINTA) SOBRESCREVENDO O JS */
     color: #3e2723 !important; 
     font-weight: 900;
     text-align: center;
@@ -261,13 +260,12 @@ body {
 #p-stats-cluster .hp-tube {
     position: fixed;
     left: 140px; 
-    top: 45px; /* Sobe um pouquinho */
+    top: 45px; 
     width: 200px; 
     height: 33px;
     
-    /* === MUDANÇA PRINCIPAL: BORDA PRETA === */
     border: 3px solid #260b00;
-    background: rgba(0,0,0,0.5); /* Escurecido para contraste */
+    background: rgba(0,0,0,0.5); 
     box-shadow: inset 0 0 5px #000;
     border-radius: 25px;
     margin: 0;
@@ -285,11 +283,11 @@ body {
 /* 5. Maestrias (Ícones) */
 #p-stats-cluster .mastery-row {
     position: fixed;
-    left: 142px; /* Empurra para a direita para alinhar com os quadrados */
-    top: 95px;  /* Sobe um pouco */
+    left: 142px; 
+    top: 95px;  
     
     display: flex;
-    gap: 20px; /* Espaço entre os quadrados de madeira */
+    gap: 20px; 
     margin: 0; padding: 0;
     justify-content: flex-start;
 }
@@ -310,8 +308,17 @@ body {
 .unit-info { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
 .unit-name { font-family: 'Russo One', sans-serif; font-size: 16px; margin-bottom: 8px; display: block; text-transform: uppercase; text-shadow: 2px 2px 0 #000; letter-spacing: 1px; }
 .lvl-circle { position: relative; width: 60px; height: 60px; flex-shrink: 0; background: linear-gradient(135deg, var(--gold), #cfaa00); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-family: 'Russo One', sans-serif; font-size: 26px; border: 3px solid #8c7200; color: #4a3b2a; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-.level-up-anim { animation: levelPulse 0.4s ease-out; color: #fff !important; background: var(--gold) !important; box-shadow: 0 0 50px var(--gold); }
-@keyframes levelPulse { 0% { transform: scale(1); } 50% { transform: scale(1.6); } 100% { transform: scale(1); } }
+
+/* === MUDANÇA: ANIMAÇÃO DE LEVEL UP APENAS BOUNCE === */
+.level-up-anim { 
+    animation: levelPulse 0.5s ease-in-out;
+}
+@keyframes levelPulse { 
+    0% { transform: scale(1); } 
+    50% { transform: scale(1.6); } 
+    100% { transform: scale(1); } 
+}
+
 .hp-tube { width: 100%; height: 22px; background: #222; border-radius: 3px; overflow: hidden; position: relative; border: 3px solid var(--wood-dark); box-shadow: inset 0 5px 10px rgba(0,0,0,0.8); }
 .hp-liquid { height: 100%; width: 100%; border-radius: 12px; transition: width 0.4s ease-out, background 0.4s ease; position: relative; }
 .hp-liquid::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background-image: linear-gradient(-45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.2) 75%, transparent 75%, transparent); background-size: 20px 20px; animation: moveLiquid 1s linear infinite; opacity: 0.4; }
