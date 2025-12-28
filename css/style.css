@@ -947,7 +947,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
         left: 50%;
         top: 5%; /* Posição no topo */
         transform: translate(-50%, 0);
-        width: 240px; /* Aumentado significativamente */
+        width: 410px; /* Aumentado significativamente */
         position: absolute;
         z-index: 20;
     }
