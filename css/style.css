@@ -241,9 +241,9 @@ body {
 
 /* 3. Nome do Jogador */
 #p-stats-cluster .unit-name {
-    position: absolute;
-    left: 160px; /* Ajuste fino */
-    top: 36px;
+    position: fixed;
+    left: 100px; /* Ajuste fino */
+    top: 14px;
     width: 210px; /* Área do pergaminho */
     
     font-family: 'MedievalSharp', cursive;
