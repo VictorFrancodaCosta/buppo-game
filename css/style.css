@@ -260,7 +260,7 @@ body {
 /* 4. Barra de Vida */
 #p-stats-cluster .hp-tube {
     position: fixed;
-    left: 130px; 
+    left: 140px; 
     top: 50px; /* Sobe um pouquinho */
     width: 212px; 
     height: 33px;
@@ -311,7 +311,7 @@ body {
 .lvl-circle { position: relative; width: 60px; height: 60px; flex-shrink: 0; background: linear-gradient(135deg, var(--gold), #cfaa00); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-family: 'Russo One', sans-serif; font-size: 26px; border: 3px solid #8c7200; color: #4a3b2a; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
 .level-up-anim { animation: levelPulse 0.4s ease-out; color: #fff !important; background: var(--gold) !important; box-shadow: 0 0 50px var(--gold); }
 @keyframes levelPulse { 0% { transform: scale(1); } 50% { transform: scale(1.6); } 100% { transform: scale(1); } }
-.hp-tube { width: 100%; height: 22px; background: #222; border-radius: 12px; overflow: hidden; position: relative; border: 10px solid var(--wood-dark); box-shadow: inset 0 5px 10px rgba(0,0,0,0.8); }
+.hp-tube { width: 100%; height: 22px; background: #222; border-radius: 3px; overflow: hidden; position: relative; border: 10px solid var(--wood-dark); box-shadow: inset 0 5px 10px rgba(0,0,0,0.8); }
 .hp-liquid { height: 100%; width: 100%; border-radius: 12px; transition: width 0.4s ease-out, background 0.4s ease; position: relative; }
 .hp-liquid::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background-image: linear-gradient(-45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.2) 75%, transparent 75%, transparent); background-size: 20px 20px; animation: moveLiquid 1s linear infinite; opacity: 0.4; }
 @keyframes moveLiquid { 0% { background-position: 0 0; } 100% { background-position: 20px 20px; } }
