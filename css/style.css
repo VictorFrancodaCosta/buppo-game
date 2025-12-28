@@ -471,11 +471,11 @@ body.theme-cavaleiro #game-background,
     height: 105px;
     
     /* Imagem de Fundo NOVA */
-    background-image: url('https://i.ibb.co/SD43hn97/AREA-DE-EXPERIENCIA.png');
+    background-image: url('https://i.ibb.co/GQvMpBc2/AREA-DE-EXPERIENCIA.png');
     
     /* 'contain' garante que a imagem inteira apareça sem esticar/deformar */
     background-size: contain; 
-    background-position: center -6px;
+    background-position: center -5px;
     background-repeat: no-repeat;
     
     background-color: transparent; 
