@@ -166,6 +166,7 @@ body {
     display: flex; align-items: center; gap: 15px; 
     box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 15px rgba(255, 215, 0, 0.1); 
     min-width: 270px; 
+    /* Animação aplicada aqui também por segurança */
     animation: hudFloat 4s ease-in-out infinite; 
 }
 
@@ -194,8 +195,10 @@ body {
     display: block !important;
     z-index: 100;
     
-    /* === MUDANÇA: Sombra Sólida Transparente (Cartoon Style) === */
+    /* Sombra Sólida Transparente (Cartoon Style) */
     filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); 
+    
+    /* Animação de Flutuar */
     animation: hudFloat 4s ease-in-out infinite;
 }
 
@@ -290,8 +293,10 @@ body {
     display: block !important;
     z-index: 100;
     
-    /* === MUDANÇA: Sombra Sólida Transparente (Cartoon Style) === */
+    /* Sombra Sólida Transparente (Cartoon Style) */
     filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); 
+    
+    /* Animação de Flutuar */
     animation: hudFloat 4s ease-in-out infinite;
 }
 
@@ -360,6 +365,12 @@ body {
 }
 #m-stats-cluster .mastery-lvl {
     bottom: 0; right: 0; width: 14px; height: 14px; font-size: 9px; border: none;
+}
+
+/* --- ANIMAÇÃO DE FLUTUAÇÃO DO HUD --- */
+@keyframes hudFloat { 
+    0%, 100% { transform: translateY(0); } 
+    50% { transform: translateY(-6px); } 
 }
 
 /* --- FIM DAS ALTERAÇÕES --- */
