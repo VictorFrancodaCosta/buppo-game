@@ -274,7 +274,7 @@ body {
 }
 /* Texto da Vida */
 #p-stats-cluster .hp-txt {
-    font-size: 10px;
+    font-size: 15px;
     top: -1px;
     font-weight: bold;
     text-shadow: 1px 1px 0 #000;
@@ -284,8 +284,8 @@ body {
 
 /* 5. Maestrias (Ícones) */
 #p-stats-cluster .mastery-row {
-    position: absolute;
-    left: 185px; /* Empurra para a direita para alinhar com os quadrados */
+    position: fixed;
+    left: 165px; /* Empurra para a direita para alinhar com os quadrados */
     top: 105px;  /* Sobe um pouco */
     
     display: flex;
