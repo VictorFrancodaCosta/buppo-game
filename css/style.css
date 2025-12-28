@@ -183,8 +183,8 @@ body {
 #p-stats-cluster {
     /* Posição: COLADO NO CANTO INFERIOR ESQUERDO */
     position: absolute;
-    bottom: 0px; /* Encostado embaixo */
-    left: 0px;   /* Encostado na esquerda */
+    bottom: 5px; /* Quase encostado, margem mínima */
+    left: 5px;   /* Quase encostado, margem mínima */
     
     /* Tamanho da imagem */
     width: 440px; 
@@ -221,10 +221,10 @@ body {
 /* 2. Círculo de Nível */
 #p-stats-cluster .lvl-circle {
     position: absolute;
-    left: 55px;  /* Levemente mais para a direita para centralizar no medalhão */
-    top: 55px;   /* Ajuste vertical */
-    width: 64px; /* Levemente maior */
-    height: 64px;
+    left: 50px;  /* Levemente mais para a esquerda que antes */
+    top: 50px;   /* Ajuste vertical */
+    width: 68px; /* Maior para preencher bem o medalhão */
+    height: 68px;
     
     /* Remove estilos antigos */
     background: transparent; border: none; box-shadow: none;
@@ -232,7 +232,7 @@ body {
     /* Texto */
     color: #00cec9;
     font-family: 'Russo One', sans-serif;
-    font-size: 36px;
+    font-size: 38px;
     text-shadow: 0 0 15px #00cec9, 2px 2px 0 #000;
     
     display: flex; justify-content: center; align-items: center;
@@ -242,9 +242,9 @@ body {
 /* 3. Nome do Jogador */
 #p-stats-cluster .unit-name {
     position: absolute;
-    left: 175px; 
-    top: 38px;
-    width: 220px; /* Área do pergaminho */
+    left: 160px; /* Ajuste fino */
+    top: 36px;
+    width: 210px; /* Área do pergaminho */
     
     font-family: 'MedievalSharp', cursive;
     font-size: 18px;
@@ -260,9 +260,9 @@ body {
 /* 4. Barra de Vida */
 #p-stats-cluster .hp-tube {
     position: absolute;
-    left: 192px; 
-    top: 85px; /* Desce um pouco para o sulco escuro */
-    width: 190px; 
+    left: 178px; 
+    top: 76px; /* Sobe um pouquinho */
+    width: 185px; 
     height: 14px;
     
     background: rgba(0,0,0,0.4);
@@ -284,11 +284,11 @@ body {
 /* 5. Maestrias (Ícones) */
 #p-stats-cluster .mastery-row {
     position: absolute;
-    left: 200px; /* Empurra para a direita para alinhar com os quadrados */
-    top: 115px;  /* Desce para a área inferior */
+    left: 185px; /* Empurra para a direita para alinhar com os quadrados */
+    top: 105px;  /* Sobe um pouco */
     
     display: flex;
-    gap: 32px; /* Espaço maior entre os quadrados de madeira */
+    gap: 25px; /* Espaço entre os quadrados de madeira */
     margin: 0; padding: 0;
     justify-content: flex-start;
 }
