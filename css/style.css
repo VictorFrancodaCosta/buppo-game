@@ -262,8 +262,9 @@ body {
     position: fixed;
     left: 140px; 
     top: 50px; /* Sobe um pouquinho */
-    width: 212px; 
+    width: 200px; 
     height: 33px;
+    border: 10px solid var(--gold);
     
     background: rgba(0,0,0,0.4);
     border: none;
