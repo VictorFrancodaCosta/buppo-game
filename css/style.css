@@ -260,8 +260,8 @@ body {
 /* 4. Barra de Vida */
 #p-stats-cluster .hp-tube {
     position: fixed;
-    left: 140px; 
-    top: 60px; /* Sobe um pouquinho */
+    left: 130px; 
+    top: 50px; /* Sobe um pouquinho */
     width: 212px; 
     height: 33px;
     
@@ -269,7 +269,7 @@ body {
     border: none;
     box-shadow: inset 0 0 5px #000;
     border-radius: 6px;
-    margin: 0;
+    margin: 3;
 }
 /* Texto da Vida */
 #p-stats-cluster .hp-txt {
