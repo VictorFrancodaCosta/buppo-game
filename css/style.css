@@ -881,66 +881,71 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 ========================================= */
 @media (max-width: 768px) {
 
-    /* Ajusta o container do Saguão para centralizar tudo */
+    /* Centraliza o Saguão */
     #lobby-screen {
-        align-items: center !important; /* Centraliza horizontalmente */
-        justify-content: center !important; /* Centraliza verticalmente */
-        padding-left: 0 !important; /* Remove o recuo da esquerda do desktop */
+        align-items: center !important;
+        justify-content: center !important;
+        padding-left: 0 !important;
     }
 
-    /* Ajusta a Moldura de Madeira */
+    /* === MOLDURA DE MADEIRA BEM MENOR === */
     .lobby-frame-container {
-        width: 95vw; /* Ocupa 95% da largura da tela */
-        height: auto; /* Altura automática para não distorcer */
-        max-height: 80vh; /* Limite de altura para caber com a barra de endereço */
-        margin-top: 40px; /* Espaço para a logo em cima */
+        /* Define um tamanho máximo fixo e relativo para a caixa da moldura */
+        width: 85vw;         /* Ocupa 85% da largura da tela */
+        max-width: 380px;    /* Trava em 380px para não ficar gigante em celulares largos */
+        height: auto;        /* Mantém a proporção */
+        max-height: 65vh;    /* Limita a altura a 65% da tela para sobrar espaço */
+        margin-top: 50px;    /* Espaço para a logo em cima */
+        
+        /* Garante que a imagem obedeça os limites acima */
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .lobby-frame-img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain; /* Garante que a imagem inteira apareça */
+        /* Força a imagem a caber dentro do container limitado acima */
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain; 
     }
 
-    /* Ajusta o conteúdo de texto DENTRO da moldura */
+    /* === CONTEÚDO INTERNO REDUZIDO === */
+    /* Ajusta o padding para o texto ficar dentro da nova moldura menor */
     .lobby-ui-overlay {
-        /* Aumenta o padding do topo para o texto não ficar em cima da borda da madeira */
-        padding: 30% 12% 12% 12%; 
+        padding: 32% 12% 10% 12%; /* Mais padding no topo para empurrar o texto para baixo */
     }
 
-    /* Texto Menor */
-    .user-welcome { font-size: 18px; margin-bottom: 2px; }
-    .user-stats { font-size: 12px; margin-bottom: 10px; }
+    /* Textos e Botões menores para caber na nova escala */
+    .user-welcome { font-size: 16px; margin-bottom: 2px; }
+    .user-stats { font-size: 11px; margin-bottom: 8px; }
     
-    /* Tabela Menor */
-    #ranking-table { font-size: 11px; }
-    #ranking-table th, #ranking-table td { padding: 4px 2px; }
+    /* Tabela bem compacta */
+    #ranking-table { font-size: 10px; }
+    #ranking-table th, #ranking-table td { padding: 3px 2px; }
+    .ranking-scroll { margin-bottom: 10px; }
 
-    /* Botão Jogar Menor */
+    /* Botões menores */
     #btn-play-match {
-        font-size: 16px;
-        padding: 10px 0;
-        width: 90%;
-        margin-top: 5px;
+        font-size: 14px;
+        padding: 8px 0;
+        width: 80%;
+        margin-bottom: 5px;
     }
     
-    /* Botão Logout Menor */
     #btn-logout {
-        font-size: 10px;
-        padding: 5px 15px;
-        margin-top: 5px;
+        font-size: 9px;
+        padding: 4px 12px;
     }
 
-    /* Reposiciona a Logo (BUPPO) */
+    /* Logo do Topo */
     .lobby-logo-right {
         left: 50%;
-        top: 8%; /* Fica no topo da tela */
-        transform: translate(-50%, 0); /* Centraliza exato */
-        width: 150px; /* Bem menor */
+        top: 6%; 
+        transform: translate(-50%, 0);
+        width: 130px; /* Um pouco menor */
         position: absolute;
     }
-    
-    /* Ajustes da Tela de Login para Mobile */
-    .game-logo { width: 90%; }
-    #btn-login { width: 80%; font-size: 16px; }
 }
