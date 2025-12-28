@@ -151,9 +151,148 @@ body {
 #p-deck-img { height: 260px; width: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.8)); transition: transform 0.2s; }
 #p-deck-img:hover { transform: scale(1.05); }
 #p-deck-count { margin-top: -30px; z-index: 31; font-size: 18px; text-shadow: 0 2px 4px #000; }
-.avatar-cluster { position: absolute; z-index: 30; background: var(--wood-light); border: 4px solid var(--wood-dark); border-radius: 16px; padding: 12px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 15px rgba(255, 215, 0, 0.1); min-width: 270px; animation: hudFloat 4s ease-in-out infinite; }
-#m-stats-cluster { top: 30px; right: 30px; flex-direction: row-reverse; text-align: right; }
-#p-stats-cluster { bottom: 30px; left: 30px; }
+
+/* ---------------------------------------------------------------------- */
+/* CLUSTERS - (Container de Vida/Nome) */
+/* ---------------------------------------------------------------------- */
+
+/* ESTILO PADRÃO (Mantido para o Inimigo) */
+.avatar-cluster { 
+    position: absolute; z-index: 30; 
+    background: var(--wood-light); 
+    border: 4px solid var(--wood-dark); 
+    border-radius: 16px; 
+    padding: 12px 20px; 
+    display: flex; align-items: center; gap: 15px; 
+    box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 15px rgba(255, 215, 0, 0.1); 
+    min-width: 270px; 
+    animation: hudFloat 4s ease-in-out infinite; 
+}
+
+/* POSIÇÃO DO INIMIGO */
+#m-stats-cluster { 
+    top: 30px; 
+    right: 30px; 
+    flex-direction: row-reverse; 
+    text-align: right; 
+}
+
+/* ---------------------------------------------------------------------- */
+/* HUD DO JOGADOR (COM IMAGEM - SOBRESCREVE ESTILO PADRÃO) */
+/* ---------------------------------------------------------------------- */
+#p-stats-cluster {
+    /* Posição na Tela */
+    bottom: 25px; 
+    left: 20px;
+    
+    /* Tamanho Aumentado para a Imagem */
+    width: 440px; 
+    height: 165px;
+    
+    /* Imagem de Fundo */
+    background-image: url('https://i.ibb.co/v6whjh6v/Gemini-Generated-Image-7rbpnm7rbpnm7rbp.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    
+    /* Reseta estilos do container padrão (.avatar-cluster) para não dar conflito */
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    min-width: auto !important;
+    
+    /* Muda para Block para permitir Absolute Positioning dentro dele */
+    display: block !important;
+    
+    /* Sombra da imagem em si */
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+}
+
+/* --- ELEMENTOS INTERNOS DO JOGADOR (Posicionamento Pixel Perfect) --- */
+
+/* 1. Container Intermediário (Desativar Flexbox herdado) */
+#p-stats-cluster .unit-info {
+    display: contents; /* Faz o container desaparecer para o layout */
+}
+
+/* 2. Círculo de Nível */
+#p-stats-cluster .lvl-circle {
+    position: absolute;
+    left: 55px;  /* Coordenada X na Imagem */
+    top: 55px;   /* Coordenada Y na Imagem */
+    width: 60px;
+    height: 60px;
+    
+    /* Remove estilos antigos */
+    background: transparent; border: none; box-shadow: none;
+    
+    /* Texto */
+    color: #00cec9;
+    font-family: 'Russo One', sans-serif;
+    font-size: 34px;
+    text-shadow: 0 0 15px #00cec9, 2px 2px 0 #000;
+    margin: 0;
+}
+
+/* 3. Nome do Jogador */
+#p-stats-cluster .unit-name {
+    position: absolute;
+    left: 180px; 
+    top: 38px;
+    width: 200px;
+    
+    font-family: 'MedievalSharp', cursive;
+    font-size: 16px;
+    color: #3e2723; /* Cor Tinta */
+    font-weight: 900;
+    text-align: center;
+    text-transform: uppercase;
+    text-shadow: none;
+    margin: 0;
+}
+
+/* 4. Barra de Vida */
+#p-stats-cluster .hp-tube {
+    position: absolute;
+    left: 195px; 
+    top: 78px;
+    width: 200px; 
+    height: 16px;
+    
+    background: transparent;
+    border: none;
+    box-shadow: inset 0 0 5px #000;
+    border-radius: 6px;
+    margin: 0;
+}
+/* Texto da Vida */
+#p-stats-cluster .hp-txt {
+    font-size: 11px;
+    top: -1px;
+    font-weight: bold;
+    text-shadow: 1px 1px 0 #000;
+}
+
+/* 5. Maestrias (Ícones) */
+#p-stats-cluster .mastery-row {
+    position: absolute;
+    left: 198px; 
+    top: 108px;
+    
+    display: flex;
+    gap: 20px;
+    margin: 0; padding: 0;
+    justify-content: flex-start;
+}
+#p-stats-cluster .mastery-icon {
+    width: 34px; height: 34px;
+    border: none; background: transparent; box-shadow: none;
+    display: flex; justify-content: center; align-items: center;
+}
+
+/* --- FIM DAS ALTERAÇÕES DO JOGADOR --- */
+
 .unit-info { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
 .unit-name { font-family: 'Russo One', sans-serif; font-size: 16px; margin-bottom: 8px; display: block; text-transform: uppercase; text-shadow: 2px 2px 0 #000; letter-spacing: 1px; }
 .lvl-circle { position: relative; width: 60px; height: 60px; flex-shrink: 0; background: linear-gradient(135deg, var(--gold), #cfaa00); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-family: 'Russo One', sans-serif; font-size: 26px; border: 3px solid #8c7200; color: #4a3b2a; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
