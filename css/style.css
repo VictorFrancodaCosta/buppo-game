@@ -259,14 +259,14 @@ body {
 
 /* 4. Barra de Vida */
 #p-stats-cluster .hp-tube {
-    position: absolute;
+    position: fixed;
     left: 140px; 
     top: 60px; /* Sobe um pouquinho */
     width: 212px; 
     height: 33px;
     
     background: rgba(0,0,0,0.4);
-    border: 2px solid #240d09;
+    border: none;
     box-shadow: inset 0 0 5px #000;
     border-radius: 6px;
     margin: 0;
