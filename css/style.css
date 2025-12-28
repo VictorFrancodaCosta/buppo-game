@@ -19,7 +19,7 @@
     --lobby-bg-url: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
 
     /* DEFINIÇÃO DAS MESAS */
-    --table-cavaleiro: url('https://i.ibb.co/4RPnVLsM/MESA-DE-JOGO.png');
+    --table-cavaleiro: url('https://i.ibb.co/zhBCbq1m/MESA-DE-JOGO.png');
     --table-mago: url('https://i.ibb.co/6csxm9jz/MESA-DE-JOGO-MAGO.png');
 
     /* PADRÃO INICIAL (Cavaleiro) */
@@ -34,27 +34,23 @@ body {
 /* --- FUNDO PRINCIPAL --- */
 #game-background {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background-image: var(--bg-image-url); /* Carrega o padrão */
+    background-image: var(--bg-image-url); 
     background-size: cover; background-position: center; background-repeat: no-repeat;
     z-index: -5; 
-    transition: filter 0.5s ease, background-image 0.5s ease-in-out; /* Transição suave */
+    transition: filter 0.5s ease, background-image 0.5s ease-in-out; 
 }
 
 /* === LÓGICA DE TEMAS (DYNAMIC BACKGROUND) === */
-
-/* Se o BODY ou o ELEMENTO tiver a classe .theme-mago, muda para a mesa roxa */
 body.theme-mago #game-background,
 #game-background.theme-mago {
     background-image: var(--table-mago) !important;
 }
 
-/* Se o BODY ou o ELEMENTO tiver a classe .theme-cavaleiro, força a mesa padrão */
 body.theme-cavaleiro #game-background,
 #game-background.theme-cavaleiro {
     background-image: var(--table-cavaleiro) !important;
 }
 
-/* Modo Lobby (Prevalece sobre os temas) */
 #game-background.lobby-mode { 
     background-image: var(--lobby-bg-url) !important; 
     filter: blur(3px); 
@@ -176,12 +172,12 @@ body.theme-cavaleiro #game-background,
 #m-deck { top: 30px; left: 30px; display: none; } 
 
 /* ---------------------------------------------------------------------- */
-/* DECK DO JOGADOR (TEXTO DISCRETO NO CANTO) - ATUALIZADO */
+/* DECK DO JOGADOR (TEXTO DISCRETO NO CANTO) */
 /* ---------------------------------------------------------------------- */
 #p-deck-container { 
     position: fixed; 
-    bottom: 50px;    /* <-- SUA ALTERAÇÃO MANTIDA */
-    right: 280px;    /* <-- SUA ALTERAÇÃO MANTIDA */
+    bottom: 50px;    
+    right: 280px;    
     z-index: 20000;  
     display: flex; 
     align-items: center;
@@ -468,23 +464,27 @@ body.theme-cavaleiro #game-background,
     
     /* Dimensões fixas para manter proporção da arte (approx 300x100 para essa imagem) */
     width: 325px;
-    height: 110px;
+    height: 105px;
     
     /* Imagem de Fundo NOVA */
-    background-image: url('https://i.ibb.co/GQvMpBc2/AREA-DE-EXPERIENCIA.png');
+    background-image: url('https://i.ibb.co/SD43hn97/AREA-DE-EXPERIENCIA.png');
     
     /* 'contain' garante que a imagem inteira apareça sem esticar/deformar */
     background-size: contain; 
-    background-position: center -8px;
-    background-repeat: no-repeat;
     
+    /* === CORREÇÃO: Alinhamento da Imagem de Fundo === */
+    background-position: center center; /* Centraliza a imagem totalmente */
+    
+    background-repeat: no-repeat;
     background-color: transparent; 
 
     /* Flex para centralizar as gemas dentro da área da arte */
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 10px; /* Ajuste de padding */
+    
+    /* === CORREÇÃO: Alinhamento das Cartas (sobe um pouco) === */
+    padding-bottom: 8px; /* Empurra as cartas levemente para cima */
 
     border: none;
     border-radius: 0;
