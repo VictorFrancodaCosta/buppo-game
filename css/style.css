@@ -16,7 +16,6 @@
     
     /* ARTES */
     --cardback-url: url('https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png');
-    /* ATUALIZADO: NOVA MESA DE JOGO */
     --bg-image-url: url('https://i.ibb.co/zhBCbq1m/MESA-DE-JOGO.png');
     --lobby-bg-url: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
 }
@@ -398,9 +397,59 @@ body {
 .mastery-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--wood-dark); border: 2px solid #ccc; display: flex; justify-content: center; align-items: center; font-size: 16px; position: relative; cursor: help; box-shadow: 0 3px 6px rgba(0,0,0,0.5); transition: transform 0.2s; }
 .mastery-icon:hover { transform: scale(1.2); z-index: 10; border-color: #fff !important; }
 .mastery-lvl { position: absolute; bottom: -5px; right: -5px; background: var(--gold); color: #000; font-family: 'Russo One', sans-serif; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid #000; }
-.xp-area { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; height: 70px; min-width: 200px; padding: 0 15px; background: var(--wood-light); border: 4px solid var(--wood-dark); border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); z-index: 50; }
-.xp-glow { box-shadow: 0 0 40px rgba(255, 215, 0, 0.6) !important; border-color: var(--gold) !important; }
-#m-xp { top: 30px; } #p-xp { bottom: 170px; } 
+
+/* === ÁREA DE XP (COM NOVA IMAGEM E FLUTUAÇÃO) === */
+.xp-area {
+    position: absolute;
+    left: 50%;
+    /* O transform translateX(-50%) foi movido para a animação hudFloatCentered para não conflitar */
+    
+    /* Dimensões fixas baseadas na proporção da nova imagem */
+    width: 330px;
+    height: 85px;
+    
+    /* Imagem de Fundo */
+    background-image: url('https://i.ibb.co/0VKwXrDy/AREA-DE-EXPERIENCIA.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-color: transparent; /* Remove cor antiga */
+    
+    /* Flex para centralizar as gemas */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 25px; /* Ajuste de padding interno */
+    
+    /* Remove estilos de caixa antigos */
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    
+    /* Sombra Recortada (Cartoon) */
+    filter: drop-shadow(0 10px 5px rgba(0,0,0,0.6));
+    z-index: 50;
+    
+    /* NOVA ANIMAÇÃO DE FLUTUAÇÃO CENTRALIZADA */
+    animation: hudFloatCentered 4s ease-in-out infinite;
+}
+
+/* Brilho da área de XP (Adaptado para usar filtro em vez de borda) */
+.xp-glow {
+    filter: drop-shadow(0 0 15px var(--gold)) drop-shadow(0 0 5px var(--gold)) !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Posicionamento Vertical das Áreas de XP */
+#m-xp { top: 30px; }
+#p-xp { bottom: 180px; /* Ajustado levemente para cima */ }
+
+/* Nova animação para flutuar elementos centralizados horizontalmente */
+@keyframes hudFloatCentered {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-6px); }
+}
+
 .xp-mini { width: 30px; height: 42px; margin: 0 4px; position: relative; border: 1px solid #111; border-radius: 2px; box-shadow: 0 4px 8px rgba(0,0,0,0.6); cursor: help; transition: transform 0.2s; background-size: cover; background-position: center; }
 #m-xp .xp-mini:hover { transform: scale(3.0) translateY(15px); z-index: 3000; } #p-xp .xp-mini:hover { transform: scale(3.0) translateY(-15px); z-index: 3000; }
 .xp-anim-clone { position: fixed; z-index: 9999; width: 30px; height: 42px; border-radius: 4px; background-size: cover; background-position: center; box-shadow: 0 0 30px var(--gold); pointer-events: none; border: 2px solid var(--gold); }
