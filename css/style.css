@@ -491,7 +491,7 @@ body.theme-cavaleiro #game-background,
     box-shadow: none;
 
     /* Sombra Recortada (Cartoon) */
-    filter: drop-shadow(0 10px 5px rgba(0,0,0,0.6));
+    filter: drop-shadow(0 5px 0px rgba(0, 0, 0, 0.5)); 
     z-index: 50;
 
     /* NOVA ANIMAÇÃO DE FLUTUAÇÃO CENTRALIZADA */
