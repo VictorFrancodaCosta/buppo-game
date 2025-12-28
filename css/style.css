@@ -16,6 +16,7 @@
     
     /* ARTES */
     --cardback-url: url('https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png');
+    /* ATUALIZADO: NOVA MESA DE JOGO */
     --bg-image-url: url('https://i.ibb.co/zhBCbq1m/MESA-DE-JOGO.png');
     --lobby-bg-url: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
 }
@@ -173,6 +174,9 @@ body {
     font-size: 16px;
     color: var(--gold); /* Dourado para destacar o número */
     text-shadow: 1px 1px 2px #000;
+    
+    /* MUDANÇA CRUCIAL: Impede a quebra de linha */
+    white-space: nowrap;
 }
 
 /* Texto Adicional "cartas restantes..." */
