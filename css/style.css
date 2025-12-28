@@ -404,32 +404,34 @@ body {
     left: 50%;
     /* O transform translateX(-50%) foi movido para a animação hudFloatCentered para não conflitar */
     
-    /* Dimensões fixas baseadas na proporção da nova imagem */
-    width: 330px;
-    height: 85px;
+    /* Dimensões fixas para manter proporção da arte (approx 300x100 para essa imagem) */
+    width: 300px;
+    height: 100px;
     
-    /* Imagem de Fundo */
+    /* Imagem de Fundo NOVA */
     background-image: url('https://i.ibb.co/SD43hn97/AREA-DE-EXPERIENCIA.png');
-    background-size: contain;
+    
+    /* 'contain' garante que a imagem inteira apareça sem esticar/deformar */
+    background-size: contain; 
+    background-position: center;
     background-repeat: no-repeat;
     
-    background-color: transparent; /* Remove cor antiga */
-    
-    /* Flex para centralizar as gemas */
+    background-color: transparent; 
+
+    /* Flex para centralizar as gemas dentro da área da arte */
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 25px; /* Ajuste de padding interno */
-    
-    /* Remove estilos de caixa antigos */
+    padding: 0 10px; /* Ajuste de padding */
+
     border: none;
     border-radius: 0;
     box-shadow: none;
-    
+
     /* Sombra Recortada (Cartoon) */
-    filter: drop-shadow(0 5px 0px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(0 10px 5px rgba(0,0,0,0.2));
     z-index: 50;
-    
+
     /* NOVA ANIMAÇÃO DE FLUTUAÇÃO CENTRALIZADA */
     animation: hudFloatCentered 4s ease-in-out infinite;
 }
@@ -443,7 +445,7 @@ body {
 
 /* Posicionamento Vertical das Áreas de XP */
 #m-xp { top: 30px; }
-#p-xp { bottom: 180px; /* Ajustado levemente para cima */ }
+#p-xp { bottom: 180px; }
 
 /* Nova animação para flutuar elementos centralizados horizontalmente */
 @keyframes hudFloatCentered {
