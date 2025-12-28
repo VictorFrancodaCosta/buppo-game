@@ -410,8 +410,9 @@ body {
     
     /* Imagem de Fundo */
     background-image: url('https://i.ibb.co/SD43hn97/AREA-DE-EXPERIENCIA.png');
-    background-size: 100% 100%;
+    background-size: contain;
     background-repeat: no-repeat;
+    
     background-color: transparent; /* Remove cor antiga */
     
     /* Flex para centralizar as gemas */
