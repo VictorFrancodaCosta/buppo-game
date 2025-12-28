@@ -16,8 +16,7 @@
     
     /* ARTES */
     --cardback-url: url('https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png');
-    /* ATUALIZADO: NOVA MESA DE JOGO */
-    --bg-image-url: url('https://i.ibb.co/qMK5vzjQ/MESA-DE-JOGO.png');
+    --bg-image-url: url('https://i.ibb.co/zhBCbq1m/MESA-DE-JOGO.png');
     --lobby-bg-url: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
 }
 
@@ -148,10 +147,44 @@ body {
 .deck-area { position: absolute; z-index: 30; width: 120px; height: 170px; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-direction: column; font-family: 'Russo One', sans-serif; color: #fff; font-size: 10px; background-image: var(--cardback-url); background-size: cover; background-position: center; border: 3px solid var(--wood-dark); box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
 .deck-count { position: absolute; bottom: -30px; left: 0; width: 100%; text-align: center; font-size: 14px; color: var(--gold); font-family: 'Russo One', sans-serif; font-weight: 600; text-shadow: 1px 1px 3px #000; }
 #m-deck { top: 30px; left: 30px; display: none; } 
-#p-deck-container { position: absolute; bottom: 205px; right: 50px; z-index: 30; display: flex; flex-direction: column; align-items: center; }
-#p-deck-img { height: 160px; width: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.8)); transition: transform 0.2s; }
-#p-deck-img:hover { transform: scale(1.05); }
-#p-deck-count { margin-top: -30px; z-index: 31; font-size: 18px; text-shadow: 0 2px 4px #000; }
+
+/* ---------------------------------------------------------------------- */
+/* DECK DO JOGADOR (TEXTO DISCRETO NO CANTO) - MODIFICADO */
+/* ---------------------------------------------------------------------- */
+#p-deck-container { 
+    position: fixed; /* Fixo na tela */
+    bottom: 25px;    /* Alinhado com o botão fullscreen */
+    right: 60px;     /* À esquerda do botão fullscreen */
+    z-index: 20000;  /* Camada de UI */
+    display: flex; 
+    align-items: center;
+    pointer-events: none; /* Não bloqueia cliques */
+}
+
+/* Esconde a imagem do deck */
+#p-deck-img { 
+    display: none !important; 
+}
+
+/* Estilo do Texto do Contador */
+#p-deck-count { 
+    margin: 0; 
+    font-family: 'Russo One', sans-serif;
+    font-size: 16px;
+    color: var(--gold); /* Dourado para destacar o número */
+    text-shadow: 1px 1px 2px #000;
+}
+
+/* Texto Adicional "cartas restantes..." */
+#p-deck-count::after {
+    content: " CARTAS RESTANTES NO DECK";
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5); /* Cor mais apagada */
+    margin-left: 6px;
+    vertical-align: middle;
+}
 
 /* ---------------------------------------------------------------------- */
 /* CLUSTERS - (Container de Vida/Nome) */
@@ -181,7 +214,7 @@ body {
     width: 370px; 
     height: 138px;
     
-    background-image: url('https://i.ibb.co/rnpMPgT/Camada-0.png');
+    background-image: url('https://i.ibb.co/tpVT4ymn/Camada-0.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
@@ -278,7 +311,7 @@ body {
     width: 370px; 
     height: 138px;
     
-    background-image: url('https://i.ibb.co/5gjF3K9H/Camada-1.png');
+    background-image: url('https://i.ibb.co/fY7nJm6v/Camada-1.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
@@ -410,7 +443,7 @@ body {
     height: 105px;
     
     /* Imagem de Fundo NOVA */
-    background-image: url('https://i.ibb.co/BHJwqqVR/AREA-DE-EXPERIENCIA.png');
+    background-image: url('https://i.ibb.co/SD43hn97/AREA-DE-EXPERIENCIA.png');
     
     /* 'contain' garante que a imagem inteira apareça sem esticar/deformar */
     background-size: contain; 
@@ -430,7 +463,7 @@ body {
     box-shadow: none;
 
     /* Sombra Recortada (Cartoon) */
-    filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.2));
+    filter: drop-shadow(0 10px 5px rgba(0,0,0,0.6));
     z-index: 50;
 
     /* NOVA ANIMAÇÃO DE FLUTUAÇÃO CENTRALIZADA */
