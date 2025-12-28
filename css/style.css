@@ -14,11 +14,16 @@
     --beige-dark: #3e3223;
     --purple-btn: #8e44ad;
     
-    /* ARTES */
+    /* === ARTES E BACKGROUNDS === */
     --cardback-url: url('https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png');
-    /* ATUALIZADO: NOVA MESA DE JOGO */
-    --bg-image-url: url('https://i.ibb.co/zhBCbq1m/MESA-DE-JOGO.png');
     --lobby-bg-url: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
+
+    /* NOVAS MESAS DE JOGO (DEFINIÇÃO) */
+    --table-cavaleiro: url('https://i.ibb.co/4RPnVLsM/MESA-DE-JOGO.png');
+    --table-mago: url('https://i.ibb.co/6csxm9jz/MESA-DE-JOGO-MAGO.png');
+
+    /* PADRÃO (Inicia com Cavaleiro) */
+    --bg-image-url: var(--table-cavaleiro);
 }
 
 body { 
@@ -30,9 +35,22 @@ body {
 #game-background {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background-image: var(--bg-image-url); background-size: cover; background-position: center; background-repeat: no-repeat;
-    z-index: -5; transition: filter 0.5s ease, background-image 0.1s ease;
+    z-index: -5; transition: filter 0.5s ease, background-image 0.5s ease; /* Adicionei transição suave na troca de imagem */
 }
-#game-background.lobby-mode { background-image: var(--lobby-bg-url) !important; filter: blur(3px); }
+
+/* --- CLASSES PARA TROCA DINÂMICA DE MESA (VIA JS) --- */
+#game-background.theme-cavaleiro {
+    background-image: var(--table-cavaleiro) !important;
+}
+#game-background.theme-mago {
+    background-image: var(--table-mago) !important;
+}
+
+/* Modo Lobby (Prevalece sobre os temas) */
+#game-background.lobby-mode { 
+    background-image: var(--lobby-bg-url) !important; 
+    filter: blur(3px); 
+}
 
 /* --- UI E CONTROLES --- */
 #top-left-controls { position: fixed; top: 15px; left: 15px; z-index: 60000; display: flex; gap: 10px; }
@@ -150,12 +168,12 @@ body {
 #m-deck { top: 30px; left: 30px; display: none; } 
 
 /* ---------------------------------------------------------------------- */
-/* DECK DO JOGADOR (TEXTO DISCRETO NO CANTO) - MODIFICADO */
+/* DECK DO JOGADOR (TEXTO DISCRETO NO CANTO) */
 /* ---------------------------------------------------------------------- */
 #p-deck-container { 
     position: fixed; /* Fixo na tela */
-    bottom: 50px;    /* Alinhado com o botão fullscreen */
-    right: 280px;     /* À esquerda do botão fullscreen */
+    bottom: 25px;    /* Alinhado com o botão fullscreen */
+    right: 60px;     /* À esquerda do botão fullscreen */
     z-index: 20000;  /* Camada de UI */
     display: flex; 
     align-items: center;
@@ -175,7 +193,7 @@ body {
     color: var(--gold); /* Dourado para destacar o número */
     text-shadow: 1px 1px 2px #000;
     
-    /* MUDANÇA CRUCIAL: Impede a quebra de linha */
+    /* Impede a quebra de linha */
     white-space: nowrap;
 }
 
