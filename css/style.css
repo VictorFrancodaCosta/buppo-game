@@ -261,12 +261,12 @@ body {
 #p-stats-cluster .hp-tube {
     position: fixed;
     left: 140px; 
-    top: 50px; /* Sobe um pouquinho */
+    top: 40px; /* Sobe um pouquinho */
     width: 200px; 
     height: 33px;
     
     /* === MUDANÇA PRINCIPAL: BORDA PRETA === */
-    border: 3px solid #000;
+    border: 3px solid #260b00;
     background: rgba(0,0,0,0.5); /* Escurecido para contraste */
     box-shadow: inset 0 0 5px #000;
     border-radius: 25px;
