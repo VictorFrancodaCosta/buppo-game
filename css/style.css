@@ -207,7 +207,7 @@ body {
     z-index: 100; /* Garante que fique acima de partículas de fundo */
     
     /* === MUDANÇA: Sombra Sólida (Cartoon Style) === */
-    filter: drop-shadow(0 10px 0px #000); 
+    filter: drop-shadow(0 10px 0px #2a0f0b); 
     animation: hudFloat 4s ease-in-out infinite;
 }
 
@@ -233,7 +233,7 @@ body {
     color: #fbc531; 
     font-family: 'Russo One', sans-serif;
     font-size: 50px;
-    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    text-shadow: 2px 2px 0 #3c220f, -1px -1px 0 #602d0c, 1px -1px 0 #602d0c, -1px 1px 0 #602d0c, 1px 1px 0 #602d0c;
     
     display: flex; justify-content: center; align-items: center;
     margin: 0;
