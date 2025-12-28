@@ -230,10 +230,10 @@ body {
     background: transparent; border: none; box-shadow: none;
     
     /* Texto */
-    color: #00cec9;
+    color: ffd800;
     font-family: 'Russo One', sans-serif;
-    font-size: 38px;
-    text-shadow: 0 0 15px #00cec9, 2px 2px 0 #000;
+    font-size: 100px;
+    text-shadow: 0 0 0 #00cec9, 2px 2px 0 #2e1e10;
     
     display: flex; justify-content: center; align-items: center;
     margin: 0;
