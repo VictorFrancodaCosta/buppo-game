@@ -243,7 +243,7 @@ body {
 #p-stats-cluster .unit-name {
     position: fixed;
     left: 100px; /* Ajuste fino */
-    top: 20px;
+    top: 17px;
     width: 210px; /* Área do pergaminho */
     
     font-family: 'MedievalSharp', cursive;
@@ -262,11 +262,11 @@ body {
     position: absolute;
     left: 140px; 
     top: 60px; /* Sobe um pouquinho */
-    width: 185px; 
-    height: 14px;
+    width: 212px; 
+    height: 33px;
     
     background: rgba(0,0,0,0.4);
-    border: none;
+    border: 2px solid #240d09;
     box-shadow: inset 0 0 5px #000;
     border-radius: 6px;
     margin: 0;
