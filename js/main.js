@@ -240,6 +240,15 @@ window.selectDeck = function(deckType) {
 
     window.currentDeck = deckType; 
     
+    // --- NOVO CÓDIGO: APLICA O TEMA AO BODY ---
+    document.body.classList.remove('theme-cavaleiro', 'theme-mago'); // Limpa temas anteriores
+    if (deckType === 'mage') {
+        document.body.classList.add('theme-mago');
+    } else {
+        document.body.classList.add('theme-cavaleiro');
+    }
+    // ------------------------------------------
+
     const options = document.querySelectorAll('.deck-option');
     options.forEach(opt => {
         if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
