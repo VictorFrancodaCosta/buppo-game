@@ -232,7 +232,7 @@ body {
     /* Texto */
     color: ffd800;
     font-family: 'Russo One', sans-serif;
-    font-size: 100px;
+    font-size: 50px;
     text-shadow: 0 0 0 #00cec9, 2px 2px 0 #2e1e10;
     
     display: flex; justify-content: center; align-items: center;
@@ -285,8 +285,8 @@ body {
 /* 5. Maestrias (Ícones) */
 #p-stats-cluster .mastery-row {
     position: fixed;
-    left: 165px; /* Empurra para a direita para alinhar com os quadrados */
-    top: 105px;  /* Sobe um pouco */
+    left: 145px; /* Empurra para a direita para alinhar com os quadrados */
+    top: 95px;  /* Sobe um pouco */
     
     display: flex;
     gap: 25px; /* Espaço entre os quadrados de madeira */
