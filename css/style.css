@@ -148,8 +148,8 @@ body {
 .deck-area { position: absolute; z-index: 30; width: 120px; height: 170px; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-direction: column; font-family: 'Russo One', sans-serif; color: #fff; font-size: 10px; background-image: var(--cardback-url); background-size: cover; background-position: center; border: 3px solid var(--wood-dark); box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
 .deck-count { position: absolute; bottom: -30px; left: 0; width: 100%; text-align: center; font-size: 14px; color: var(--gold); font-family: 'Russo One', sans-serif; font-weight: 600; text-shadow: 1px 1px 3px #000; }
 #m-deck { top: 30px; left: 30px; display: none; } 
-#p-deck-container { position: absolute; bottom: 195px; right: 50px; z-index: 30; display: flex; flex-direction: column; align-items: center; }
-#p-deck-img { height: 260px; width: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.8)); transition: transform 0.2s; }
+#p-deck-container { position: absolute; bottom: 205px; right: 50px; z-index: 30; display: flex; flex-direction: column; align-items: center; }
+#p-deck-img { height: 160px; width: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.8)); transition: transform 0.2s; }
 #p-deck-img:hover { transform: scale(1.05); }
 #p-deck-count { margin-top: -30px; z-index: 31; font-size: 18px; text-shadow: 0 2px 4px #000; }
 
