@@ -154,7 +154,7 @@ body {
 /* ---------------------------------------------------------------------- */
 #p-deck-container { 
     position: fixed; /* Fixo na tela */
-    bottom: 20px;    /* Alinhado com o botão fullscreen */
+    bottom: 50px;    /* Alinhado com o botão fullscreen */
     right: 280px;     /* À esquerda do botão fullscreen */
     z-index: 20000;  /* Camada de UI */
     display: flex; 
@@ -184,7 +184,7 @@ body {
     content: " CARTAS RESTANTES NO DECK";
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
-    font-size: 16px;
+    font-size: 10px;
     color: rgba(255, 255, 255, 0.5); /* Cor mais apagada */
     margin-left: 6px;
     vertical-align: middle;
