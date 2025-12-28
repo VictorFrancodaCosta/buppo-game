@@ -285,11 +285,11 @@ body {
 /* 5. Maestrias (Ícones) */
 #p-stats-cluster .mastery-row {
     position: fixed;
-    left: 145px; /* Empurra para a direita para alinhar com os quadrados */
+    left: 142px; /* Empurra para a direita para alinhar com os quadrados */
     top: 95px;  /* Sobe um pouco */
     
     display: flex;
-    gap: 25px; /* Espaço entre os quadrados de madeira */
+    gap: 20px; /* Espaço entre os quadrados de madeira */
     margin: 0; padding: 0;
     justify-content: flex-start;
 }
