@@ -228,7 +228,29 @@ window.showScreen = function(screenId) {
     }
 }
 
+// --- SUBSTITUA A FUNÇÃO window.openDeckSelector NO SEU MAIN.JS POR ESTA: ---
+
 window.openDeckSelector = function() {
+    // 1. Tenta ativar TELA CHEIA
+    try {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log("Fullscreen foi negado ou não é suportado neste momento:", err);
+            });
+        }
+    } catch (e) { console.log(e); }
+
+    // 2. Tenta forçar a ORIENTAÇÃO HORIZONTAL (Landscape)
+    try {
+        if (screen.orientation && screen.orientation.lock) {
+            // 'landscape' força a tela a deitar
+            screen.orientation.lock('landscape').catch(err => {
+                console.log("Trava de orientação não suportada pelo dispositivo/navegador:", err);
+            });
+        }
+    } catch (e) { console.log(e); }
+
+    // 3. Segue o fluxo normal do jogo
     window.showScreen('deck-selection-screen');
 };
 
