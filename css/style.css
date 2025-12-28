@@ -184,7 +184,7 @@ body {
     /* Posição: COLADO NO CANTO INFERIOR ESQUERDO */
     position: fixed;
     bottom: 10px; /* Quase encostado, margem mínima */
-    left: 10px;   /* Quase encostado, margem mínima */
+    left: 2px;   /* Quase encostado, margem mínima */
     
     /* Tamanho da imagem */
     width: 440px; 
