@@ -181,15 +181,15 @@ body {
 /* HUD DO JOGADOR (COM IMAGEM - SOBRESCREVE ESTILO PADRÃO) */
 /* ---------------------------------------------------------------------- */
 #p-stats-cluster {
-    /* Posição na Tela */
-    bottom: 25px; 
-    left: 20px;
+    /* Posição: Mais colado no canto para fugir das cartas */
+    position: absolute;
+    bottom: 10px; 
+    left: 10px;
     
-    /* Tamanho Aumentado para a Imagem */
+    /* Tamanho da imagem */
     width: 440px; 
     height: 165px;
     
-    /* Imagem de Fundo */
     background-image: url('https://i.ibb.co/v6whjh6v/Gemini-Generated-Image-7rbpnm7rbpnm7rbp.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
@@ -204,9 +204,11 @@ body {
     
     /* Muda para Block para permitir Absolute Positioning dentro dele */
     display: block !important;
+    z-index: 100; /* Garante que fique acima de partículas de fundo */
     
     /* Sombra da imagem em si */
     filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+    animation: hudFloat 4s ease-in-out infinite;
 }
 
 /* --- ELEMENTOS INTERNOS DO JOGADOR (Posicionamento Pixel Perfect) --- */
@@ -219,10 +221,10 @@ body {
 /* 2. Círculo de Nível */
 #p-stats-cluster .lvl-circle {
     position: absolute;
-    left: 55px;  /* Coordenada X na Imagem */
-    top: 55px;   /* Coordenada Y na Imagem */
-    width: 60px;
-    height: 60px;
+    left: 48px;  
+    top: 52px;
+    width: 64px; /* Levemente maior para preencher o aro */
+    height: 64px;
     
     /* Remove estilos antigos */
     background: transparent; border: none; box-shadow: none;
@@ -230,37 +232,42 @@ body {
     /* Texto */
     color: #00cec9;
     font-family: 'Russo One', sans-serif;
-    font-size: 34px;
+    font-size: 36px;
     text-shadow: 0 0 15px #00cec9, 2px 2px 0 #000;
+    
+    display: flex; justify-content: center; align-items: center;
     margin: 0;
 }
 
 /* 3. Nome do Jogador */
 #p-stats-cluster .unit-name {
     position: absolute;
-    left: 180px; 
-    top: 38px;
-    width: 200px;
+    left: 155px; 
+    top: 32px;
+    width: 215px; /* Largura da área útil do papel */
     
     font-family: 'MedievalSharp', cursive;
-    font-size: 16px;
+    font-size: 18px;
     color: #3e2723; /* Cor Tinta */
     font-weight: 900;
     text-align: center;
     text-transform: uppercase;
     text-shadow: none;
     margin: 0;
+    white-space: nowrap; /* Evita quebra de linha */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* 4. Barra de Vida */
 #p-stats-cluster .hp-tube {
     position: absolute;
-    left: 195px; 
-    top: 78px;
-    width: 200px; 
-    height: 16px;
+    left: 172px; 
+    top: 72px;
+    width: 190px; /* Largura exata da calha */
+    height: 14px; /* Altura exata da calha */
     
-    background: transparent;
+    background: rgba(0,0,0,0.3);
     border: none;
     box-shadow: inset 0 0 5px #000;
     border-radius: 6px;
@@ -268,27 +275,41 @@ body {
 }
 /* Texto da Vida */
 #p-stats-cluster .hp-txt {
-    font-size: 11px;
+    font-size: 10px;
     top: -1px;
     font-weight: bold;
     text-shadow: 1px 1px 0 #000;
+    width: 100%;
+    text-align: center;
 }
 
 /* 5. Maestrias (Ícones) */
 #p-stats-cluster .mastery-row {
     position: absolute;
-    left: 198px; 
-    top: 108px;
+    left: 178px; /* Início do primeiro quadrado */
+    top: 98px;   /* Altura dos quadrados */
     
     display: flex;
-    gap: 20px;
+    gap: 28px; /* Distância exata entre o centro de um quadrado e o outro */
     margin: 0; padding: 0;
     justify-content: flex-start;
 }
 #p-stats-cluster .mastery-icon {
-    width: 34px; height: 34px;
-    border: none; background: transparent; box-shadow: none;
+    width: 32px; 
+    height: 32px;
+    border: none; 
+    background: transparent; 
+    box-shadow: none;
     display: flex; justify-content: center; align-items: center;
+}
+/* Bolinha de nível da maestria (canto inferior do ícone) */
+#p-stats-cluster .mastery-lvl {
+    bottom: 0;
+    right: 0;
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
+    border: none;
 }
 
 /* --- FIM DAS ALTERAÇÕES DO JOGADOR --- */
