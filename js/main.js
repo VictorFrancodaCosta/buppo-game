@@ -505,14 +505,31 @@ window.restartMatch = function() {
     MusicController.play('bgm-loop'); 
 }
 
+// --- ARQUIVO: js/main.js ---
+// Substitua a função window.abandonMatch por esta:
+
 window.abandonMatch = function() {
-     if(document.getElementById('game-screen').classList.contains('active')) {
-         window.toggleConfig(); 
-         if(window.confirm("Tem certeza que deseja sair? Contará como derrota.")) {
-             window.registrarDerrotaOnline();
-             window.transitionToLobby(); 
-         }
-     }
+    // Verifica se está na tela de jogo
+    if(document.getElementById('game-screen').classList.contains('active')) {
+        
+        // Fecha o painel de configuração (a engrenagem)
+        window.toggleConfig(); 
+
+        // Abre a Janela Interna do Jogo (Modal)
+        window.openModal(
+            "ABANDONAR?", // Título
+            "Sair da partida contará como DERROTA. Tem certeza?", // Descrição
+            ["CANCELAR", "SAIR"], // Botões
+            (choice) => {
+                // Callback: o que fazer quando o jogador clica
+                if (choice === "SAIR") {
+                    window.registrarDerrotaOnline();
+                    window.transitionToLobby();
+                }
+                // Se clicar em "CANCELAR", o modal fecha sozinho automaticamente
+            }
+        );
+    }
 }
 
 function preloadGame() {
