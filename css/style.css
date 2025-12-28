@@ -16,7 +16,8 @@
     
     /* ARTES */
     --cardback-url: url('https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png');
-    --bg-image-url: url('https://i.ibb.co/KzVqKR6D/MESA-DE-JOGO.png');
+    /* ATUALIZADO: NOVA MESA DE JOGO */
+    --bg-image-url: url('https://i.ibb.co/zhBCbq1m/MESA-DE-JOGO.png');
     --lobby-bg-url: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
 }
 
@@ -166,7 +167,6 @@ body {
     display: flex; align-items: center; gap: 15px; 
     box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 15px rgba(255, 215, 0, 0.1); 
     min-width: 270px; 
-    /* Animação aplicada aqui também por segurança */
     animation: hudFloat 4s ease-in-out infinite; 
 }
 
@@ -181,7 +181,7 @@ body {
     width: 370px; 
     height: 138px;
     
-    background-image: url('https://i.ibb.co/rnpMPgT/Camada-0.png');
+    background-image: url('https://i.ibb.co/tpVT4ymn/Camada-0.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
@@ -278,7 +278,7 @@ body {
     width: 370px; 
     height: 138px;
     
-    background-image: url('https://i.ibb.co/5gjF3K9H/Camada-1.png');
+    background-image: url('https://i.ibb.co/fY7nJm6v/Camada-1.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
