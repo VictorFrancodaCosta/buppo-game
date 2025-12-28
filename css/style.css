@@ -183,8 +183,8 @@ body {
 #p-stats-cluster {
     /* Posição: COLADO NO CANTO INFERIOR ESQUERDO */
     position: absolute;
-    bottom: 5px; /* Quase encostado, margem mínima */
-    left: 1px;   /* Quase encostado, margem mínima */
+    bottom: 0px; /* Quase encostado, margem mínima */
+    left: 0px;   /* Quase encostado, margem mínima */
     
     /* Tamanho da imagem */
     width: 440px; 
