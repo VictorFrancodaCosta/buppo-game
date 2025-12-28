@@ -243,7 +243,7 @@ body {
 #p-stats-cluster .unit-name {
     position: fixed;
     left: 100px; /* Ajuste fino */
-    top: 14px;
+    top: 13px;
     width: 210px; /* Área do pergaminho */
     
     font-family: 'MedievalSharp', cursive;
@@ -260,8 +260,8 @@ body {
 /* 4. Barra de Vida */
 #p-stats-cluster .hp-tube {
     position: absolute;
-    left: 178px; 
-    top: 76px; /* Sobe um pouquinho */
+    left: 150px; 
+    top: 50px; /* Sobe um pouquinho */
     width: 185px; 
     height: 14px;
     
