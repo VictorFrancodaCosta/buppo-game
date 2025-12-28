@@ -468,14 +468,14 @@ body.theme-cavaleiro #game-background,
     
     /* Dimensões fixas para manter proporção da arte (approx 300x100 para essa imagem) */
     width: 325px;
-    height: 105px;
+    height: 110px;
     
     /* Imagem de Fundo NOVA */
     background-image: url('https://i.ibb.co/GQvMpBc2/AREA-DE-EXPERIENCIA.png');
     
     /* 'contain' garante que a imagem inteira apareça sem esticar/deformar */
     background-size: contain; 
-    background-position: center -5px;
+    background-position: center -8px;
     background-repeat: no-repeat;
     
     background-color: transparent; 
