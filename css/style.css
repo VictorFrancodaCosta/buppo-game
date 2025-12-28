@@ -187,8 +187,8 @@ body {
     left: 2px;   /* Quase encostado, margem mínima */
     
     /* Tamanho da imagem */
-    width: 350px; 
-    height: 131px;
+    width: 370px; 
+    height: 138px;
     
     background-image: url('https://i.ibb.co/r2ZK3GRQ/Camada-0.png');
     background-size: 100% 100%;
@@ -207,7 +207,7 @@ body {
     z-index: 100; /* Garante que fique acima de partículas de fundo */
     
     /* Sombra da imagem em si */
-    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+    filter: drop-shadow(0 10px 5px rgba(0,0,0,0.9));
     animation: hudFloat 4s ease-in-out infinite;
 }
 
@@ -220,9 +220,9 @@ body {
 
 /* 2. Círculo de Nível */
 #p-stats-cluster .lvl-circle {
-    position: absolute;
-    left: 50px;  /* Levemente mais para a esquerda que antes */
-    top: 50px;   /* Ajuste vertical */
+    position: fixed;
+    left: 30px;  /* Levemente mais para a esquerda que antes */
+    top: 70px;   /* Ajuste vertical */
     width: 68px; /* Maior para preencher bem o medalhão */
     height: 68px;
     
