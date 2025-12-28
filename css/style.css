@@ -181,7 +181,7 @@ body {
     width: 370px; 
     height: 138px;
     
-    background-image: url('https://i.ibb.co/tpVT4ymn/Camada-0.png');
+    background-image: url('https://i.ibb.co/rnpMPgT/Camada-0.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
@@ -278,7 +278,7 @@ body {
     width: 370px; 
     height: 138px;
     
-    background-image: url('https://i.ibb.co/fY7nJm6v/Camada-1.png');
+    background-image: url('https://i.ibb.co/5gjF3K9H/Camada-1.png');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
@@ -414,7 +414,7 @@ body {
     
     /* 'contain' garante que a imagem inteira apareça sem esticar/deformar */
     background-size: contain; 
-    background-position: center;
+    background-position: center -3px;
     background-repeat: no-repeat;
     
     background-color: transparent; 
@@ -430,7 +430,7 @@ body {
     box-shadow: none;
 
     /* Sombra Recortada (Cartoon) */
-    filter: drop-shadow(0 10px 5px rgba(0,0,0,0.6));
+    filter: drop-shadow(0 10px 5px rgba(0, 0, 0, 0.5));
     z-index: 50;
 
     /* NOVA ANIMAÇÃO DE FLUTUAÇÃO CENTRALIZADA */
