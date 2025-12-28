@@ -194,8 +194,8 @@ body {
     display: block !important;
     z-index: 100;
     
-    /* Sombra Sólida */
-    filter: drop-shadow(0 10px 0px #2a0f0b); 
+    /* === MUDANÇA: Sombra Sólida Transparente (Cartoon Style) === */
+    filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); 
     animation: hudFloat 4s ease-in-out infinite;
 }
 
@@ -290,8 +290,8 @@ body {
     display: block !important;
     z-index: 100;
     
-    /* Sombra Sólida */
-    filter: drop-shadow(0 10px 0px #2a0f0b); 
+    /* === MUDANÇA: Sombra Sólida Transparente (Cartoon Style) === */
+    filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); 
     animation: hudFloat 4s ease-in-out infinite;
 }
 
