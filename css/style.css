@@ -18,11 +18,11 @@
     --cardback-url: url('https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png');
     --lobby-bg-url: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
 
-    /* NOVAS MESAS DE JOGO (DEFINIÇÃO) */
+    /* DEFINIÇÃO DAS MESAS */
     --table-cavaleiro: url('https://i.ibb.co/4RPnVLsM/MESA-DE-JOGO.png');
     --table-mago: url('https://i.ibb.co/6csxm9jz/MESA-DE-JOGO-MAGO.png');
 
-    /* PADRÃO (Inicia com Cavaleiro) */
+    /* PADRÃO INICIAL (Cavaleiro) */
     --bg-image-url: var(--table-cavaleiro);
 }
 
@@ -34,16 +34,24 @@ body {
 /* --- FUNDO PRINCIPAL --- */
 #game-background {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background-image: var(--bg-image-url); background-size: cover; background-position: center; background-repeat: no-repeat;
-    z-index: -5; transition: filter 0.5s ease, background-image 0.5s ease; /* Adicionei transição suave na troca de imagem */
+    background-image: var(--bg-image-url); /* Carrega o padrão */
+    background-size: cover; background-position: center; background-repeat: no-repeat;
+    z-index: -5; 
+    transition: filter 0.5s ease, background-image 0.5s ease-in-out; /* Transição suave */
 }
 
-/* --- CLASSES PARA TROCA DINÂMICA DE MESA (VIA JS) --- */
-#game-background.theme-cavaleiro {
-    background-image: var(--table-cavaleiro) !important;
-}
+/* === LÓGICA DE TEMAS (DYNAMIC BACKGROUND) === */
+
+/* Se o BODY ou o ELEMENTO tiver a classe .theme-mago, muda para a mesa roxa */
+body.theme-mago #game-background,
 #game-background.theme-mago {
     background-image: var(--table-mago) !important;
+}
+
+/* Se o BODY ou o ELEMENTO tiver a classe .theme-cavaleiro, força a mesa padrão */
+body.theme-cavaleiro #game-background,
+#game-background.theme-cavaleiro {
+    background-image: var(--table-cavaleiro) !important;
 }
 
 /* Modo Lobby (Prevalece sobre os temas) */
@@ -168,16 +176,16 @@ body {
 #m-deck { top: 30px; left: 30px; display: none; } 
 
 /* ---------------------------------------------------------------------- */
-/* DECK DO JOGADOR (TEXTO DISCRETO NO CANTO) */
+/* DECK DO JOGADOR (TEXTO DISCRETO NO CANTO) - ATUALIZADO */
 /* ---------------------------------------------------------------------- */
 #p-deck-container { 
-    position: fixed; /* Fixo na tela */
-    bottom: 25px;    /* Alinhado com o botão fullscreen */
-    right: 60px;     /* À esquerda do botão fullscreen */
-    z-index: 20000;  /* Camada de UI */
+    position: fixed; 
+    bottom: 50px;    /* <-- SUA ALTERAÇÃO MANTIDA */
+    right: 280px;    /* <-- SUA ALTERAÇÃO MANTIDA */
+    z-index: 20000;  
     display: flex; 
     align-items: center;
-    pointer-events: none; /* Não bloqueia cliques */
+    pointer-events: none; 
 }
 
 /* Esconde a imagem do deck */
@@ -190,10 +198,8 @@ body {
     margin: 0; 
     font-family: 'Russo One', sans-serif;
     font-size: 16px;
-    color: var(--gold); /* Dourado para destacar o número */
+    color: var(--gold); 
     text-shadow: 1px 1px 2px #000;
-    
-    /* Impede a quebra de linha */
     white-space: nowrap;
 }
 
@@ -203,7 +209,7 @@ body {
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.5); /* Cor mais apagada */
+    color: rgba(255, 255, 255, 0.5); 
     margin-left: 6px;
     vertical-align: middle;
 }
