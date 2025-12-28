@@ -406,15 +406,15 @@ body {
     /* O transform translateX(-50%) foi movido para a animação hudFloatCentered para não conflitar */
     
     /* Dimensões fixas para manter proporção da arte (approx 300x100 para essa imagem) */
-    width: 300px;
-    height: 100px;
+    width: 325px;
+    height: 105px;
     
     /* Imagem de Fundo NOVA */
     background-image: url('https://i.ibb.co/BHJwqqVR/AREA-DE-EXPERIENCIA.png');
     
     /* 'contain' garante que a imagem inteira apareça sem esticar/deformar */
     background-size: contain; 
-    background-position: center -3px;
+    background-position: center -6px;
     background-repeat: no-repeat;
     
     background-color: transparent; 
@@ -430,7 +430,7 @@ body {
     box-shadow: none;
 
     /* Sombra Recortada (Cartoon) */
-    filter: drop-shadow(0 10px 5px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5));
     z-index: 50;
 
     /* NOVA ANIMAÇÃO DE FLUTUAÇÃO CENTRALIZADA */
