@@ -16,6 +16,7 @@
     
     /* ARTES */
     --cardback-url: url('https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png');
+    /* ATUALIZADO: NOVA MESA DE JOGO */
     --bg-image-url: url('https://i.ibb.co/zhBCbq1m/MESA-DE-JOGO.png');
     --lobby-bg-url: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
 }
@@ -409,7 +410,7 @@ body {
     height: 100px;
     
     /* Imagem de Fundo NOVA */
-    background-image: url('https://i.ibb.co/SD43hn97/AREA-DE-EXPERIENCIA.png');
+    background-image: url('https://i.ibb.co/BHJwqqVR/AREA-DE-EXPERIENCIA.png');
     
     /* 'contain' garante que a imagem inteira apareça sem esticar/deformar */
     background-size: contain; 
@@ -429,7 +430,7 @@ body {
     box-shadow: none;
 
     /* Sombra Recortada (Cartoon) */
-    filter: drop-shadow(0 10px 5px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 10px 5px rgba(0,0,0,0.6));
     z-index: 50;
 
     /* NOVA ANIMAÇÃO DE FLUTUAÇÃO CENTRALIZADA */
@@ -453,8 +454,27 @@ body {
     50% { transform: translateX(-50%) translateY(-6px); }
 }
 
-.xp-mini { width: 30px; height: 42px; margin: 0 4px; position: relative; border: 1px solid #111; border-radius: 2px; box-shadow: 0 4px 8px rgba(0,0,0,0.6); cursor: help; transition: transform 0.2s; background-size: cover; background-position: center; }
-#m-xp .xp-mini:hover { transform: scale(3.0) translateY(15px); z-index: 3000; } #p-xp .xp-mini:hover { transform: scale(3.0) translateY(-15px); z-index: 3000; }
+/* === CARTAS DE XP (AUMENTADAS) === */
+.xp-mini { 
+    /* Aumentado de 30x42 para 38x53 para preencher melhor a moldura */
+    width: 38px; 
+    height: 53px; 
+    
+    /* Margem para separar as cartas */
+    margin: 0 6px; 
+    
+    position: relative; 
+    border: 1px solid #111; 
+    border-radius: 3px; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.6); 
+    cursor: help; 
+    transition: transform 0.2s; 
+    background-size: cover; 
+    background-position: center; 
+}
+#m-xp .xp-mini:hover { transform: scale(3.0) translateY(15px); z-index: 3000; } 
+#p-xp .xp-mini:hover { transform: scale(3.0) translateY(-15px); z-index: 3000; }
+
 .xp-anim-clone { position: fixed; z-index: 9999; width: 30px; height: 42px; border-radius: 4px; background-size: cover; background-position: center; box-shadow: 0 0 30px var(--gold); pointer-events: none; border: 2px solid var(--gold); }
 .xp-fly-up { animation: ghostUp 1.0s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards; } .xp-fly-down { animation: ghostDown 1.0s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards; }
 @keyframes ghostUp { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(1.5); opacity: 1; } 100% { transform: translateY(-150px) scale(2.0); opacity: 0; } }
