@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL UNIFICADA E CORRIGIDA)
+// ARQUIVO: js/main.js (VERSÃO FINAL UNIFICADA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -51,6 +51,7 @@ window.isGameRunning = false;
 window.currentMatchId = null;
 window.isMatchStarting = false;
 window.currentDeck = 'knight';
+window.gameMode = 'pve'; // Padrão
 
 // --- ASSETS ---
 const MAGE_ASSETS = {
@@ -387,6 +388,11 @@ function startMatchListener(matchId) {
             window.transitionToGame(); 
         }
 
+        // --- ATUALIZAÇÃO (SYNC) ---
+        if (matchData.status === 'playing') {
+            syncMatchState(matchData);
+        }
+
         if (currentUser.uid === matchData.player1.uid && 
             matchData.status === 'waiting_decks' &&
             matchData.player1.status === 'ready' && 
@@ -396,6 +402,40 @@ function startMatchListener(matchId) {
             await initializeMatchDecks(matchId, matchData);
         }
     });
+}
+
+// --- NOVA FUNÇÃO: O CÉREBRO DA SINCRONIZAÇÃO ---
+function syncMatchState(data) {
+    const isP1 = (currentUser.uid === data.player1.uid);
+    const myData = isP1 ? data.player1 : data.player2;
+    const oppData = isP1 ? data.player2 : data.player1;
+
+    player.hp = myData.hp;
+    player.maxHp = 6 + (myData.maxHpBonus || 0);
+    player.lvl = 1 + (myData.xp ? Math.floor(myData.xp.length / 5) : 0);
+    player.hand = myData.hand || [];
+    player.deck = myData.deck || [];
+    player.xp = myData.xp || [];
+    player.disabled = myData.disabled || null;
+
+    monster.name = oppData.class === 'mage' ? "MAGO RIVAL" : "CAVALEIRO RIVAL";
+    monster.hp = oppData.hp;
+    monster.maxHp = 6 + (oppData.maxHpBonus || 0);
+    monster.lvl = 1 + (oppData.xp ? Math.floor(oppData.xp.length / 5) : 0);
+    // Para o inimigo, não precisamos saber a mão exata, apenas a quantidade
+    monster.hand = new Array(oppData.hand ? oppData.hand.length : 0).fill('unknown'); 
+    monster.deck = oppData.deck || [];
+    monster.xp = oppData.xp || [];
+    monster.disabled = oppData.disabled || null;
+
+    turnCount = data.turn;
+    updateUI();
+
+    const handEl = document.getElementById('player-hand');
+    if (handEl && handEl.classList.contains('preparing') && player.hand.length > 0) {
+        handEl.classList.remove('preparing');
+        dealAllInitialCards(); 
+    }
 }
 
 async function initializeMatchDecks(matchId, matchData) {
@@ -1145,7 +1185,35 @@ function apply3DTilt(element, isHand = false) {
     }); 
 }
 
-// ======================================================
-// INICIALIZADOR
-// ======================================================
+// --- FUNÇÕES DE START DO JOGO (PvE e PvP) ---
+
+function startGameFlow() {
+    document.getElementById('end-screen').classList.remove('visible');
+    isProcessing = false; 
+    startCinematicLoop(); 
+    
+    window.isMatchStarting = true;
+    const handEl = document.getElementById('player-hand');
+    if (handEl) {
+        handEl.innerHTML = '';
+        handEl.classList.add('preparing'); 
+    }
+    
+    // SE FOR PVP, PAUSA AQUI E DEIXA O FIREBASE (syncMatchState) PREENCHER
+    if (window.gameMode === 'pvp') {
+        return; 
+    }
+    
+    // SE FOR PVE, PREENCHE LOCALMENTE
+    resetUnit(player); 
+    resetUnit(monster); 
+    turnCount = 1; 
+    playerHistory = [];
+    drawCardLogic(monster, 6); 
+    drawCardLogic(player, 6); 
+    updateUI(); 
+    dealAllInitialCards();
+}
+
+// Inicializador
 preloadGame();
