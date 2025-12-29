@@ -310,29 +310,44 @@ window.startPvPSearch = async function() {
     }
 };
 
+// Função que procura oponentes na fila (Host Logic)
 async function findOpponentInQueue() {
     try {
         const queueRef = collection(db, "queue");
-        const q = query(queueRef, orderBy("timestamp", "asc"), limit(10));
+        // Aumentei o limite para 50 para garantir que varremos a fila toda
+        // OrderBy timestamp garante que pegamos o que está esperando há mais tempo (qualquer nível)
+        const q = query(queueRef, orderBy("timestamp", "asc"), limit(50));
         const querySnapshot = await getDocs(q);
+
         let opponentDoc = null;
 
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
-                opponentDoc = doc;
+            // Regras: Não sou eu, não tem partida ainda, não cancelou
+            // E ignoramos tickets muito velhos (> 1 hora) para não travar em fantasmas
+            const isValid = !data.matchId && !data.cancelled && (Date.now() - data.timestamp < 3600000);
+            
+            if (data.uid !== currentUser.uid && isValid) {
+                if (!opponentDoc) opponentDoc = doc; // Pega o primeiro válido que achar
             }
         });
 
         if (opponentDoc) {
             const opponentId = opponentDoc.data().uid;
-            console.log("Oponente encontrado:", opponentId);
+            console.log("Oponente encontrado na fila (Qualquer Nível):", opponentId);
+
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+
+            // Trava o oponente e eu
             await updateDoc(opponentDoc.ref, { matchId: matchId });
             if (myQueueRef) { await updateDoc(myQueueRef, { matchId: matchId }); }
+
             await createMatchDocument(matchId, currentUser.uid, opponentId);
         }
-    } catch (e) { console.error("Erro ao buscar oponente:", e); }
+
+    } catch (e) {
+        console.error("Erro ao buscar oponente:", e);
+    }
 }
 
 async function createMatchDocument(matchId, p1Id, p2Id) {
@@ -413,7 +428,9 @@ function syncMatchState(data) {
     player.hp = myData.hp;
     player.maxHp = 6 + (myData.maxHpBonus || 0);
     player.lvl = 1 + (myData.xp ? Math.floor(myData.xp.length / 5) : 0);
-    player.hand = myData.hand || [];
+    
+    // Garante que hand é array antes de atribuir
+    player.hand = Array.isArray(myData.hand) ? myData.hand : [];
     player.deck = myData.deck || [];
     player.xp = myData.xp || [];
     player.disabled = myData.disabled || null;
@@ -422,19 +439,29 @@ function syncMatchState(data) {
     monster.hp = oppData.hp;
     monster.maxHp = 6 + (oppData.maxHpBonus || 0);
     monster.lvl = 1 + (oppData.xp ? Math.floor(oppData.xp.length / 5) : 0);
-    // Para o inimigo, não precisamos saber a mão exata, apenas a quantidade
     monster.hand = new Array(oppData.hand ? oppData.hand.length : 0).fill('unknown'); 
     monster.deck = oppData.deck || [];
     monster.xp = oppData.xp || [];
     monster.disabled = oppData.disabled || null;
 
     turnCount = data.turn;
+    
+    // Atualiza a UI
     updateUI();
 
+    // Se as cartas foram desenhadas mas estão invisíveis (preparing), force a entrada
     const handEl = document.getElementById('player-hand');
-    if (handEl && handEl.classList.contains('preparing') && player.hand.length > 0) {
-        handEl.classList.remove('preparing');
-        dealAllInitialCards(); 
+    if (handEl && player.hand.length > 0) {
+        // Se a mão tem cartas, removemos o modo de preparação para exibi-las
+        if(handEl.classList.contains('preparing')) {
+            handEl.classList.remove('preparing');
+            dealAllInitialCards(); 
+        }
+        
+        // Segurança extra: Se já passamos do início, garante opacidade 1
+        if (!window.isMatchStarting) {
+            Array.from(handEl.children).forEach(c => c.style.opacity = '1');
+        }
     }
 }
 
@@ -1185,13 +1212,27 @@ function apply3DTilt(element, isHand = false) {
     }); 
 }
 
-// --- FUNÇÕES DE START DO JOGO (PvE e PvP) ---
-
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
+    // --- CORREÇÃO CRÍTICA PARA PVP ---
+    if (window.gameMode === 'pvp') {
+        // No PvP, não limpamos a mão nem resetamos variáveis aqui.
+        // O syncMatchState cuida de tudo. Apenas liberamos a visibilidade.
+        window.isMatchStarting = false;
+        const handEl = document.getElementById('player-hand');
+        if(handEl) {
+            handEl.classList.remove('preparing');
+            // Força atualização visual caso as cartas já estejam lá mas ocultas
+            Array.from(handEl.children).forEach(c => c.style.opacity = '1');
+        }
+        return; 
+    }
+    // ---------------------------------
+    
+    // LÓGICA PVE (Mantida)
     window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand');
     if (handEl) {
@@ -1199,12 +1240,6 @@ function startGameFlow() {
         handEl.classList.add('preparing'); 
     }
     
-    // SE FOR PVP, PAUSA AQUI E DEIXA O FIREBASE (syncMatchState) PREENCHER
-    if (window.gameMode === 'pvp') {
-        return; 
-    }
-    
-    // SE FOR PVE, PREENCHE LOCALMENTE
     resetUnit(player); 
     resetUnit(monster); 
     turnCount = 1; 
