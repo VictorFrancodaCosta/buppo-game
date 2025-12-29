@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL CORRIGIDA)
+// ARQUIVO: js/main.js (VERSÃO FINAL RESTAURADA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -44,9 +44,9 @@ let mixerInterval = null;
 // Variáveis de Matchmaking e PvP
 let matchTimerInterval = null;
 let matchSeconds = 0;
-let myQueueRef = null;      // Referência na fila
-let queueListener = null;   // Listener da fila
-let matchUnsub = null;      // Listener da partida
+let myQueueRef = null;
+let queueListener = null;
+let matchUnsub = null;
 window.isGameRunning = false;
 window.currentMatchId = null;
 window.isMatchStarting = false;
@@ -114,7 +114,6 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-tie', src: 'https://files.catbox.moe/sb18ja.mp3' }
     ]
 };
-let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 
 // --- HELPER FUNCTIONS ---
 function getCardArt(cardKey, isPlayer) {
@@ -124,7 +123,7 @@ function getCardArt(cardKey, isPlayer) {
     return CARDS_DB[cardKey].img;
 }
 
-// --- FUNÇÃO CRÍTICA QUE FALTAVA ---
+// --- TOOLTIP LOGIC ---
 const tt = document.getElementById('tooltip-box');
 function bindFixedTooltip(el, k) { 
     const updatePos = () => { 
@@ -278,69 +277,6 @@ window.openDeckSelector = function() {
         document.body.appendChild(div);
     }
 })();
-
-// --- GAME LOGIC & UI ---
-function updateUI() { 
-    updateUnit(player); 
-    updateUnit(monster); 
-    document.getElementById('turn-txt').innerText = "TURNO " + turnCount; 
-}
-
-function updateUnit(u) {
-    document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
-    document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
-    let hpPct = (Math.max(0,u.hp)/u.maxHp)*100;
-    let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
-    if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
-    document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
-    
-    if(u === player) {
-        let deckImgEl = document.getElementById('p-deck-img');
-        deckImgEl.src = (window.currentDeck === 'mage') ? MAGE_ASSETS.DECK_IMG : 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png';
-    }
-
-    if(u===player) {
-        let hc=document.getElementById('player-hand'); hc.innerHTML='';
-        u.hand.forEach((k,i)=>{
-            let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
-            c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
-            if(u.disabled===k) c.classList.add('disabled-card');
-            
-            // Corrige opacidade inicial
-            c.style.opacity = window.isMatchStarting ? '0' : '1';
-
-            let lethalType = checkCardLethality(k); 
-            let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
-            let imgUrl = getCardArt(k, true);
-            c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
-            c.onclick=()=>onCardClick(i); 
-            
-            // Chama o bindFixedTooltip aqui (AGORA DEFINIDO)
-            let ttHandler = bindFixedTooltip(c,k);
-            c.onmouseenter = (e) => { 
-                ttHandler.onmouseenter(e); 
-                document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); 
-                if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } 
-                playSound('sfx-hover'); 
-            };
-            c.onmouseleave = (e) => { if(tt) tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
-            hc.appendChild(c); apply3DTilt(c, true);
-        });
-    }
-    
-    let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
-    u.xp.forEach(k=>{ 
-        let d=document.createElement('div'); d.className='xp-mini'; 
-        let imgUrl = getCardArt(k, (u === player)); d.style.backgroundImage = `url('${imgUrl}')`; 
-        d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; 
-        d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; 
-        xc.appendChild(d); 
-    });
-    
-    let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
-    if(u.bonusAtk>0) addMI(mc, 'ATAQUE', u.bonusAtk, '#e74c3c', u.id); 
-    if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
-}
 
 // --- MATCHMAKING & PVP ---
 window.startPvE = function() { window.gameMode = 'pve'; window.playNavSound(); window.openDeckSelector(); };
@@ -675,12 +611,19 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
+// --- FUNÇÃO DE LOGIN WEB SIMPLES ---
 window.googleLogin = async function() {
     window.playNavSound(); 
     const btnText = document.getElementById('btn-text');
     btnText.innerText = "CONECTANDO...";
-    try { await signInWithPopup(auth, provider); } 
-    catch (error) { console.error("Erro no Login:", error); btnText.innerText = "ERRO - TENTE NOVAMENTE"; setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000); }
+
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.error("Erro no Login:", error);
+        btnText.innerText = "ERRO - TENTE NOVAMENTE";
+        setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000);
+    }
 };
 
 window.registrarVitoriaOnline = async function(modo = 'pve') {
@@ -730,8 +673,69 @@ window.abandonMatch = function() {
 }
 
 // ======================================================
-// INICIALIZAÇÃO
+// GAME UI & UTILS
 // ======================================================
+
+function updateUI() { 
+    updateUnit(player); 
+    updateUnit(monster); 
+    document.getElementById('turn-txt').innerText = "TURNO " + turnCount; 
+}
+
+function updateUnit(u) {
+    document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
+    document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
+    let hpPct = (Math.max(0,u.hp)/u.maxHp)*100;
+    let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
+    if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
+    document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
+    
+    if(u === player) {
+        let deckImgEl = document.getElementById('p-deck-img');
+        deckImgEl.src = (window.currentDeck === 'mage') ? MAGE_ASSETS.DECK_IMG : 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png';
+    }
+
+    if(u===player) {
+        let hc=document.getElementById('player-hand'); hc.innerHTML='';
+        u.hand.forEach((k,i)=>{
+            let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
+            c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
+            if(u.disabled===k) c.classList.add('disabled-card');
+            
+            // Corrige opacidade inicial
+            c.style.opacity = window.isMatchStarting ? '0' : '1';
+
+            let lethalType = checkCardLethality(k); 
+            let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
+            let imgUrl = getCardArt(k, true);
+            c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
+            c.onclick=()=>onCardClick(i); 
+            
+            let ttHandler = bindFixedTooltip(c,k);
+            c.onmouseenter = (e) => { 
+                ttHandler.onmouseenter(e); 
+                document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); 
+                if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } 
+                playSound('sfx-hover'); 
+            };
+            c.onmouseleave = (e) => { if(tt) tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
+            hc.appendChild(c); apply3DTilt(c, true);
+        });
+    }
+    
+    let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
+    u.xp.forEach(k=>{ 
+        let d=document.createElement('div'); d.className='xp-mini'; 
+        let imgUrl = getCardArt(k, (u === player)); d.style.backgroundImage = `url('${imgUrl}')`; 
+        d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; 
+        d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; 
+        xc.appendChild(d); 
+    });
+    
+    let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
+    if(u.bonusAtk>0) addMI(mc, 'ATAQUE', u.bonusAtk, '#e74c3c', u.id); 
+    if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
+}
 
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
@@ -739,19 +743,18 @@ function startGameFlow() {
     startCinematicLoop(); 
     
     // CORREÇÃO CRÍTICA PARA PVP:
-    // Se for PvP, não resetamos as variáveis locais, pois o syncMatchState fará isso.
     if (window.gameMode === 'pvp') {
         window.isMatchStarting = false;
         const handEl = document.getElementById('player-hand');
         if(handEl) {
             handEl.classList.remove('preparing');
-            // Força atualização visual caso as cartas já estejam lá mas ocultas
+            // Força a exibição
             Array.from(handEl.children).forEach(c => c.style.opacity = '1');
         }
         return; 
     }
     
-    // FLUXO PVE (Mantido)
+    // FLUXO PVE
     window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand');
     if (handEl) { handEl.innerHTML = ''; handEl.classList.add('preparing'); }
@@ -766,7 +769,7 @@ function startGameFlow() {
     dealAllInitialCards();
 }
 
-// Funções de Jogo Auxiliares (Definidas no escopo global para o HTML acessar)
+// Funções de Jogo Auxiliares (Globais)
 window.showCenterText = showCenterText;
 window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
 window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
@@ -778,6 +781,171 @@ function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j =
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 function dealAllInitialCards() { isProcessing = true; playSound('sfx-deal'); const handEl = document.getElementById('player-hand'); const cards = Array.from(handEl.children); cards.forEach((cardEl, i) => { cardEl.classList.add('intro-anim'); cardEl.style.animationDelay = (i * 0.1) + 's'; cardEl.style.opacity = ''; }); window.isMatchStarting = false; if(handEl) handEl.classList.remove('preparing'); setTimeout(() => { cards.forEach(c => { c.classList.remove('intro-anim'); c.style.animationDelay = ''; }); isProcessing = false; }, 2000); }
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
+
+// ======================================================
+// RECURSOS RESTAURADOS QUE CAUSARAM O CRASH
+// ======================================================
+
+function preloadGame() {
+    console.log("Iniciando Preload de " + totalAssets + " recursos...");
+    ASSETS_TO_LOAD.images.forEach(src => { 
+        let img = new Image(); img.src = src; window.gameAssets.push(img);
+        img.onload = () => updateLoader(); 
+        img.onerror = () => { console.warn("Erro ao carregar imagem: " + src); updateLoader(); }; 
+    });
+    ASSETS_TO_LOAD.audio.forEach(a => { 
+        let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; 
+        audios[a.id] = s; window.gameAssets.push(s);
+        s.onloadedmetadata = () => updateLoader(); 
+        s.onerror = () => { console.warn("Erro ao carregar áudio: " + a.src); updateLoader(); }; 
+        setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 3000); 
+    });
+}
+
+function updateLoader() {
+    assetsLoaded++; 
+    let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
+    const fill = document.getElementById('loader-fill');
+    if(fill) fill.style.width = pct + '%';
+    if(assetsLoaded >= totalAssets) {
+        console.log("Preload completo!");
+        if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
+        setTimeout(() => {
+            const loading = document.getElementById('loading-screen');
+            if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
+            if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
+        }, 800); 
+        document.body.addEventListener('click', () => { 
+            if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) { MusicController.play('bgm-menu'); }
+        }, { once: true });
+    }
+}
+
+function initGlobalHoverLogic() {
+    let lastTarget = null;
+    document.body.addEventListener('mouseover', (e) => {
+        const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn';
+        const target = e.target.closest(selector);
+        if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } 
+        else if (!target) { lastTarget = null; }
+    });
+}
+
+window.onload = function() {
+    const btnSound = document.getElementById('btn-sound');
+    if (btnSound) {
+        btnSound.onclick = null; 
+        btnSound.addEventListener('click', (e) => { e.stopPropagation(); window.toggleMute(); });
+    }
+};
+
+window.toggleFullScreen = function() {
+    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
+    else { if (document.exitFullscreen) { document.exitFullscreen(); } }
+}
+
+function createLobbyFlares() {
+    const container = document.getElementById('lobby-particles');
+    if(!container) return;
+    container.innerHTML = ''; 
+    for(let i=0; i < 70; i++) {
+        let flare = document.createElement('div');
+        flare.className = 'lobby-flare';
+        flare.style.left = Math.random() * 100 + '%'; flare.style.top = Math.random() * 100 + '%';
+        let size = 4 + Math.random() * 18; 
+        flare.style.width = size + 'px'; flare.style.height = size + 'px';
+        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; flare.style.animationDelay = (Math.random() * 4) + 's';
+        container.appendChild(flare);
+    }
+}
+
+function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
+
+function updateAudioMixer() { 
+    const cineAudio = audios['sfx-cine']; if(!cineAudio) return; 
+    const mVol = window.masterVol || 1.0; const maxCine = 0.6 * mVol; 
+    let targetCine = isLethalHover ? maxCine : 0; 
+    if(window.isMuted) { cineAudio.volume = 0; return; }
+    if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
+    else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
+}
+
+window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
+document.addEventListener('click', function(e) { const panel = document.getElementById('config-panel'); const btn = document.getElementById('btn-config-toggle'); if (panel && panel.classList.contains('active') && !panel.contains(e.target) && (btn && !btn.contains(e.target))) window.toggleConfig(); });
+
+window.updateVol = function(type, val) { 
+    if(type==='master') window.masterVol = parseFloat(val); 
+    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 
+     'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 
+     'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
+        if(audios[k]) {
+            let vol = window.masterVol || 1.0;
+            if(k === 'sfx-ui-hover') audios[k].volume = 0.3 * vol;
+            else if (k === 'sfx-levelup') audios[k].volume = 1.0 * vol;
+            else if (k === 'sfx-train') audios[k].volume = 0.5 * vol;
+            else audios[k].volume = 0.8 * vol;
+        }
+    }); 
+}
+function playSound(key) { 
+    if(audios[key]) { 
+        if (key === 'sfx-levelup') {
+            audios[key].volume = 1.0 * (window.masterVol || 1.0);
+            audios[key].currentTime = 0; audios[key].play().catch(()=>{});
+            let clone = audios[key].cloneNode(); clone.volume = audios[key].volume; clone.play().catch(()=>{});
+        } else {
+            audios[key].currentTime = 0; audios[key].play().catch(()=>{}); 
+        }
+    } 
+}
+
+function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
+initAmbientParticles();
+
+function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
+
+function triggerDamageEffect(isPlayer, playAudio = true) { 
+    try { 
+        if(playAudio) {
+            if(!isPlayer && window.currentDeck === 'mage') playSound('sfx-hit-mage');
+            else playSound('sfx-hit'); 
+        } 
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); 
+        if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } 
+        if (isPlayer) {
+            document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
+            if(window.triggerDamageEffect) window.triggerDamageEffect(); 
+            let ov = document.getElementById('dmg-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
+        }
+    } catch(e) {} 
+}
+
+function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
+
+function triggerHealEffect(isPlayer) { 
+    try { 
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); 
+        if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } 
+        if (isPlayer) {
+            if(window.triggerHealEffect) window.triggerHealEffect();
+            let ov = document.getElementById('heal-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
+        }
+    } catch(e) {} 
+}
+
+function triggerBlockEffect(isPlayer) { 
+    try { 
+        if(isPlayer && window.currentDeck === 'mage') playSound('sfx-block-mage');
+        else playSound('sfx-block'); 
+        if (!isPlayer) {
+             if(window.triggerBlockEffect) window.triggerBlockEffect();
+             let ov = document.getElementById('block-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
+             document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+        }
+    } catch(e) {} 
+}
+
+function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 
 // Inicializa o jogo
 preloadGame();
