@@ -4,6 +4,13 @@
 @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap'); /* NOVA FONTE CARTOON */
 
+/* REMOVE O HIGHLIGHT DE TOQUE NO CELULAR */
+* {
+    -webkit-tap-highlight-color: transparent; /* Chrome/Safari/Android/iOS */
+    outline: none; /* Remove bordas de foco padrão */
+    -webkit-touch-callout: none; /* Desabilita menu de contexto de toque longo (iOS) */
+}
+
 :root {
     --bg-app: #050505;
     --txt-primary: #ecf0f1; --txt-secondary: #d7ccc8;
