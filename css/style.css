@@ -26,11 +26,12 @@
     --lobby-bg-url: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
 
     /* DEFINIÇÃO DAS MESAS */
-    --table-cavaleiro: url('https://i.ibb.co/zhBCbq1m/MESA-DE-JOGO.png');
-    --table-mago: url('https://i.ibb.co/6csxm9jz/MESA-DE-JOGO-MAGO.png');
+    --table-saguao: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
+    --table-cavaleiro: url('https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png');
+    --table-mago: url('https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png');
 
     /* PADRÃO INICIAL (Cavaleiro) */
-    --bg-image-url: var(--table-cavaleiro);
+    --bg-image-url: var(--table-saguao);
 }
 
 body { 
