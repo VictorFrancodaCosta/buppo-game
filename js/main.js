@@ -46,31 +46,15 @@ const MAGE_ASSETS = {
 };
 
 const ASSETS_TO_LOAD = {
-    images: [
-        'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png',
-        'https://i.ibb.co/KzVqKR6D/MESA-DE-JOGO.png',
-        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png',
-        'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',
-        'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png',
-        'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',
-        'https://i.ibb.co/fzr36qbR/SELE-O-DE-DECK-CAVALEIRO.png',
-        'https://i.ibb.co/bjBcKN6c/SELE-O-DE-DECK-MAGO.png',
-        'https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png',
-        'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
-        'https://i.ibb.co/jdZmTHC/CARDBACK.png',
-        'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png',
-        'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png',
-        'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png',
-        'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png',
-        'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
-        'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png',
-        'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png',
-        'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
-        'https://i.ibb.co/sv98P3JK/03-DESCANSAR-MAGO.png',
-        'https://i.ibb.co/Q7SmhYQk/04-DESARMAR-MAGO.png',
-        'https://i.ibb.co/8LGTJCn4/05-TREINAR-MAGO.png',
-        'https://i.ibb.co/XZ8qc166/DECK-MAGO.png',
-        'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png'
+   images: [
+        'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png', 'https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png', 'https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png',
+        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png', 'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',
+        'https://i.ibb.co/fzr36qbR/SELE-O-DE-DECK-CAVALEIRO.png', 'https://i.ibb.co/bjBcKN6c/SELE-O-DE-DECK-MAGO.png', 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
+        'https://i.ibb.co/jdZmTHC/CARDBACK.png', 'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png', 'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png',
+        'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png', 'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png', 'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
+        'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png', 'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png', 'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
+        'https://i.ibb.co/sv98P3JK/03-DESCANSAR-MAGO.png', 'https://i.ibb.co/Q7SmhYQk/04-DESARMAR-MAGO.png', 'https://i.ibb.co/8LGTJCn4/05-TREINAR-MAGO.png',
+        'https://i.ibb.co/XZ8qc166/DECK-MAGO.png', 'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png', 'https://i.ibb.co/SXPndxhb/AREA-DE-EXPERIENCIA.png'
     ],
     audio: [
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
