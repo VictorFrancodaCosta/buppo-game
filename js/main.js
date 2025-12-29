@@ -262,6 +262,8 @@ window.openDeckSelector = function() {
     }
 })();
 
+// --- DENTRO DE js/main.js ---
+
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         audios['sfx-deck-select'].currentTime = 0;
