@@ -5,27 +5,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap');
 
-/* RESET */
-* { -webkit-tap-highlight-color: transparent; outline: none; -webkit-touch-callout: none; box-sizing: border-box; }
+/* RESET E OTIMIZAÇÃO DE TOQUE */
+* {
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    -webkit-touch-callout: none;
+    box-sizing: border-box;
+}
 
 :root {
     --bg-app: #1a1a1a;
+    --txt-primary: #ecf0f1; --txt-secondary: #d7ccc8;
+    --accent-blue: #00cec9; --accent-red: #ff7675;
     --gold: #ffd700;
     --wood-dark: #3e2723;
     --wood-light: #5d4037;
     --purple-btn: #8e44ad;
+    
     /* IMAGENS */
     --cardback-url: url('https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png');
     --lobby-bg-url: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
     --table-cavaleiro: url('https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png');
     --table-mago: url('https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png');
+    --bg-image-url: var(--table-cavaleiro);
 }
 
-/* O BODY AGORA TEM COR DE FUNDO PARA DISFARÇAR AS BORDAS PRETAS */
+/* CORPO DA PÁGINA (Preenche as bordas pretas com madeira escura) */
 body { 
     font-family: 'Montserrat', sans-serif; 
-    background-color: #0d0d0d; /* Fundo escuro neutro */
-    background-image: radial-gradient(circle, #2c1e15 0%, #000000 100%); /* Gradiente estilo madeira escura */
+    background-color: #0d0d0d;
+    background-image: radial-gradient(circle, #2c1e15 0%, #000000 100%); /* Gradiente para bordas */
     margin: 0; padding: 0; 
     height: 100vh; width: 100vw;
     overflow: hidden; 
@@ -44,125 +53,316 @@ body {
     background-color: #000;
     box-shadow: 0 0 100px rgba(0,0,0,0.8);
     transform-origin: center center;
-    /* Transição suave ao girar a tela */
-    transition: transform 0.3s ease-out;
+    transition: opacity 0.3s ease;
 }
 
-/* --- TRUQUE PARA ESCONDER O JOGO QUANDO EM PÉ --- */
+/* --- LÓGICA DE ROTAÇÃO OBRIGATÓRIA --- */
+/* Se estiver em pé, esconde o jogo */
 @media screen and (orientation: portrait) {
-    #app-scaler {
-        opacity: 0;
-        pointer-events: none;
-    }
+    #app-scaler { opacity: 0; pointer-events: none; }
 }
 
 /* --- FUNDO DO JOGO --- */
 #game-background {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-    background-image: var(--table-cavaleiro); 
+    position: absolute; top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    background-image: var(--bg-image-url); 
     background-size: cover; background-position: center; 
-    z-index: -5; transition: 0.5s;
+    z-index: -5; transition: filter 0.5s ease, background-image 0.5s ease-in-out;
 }
-body.theme-mago #game-background { background-image: var(--table-mago) !important; }
+
+/* TEMAS */
+body.theme-mago #game-background, #game-background.theme-mago { background-image: var(--table-mago) !important; }
+body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { background-image: var(--table-cavaleiro) !important; }
 #game-background.lobby-mode { background-image: var(--lobby-bg-url) !important; filter: blur(4px); }
 
-/* --- UI ELEMENTS GERAIS --- */
-#top-left-controls { position: absolute; top: 25px; left: 25px; z-index: 60000; display: flex; gap: 15px; }
+/* CONTROLES TOPO (Ajustados para 1080p) */
+#top-left-controls { position: absolute; top: 30px; left: 30px; z-index: 60000; display: flex; gap: 20px; }
 .circle-btn {
-    background: var(--wood-dark); width: 70px; height: 70px; border-radius: 50%; 
-    display: flex; justify-content: center; align-items: center; border: 3px solid var(--gold); 
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.2s;
+    background: var(--wood-dark); width: 80px; height: 80px;
+    border-radius: 50%; display: flex; justify-content: center; align-items: center;
+    border: 4px solid var(--gold); box-shadow: 0 5px 15px rgba(0,0,0,0.5); cursor: pointer;
+    transition: transform 0.2s; padding: 15px;
 }
-.circle-btn:active { transform: scale(0.9); }
-.circle-btn svg { width: 60%; height: 60%; fill: #fff; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8)); }
+.circle-btn:active { transform: scale(0.95); }
+.circle-btn:hover { border-color: #fff; transform: scale(1.05); }
+.circle-btn svg { width: 100%; height: 100%; fill: #ecf0f1; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8)); pointer-events: none; }
+#btn-config-toggle { display: none; } /* Oculto por padrão, aparece via JS */
 
-#btn-fullscreen { position: absolute; bottom: 30px; right: 30px; z-index: 20000; font-size: 50px; color: rgba(255,255,255,0.3); cursor: pointer; }
+/* CONFIGURAR E FULLSCREEN */
+#btn-fullscreen { position: absolute; bottom: 30px; right: 30px; z-index: 20000; font-size: 50px; cursor: pointer; color: rgba(255, 255, 255, 0.4); transition: 0.3s; background: transparent; border: none; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+#btn-fullscreen:hover { color: var(--gold); transform: scale(1.1); text-shadow: 0 0 15px var(--gold); }
 
-/* LOADING SCREEN (Sempre visível acima de tudo) */
+#config-panel { position: absolute; top: 120px; left: 30px; z-index: 5000; background: var(--wood-light); border: 5px solid var(--wood-dark); border-radius: 15px; padding: 25px; width: 350px; display: none; flex-direction: column; gap: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); color: var(--txt-primary); }
+#config-panel.active { display: flex; animation: slideDown 0.2s ease-out; }
+#btn-surrender { background: #c0392b; color: #fff; border: 3px solid #e74c3c; padding: 15px; font-family: 'Russo One'; cursor: pointer; border-radius: 10px; text-transform: uppercase; font-size: 20px; width: 100%; }
+#btn-surrender:hover { background: #e74c3c; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+.cfg-row { display: flex; flex-direction: column; gap: 10px; } 
+.cfg-label { color: var(--gold); font-size: 16px; text-transform: uppercase; font-weight: 700; font-family: 'Russo One', sans-serif; } 
+.cfg-slider { width: 100%; cursor: pointer; accent-color: var(--gold); height: 10px; }
+
+/* LOADING SCREEN (Fora do Scaler - Mantém fixed para cobrir tudo) */
 #loading-screen {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 99999;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
+    transition: opacity 0.5s; opacity: 1; pointer-events: auto;
 }
-.loader-title { font-family: 'Russo One'; color: var(--gold); font-size: 80px; margin-bottom: 20px; }
-.loader-bar-bg { width: 400px; height: 20px; background: #333; border-radius: 10px; border: 2px solid #555; overflow: hidden; }
-.loader-bar-fill { width: 0%; height: 100%; background: var(--gold); transition: width 0.2s; }
-.loader-txt { color: #888; margin-top: 15px; font-family: 'Montserrat'; font-size: 18px; }
+.loader-title { font-family: 'Russo One', sans-serif; color: #fff; font-size: 80px; margin-bottom: 20px; text-shadow: 0 0 20px var(--gold); }
+.loader-bar-bg { width: 500px; height: 20px; background: #333; border-radius: 10px; overflow: hidden; border: 2px solid #555; }
+.loader-bar-fill { width: 0%; height: 100%; background: var(--gold); transition: width 0.2s; box-shadow: 0 0 20px var(--gold); }
+.loader-txt { color: #777; margin-top: 20px; font-size: 18px; font-family: 'Montserrat', sans-serif; }
 
-/* TELAS */
-#game-container { width: 100%; height: 100%; position: absolute; top:0; left:0; display: flex; flex-direction: column; z-index: 10; }
-.screen { display: none; height: 100%; width: 100%; flex-direction: column; }
+/* TELAS INTERNAS */
+#game-container { width: 100%; height: 100%; position: absolute; top:0; left:0; display: flex; flex-direction: column; z-index: 10; opacity: 1 !important; }
+.screen { display: none; height: 100%; width: 100%; flex-direction: column; justify-content: space-between; }
 .screen.active { display: flex !important; }
 
 /* TELA LOGIN */
-#start-screen { justify-content: center; align-items: center; gap: 40px; }
-.game-logo { max-width: 800px; width: 80%; animation: logoFloat 3s ease-in-out infinite; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.8)); }
+#start-screen { justify-content: center !important; align-items: center; gap: 50px; z-index: 10000; background: transparent; overflow: hidden; position: absolute; }
+.start-bg-layer {
+    position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
+    background-image: var(--bg-image-url); background-size: cover; background-position: center;
+    filter: blur(8px) brightness(0.3); z-index: 0; animation: bgZoomFast 4s infinite alternate ease-in-out; 
+}
+@keyframes bgZoomFast { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+.game-logo { max-width: 800px; width: 80%; height: auto; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.9)); z-index: 2; position: relative; animation: logoFloat 3s ease-in-out infinite; }
 @keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 #btn-login { 
-    padding: 25px 70px; font-size: 30px; font-family: 'Russo One'; 
-    background: var(--purple-btn); color: #fff; border: 4px solid #fff; border-radius: 70px;
-    cursor: pointer; box-shadow: 0 10px 0 #6c3483, 0 20px 20px rgba(0,0,0,0.5); 
-    transition: 0.1s; text-transform: uppercase; letter-spacing: 2px;
+    padding: 30px 80px; font-size: 32px; font-family: 'Russo One', sans-serif; 
+    background: var(--purple-btn); color: #fff; border: 4px solid #fff; border-radius: 80px;
+    cursor: pointer; box-shadow: 0 10px 25px rgba(142, 68, 173, 0.6); transition: 0.1s;
+    text-transform: uppercase; z-index: 2; position: relative; letter-spacing: 2px; min-width: 400px;
 }
-#btn-login:active { transform: translateY(10px); box-shadow: 0 0 0 #6c3483, 0 0 0 rgba(0,0,0,0.5); }
+#btn-login:hover { transform: scale(1.05); background: #9b59b6; }
+#btn-login:active { transform: scale(0.95); }
 
 /* TELA SAGUÃO */
-#lobby-screen { justify-content: center; align-items: center; }
-.lobby-frame-container { position: relative; height: 75%; margin-top: 50px; display: flex; justify-content: center; align-items: center; }
-.lobby-frame-img { height: 100%; width: auto; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.9)); }
+#lobby-screen { justify-content: center !important; align-items: center !important; padding-left: 0; z-index: 10000; position: absolute; }
+.lobby-logo-right {
+    position: absolute; left: 50%; top: 5%; transform: translate(-50%, 0);
+    max-width: 600px; width: 40%; height: auto;
+    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9)); z-index: 5; pointer-events: none; 
+}
+.lobby-frame-container {
+    position: relative; z-index: 5; width: auto; height: 70%; margin-top: 120px;
+    display: flex; justify-content: center; align-items: center; animation: frameFloat 4s ease-in-out infinite;
+}
+@keyframes frameFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.lobby-frame-img { height: 100%; width: auto; filter: drop-shadow(0 30px 60px rgba(0,0,0,0.8)); display: block; }
 .lobby-ui-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    display: flex; flex-direction: column; align-items: center; padding: 22% 14% 13% 14%; 
-    text-align: center; color: #fff;
+    display: flex; flex-direction: column; align-items: center; padding: 22% 14% 14% 14%; 
+    box-sizing: border-box; text-align: center; color: #fff;
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000;
 }
-.user-welcome { font-family: 'Russo One'; font-size: 36px; margin-bottom: 10px; color: #fff; text-transform: uppercase; }
-.user-stats { color: var(--gold); font-size: 24px; font-weight: 900; margin-bottom: 25px; font-family: 'Russo One'; }
-.ranking-scroll { flex-grow: 1; width: 100%; overflow-y: auto; margin-bottom: 20px; }
-#ranking-table { width: 100%; font-size: 20px; color: #fff; border-collapse: collapse; }
-#ranking-table td, #ranking-table th { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.2); }
-.rank-1 { color: var(--gold); font-size: 24px; }
-#btn-play-match { padding: 20px 0; width: 100%; font-size: 32px; font-family: 'Russo One'; background: #8e44ad; color: #fff; border: 3px solid #fff; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-#btn-logout { margin-top: 10px; background: rgba(0,0,0,0.3); border: 2px solid #aaa; color: #ccc; padding: 10px 30px; border-radius: 30px; cursor: pointer; font-family: 'Russo One'; }
+.user-welcome { font-family: 'Russo One'; font-size: 36px; margin-bottom: 10px; text-transform: uppercase; color: #fff; }
+.user-stats { color: #ffd700; font-size: 24px; font-weight: 700; margin-bottom: 25px; font-family: 'Russo One'; }
+.ranking-scroll { flex-grow: 1; width: 100%; overflow-y: auto; margin-bottom: 25px; scrollbar-width: thin; scrollbar-color: var(--wood-dark) transparent; }
+#ranking-table { width: 100%; border-collapse: collapse; font-size: 20px; color: #fff; }
+#ranking-table th { text-align: left; padding: 10px; border-bottom: 3px solid #fff; font-family: 'Russo One'; color: var(--gold); }
+#ranking-table td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.3); font-weight: 700; }
+.rank-1 { color: #ffd700 !important; font-size: 22px; } 
+#btn-play-match {
+    padding: 20px 60px; font-size: 36px; font-family: 'Russo One'; background: #8e44ad; color: #fff; 
+    border: 3px solid #fff; border-radius: 60px; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    transition: 0.2s; text-transform: uppercase; margin-bottom: 15px; width: 90%; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+#btn-play-match:hover { transform: scale(1.05); background: #9b59b6; }
+#btn-logout { background: rgba(0,0,0,0.4); border: 2px solid #fff; color: #ccc; padding: 12px 30px; border-radius: 40px; cursor: pointer; font-size: 16px; font-family: 'Russo One'; text-transform: uppercase; }
+#btn-logout:hover { background: rgba(255,0,0,0.4); color: #fff; }
 
-/* SELEÇÃO DE DECK */
+/* TELA DE SELEÇÃO DE DECK */
 #deck-selection-screen {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(15px);
     z-index: 15000; display: none; flex-direction: column; justify-content: center; align-items: center;
+    gap: 40px; padding: 20px; box-sizing: border-box; opacity: 0; transition: opacity 0.5s ease;
 }
-.img-titulo-placa { width: 60%; max-width: 700px; margin-top: -50px; margin-bottom: 40px; }
-.deck-options-container { display: flex; gap: 60px; justify-content: center; align-items: center; margin-bottom: 60px; }
-.deck-option { width: 500px; cursor: pointer; transition: 0.3s; position: relative; }
-.deck-option img { width: 100%; filter: grayscale(100%) brightness(0.5); transition: 0.3s; }
-.deck-option:hover img { filter: grayscale(0%) brightness(1.2) drop-shadow(0 0 40px var(--gold)); transform: scale(1.1) translateY(-20px); }
-.return-btn { padding: 20px 50px; font-size: 20px; background: transparent; border: 2px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); border-radius: 50px; cursor: pointer; font-family: 'Russo One'; }
-
-/* TELA DE JOGO */
-.middle-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; gap: 150px; padding-bottom: 200px; pointer-events: none; }
-.slot { width: 240px; height: 340px; display: flex; justify-content: center; align-items: center; pointer-events: auto; }
-.hand-wrapper { position: absolute; bottom: -40px; left: 0; width: 100%; height: 250px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; }
-
-/* CARTAS */
-.card { 
-    width: 170px; height: 240px; border-radius: 15px; border: 4px solid #111; 
-    background: #111; position: relative; margin: 0 -15px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    transition: 0.2s; cursor: pointer; transform-style: preserve-3d;
+#deck-selection-screen.active { display: flex !important; opacity: 1; }
+@keyframes titleFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.titulo-selecao { width: 100%; display: flex; justify-content: center; margin-top: -100px; margin-bottom: 20px; }
+.img-titulo-placa { width: 100%; max-width: 800px; height: auto; display: block; filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.6)); animation: titleFloat 3s ease-in-out infinite; }
+.deck-options-container { display: flex; gap: 80px; align-items: center; justify-content: center; perspective: 1000px; margin-bottom: 80px; }
+.deck-option { position: relative; cursor: pointer; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); background: transparent; border: none; outline: none; padding: 0; width: 500px; display: flex; justify-content: center; }
+.deck-option img { width: 100%; height: auto; display: block; filter: grayscale(100%) brightness(0.6) drop-shadow(0 15px 20px rgba(0,0,0,0.6)); transform: scale(0.95); transition: all 0.4s ease-out; border-radius: 0; box-shadow: none !important; }
+.deck-option:hover { z-index: 10; }
+.deck-option:hover img { transform: scale(1.1) translateY(-20px); filter: grayscale(0%) brightness(1.2) drop-shadow(0 0 50px rgba(255, 215, 0, 0.6)); }
+.deck-option::after {
+    content: attr(data-name); position: absolute; top: 105%; left: 50%; transform: translateX(-50%) translateY(20px);
+    font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 20px; color: #ecf0f1; text-align: center; width: 180%; 
+    opacity: 0; transition: all 0.3s ease; pointer-events: none; text-shadow: 0 2px 4px rgba(0,0,0,0.9);
 }
-.card-art { position: absolute; top:0; left:0; width:100%; height:100%; border-radius: 11px; background-size: cover; background-position: center; }
-.hand-card:hover { transform: translateY(-80px) scale(1.3) !important; z-index: 9999; margin: 0 60px; box-shadow: 0 0 50px var(--gold); }
+.deck-option:hover::after { opacity: 1; transform: translateX(-50%) translateY(0px); }
+.return-btn { margin-top: 0; padding: 15px 50px; background: transparent; border: 3px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: 2px; cursor: pointer; transition: 0.3s; border-radius: 50px; text-transform: uppercase; }
+.return-btn:hover { color: #fff; border-color: #fff; background: rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(255,255,255,0.2); }
 
-/* HUD E STATUS */
+/* TELA FIM DE JOGO */
+#end-screen {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 20000;
+    display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none;
+    transition: opacity 0.5s ease; backdrop-filter: blur(10px);
+}
+#end-screen.visible { opacity: 1; pointer-events: auto; }
+.end-content { text-align: center; transform: scale(0.8); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+#end-screen.visible .end-content { transform: scale(1); }
+#end-title { font-family: 'Russo One', sans-serif; font-size: 140px; margin-bottom: 50px; text-transform: uppercase; text-shadow: 0 10px 30px rgba(0,0,0,0.8); margin-top: 0; }
+.win-theme { color: #ffd700; text-shadow: 0 0 50px rgba(255, 215, 0, 0.6); }
+.lose-theme { color: #ff7675; text-shadow: 0 0 50px rgba(255, 118, 117, 0.6); }
+.tie-theme { color: #fff; text-shadow: 0 0 50px rgba(255, 255, 255, 0.6); }
+.end-btn-row { display: flex; gap: 40px; justify-content: center; }
+.big-btn { padding: 30px 70px; font-size: 36px; font-family: 'Russo One', sans-serif; background: #ffd700; color: #000; border: none; border-radius: 80px; cursor: pointer; box-shadow: 0 15px 40px rgba(255, 215, 0, 0.4); transition: transform 0.2s, box-shadow 0.2s; text-transform: uppercase; }
+.big-btn:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 20px 50px rgba(255, 215, 0, 0.6); }
+.secondary-btn { background: transparent; border: 5px solid #fff; color: #fff; box-shadow: none; }
+.secondary-btn:hover { background: rgba(255,255,255,0.1); box-shadow: 0 0 30px rgba(255,255,255,0.4); color: #fff; }
+
+/* HUD E ELEMENTOS DE JOGO */
+.deck-area { position: absolute; z-index: 30; width: 180px; height: 250px; border-radius: 18px; display: flex; justify-content: center; align-items: center; flex-direction: column; font-family: 'Russo One', sans-serif; color: #fff; font-size: 16px; background-image: var(--cardback-url); background-size: cover; background-position: center; border: 5px solid var(--wood-dark); box-shadow: 0 15px 40px rgba(0,0,0,0.7); }
+.deck-count { position: absolute; bottom: -45px; left: 0; width: 100%; text-align: center; font-size: 20px; color: var(--gold); font-family: 'Russo One', sans-serif; font-weight: 600; text-shadow: 2px 2px 4px #000; }
+#m-deck { top: 40px; left: 40px; display: none; } 
+
+/* DECK JOGADOR (Canto Inferior) */
+#p-deck-container { 
+    position: absolute; bottom: 60px; right: 380px; z-index: 20000;  
+    display: flex; align-items: center; pointer-events: none; 
+}
+#p-deck-img { display: none !important; }
+#p-deck-count { 
+    margin: 0; font-family: 'Russo One', sans-serif; font-size: 24px; color: var(--gold); 
+    text-shadow: 2px 2px 4px #000; white-space: nowrap;
+}
+#p-deck-count::after {
+    content: " CARTAS RESTANTES"; font-family: 'Montserrat', sans-serif;
+    font-weight: 700; font-size: 14px; color: rgba(255, 255, 255, 0.6); margin-left: 10px; vertical-align: middle;
+}
+
+/* CLUSTERS (HUD) */
 .avatar-cluster { 
-    position: absolute; background: var(--wood-light); border: 5px solid var(--wood-dark); 
-    border-radius: 20px; padding: 20px; display: flex; align-items: center; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8); width: 500px; height: 160px; 
+    position: absolute; z-index: 30; 
+    background: var(--wood-light); border: 6px solid var(--wood-dark); 
+    border-radius: 25px; padding: 20px 30px; display: flex; align-items: center; gap: 20px; 
+    box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 20px rgba(255, 215, 0, 0.1); 
+    min-width: 400px; animation: hudFloat 4s ease-in-out infinite; 
 }
-#p-stats-cluster { bottom: 250px; left: 20px; }
-#m-stats-cluster { top: 20px; right: 20px; }
-.lvl-circle { width: 100px; height: 100px; border-radius: 50%; background: var(--gold); border: 5px solid #8c7200; display: flex; justify-content: center; align-items: center; font-size: 50px; font-family: 'Russo One'; color: #3e2723; position: absolute; }
-#p-stats-cluster .lvl-circle { left: -30px; }
-#m-stats-cluster .lvl-circle { right: -30px; }
+#p-stats-cluster {
+    position: absolute; bottom: 250px; left: 20px;   
+    width: 500px; height: 180px;
+    background-image: url('https://i.ibb.co/tpVT4ymn/Camada-0.png');
+    background-size: 100% 100%; background-repeat: no-repeat;
+    background-color: transparent !important; border: none !important;
+    border-radius: 0 !important; box-shadow: none !important; padding: 0 !important;
+    min-width: auto !important; display: block !important; z-index: 100;
+    filter: drop-shadow(0 15px 5px rgba(0, 0, 0, 0.5)); animation: hudFloat 4s ease-in-out infinite;
+}
+#p-stats-cluster .lvl-circle { left: 40px; top: 50px; }
+#p-stats-cluster .unit-name { left: 140px; top: 25px; width: 300px; }
+#p-stats-cluster .hp-tube { left: 190px; top: 60px; width: 260px; }
+#p-stats-cluster .mastery-row { left: 195px; top: 120px; }
 
-/* === TELA OBRIGATÓRIA DE ROTAÇÃO === */
+#m-stats-cluster {
+    position: absolute; top: 20px; right: 20px; 
+    width: 500px; height: 180px;
+    background-image: url('https://i.ibb.co/fY7nJm6v/Camada-1.png');
+    background-size: 100% 100%; background-repeat: no-repeat;
+    background-color: transparent !important; border: none !important;
+    border-radius: 0 !important; box-shadow: none !important; padding: 0 !important;
+    min-width: auto !important; display: block !important; z-index: 100;
+    filter: drop-shadow(0 15px 5px rgba(0, 0, 0, 0.5)); animation: hudFloat 4s ease-in-out infinite;
+}
+#m-stats-cluster .lvl-circle { right: 40px; top: 50px; }
+#m-stats-cluster .unit-name { right: 140px; top: 25px; width: 300px; }
+#m-stats-cluster .hp-tube { right: 190px; top: 60px; width: 260px; }
+#m-stats-cluster .mastery-row { right: 195px; top: 120px; }
+
+@keyframes hudFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+/* ELEMENTOS DO HUD */
+.lvl-circle {
+    position: absolute; width: 90px; height: 90px; background: linear-gradient(135deg, var(--gold), #cfaa00); 
+    border-radius: 50%; display: flex; justify-content: center; align-items: center; 
+    font-family: 'Russo One'; font-size: 60px; border: 5px solid #8c7200; color: #4a3b2a; 
+    z-index: 100; box-shadow: 0 10px 20px rgba(0,0,0,0.6);
+}
+.unit-name { font-family: 'MedievalSharp', cursive; font-size: 26px; color: #3e2723 !important; font-weight: 900; text-align: center; text-transform: uppercase; margin: 0; text-shadow: none; position: absolute; }
+.hp-tube { position: absolute; height: 40px; border: 4px solid #260b00; background: rgba(0,0,0,0.5); box-shadow: inset 0 0 10px #000; border-radius: 30px; margin: 0; overflow: hidden; }
+.hp-liquid { height: 100%; width: 100%; transition: width 0.4s ease-out; position: relative; }
+.hp-liquid::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(-45deg, rgba(255,255,255,0.2) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.2) 75%, transparent 75%); background-size: 30px 30px; animation: moveLiquid 1s linear infinite; opacity: 0.3; }
+@keyframes moveLiquid { 0% { background-position: 0 0; } 100% { background-position: 30px 30px; } }
+.hp-txt { position: absolute; top: -2px; left: 0; width: 100%; text-align: center; font-family: 'Russo One'; font-size: 20px; color: #fff; text-shadow: 1px 1px 2px #000; z-index: 5; line-height: 40px; }
+.mastery-row { position: absolute; display: flex; gap: 15px; }
+.mastery-icon { width: 45px; height: 45px; border-radius: 50%; background: var(--wood-dark); border: 3px solid #ccc; display: flex; justify-content: center; align-items: center; font-size: 22px; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.6); }
+.mastery-lvl { position: absolute; bottom: -5px; right: -5px; background: var(--gold); color: #000; font-family: 'Russo One'; font-size: 12px; width: 20px; height: 20px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid #000; }
+
+/* XP AREA */
+.xp-area {
+    position: absolute; left: 50%; width: 450px; height: 140px;
+    background-image: url('https://i.ibb.co/SXPndxhb/AREA-DE-EXPERIENCIA.png');
+    background-size: contain; background-position: center; background-repeat: no-repeat;
+    display: flex; align-items: center; justify-content: center; padding-bottom: 10px;
+    filter: drop-shadow(0 15px 10px rgba(0,0,0,0.6)); z-index: 50;
+    animation: hudFloatCentered 4s ease-in-out infinite;
+}
+.xp-glow { filter: drop-shadow(0 0 20px var(--gold)) !important; }
+#m-xp { top: 30px; }
+#p-xp { bottom: 250px; }
+@keyframes hudFloatCentered { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
+.xp-mini { width: 50px; height: 72px; margin: 0 4px; border: 2px solid #111; border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.6); background-size: cover; background-position: center; transition: 0.2s; }
+#m-xp .xp-mini:hover { transform: scale(3) translateY(20px); z-index: 5000; }
+#p-xp .xp-mini:hover { transform: scale(3) translateY(-20px); z-index: 5000; }
+.xp-anim-clone { position: absolute; z-index: 9999; width: 50px; height: 72px; background-size: cover; border: 2px solid var(--gold); box-shadow: 0 0 30px var(--gold); pointer-events: none; border-radius: 5px; }
+
+/* MESA E SLOTS */
+.middle-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; gap: 150px; perspective: 1200px; pointer-events: none; z-index: 10; padding-bottom: 200px; }
+.turn-display { position: absolute; top: 50%; left: 40px; transform: translateY(-50%) rotate(-90deg); transform-origin: left center; font-family: 'Russo One'; font-size: 40px; color: var(--gold); opacity: 0.8; letter-spacing: 10px; text-shadow: 3px 3px 0 #000; }
+.slot { width: 240px; height: 340px; display: flex; justify-content: center; align-items: center; transform: rotateX(25deg); transform-style: preserve-3d; perspective: 1000px; pointer-events: auto; }
+.card-on-table { width: 100% !important; height: 100% !important; margin: 0 !important; box-shadow: 0 15px 0 rgba(0,0,0,0.4) !important; transform: translateY(-5px); border-width: 4px !important; }
+
+/* MÃO DO JOGADOR */
+.hand-wrapper { position: absolute; bottom: -40px; left: 0; width: 100%; height: 260px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; }
+#player-hand.preparing .card { opacity: 0 !important; visibility: hidden !important; }
+
+/* ESTILO CARTA */
+.card { 
+    width: 170px; height: 240px; border-radius: 16px; border: 4px solid #111; 
+    background: #111; position: relative; margin: 0 -15px; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8); cursor: pointer; transform-style: preserve-3d;
+    transition: 0.2s ease; pointer-events: auto;
+}
+.card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px; background-size: cover; background-position: center; pointer-events: none; }
+.card::after { content: ""; position: absolute; top:0; left:0; width:100%; height:100%; border-radius: 16px; background: linear-gradient(115deg, transparent 25%, rgba(255,215,0,0.2) 45%, transparent 60%); opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.card:hover::after { opacity: 1; }
+.hand-card:not(.disabled-card):hover { z-index: 10000 !important; margin: 0 50px; box-shadow: 0 0 50px rgba(255,215,0,0.4), 0 50px 100px #000; transform: translateY(-80px) scale(1.1) !important; }
+.disabled-card { filter: grayscale(100%) brightness(0.4); cursor: not-allowed; border-color: #555; }
+.flying-card { position: absolute; z-index: 99999; pointer-events: none; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 4px solid #111; border-radius: 16px; background: #111; transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+/* TEXTOS FLUTUANTES E TOOLTIPS */
+.floating-text { position: absolute; font-family: 'Russo One'; font-size: 60px; text-shadow: 0 5px 15px rgba(0,0,0,0.9); pointer-events: none; animation: floatUp 1.5s forwards; z-index: 200; width: 400px; text-align: center; left: 50%; transform: translateX(-50%); }
+@keyframes floatUp { 0% { opacity: 0; top: 40px; transform: translateX(-50%) scale(0.5); } 20% { opacity: 1; top: -50px; transform: translateX(-50%) scale(1.2); } 100% { opacity: 0; top: -150px; transform: translateX(-50%) scale(0.8); } }
+
+#tooltip-box {
+    position: absolute; pointer-events: none; z-index: 99999; background: var(--wood-light); border: 5px solid var(--wood-dark); 
+    color: var(--gold); padding: 25px; border-radius: 20px; width: 320px; display: none; text-align: left; 
+    box-shadow: 0 30px 60px rgba(0,0,0,0.8); font-size: 15px; line-height: 1.5; transform: translateX(-50%);
+    animation: tooltipFloat 3s ease-in-out infinite;
+}
+@keyframes tooltipFloat { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-10px); } }
+#tt-title { font-family: 'Russo One'; font-size: 26px; color: var(--gold); margin: 0 0 15px 0; border-bottom: 3px solid var(--wood-dark); padding-bottom: 10px; text-transform: uppercase; text-align: center; }
+.tt-desc { font-size: 16px; color: #fff; margin-bottom: 15px; }
+.tt-cartoon-title { font-family: 'Russo One'; font-size: 14px; text-transform: uppercase; margin-top: 15px; margin-bottom: 5px; border-bottom: 1px dashed rgba(255,255,255,0.2); display: inline-block; }
+.cartoon-orange { color: #ff9f43; } .cartoon-purple { color: #a29bfe; }
+.tt-text { font-size: 14px; color: #d7ccc8; }
+.dynamic-val { display: inline-block; background: #000; color: var(--gold); border: 2px solid var(--gold); border-radius: 4px; padding: 0 6px; font-family: 'Russo One'; font-size: 16px; }
+
+/* MODAL */
+.modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(10px); }
+.modal-box { background: var(--wood-light); padding: 60px; border-radius: 30px; border: 6px solid var(--wood-dark); text-align: center; min-width: 500px; box-shadow: 0 50px 100px #000; }
+#modal-title { color: var(--gold); font-weight: 900; font-size: 36px; margin-bottom: 20px; }
+#modal-desc { color: var(--txt-secondary); font-size: 20px; }
+.modal-btns { display: flex; gap: 20px; justify-content: center; margin-top: 40px; }
+.mini-btn { padding: 20px 50px; background: var(--wood-dark); color: var(--gold); border: 3px solid var(--gold); cursor: pointer; border-radius: 60px; font-family: 'Russo One'; text-transform: uppercase; transition: 0.2s; font-size: 20px; }
+.mini-btn:hover { background: var(--gold); color: var(--wood-dark); transform: translateY(-5px); }
+
+/* AVISO DE ROTAÇÃO OBRIGATÓRIA (CSS) */
 #rotate-overlay { 
     display: none; 
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
@@ -177,3 +377,7 @@ body.theme-mago #game-background { background-image: var(--table-mago) !importan
 @media screen and (orientation: portrait) {
     #rotate-overlay { display: flex !important; }
 }
+
+/* OUTROS EFEITOS */
+.intro-anim { animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; pointer-events: none; }
+@keyframes introBounce { 0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 60% { transform: translateY(-40px) scale(1.1); opacity: 1; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
