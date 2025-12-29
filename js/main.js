@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL 1920x1080)
+// ARQUIVO: js/main.js (VERSÃO WEB PURA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -15,7 +15,9 @@ const firebaseConfig = {
     appId: "1:950871979140:web:f2dba12900500c52053ed1"
 };
 
+// --- INICIALIZAÇÃO SIMPLES ---
 let app, auth, db, provider;
+
 try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
@@ -26,7 +28,7 @@ try {
     console.error("Erro Firebase:", e);
 }
 
-// --- VARIÁVEIS GLOBAIS ---
+// --- VARIÁVEIS GLOBAIS DO JOGO ---
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
@@ -100,6 +102,7 @@ function getCardArt(cardKey, isPlayer) {
 
 const MusicController = {
     currentTrackId: null,
+    fadeTimer: null,
     play(trackId) {
         if (this.currentTrackId === trackId) {
             if (audios[trackId] && audios[trackId].paused && !window.isMuted) {
@@ -112,7 +115,8 @@ const MusicController = {
         } 
         const maxVol = 0.5 * window.masterVol;
         if (this.currentTrackId && audios[this.currentTrackId]) {
-            this.fadeOut(audios[this.currentTrackId]);
+            const oldAudio = audios[this.currentTrackId];
+            this.fadeOut(oldAudio);
         }
         if (trackId && audios[trackId]) {
             const newAudio = audios[trackId];
@@ -162,6 +166,10 @@ const MusicController = {
 window.isMuted = false;
 window.toggleMute = function() {
     window.isMuted = !window.isMuted;
+    const btn = document.getElementById('btn-sound');
+    const iconOn = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M3,9v6h4l5,5V4L7,9H3z M16.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C15.48,15.29,16.5,13.77,16.5,12z M14,3.23v2.06 c2.89,0.86,5,3.54,5,6.71s-2.11,5.85-5,6.71v2.06c4.01-0.91,7-4.49,7-8.77S18.01,4.14,14,3.23z"/></svg>`;
+    const iconOff = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M16.5,12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45,2.45C16.42,12.5,16.5,12.26,16.5,12z M19,12c0,0.94-0.2,1.82-0.54,2.64l1.51,1.51C20.63,14.91,21,13.5,21,12c0-4.28-2.99-7.86-7-8.77v2.06C16.89,6.15,19,8.83,19,12z M4.27,3L3,4.27l4.56,4.56C7.39,8.91,7.2,8.96,7,9H3v6h4l5,5v-6.73l4.25,4.25c-0.67,0.52-1.42,0.93-2.25,1.18v2.06c1.38-0.31,2.63-0.95,3.69-1.81L19.73,21L21,19.73L9,7.73V4L4.27,3z M12,4L9.91,6.09L12,8.18V4z"/></svg>`;
+    if(btn) btn.innerHTML = window.isMuted ? iconOff : iconOn;
     Object.values(audios).forEach(audio => { if(audio) audio.muted = window.isMuted; });
     if(!window.isMuted && MusicController.currentTrackId) {
         const audio = audios[MusicController.currentTrackId];
@@ -178,6 +186,7 @@ let lastHoverTime = 0;
 window.playUIHoverSound = function() {
     let now = Date.now();
     if (now - lastHoverTime < 50) return; 
+
     let base = audios['sfx-ui-hover'];
     if(base && !window.isMuted) { 
         let s = base.cloneNode(); 
@@ -203,9 +212,41 @@ window.showScreen = function(screenId) {
     }
 }
 
+// --- ATUALIZAÇÃO NO js/main.js ---
+
 window.openDeckSelector = function() {
+    // 1. Marca o corpo da página para exigir modo paisagem via CSS
+    document.body.classList.add('force-landscape');
+
+    // 2. Tenta Fullscreen e Trava (Funciona bem no Android)
+    try {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+        }
+    } catch (e) { console.log(e); }
+
+    // 3. Vai para a seleção
     window.showScreen('deck-selection-screen');
 };
+
+// --- IMPORTANTE: ADICIONE ISSO TAMBÉM NO FINAL DO ARQUIVO MAIN.JS ---
+// (Isso cria o aviso visual de "Gire o Celular" automaticamente no HTML)
+(function createRotateOverlay() {
+    if (!document.getElementById('rotate-overlay')) {
+        const div = document.createElement('div');
+        div.id = 'rotate-overlay';
+        div.innerHTML = `
+            <div style="font-size: 50px; margin-bottom: 20px;">↻</div>
+            <div>GIRE O CELULAR<br>PARA JOGAR</div>
+        `;
+        document.body.appendChild(div);
+    }
+})();
+
+// --- DENTRO DE js/main.js ---
 
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
@@ -214,18 +255,56 @@ window.selectDeck = function(deckType) {
     }
 
     window.currentDeck = deckType; 
-    document.body.classList.remove('theme-cavaleiro', 'theme-mago'); 
+    
+    // --- NOVO CÓDIGO: APLICA O TEMA AO BODY ---
+    document.body.classList.remove('theme-cavaleiro', 'theme-mago'); // Limpa temas anteriores
     if (deckType === 'mage') {
         document.body.classList.add('theme-mago');
     } else {
         document.body.classList.add('theme-cavaleiro');
     }
+    // ------------------------------------------
 
-    window.transitionToGame();
+    const options = document.querySelectorAll('.deck-option');
+    options.forEach(opt => {
+        if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
+            opt.style.transition = "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+            opt.style.transform = "scale(1.15) translateY(-20px)";
+            opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))";
+            opt.style.zIndex = "100";
+            const img = opt.querySelector('img');
+            if(img) img.style.filter = "grayscale(0%) brightness(1.2)";
+        } else {
+            opt.style.transition = "all 0.3s ease";
+            opt.style.transform = "scale(0.8) translateY(10px)";
+            opt.style.opacity = "0.2";
+            opt.style.filter = "grayscale(100%)";
+        }
+    });
+
+    setTimeout(() => {
+        const selectionScreen = document.getElementById('deck-selection-screen');
+        selectionScreen.style.transition = "opacity 0.5s";
+        selectionScreen.style.opacity = "0";
+
+        setTimeout(() => {
+            window.transitionToGame();
+            setTimeout(() => {
+                selectionScreen.style.opacity = "1";
+                options.forEach(opt => {
+                    opt.style = "";
+                    const img = opt.querySelector('img');
+                    if(img) img.style = "";
+                });
+            }, 500);
+        }, 500);
+    }, 400);
 };
 
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
+    const transText = transScreen.querySelector('.trans-text');
+    if(transText) transText.innerText = "PREPARANDO BATALHA...";
     if(transScreen) transScreen.classList.add('active');
     setTimeout(() => {
         MusicController.play('bgm-loop'); 
@@ -243,6 +322,8 @@ window.transitionToGame = function() {
 
 window.transitionToLobby = function() {
     const transScreen = document.getElementById('transition-overlay');
+    const transText = transScreen.querySelector('.trans-text');
+    if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
     if(transScreen) transScreen.classList.add('active');
     MusicController.stopCurrent(); 
     setTimeout(() => {
@@ -264,6 +345,7 @@ window.goToLobby = async function(isAutoLogin = false) {
     if(bg) bg.classList.add('lobby-mode');
     
     MusicController.play('bgm-menu'); 
+    createLobbyFlares();
     
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
@@ -282,7 +364,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         let pos = 1;
         snapshot.forEach((doc) => {
             const p = doc.data();
-            let rankClass = pos === 1 ? "rank-1" : "";
+            let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : ""));
             html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
             pos++;
         });
@@ -338,6 +420,7 @@ function checkEndGame(){
     } else { isProcessing = false; } 
 }
 
+// --- AUTH LISTENER ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
@@ -353,10 +436,12 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
+// --- FUNÇÃO DE LOGIN WEB SIMPLES ---
 window.googleLogin = async function() {
     window.playNavSound(); 
     const btnText = document.getElementById('btn-text');
     btnText.innerText = "CONECTANDO...";
+
     try {
         await signInWithPopup(auth, provider);
     } catch (error) {
@@ -406,18 +491,28 @@ window.restartMatch = function() {
     MusicController.play('bgm-loop'); 
 }
 
+// --- ARQUIVO: js/main.js ---
+// Substitua a função window.abandonMatch por esta:
+
 window.abandonMatch = function() {
+    // Verifica se está na tela de jogo
     if(document.getElementById('game-screen').classList.contains('active')) {
+        
+        // Fecha o painel de configuração (a engrenagem)
         window.toggleConfig(); 
+
+        // Abre a Janela Interna do Jogo (Modal)
         window.openModal(
-            "ABANDONAR?", 
-            "Sair da partida contará como DERROTA. Tem certeza?", 
-            ["CANCELAR", "SAIR"], 
+            "ABANDONAR?", // Título
+            "Sair da partida contará como DERROTA. Tem certeza?", // Descrição
+            ["CANCELAR", "SAIR"], // Botões
             (choice) => {
+                // Callback: o que fazer quando o jogador clica
                 if (choice === "SAIR") {
                     window.registrarDerrotaOnline();
                     window.transitionToLobby();
                 }
+                // Se clicar em "CANCELAR", o modal fecha sozinho automaticamente
             }
         );
     }
@@ -425,13 +520,19 @@ window.abandonMatch = function() {
 
 function preloadGame() {
     console.log("Iniciando Preload de " + totalAssets + " recursos...");
+    
     ASSETS_TO_LOAD.images.forEach(src => { 
         let img = new Image(); 
         img.src = src; 
         window.gameAssets.push(img);
+        
         img.onload = () => updateLoader(); 
-        img.onerror = () => updateLoader(); 
+        img.onerror = () => {
+            console.warn("Erro ao carregar imagem: " + src);
+            updateLoader(); 
+        }; 
     });
+
     ASSETS_TO_LOAD.audio.forEach(a => { 
         let s = new Audio(); 
         s.src = a.src; 
@@ -439,9 +540,16 @@ function preloadGame() {
         if(a.loop) s.loop = true; 
         audios[a.id] = s; 
         window.gameAssets.push(s);
+
         s.onloadedmetadata = () => updateLoader(); 
-        s.onerror = () => updateLoader(); 
-        setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 3000); 
+        s.onerror = () => {
+            console.warn("Erro ao carregar áudio: " + a.src);
+            updateLoader();
+        }; 
+        
+        setTimeout(() => { 
+            if(s.readyState === 0) updateLoader(); 
+        }, 3000); 
     });
 }
 
@@ -453,7 +561,9 @@ function updateLoader() {
     
     if(assetsLoaded >= totalAssets) {
         console.log("Preload completo!");
+        
         if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
+        
         setTimeout(() => {
             const loading = document.getElementById('loading-screen');
             if(loading) {
@@ -465,6 +575,7 @@ function updateLoader() {
                 window.hoverLogicInitialized = true;
             }
         }, 800); 
+        
         document.body.addEventListener('click', () => { 
             if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) {
                 MusicController.play('bgm-menu');
@@ -505,6 +616,24 @@ window.toggleFullScreen = function() {
     else { if (document.exitFullscreen) { document.exitFullscreen(); } }
 }
 
+function createLobbyFlares() {
+    const container = document.getElementById('lobby-particles');
+    if(!container) return;
+    container.innerHTML = ''; 
+    for(let i=0; i < 70; i++) {
+        let flare = document.createElement('div');
+        flare.className = 'lobby-flare';
+        flare.style.left = Math.random() * 100 + '%';
+        flare.style.top = Math.random() * 100 + '%';
+        let size = 4 + Math.random() * 18; 
+        flare.style.width = size + 'px';
+        flare.style.height = size + 'px';
+        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
+        flare.style.animationDelay = (Math.random() * 4) + 's';
+        container.appendChild(flare);
+    }
+}
+
 function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
 
 function updateAudioMixer() { 
@@ -519,6 +648,7 @@ function updateAudioMixer() {
 }
 
 window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
+document.addEventListener('click', function(e) { const panel = document.getElementById('config-panel'); const btn = document.getElementById('btn-config-toggle'); if (panel && panel.classList.contains('active') && !panel.contains(e.target) && (btn && !btn.contains(e.target))) window.toggleConfig(); });
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
@@ -541,10 +671,24 @@ window.updateVol = function(type, val) {
 }
 function playSound(key) { 
     if(audios[key]) { 
-        audios[key].currentTime = 0; 
-        audios[key].play().catch(e => console.log("Audio prevented:", e)); 
+        if (key === 'sfx-levelup') {
+            audios[key].volume = 1.0 * (window.masterVol || 1.0);
+            audios[key].currentTime = 0; 
+            audios[key].play().catch(e => console.log("Audio prevented:", e));
+            let clone = audios[key].cloneNode();
+            clone.volume = audios[key].volume;
+            clone.play().catch(()=>{});
+        } else {
+            audios[key].currentTime = 0; 
+            audios[key].play().catch(e => console.log("Audio prevented:", e)); 
+        }
     } 
 }
+
+function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
+initAmbientParticles();
+
+function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
 function triggerDamageEffect(isPlayer, playAudio = true) { 
     try { 
@@ -555,9 +699,22 @@ function triggerDamageEffect(isPlayer, playAudio = true) {
                 playSound('sfx-hit'); 
             }
         } 
+        
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
+        let slot = document.getElementById(elId); 
+        if(slot) { 
+            let r = slot.getBoundingClientRect(); 
+            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); 
+        } 
+
         if (isPlayer) {
+            document.body.classList.add('shake-screen'); 
+            setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
             if(window.triggerDamageEffect) window.triggerDamageEffect(); 
+            let ov = document.getElementById('dmg-overlay'); 
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
         }
+
     } catch(e) {} 
 }
 
@@ -565,17 +722,36 @@ function triggerCritEffect() { let ov = document.getElementById('crit-overlay');
 
 function triggerHealEffect(isPlayer) { 
     try { 
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
+        let slot = document.getElementById(elId); 
+        if(slot) { 
+            let r = slot.getBoundingClientRect(); 
+            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); 
+        } 
+        
         if (isPlayer) {
             if(window.triggerHealEffect) window.triggerHealEffect();
-            playSound('sfx-heal'); 
+            let ov = document.getElementById('heal-overlay'); 
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
         }
     } catch(e) {} 
 }
 
 function triggerBlockEffect(isPlayer) { 
     try { 
-        if(isPlayer && window.currentDeck === 'mage') { playSound('sfx-block-mage'); } else { playSound('sfx-block'); }
-        if (!isPlayer) { if(window.triggerBlockEffect) window.triggerBlockEffect(); }
+        if(isPlayer && window.currentDeck === 'mage') {
+             playSound('sfx-block-mage');
+        } else {
+             playSound('sfx-block'); 
+        }
+        
+        if (!isPlayer) {
+             if(window.triggerBlockEffect) window.triggerBlockEffect();
+             let ov = document.getElementById('block-overlay'); 
+             if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
+             document.body.classList.add('shake-screen'); 
+             setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+        }
     } catch(e) {} 
 }
 
@@ -598,6 +774,7 @@ function dealAllInitialCards() {
     });
 
     window.isMatchStarting = false;
+    
     if(handEl) handEl.classList.remove('preparing');
 
     setTimeout(() => {
@@ -623,7 +800,11 @@ function onCardClick(index) {
 
 function getBestAIMove() {
     let moves = []; 
-    monster.hand.forEach((card, index) => { if(card !== monster.disabled) moves.push({ card: card, index: index, score: 0 }); });
+    monster.hand.forEach((card, index) => { 
+        if(card !== monster.disabled) {
+            moves.push({ card: card, index: index, score: 0 }); 
+        }
+    });
     if(moves.length === 0) return null;
     let recentHistory = playerHistory.slice(-5);
     let attackCount = recentHistory.filter(c => c === 'ATAQUE').length;
@@ -677,6 +858,10 @@ function playCardFlow(index, pDisarmChoice) {
         realCardEl.style.transition = 'none';
         realCardEl.style.setProperty('opacity', '0', 'important');
         realCardEl.style.setProperty('visibility', 'hidden', 'important');
+        realCardEl.innerHTML = '';
+        realCardEl.style.border = 'none';
+        realCardEl.style.background = 'none';
+        realCardEl.style.boxShadow = 'none';
     }
     
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
@@ -684,7 +869,7 @@ function playCardFlow(index, pDisarmChoice) {
         updateUI(); 
     }, false, true, true); 
 
-    const opponentHandOrigin = { top: -200, left: window.innerWidth / 2 };
+    const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
     animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { 
         renderTable(mCardKey, 'm-slot', false); 
         setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); 
@@ -734,8 +919,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     updateUI();
     let pDead = player.hp <= 0, mDead = monster.hp <= 0;
     
-    if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); }
-    if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); }
+    if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
+    if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
     function handleExtraXP(u) { 
         if(u.deck.length > 0) { 
@@ -837,15 +1022,22 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
 
     const fly = document.createElement('div');
     fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
+    
     let imgUrl = getCardArt(cardKey, isPlayer);
     fly.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
     if (isToTable) fly.classList.add('card-bounce');
 
-    fly.style.width = '170px'; fly.style.height = '240px';
+    if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; } 
+    else { let w = window.innerWidth < 768 ? '84px' : '105px'; let h = window.innerWidth < 768 ? '120px' : '150px'; fly.style.width=w; fly.style.height=h; }
+
+    let tableW = window.innerWidth < 768 ? '110px' : '180px';
+    let tableH = window.innerWidth < 768 ? '170px' : '260px';
+
     fly.style.top=s.top+'px'; fly.style.left=s.left+'px';
     if(endId.includes('xp')) fly.style.transform='scale(0.3)';
-    
     document.body.appendChild(fly); fly.offsetHeight;
+    
+    if(isToTable) { fly.style.width=tableW; fly.style.height=tableH; }
     fly.style.top=e.top+'px'; fly.style.left=e.left+'px';
     setTimeout(() => { fly.remove(); if(cb) cb(); }, 250);
 }
@@ -989,7 +1181,7 @@ function bindFixedTooltip(el,k) {
     return { 
         onmouseenter: (e) => { 
             showTT(k); 
-            tt.style.bottom = '300px'; 
+            tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
             tt.style.top = 'auto'; 
             
             tt.classList.remove('tooltip-anim-up'); 
@@ -1023,6 +1215,8 @@ function showTT(k) {
 }
 
 function apply3DTilt(element, isHand = false) { 
+    if(window.innerWidth < 768) return; 
+    
     element.addEventListener('mousemove', (e) => { 
         const rect = element.getBoundingClientRect(); 
         const x = e.clientX - rect.left; 
@@ -1033,7 +1227,7 @@ function apply3DTilt(element, isHand = false) {
         element.style.setProperty('--rx', xPct);
         element.style.setProperty('--ry', yPct);
 
-        let lift = isHand ? 'translateY(-80px) scale(1.1)' : 'scale(1.1)'; 
+        let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
         let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
         if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
         
@@ -1051,62 +1245,3 @@ function apply3DTilt(element, isHand = false) {
         element.style.setProperty('--ry', 0);
     }); 
 }
-
-// === SISTEMA DE ESCALA INTELIGENTE (1920x1080) ===
-function resizeGame() {
-    const gameContainer = document.getElementById('app-scaler');
-    if (!gameContainer) return;
-
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-
-    // Se estiver em Portrait (Celular em pé), não calcula zoom,
-    // pois o CSS vai esconder o jogo e mostrar o aviso de rotação.
-    if (height > width) {
-        // Reseta transform para evitar bugs visuais
-        gameContainer.style.transform = 'translate(-50%, -50%) scale(0.3)';
-        return;
-    }
-
-    // Resolução Base (Full HD)
-    const baseWidth = 1920;
-    const baseHeight = 1080;
-
-    // Calcula as escalas
-    const scaleX = width / baseWidth;
-    const scaleY = height / baseHeight;
-
-    // "fit": Usa a MENOR escala para garantir que TUDO apareça na tela (sem cortes)
-    let scale = Math.min(scaleX, scaleY);
-    
-    // Aplica o Zoom
-    gameContainer.style.transform = `translate(-50%, -50%) scale(${scale})`;
-    
-    // Centraliza Absolutamente
-    gameContainer.style.position = 'absolute';
-    gameContainer.style.left = '50%';
-    gameContainer.style.top = '50%';
-}
-
-// Ouve eventos de redimensionamento e rotação
-window.addEventListener('resize', resizeGame);
-window.addEventListener('orientationchange', () => {
-    setTimeout(resizeGame, 200);
-});
-window.addEventListener('load', resizeGame);
-
-// Cria o Aviso de Rotação dinamicamente
-(function createRotateWarning() {
-    if (!document.getElementById('rotate-overlay')) {
-        const div = document.createElement('div');
-        div.id = 'rotate-overlay';
-        div.innerHTML = `
-            <div class="rotate-icon">↻</div>
-            <div class="rotate-text">GIRE O CELULAR<br>PARA JOGAR</div>
-        `;
-        document.body.appendChild(div);
-    }
-})();
-
-// Inicia escala
-resizeGame();
