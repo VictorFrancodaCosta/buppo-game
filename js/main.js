@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL 2.0 - CORREÇÃO DE CARTAS)
+// ARQUIVO: js/main.js (VERSÃO FINAL UNIFICADA E CORRIGIDA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -15,7 +15,7 @@ const firebaseConfig = {
     appId: "1:950871979140:web:f2dba12900500c52053ed1"
 };
 
-// --- INICIALIZAÇÃO ---
+// --- INICIALIZAÇÃO FIREBASE ---
 let app, auth, db, provider;
 try {
     app = initializeApp(firebaseConfig);
@@ -31,7 +31,7 @@ const audios = {};
 let assetsLoaded = 0; 
 window.gameAssets = []; 
 
-// Jogo
+// Variáveis de Jogo
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let isProcessing = false; 
@@ -41,7 +41,7 @@ window.masterVol = 1.0;
 let isLethalHover = false; 
 let mixerInterval = null;
 
-// PvP e Matchmaking
+// Variáveis de Matchmaking e PvP
 let matchTimerInterval = null;
 let matchSeconds = 0;
 let myQueueRef = null;
@@ -90,12 +90,96 @@ const ASSETS_TO_LOAD = {
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 
-// --- HELPERS ---
+// --- HELPERS BÁSICOS ---
 function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) { return MAGE_ASSETS[cardKey]; }
     return CARDS_DB[cardKey].img;
 }
 
+const tt = document.getElementById('tooltip-box');
+
+// --- TOOLTIPS E UI HELPERS ---
+function bindFixedTooltip(el, k) { 
+    const updatePos = () => { 
+        let rect = el.getBoundingClientRect(); 
+        if(tt) tt.style.left = (rect.left + rect.width / 2) + 'px'; 
+    }; 
+    return { 
+        onmouseenter: (e) => { 
+            showTT(k); 
+            if(tt) {
+                tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
+                tt.style.top = 'auto'; 
+                tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); tt.classList.add('tooltip-anim-up'); 
+                updatePos(); 
+            }
+            el.addEventListener('mousemove', updatePos); 
+        } 
+    }; 
+}
+
+function showTT(k) {
+    let db = CARDS_DB[k];
+    document.getElementById('tt-title').innerHTML = k; 
+    if (db.customTooltip) {
+        let content = db.customTooltip;
+        let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
+        content = content.replace('{PLAYER_LVL}', currentLvl);
+        let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
+        let reflectDmg = 1 + bonusBlock;
+        content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
+        document.getElementById('tt-content').innerHTML = content;
+    } else {
+        document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`;
+    }
+    tt.style.display = 'block';
+}
+
+function bindMasteryTooltip(el, key, value, ownerId) {
+    return {
+        onmouseenter: (e) => {
+            let db=CARDS_DB[key];
+            document.getElementById('tt-title').innerHTML = key; 
+            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
+            tt.style.display = 'block';
+            tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); 
+            void tt.offsetWidth; let rect = el.getBoundingClientRect();
+            if(ownerId === 'p') { tt.classList.add('tooltip-anim-up'); tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px'; tt.style.top = 'auto'; } 
+            else { tt.classList.add('tooltip-anim-down'); tt.style.top = (rect.bottom + 10) + 'px'; tt.style.bottom = 'auto'; }
+            tt.style.left = (rect.left + rect.width/2) + 'px'; tt.style.transform = "translateX(-50%)"; 
+        }
+    };
+}
+
+function addMI(parent, key, value, col, ownerId){ 
+    let d = document.createElement('div'); d.className = 'mastery-icon'; 
+    d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`;
+    d.style.borderColor = col; 
+    let handlers = bindMasteryTooltip(d, key, value, ownerId);
+    d.onmouseenter = handlers.onmouseenter; d.onmouseleave = () => { tt.style.display = 'none'; }; parent.appendChild(d); 
+}
+
+function apply3DTilt(element, isHand = false) { 
+    if(window.innerWidth < 768) return; 
+    element.addEventListener('mousemove', (e) => { 
+        const rect = element.getBoundingClientRect(); 
+        const x = e.clientX - rect.left; const y = e.clientY - rect.top; 
+        const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; 
+        element.style.setProperty('--rx', xPct); element.style.setProperty('--ry', yPct);
+        let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
+        let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
+        if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
+        element.style.transform = `${lift} ${rotate}`; 
+        let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
+    }); 
+    element.addEventListener('mouseleave', () => { 
+        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
+        let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; 
+        element.style.setProperty('--rx', 0); element.style.setProperty('--ry', 0);
+    }); 
+}
+
+// --- AUDIO CONTROLLER ---
 const MusicController = {
     currentTrackId: null,
     play(trackId) {
@@ -212,7 +296,6 @@ window.startPvPSearch = async function() {
 async function findOpponentInQueue() {
     try {
         const queueRef = collection(db, "queue");
-        // Aumentado limite para 50 para achar qualquer oponente
         const q = query(queueRef, orderBy("timestamp", "asc"), limit(50));
         const querySnapshot = await getDocs(q);
         let opponentDoc = null;
@@ -500,12 +583,19 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
+// --- FUNÇÃO DE LOGIN WEB SIMPLES ---
 window.googleLogin = async function() {
     window.playNavSound(); 
     const btnText = document.getElementById('btn-text');
     btnText.innerText = "CONECTANDO...";
-    try { await signInWithPopup(auth, provider); } 
-    catch (error) { console.error("Erro no Login:", error); btnText.innerText = "ERRO - TENTE NOVAMENTE"; setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000); }
+
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.error("Erro no Login:", error);
+        btnText.innerText = "ERRO - TENTE NOVAMENTE";
+        setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000);
+    }
 };
 
 window.registrarVitoriaOnline = async function(modo = 'pve') {
@@ -564,29 +654,6 @@ function updateUI() {
     document.getElementById('turn-txt').innerText = "TURNO " + turnCount; 
 }
 
-// --- FUNÇÃO RECUPERADA: bindFixedTooltip ---
-const tt = document.getElementById('tooltip-box');
-function bindFixedTooltip(el, k) { 
-    const updatePos = () => { 
-        let rect = el.getBoundingClientRect(); 
-        if(tt) tt.style.left = (rect.left + rect.width / 2) + 'px'; 
-    }; 
-    return { 
-        onmouseenter: (e) => { 
-            showTT(k); 
-            if(tt) {
-                tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
-                tt.style.top = 'auto'; 
-                tt.classList.remove('tooltip-anim-up'); 
-                tt.classList.remove('tooltip-anim-down'); 
-                tt.classList.add('tooltip-anim-up'); 
-                updatePos(); 
-            }
-            el.addEventListener('mousemove', updatePos); 
-        } 
-    }; 
-}
-
 function updateUnit(u) {
     document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
     document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
@@ -607,6 +674,7 @@ function updateUnit(u) {
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
             
+            // Corrige opacidade inicial
             c.style.opacity = window.isMatchStarting ? '0' : '1';
 
             let lethalType = checkCardLethality(k); 
@@ -641,82 +709,24 @@ function updateUnit(u) {
     if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
 }
 
-function showTT(k) {
-    let db = CARDS_DB[k];
-    document.getElementById('tt-title').innerHTML = k; 
-    if (db.customTooltip) {
-        let content = db.customTooltip;
-        let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
-        content = content.replace('{PLAYER_LVL}', currentLvl);
-        let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
-        let reflectDmg = 1 + bonusBlock;
-        content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
-        document.getElementById('tt-content').innerHTML = content;
-    } else {
-        document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`;
-    }
-    tt.style.display = 'block';
-}
-
-function bindMasteryTooltip(el, key, value, ownerId) {
-    return {
-        onmouseenter: (e) => {
-            let db=CARDS_DB[key];
-            document.getElementById('tt-title').innerHTML = key; 
-            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
-            tt.style.display = 'block';
-            tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); 
-            void tt.offsetWidth; let rect = el.getBoundingClientRect();
-            if(ownerId === 'p') { tt.classList.add('tooltip-anim-up'); tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px'; tt.style.top = 'auto'; } 
-            else { tt.classList.add('tooltip-anim-down'); tt.style.top = (rect.bottom + 10) + 'px'; tt.style.bottom = 'auto'; }
-            tt.style.left = (rect.left + rect.width/2) + 'px'; tt.style.transform = "translateX(-50%)"; 
-        }
-    };
-}
-
-function addMI(parent, key, value, col, ownerId){ 
-    let d = document.createElement('div'); d.className = 'mastery-icon'; 
-    d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`;
-    d.style.borderColor = col; 
-    let handlers = bindMasteryTooltip(d, key, value, ownerId);
-    d.onmouseenter = handlers.onmouseenter; d.onmouseleave = () => { tt.style.display = 'none'; }; parent.appendChild(d); 
-}
-
-function apply3DTilt(element, isHand = false) { 
-    if(window.innerWidth < 768) return; 
-    element.addEventListener('mousemove', (e) => { 
-        const rect = element.getBoundingClientRect(); 
-        const x = e.clientX - rect.left; const y = e.clientY - rect.top; 
-        const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; 
-        element.style.setProperty('--rx', xPct); element.style.setProperty('--ry', yPct);
-        let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
-        let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
-        if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
-        element.style.transform = `${lift} ${rotate}`; 
-        let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
-    }); 
-    element.addEventListener('mouseleave', () => { 
-        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
-        let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; 
-        element.style.setProperty('--rx', 0); element.style.setProperty('--ry', 0);
-    }); 
-}
-
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
+    // CORREÇÃO CRÍTICA PARA PVP:
     if (window.gameMode === 'pvp') {
         window.isMatchStarting = false;
         const handEl = document.getElementById('player-hand');
         if(handEl) {
             handEl.classList.remove('preparing');
+            // Força a exibição
             Array.from(handEl.children).forEach(c => c.style.opacity = '1');
         }
         return; 
     }
     
+    // FLUXO PVE
     window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand');
     if (handEl) { handEl.innerHTML = ''; handEl.classList.add('preparing'); }
@@ -731,6 +741,7 @@ function startGameFlow() {
     dealAllInitialCards();
 }
 
+// Funções de Jogo Auxiliares (Globais)
 window.showCenterText = showCenterText;
 window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
 window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
@@ -743,178 +754,167 @@ function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) 
 function dealAllInitialCards() { isProcessing = true; playSound('sfx-deal'); const handEl = document.getElementById('player-hand'); const cards = Array.from(handEl.children); cards.forEach((cardEl, i) => { cardEl.classList.add('intro-anim'); cardEl.style.animationDelay = (i * 0.1) + 's'; cardEl.style.opacity = ''; }); window.isMatchStarting = false; if(handEl) handEl.classList.remove('preparing'); setTimeout(() => { cards.forEach(c => { c.classList.remove('intro-anim'); c.style.animationDelay = ''; }); isProcessing = false; }, 2000); }
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
 
-function onCardClick(index) {
-    if(isProcessing) return; if (!player.hand[index]) return;
-    playSound('sfx-play'); document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active');
-    document.getElementById('tooltip-box').style.display = 'none'; isLethalHover = false; 
-    let cardKey = player.hand[index];
-    if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
-    if(cardKey === 'DESARMAR') { window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => playCardFlow(index, choice)); } 
-    else { playCardFlow(index, null); }
-}
-
-function getBestAIMove() {
-    let moves = []; 
-    monster.hand.forEach((card, index) => { if(card !== monster.disabled) moves.push({ card: card, index: index, score: 0 }); });
-    if(moves.length === 0) return null;
-    let recentHistory = playerHistory.slice(-5);
-    let attackCount = recentHistory.filter(c => c === 'ATAQUE').length;
-    let playerAggro = recentHistory.length > 0 ? (attackCount / recentHistory.length) : 0.5;
-    let threatLvl = player.lvl + player.bonusAtk;
-    let amIDying = monster.hp <= threatLvl;
-    let myDmg = monster.lvl + monster.bonusAtk;
-    let canKill = player.hp <= myDmg;
-    moves.forEach(m => {
-        let score = 50; 
-        if (m.card === 'ATAQUE') { if (canKill) score += 500; if (playerAggro < 0.4) score += 40; if (amIDying) score -= 30; }
-        else if (m.card === 'BLOQUEIO') { if (amIDying) score += 100; if (playerAggro > 0.6) score += 60; if (threatLvl >= 3) score += 40; }
-        else if (m.card === 'DESCANSAR') { if (monster.hp === monster.maxHp) score -= 100; else if (monster.hp <= 3) score += 50; if (playerAggro > 0.7) score -= 40; }
-        else if (m.card === 'DESARMAR') { if (amIDying) score += 120; if (playerAggro > 0.8) score += 50; }
-        else if (m.card === 'TREINAR') { if (turnCount < 5) score += 30; if (amIDying || monster.hp <= 3) score -= 200; }
-        m.score = score + Math.random() * 15; 
+// --- FUNÇÕES DE PRELOAD E INICIALIZAÇÃO ---
+function preloadGame() {
+    console.log("Iniciando Preload de " + totalAssets + " recursos...");
+    ASSETS_TO_LOAD.images.forEach(src => { 
+        let img = new Image(); img.src = src; window.gameAssets.push(img);
+        img.onload = () => updateLoader(); 
+        img.onerror = () => { console.warn("Erro ao carregar imagem: " + src); updateLoader(); }; 
     });
-    moves.sort((a, b) => b.score - a.score);
-    return moves[0];
+    ASSETS_TO_LOAD.audio.forEach(a => { 
+        let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; 
+        audios[a.id] = s; window.gameAssets.push(s);
+        s.onloadedmetadata = () => updateLoader(); 
+        s.onerror = () => { console.warn("Erro ao carregar áudio: " + a.src); updateLoader(); }; 
+        setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 3000); 
+    });
 }
 
-function playCardFlow(index, pDisarmChoice) {
-    isProcessing = true; 
-    let cardKey = player.hand.splice(index, 1)[0]; 
-    playerHistory.push(cardKey);
-
-    let aiMove = getBestAIMove(); 
-    let mCardKey = 'ATAQUE'; 
-    let mDisarmTarget = null; 
-    if(aiMove) { 
-        mCardKey = aiMove.card; 
-        monster.hand.splice(aiMove.index, 1); 
-        if(mCardKey === 'DESARMAR') { 
-            if(player.hp <= (monster.lvl + monster.bonusAtk + 2)) { mDisarmTarget = 'BLOQUEIO'; } 
-            else { 
-                let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1); 
-                let bestTarget = null; for(let k in pCounts) if(pCounts[k] >= 3) bestTarget = k; 
-                if(bestTarget) mDisarmTarget = bestTarget; else mDisarmTarget = 'ATAQUE'; 
-            } 
-        } 
-    } else { 
-        if(monster.hand.length > 0) mCardKey = monster.hand.pop(); 
-        else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } 
-    }
-
-    let handContainer = document.getElementById('player-hand'); 
-    let realCardEl = handContainer.children[index]; 
-    let startRect = null;
-    if(realCardEl) { 
-        startRect = realCardEl.getBoundingClientRect(); 
-        realCardEl.style.transition = 'none';
-        realCardEl.style.setProperty('opacity', '0', 'important');
-        realCardEl.style.setProperty('visibility', 'hidden', 'important');
-        realCardEl.innerHTML = '';
-        realCardEl.style.border = 'none'; realCardEl.style.background = 'none'; realCardEl.style.boxShadow = 'none';
-    }
-    
-    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
-        renderTable(cardKey, 'p-slot', true); 
-        updateUI(); 
-    }, false, true, true); 
-
-    const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
-    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { 
-        renderTable(mCardKey, 'm-slot', false); 
-        setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); 
-    }, false, true, false);
-}
-
-function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
-    let pDmg = 0, mDmg = 0;
-    if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
-    if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
-
-    if(mAct === 'ATAQUE') { pDmg += monster.lvl; }
-    if(pAct === 'ATAQUE') { mDmg += player.lvl; }
-    if(pAct === 'BLOQUEIO') { pDmg = 0; if(mAct === 'ATAQUE') { mDmg += (1 + player.bonusBlock); } }
-    if(mAct === 'BLOQUEIO') { mDmg = 0; if(pAct === 'ATAQUE') { pDmg += (1 + monster.bonusBlock); } }
-
-    let clash = false;
-    let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); 
-    let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE'); 
-    if(pBlocks) { clash = true; triggerBlockEffect(true); } else if(mBlocks) { clash = true; triggerBlockEffect(false); }
-
-    let nextPlayerDisabled = null; let nextMonsterDisabled = null;
-    if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
-    if(pAct === 'DESARMAR') { nextMonsterDisabled = pDisarmChoice; }
-    if(pAct === 'DESARMAR' && mAct === 'DESARMAR') { nextPlayerDisabled = null; nextMonsterDisabled = null; showCenterText("ANULADO", "#aaa"); }
-
-    player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
-    if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
-
-    if(pDmg > 0) { 
-        player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); 
-        let soundOn = !(clash && mAct === 'BLOQUEIO'); if (!mBlocks) triggerDamageEffect(true, soundOn);
-    }
-    if(mDmg > 0) { 
-        monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); 
-        let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn); 
-    }
-    updateUI();
-    let pDead = player.hp <= 0, mDead = monster.hp <= 0;
-    
-    if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
-    if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
-
-    function handleExtraXP(u) { 
-        if(u.deck.length > 0) { 
-            let card = u.deck.pop(); 
-            animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }, false, false, (u.id === 'p')); 
-        } 
-    }
-    if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
-    if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
-
-    setTimeout(() => {
-        animateFly('p-slot', 'p-xp', pAct, () => { if(!pDead) { player.xp.push(pAct); triggerXPGlow('p'); updateUI(); } checkLevelUp(player, () => { if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); }); }, false, false, true);
-        animateFly('m-slot', 'm-xp', mAct, () => { if(!mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); } checkLevelUp(monster, () => { if(!mDead) drawCardLogic(monster, 1); checkEndGame(); }); }, false, false, false);
-        document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
-    }, 700);
-}
-function checkLevelUp(u, doneCb) {
-    if(u.xp.length >= 5) {
-        let xpContainer = document.getElementById(u.id + '-xp'); 
-        let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
-        minis.forEach(realCard => {
-            let rect = realCard.getBoundingClientRect(); 
-            let clone = document.createElement('div'); clone.className = 'xp-anim-clone';
-            clone.style.left = rect.left + 'px'; clone.style.top = rect.top + 'px'; clone.style.width = rect.width + 'px'; clone.style.height = rect.height + 'px'; 
-            clone.style.backgroundImage = realCard.style.backgroundImage;
-            if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down');
-            document.body.appendChild(clone);
-        });
-        minis.forEach(m => m.style.opacity = '0');
-
+function updateLoader() {
+    assetsLoaded++; 
+    let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
+    const fill = document.getElementById('loader-fill');
+    if(fill) fill.style.width = pct + '%';
+    if(assetsLoaded >= totalAssets) {
+        console.log("Preload completo!");
+        if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
         setTimeout(() => {
-            let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); 
-            let triggers = []; for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
-            
-            processMasteries(u, triggers, () => {
-                let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; 
-                lvlEl.classList.add('level-up-anim'); triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); 
-                setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
-                u.xp.forEach(x => u.deck.push(x)); u.xp = []; shuffle(u.deck); 
-                let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
-                updateUI(); doneCb();
-            });
-        }, 1000); 
-    } else { doneCb(); }
+            const loading = document.getElementById('loading-screen');
+            if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
+            if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
+        }, 800); 
+        document.body.addEventListener('click', () => { 
+            if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) { MusicController.play('bgm-menu'); }
+        }, { once: true });
+    }
 }
 
-function triggerLevelUpVisuals(unitId) {
-    let clusterId = (unitId === 'p') ? 'p-stats-cluster' : 'm-stats-cluster';
-    let cluster = document.getElementById(clusterId);
-    if(!cluster) return;
-    const text = document.createElement('div'); text.innerText = "LEVEL UP!"; text.className = 'levelup-text'; 
-    if (unitId === 'p') { text.classList.add('lvl-anim-up'); } else { text.classList.add('lvl-anim-down'); }
-    cluster.appendChild(text); setTimeout(() => { text.remove(); }, 2000);
+function initGlobalHoverLogic() {
+    let lastTarget = null;
+    document.body.addEventListener('mouseover', (e) => {
+        const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn';
+        const target = e.target.closest(selector);
+        if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } 
+        else if (!target) { lastTarget = null; }
+    });
 }
+
+window.onload = function() {
+    const btnSound = document.getElementById('btn-sound');
+    if (btnSound) {
+        btnSound.onclick = null; 
+        btnSound.addEventListener('click', (e) => { e.stopPropagation(); window.toggleMute(); });
+    }
+};
+
+window.toggleFullScreen = function() {
+    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
+    else { if (document.exitFullscreen) { document.exitFullscreen(); } }
+}
+
+function createLobbyFlares() {
+    const container = document.getElementById('lobby-particles');
+    if(!container) return;
+    container.innerHTML = ''; 
+    for(let i=0; i < 70; i++) {
+        let flare = document.createElement('div');
+        flare.className = 'lobby-flare';
+        flare.style.left = Math.random() * 100 + '%'; flare.style.top = Math.random() * 100 + '%';
+        let size = 4 + Math.random() * 18; 
+        flare.style.width = size + 'px'; flare.style.height = size + 'px';
+        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; flare.style.animationDelay = (Math.random() * 4) + 's';
+        container.appendChild(flare);
+    }
+}
+
+function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
+
+function updateAudioMixer() { 
+    const cineAudio = audios['sfx-cine']; if(!cineAudio) return; 
+    const mVol = window.masterVol || 1.0; const maxCine = 0.6 * mVol; 
+    let targetCine = isLethalHover ? maxCine : 0; 
+    if(window.isMuted) { cineAudio.volume = 0; return; }
+    if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
+    else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
+}
+
+window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
+document.addEventListener('click', function(e) { const panel = document.getElementById('config-panel'); const btn = document.getElementById('btn-config-toggle'); if (panel && panel.classList.contains('active') && !panel.contains(e.target) && (btn && !btn.contains(e.target))) window.toggleConfig(); });
+
+window.updateVol = function(type, val) { 
+    if(type==='master') window.masterVol = parseFloat(val); 
+    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 
+     'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 
+     'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
+        if(audios[k]) {
+            let vol = window.masterVol || 1.0;
+            if(k === 'sfx-ui-hover') audios[k].volume = 0.3 * vol;
+            else if (k === 'sfx-levelup') audios[k].volume = 1.0 * vol;
+            else if (k === 'sfx-train') audios[k].volume = 0.5 * vol;
+            else audios[k].volume = 0.8 * vol;
+        }
+    }); 
+}
+function playSound(key) { 
+    if(audios[key]) { 
+        if (key === 'sfx-levelup') {
+            audios[key].volume = 1.0 * (window.masterVol || 1.0);
+            audios[key].currentTime = 0; audios[key].play().catch(()=>{});
+            let clone = audios[key].cloneNode(); clone.volume = audios[key].volume; clone.play().catch(()=>{});
+        } else {
+            audios[key].currentTime = 0; audios[key].play().catch(()=>{}); 
+        }
+    } 
+}
+
+function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
+initAmbientParticles();
+
+function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
+
+function triggerDamageEffect(isPlayer, playAudio = true) { 
+    try { 
+        if(playAudio) {
+            if(!isPlayer && window.currentDeck === 'mage') playSound('sfx-hit-mage');
+            else playSound('sfx-hit'); 
+        } 
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); 
+        if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } 
+        if (isPlayer) {
+            document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
+            if(window.triggerDamageEffect) window.triggerDamageEffect(); 
+            let ov = document.getElementById('dmg-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
+        }
+    } catch(e) {} 
+}
+
+function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
+
+function triggerHealEffect(isPlayer) { 
+    try { 
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); 
+        if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } 
+        if (isPlayer) {
+            if(window.triggerHealEffect) window.triggerHealEffect();
+            let ov = document.getElementById('heal-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
+        }
+    } catch(e) {} 
+}
+
+function triggerBlockEffect(isPlayer) { 
+    try { 
+        if(isPlayer && window.currentDeck === 'mage') playSound('sfx-block-mage');
+        else playSound('sfx-block'); 
+        if (!isPlayer) {
+             if(window.triggerBlockEffect) window.triggerBlockEffect();
+             let ov = document.getElementById('block-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
+             document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+        }
+    } catch(e) {} 
+}
+
+function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 
 // Inicializa o jogo
 preloadGame();
