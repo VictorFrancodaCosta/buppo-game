@@ -1161,3 +1161,59 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
         display: flex !important;
     }
 }
+
+/* =========================================
+   CORREÇÃO FINAL DE ALINHAMENTO (MATCHMAKING)
+========================================= */
+
+.matchmaking-box {
+    /* Força o comportamento de coluna */
+    display: flex !important;
+    flex-direction: column !important;
+    
+    /* O SEGREDO: align-items center alinha tudo horizontalmente no meio */
+    align-items: center !important; 
+    justify-content: center !important;
+    
+    /* Garante que o texto dentro das divs também fique centralizado */
+    text-align: center !important;
+    
+    /* Remove gaps instáveis e controla espaçamento manualmente */
+    gap: 12px !important; 
+}
+
+/* Centraliza o Círculo de Carregamento */
+.radar-spinner {
+    margin: 0 auto !important; /* Força margens automáticas laterais */
+    display: block !important;
+    flex-shrink: 0; /* Impede que ele amasse */
+}
+
+/* Ajusta o Título para não ter margens laterais estranhas */
+.mm-title {
+    width: 100% !important;
+    margin-top: 10px !important;
+    margin-bottom: 0 !important;
+    line-height: 1.2 !important;
+}
+
+/* Ajusta a Descrição */
+.mm-desc {
+    max-width: 90% !important; /* Usa % para não estourar em telas pequenas */
+    margin: 0 auto !important;
+}
+
+/* Centraliza o Timer */
+.mm-timer {
+    width: 100% !important;
+    text-align: center !important;
+    margin: 5px 0 !important;
+}
+
+/* Centraliza o Botão Cancelar */
+.cancel-btn {
+    margin-top: 15px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: inline-block !important;
+}
