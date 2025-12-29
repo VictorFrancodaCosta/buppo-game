@@ -48,14 +48,13 @@ const MAGE_ASSETS = {
 const ASSETS_TO_LOAD = {
     images: [
         'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png',
-        'https://i.ibb.co/KzVqKR6D/MESA-DE-JOGO.png',
+        'https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png', // Atualizado para nova mesa Cavaleiro
+        'https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png', // Atualizado para nova mesa Mago
         'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png',
         'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',
-        'https://i.ibb.co/fVRc0vLs/Gemini-Generated-Image-ilb8d0ilb8d0ilb8.png',
         'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',
         'https://i.ibb.co/fzr36qbR/SELE-O-DE-DECK-CAVALEIRO.png',
         'https://i.ibb.co/bjBcKN6c/SELE-O-DE-DECK-MAGO.png',
-        'https://i.ibb.co/JFpgxFY1/SELE-O-DE-DECK-CAVALEIRO.png',
         'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
         'https://i.ibb.co/jdZmTHC/CARDBACK.png',
         'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png',
@@ -70,7 +69,8 @@ const ASSETS_TO_LOAD = {
         'https://i.ibb.co/Q7SmhYQk/04-DESARMAR-MAGO.png',
         'https://i.ibb.co/8LGTJCn4/05-TREINAR-MAGO.png',
         'https://i.ibb.co/XZ8qc166/DECK-MAGO.png',
-        'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png'
+        'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png',
+        'https://i.ibb.co/SXPndxhb/AREA-DE-EXPERIENCIA.png'
     ],
     audio: [
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
@@ -228,8 +228,7 @@ window.showScreen = function(screenId) {
     }
 }
 
-// --- ATUALIZAÇÃO NO js/main.js ---
-
+// --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
 window.openDeckSelector = function() {
     // 1. Marca o corpo da página para exigir modo paisagem via CSS
     document.body.classList.add('force-landscape');
@@ -248,8 +247,7 @@ window.openDeckSelector = function() {
     window.showScreen('deck-selection-screen');
 };
 
-// --- IMPORTANTE: ADICIONE ISSO TAMBÉM NO FINAL DO ARQUIVO MAIN.JS ---
-// (Isso cria o aviso visual de "Gire o Celular" automaticamente no HTML)
+// --- AVISO DE ROTAÇÃO PARA CELULAR ---
 (function createRotateOverlay() {
     if (!document.getElementById('rotate-overlay')) {
         const div = document.createElement('div');
@@ -262,6 +260,7 @@ window.openDeckSelector = function() {
     }
 })();
 
+// --- SELEÇÃO DE DECK ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         audios['sfx-deck-select'].currentTime = 0;
@@ -470,155 +469,51 @@ window.handleLogout = function() {
     signOut(auth).then(() => { location.reload(); });
 };
 
-/* =========================================
-   NOVOS BOTÕES DO LOBBY E MATCHMAKING
-========================================= */
+// --- SISTEMA DE PONTUAÇÃO (PvP e PvE) ---
+window.registrarVitoriaOnline = async function(modo = 'pve') {
+    if(!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if(userSnap.exists()) {
+            const data = userSnap.data();
+            
+            // Define pontos ganhos: 8 para PvP, 1 para PvE
+            let modoAtual = window.gameMode || 'pve';
+            let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
 
-.lobby-btn-row {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 10px;
-    align-items: center;
-}
+            await updateDoc(userRef, {
+                totalWins: (data.totalWins || 0) + 1,
+                score: (data.score || 0) + pontosGanhos
+            });
+            console.log(`Vitória registrada (${modoAtual}): +${pontosGanhos} pontos.`);
+        }
+    } catch(e) { console.error("Erro ao salvar vitória:", e); }
+};
 
-/* BOTÃO PvP (O Principal - Dourado) */
-#btn-play-pvp {
-    width: 100%;
-    background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%);
-    border: 2px solid #fff;
-    border-radius: 50px;
-    padding: 12px 0;
-    cursor: pointer;
-    box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
-    transition: transform 0.2s, filter 0.2s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-shadow: 1px 1px 0 rgba(255,255,255,0.4);
-    animation: pulseGold 2s infinite;
-}
+window.registrarDerrotaOnline = async function(modo = 'pve') {
+    if(!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if(userSnap.exists()) {
+            const data = userSnap.data();
+            
+            let modoAtual = window.gameMode || 'pve';
+            let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3;
+            
+            // Evita pontuação negativa
+            let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
 
-#btn-play-pvp:hover {
-    transform: scale(1.05);
-    filter: brightness(1.1);
-}
-
-#btn-play-pvp .btn-title {
-    font-family: 'Russo One', sans-serif;
-    font-size: 22px;
-    color: #5d4037; /* Marrom Escuro */
-    text-transform: uppercase;
-}
-
-#btn-play-pvp .btn-sub {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 10px;
-    font-weight: 800;
-    color: #8e44ad; /* Roxo para destacar */
-    margin-top: -2px;
-}
-
-@keyframes pulseGold {
-    0% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(241, 196, 15, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); }
-}
-
-/* BOTÃO PvE (O Secundário - Roxo) */
-#btn-play-pve {
-    width: 90%; /* Um pouco menor que o PvP */
-    background: #8e44ad;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-radius: 50px;
-    padding: 8px 0;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: 0.2s;
-}
-
-#btn-play-pve:hover {
-    background: #9b59b6;
-    transform: scale(1.02);
-}
-
-#btn-play-pve .btn-title {
-    font-family: 'Russo One', sans-serif;
-    font-size: 16px;
-    color: #ecf0f1;
-}
-
-#btn-play-pve .btn-sub {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 9px;
-    color: #bdc3c7;
-}
-
-/* TELA DE MATCHMAKING */
-.matchmaking-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    min-width: 300px;
-}
-
-.mm-title {
-    font-family: 'Russo One', sans-serif;
-    font-size: 24px;
-    color: var(--gold);
-    text-transform: uppercase;
-    text-shadow: 2px 2px 0 #000;
-    margin-top: 10px;
-    text-align: center;
-}
-
-.mm-desc {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 14px;
-    color: #ddd;
-    text-align: center;
-    max-width: 250px;
-}
-
-.mm-timer {
-    font-family: 'Russo One', sans-serif;
-    font-size: 32px;
-    color: #fff;
-    margin: 10px 0;
-}
-
-.cancel-btn {
-    background: #c0392b !important;
-    border-color: #e74c3c !important;
-    font-size: 12px;
-    color: #fff !important;
-}
-.cancel-btn:hover { background: #e74c3c !important; }
-
-/* Animação de Radar */
-.radar-spinner {
-    width: 60px;
-    height: 60px;
-    border: 4px solid rgba(255, 215, 0, 0.3);
-    border-top: 4px solid var(--gold);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-/* Ajuste Mobile para os botões */
-@media (max-width: 768px) {
-    #btn-play-pvp .btn-title { font-size: 18px; }
-    #btn-play-pve .btn-title { font-size: 14px; }
-    .lobby-btn-row { gap: 8px; }
-}
+            await updateDoc(userRef, {
+                score: novoScore
+            });
+            console.log(`Derrota registrada (${modoAtual}): -${pontosPerdidos} pontos.`);
+        }
+    } catch(e) { console.error("Erro ao salvar derrota:", e); }
+};
 
 window.restartMatch = function() {
     document.getElementById('end-screen').classList.remove('visible');
@@ -626,13 +521,9 @@ window.restartMatch = function() {
     MusicController.play('bgm-loop'); 
 }
 
-// --- ARQUIVO: js/main.js ---
-// Substitua a função window.abandonMatch por esta:
-
 window.abandonMatch = function() {
     // Verifica se está na tela de jogo
     if(document.getElementById('game-screen').classList.contains('active')) {
-        
         // Fecha o painel de configuração (a engrenagem)
         window.toggleConfig(); 
 
@@ -1379,8 +1270,9 @@ function apply3DTilt(element, isHand = false) {
         element.style.setProperty('--rx', 0);
         element.style.setProperty('--ry', 0);
     }); 
+}
 
-    // --- LÓGICA DE MATCHMAKING (UI) ---
+// --- LÓGICA DE MATCHMAKING (UI) ---
 
 let matchTimerInterval = null;
 let matchSeconds = 0;
@@ -1426,4 +1318,3 @@ window.cancelPvPSearch = function() {
     if(matchTimerInterval) clearInterval(matchTimerInterval);
     console.log("Busca cancelada.");
 };
-}
