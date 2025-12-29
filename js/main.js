@@ -470,34 +470,155 @@ window.handleLogout = function() {
     signOut(auth).then(() => { location.reload(); });
 };
 
-window.registrarVitoriaOnline = async function() {
-    if(!currentUser) return;
-    try {
-        const userRef = doc(db, "players", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        if(userSnap.exists()) {
-            const data = userSnap.data();
-            await updateDoc(userRef, {
-                totalWins: (data.totalWins || 0) + 1,
-                score: (data.score || 0) + 100
-            });
-        }
-    } catch(e) { console.error(e); }
-};
+/* =========================================
+   NOVOS BOTÕES DO LOBBY E MATCHMAKING
+========================================= */
 
-window.registrarDerrotaOnline = async function() {
-    if(!currentUser) return;
-    try {
-        const userRef = doc(db, "players", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        if(userSnap.exists()) {
-            const data = userSnap.data();
-            await updateDoc(userRef, {
-                score: (data.score || 0) + 10 
-            });
-        }
-    } catch(e) {}
-};
+.lobby-btn-row {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+/* BOTÃO PvP (O Principal - Dourado) */
+#btn-play-pvp {
+    width: 100%;
+    background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%);
+    border: 2px solid #fff;
+    border-radius: 50px;
+    padding: 12px 0;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+    transition: transform 0.2s, filter 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.4);
+    animation: pulseGold 2s infinite;
+}
+
+#btn-play-pvp:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+}
+
+#btn-play-pvp .btn-title {
+    font-family: 'Russo One', sans-serif;
+    font-size: 22px;
+    color: #5d4037; /* Marrom Escuro */
+    text-transform: uppercase;
+}
+
+#btn-play-pvp .btn-sub {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    color: #8e44ad; /* Roxo para destacar */
+    margin-top: -2px;
+}
+
+@keyframes pulseGold {
+    0% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(241, 196, 15, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); }
+}
+
+/* BOTÃO PvE (O Secundário - Roxo) */
+#btn-play-pve {
+    width: 90%; /* Um pouco menor que o PvP */
+    background: #8e44ad;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50px;
+    padding: 8px 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+#btn-play-pve:hover {
+    background: #9b59b6;
+    transform: scale(1.02);
+}
+
+#btn-play-pve .btn-title {
+    font-family: 'Russo One', sans-serif;
+    font-size: 16px;
+    color: #ecf0f1;
+}
+
+#btn-play-pve .btn-sub {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    color: #bdc3c7;
+}
+
+/* TELA DE MATCHMAKING */
+.matchmaking-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    min-width: 300px;
+}
+
+.mm-title {
+    font-family: 'Russo One', sans-serif;
+    font-size: 24px;
+    color: var(--gold);
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0 #000;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.mm-desc {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    color: #ddd;
+    text-align: center;
+    max-width: 250px;
+}
+
+.mm-timer {
+    font-family: 'Russo One', sans-serif;
+    font-size: 32px;
+    color: #fff;
+    margin: 10px 0;
+}
+
+.cancel-btn {
+    background: #c0392b !important;
+    border-color: #e74c3c !important;
+    font-size: 12px;
+    color: #fff !important;
+}
+.cancel-btn:hover { background: #e74c3c !important; }
+
+/* Animação de Radar */
+.radar-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 215, 0, 0.3);
+    border-top: 4px solid var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Ajuste Mobile para os botões */
+@media (max-width: 768px) {
+    #btn-play-pvp .btn-title { font-size: 18px; }
+    #btn-play-pve .btn-title { font-size: 14px; }
+    .lobby-btn-row { gap: 8px; }
+}
 
 window.restartMatch = function() {
     document.getElementById('end-screen').classList.remove('visible');
@@ -1258,4 +1379,51 @@ function apply3DTilt(element, isHand = false) {
         element.style.setProperty('--rx', 0);
         element.style.setProperty('--ry', 0);
     }); 
+
+    // --- LÓGICA DE MATCHMAKING (UI) ---
+
+let matchTimerInterval = null;
+let matchSeconds = 0;
+
+// Botão PvE (Treino) - Vai direto para seleção de deck
+window.startPvE = function() {
+    window.gameMode = 'pve'; // Salva o modo globalmente
+    window.playNavSound();
+    window.openDeckSelector(); // Usa sua função existente de abrir tela cheia/deck
+};
+
+// Botão PvP (Rankeado) - Abre a busca
+window.startPvPSearch = function() {
+    window.gameMode = 'pvp'; // Salva o modo globalmente
+    window.playNavSound();
+    
+    // Abre a tela de busca
+    const mmScreen = document.getElementById('matchmaking-screen');
+    mmScreen.style.display = 'flex';
+    
+    // Reseta e inicia o timer visual
+    matchSeconds = 0;
+    const timerEl = document.getElementById('mm-timer');
+    timerEl.innerText = "00:00";
+    
+    if(matchTimerInterval) clearInterval(matchTimerInterval);
+    matchTimerInterval = setInterval(() => {
+        matchSeconds++;
+        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
+        let s = (matchSeconds % 60).toString().padStart(2, '0');
+        timerEl.innerText = `${m}:${s}`;
+    }, 1000);
+
+    // AQUI ENTRARÁ A LÓGICA DO FIREBASE DEPOIS
+    console.log("Iniciando busca PvP...");
+};
+
+// Cancelar Busca
+window.cancelPvPSearch = function() {
+    window.playNavSound();
+    const mmScreen = document.getElementById('matchmaking-screen');
+    mmScreen.style.display = 'none';
+    if(matchTimerInterval) clearInterval(matchTimerInterval);
+    console.log("Busca cancelada.");
+};
 }
