@@ -3,7 +3,7 @@
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
@@ -1272,33 +1272,44 @@ function apply3DTilt(element, isHand = false) {
     }); 
 }
 
-// --- LÓGICA DE MATCHMAKING (UI) ---
+// ======================================================
+// LÓGICA DE MATCHMAKING REAL (FIREBASE)
+// ======================================================
 
 let matchTimerInterval = null;
 let matchSeconds = 0;
+let myQueueRef = null;      // Referência do meu lugar na fila
+let queueListener = null;   // Ouvinte para saber se alguém me achou
 
 // Botão PvE (Treino) - Vai direto para seleção de deck
 window.startPvE = function() {
-    window.gameMode = 'pve'; // Salva o modo globalmente
+    window.gameMode = 'pve'; 
     window.playNavSound();
-    window.openDeckSelector(); // Usa sua função existente de abrir tela cheia/deck
+    window.openDeckSelector(); 
 };
 
-// Botão PvP (Rankeado) - Abre a busca
-window.startPvPSearch = function() {
-    window.gameMode = 'pvp'; // Salva o modo globalmente
+// --- INICIAR BUSCA (Botão PvP) ---
+window.startPvPSearch = async function() {
+    if (!currentUser) return; 
+    window.gameMode = 'pvp';
     window.playNavSound();
-    
-    // Abre a tela de busca
+
+    // 1. UI: Abre a tela de busca
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'flex';
+    // Garante que o texto está resetado caso tenha jogado antes
+    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
+    document.querySelector('.mm-title').style.color = "var(--gold)";
+    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
+    document.querySelector('.radar-spinner').style.borderTopColor = "var(--gold)";
+    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
+    document.querySelector('.cancel-btn').style.display = "block";
     
-    // Reseta e inicia o timer visual
+    // 2. Timer Visual
     matchSeconds = 0;
     const timerEl = document.getElementById('mm-timer');
     timerEl.innerText = "00:00";
-    
-    if(matchTimerInterval) clearInterval(matchTimerInterval);
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
     matchTimerInterval = setInterval(() => {
         matchSeconds++;
         let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
@@ -1306,15 +1317,142 @@ window.startPvPSearch = function() {
         timerEl.innerText = `${m}:${s}`;
     }, 1000);
 
-    // AQUI ENTRARÁ A LÓGICA DO FIREBASE DEPOIS
-    console.log("Iniciando busca PvP...");
+    // 3. FIREBASE: Entrar na Fila
+    try {
+        // Passo A: Criar meu ticket na fila
+        myQueueRef = doc(collection(db, "queue")); 
+        const myData = {
+            uid: currentUser.uid,
+            name: currentUser.displayName,
+            score: 0, // Futuramente puxar do userSnap
+            timestamp: Date.now(),
+            matchId: null // Se preenchido, significa que acharam partida
+        };
+        await setDoc(myQueueRef, myData);
+
+        // Passo B: Escutar meu próprio ticket para ver se alguém me puxou
+        queueListener = onSnapshot(myQueueRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.matchId) {
+                    enterMatch(data.matchId); // ALGUÉM ME ACHOU!
+                }
+            }
+        });
+
+        // Passo C: Tentar achar alguém que já esteja lá (Ser o Host)
+        findOpponentInQueue();
+
+    } catch (e) {
+        console.error("Erro no Matchmaking:", e);
+        cancelPvPSearch();
+    }
 };
 
-// Cancelar Busca
-window.cancelPvPSearch = function() {
+// Função que procura oponentes na fila (Host Logic)
+async function findOpponentInQueue() {
+    try {
+        const queueRef = collection(db, "queue");
+        // Pega os 10 primeiros da fila
+        const q = query(queueRef, orderBy("timestamp", "asc"), limit(10));
+        const querySnapshot = await getDocs(q);
+
+        let opponentDoc = null;
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            // Se não sou eu, e não está cancelado, e ainda não tem partida
+            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
+                opponentDoc = doc;
+            }
+        });
+
+        if (opponentDoc) {
+            // ACHAMOS UM OPONENTE!
+            const opponentId = opponentDoc.data().uid;
+            console.log("Oponente encontrado na fila:", opponentId);
+
+            // 1. Cria o ID da Partida
+            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+
+            // 2. Avisa o oponente (atualiza o doc dele na fila com o ID da partida)
+            await updateDoc(opponentDoc.ref, { matchId: matchId });
+
+            // 3. Avisa a mim mesmo (atualiza meu doc)
+            if (myQueueRef) {
+                await updateDoc(myQueueRef, { matchId: matchId });
+            }
+
+            // 4. Cria o documento da partida (Inicializa a mesa)
+            await createMatchDocument(matchId, currentUser.uid, opponentId);
+        }
+
+    } catch (e) {
+        console.error("Erro ao buscar oponente:", e);
+    }
+}
+
+// Cria a estrutura inicial da partida no banco
+async function createMatchDocument(matchId, p1Id, p2Id) {
+    const matchRef = doc(db, "matches", matchId);
+    await setDoc(matchRef, {
+        player1: { uid: p1Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        player2: { uid: p2Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        turn: 1,
+        status: 'waiting_decks', // Esperando escolherem decks
+        createdAt: Date.now()
+    });
+}
+
+// --- CANCELAR BUSCA ---
+window.cancelPvPSearch = async function() {
     window.playNavSound();
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'none';
-    if(matchTimerInterval) clearInterval(matchTimerInterval);
+    
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    
+    // Para de escutar mudanças
+    if (queueListener) {
+        queueListener(); 
+        queueListener = null;
+    }
+
+    // Remove ou cancela meu nome da fila
+    if (myQueueRef) {
+        await updateDoc(myQueueRef, { cancelled: true }); 
+        // Idealmente usaríamos deleteDoc(myQueueRef), mas marcar cancelado é mais seguro para logs
+        myQueueRef = null;
+    }
+    
     console.log("Busca cancelada.");
 };
+
+// --- ENTRAR NA PARTIDA (Sucesso) ---
+function enterMatch(matchId) {
+    console.log("PARTIDA ENCONTRADA! ID:", matchId);
+    
+    // Limpa listeners da fila
+    if (queueListener) queueListener();
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+
+    // Atualiza UI para Verde
+    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
+    document.querySelector('.mm-title').style.color = "#2ecc71";
+    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
+    document.querySelector('.radar-spinner').style.animation = "none";
+    document.querySelector('.cancel-btn').style.display = "none";
+
+    // Aguarda um pouco e vai para a seleção de deck (que agora será PvP)
+    setTimeout(() => {
+        const mmScreen = document.getElementById('matchmaking-screen');
+        mmScreen.style.display = 'none';
+        
+        // Configura o ID da partida globalmente para usarmos depois
+        window.currentMatchId = matchId;
+        
+        // Vai para a seleção de deck
+        window.openDeckSelector(); 
+        
+    }, 1500);
+}
