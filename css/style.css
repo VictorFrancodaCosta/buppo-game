@@ -491,7 +491,7 @@ body.theme-cavaleiro #game-background,
     justify-content: center;
     
     /* === CORREÇÃO: Alinhamento das Cartas (sobe um pouco) === */
-    padding-bottom: 8px; /* Empurra as cartas levemente para cima */
+    padding-bottom: 7px; /* Empurra as cartas levemente para cima */
 
     border: none;
     border-radius: 0;
