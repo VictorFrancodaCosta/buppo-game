@@ -875,3 +875,80 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     20% { opacity: 1; transform: translateX(-50%) translateY(30px) scale(1.2) rotate(0deg); } /* Pop! */
     100% { opacity: 0; transform: translateX(-50%) translateY(120px) scale(1.0); } /* Fade out descendo */
 }
+
+/* =========================================
+   AJUSTES PARA CELULAR (MOBILE RESPONSIVE) - VERSÃO V3 (AMPLIADA)
+========================================= */
+@media (max-width: 768px) {
+
+    /* Centraliza o Saguão */
+    #lobby-screen {
+        align-items: center !important;
+        justify-content: center !important;
+        padding-left: 0 !important;
+        overflow: hidden; /* Evita rolagens indesejadas */
+    }
+
+    /* === MOLDURA DE MADEIRA (AUMENTADA) === */
+    .lobby-frame-container {
+        /* Ocupa quase toda a largura */
+        width: 95vw;         
+        /* Aumentei o limite para não travar em telas maiores de celular */
+        max-width: 550px;    
+        height: auto;       
+        /* Altura segura para caber na tela sem corte */
+        max-height: 80vh;    
+        /* Espaço no topo para a Logo */
+        margin-top: 80px;    
+        
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .lobby-frame-img {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain; 
+    }
+
+    /* === CONTEÚDO INTERNO (REAUSTADO PARA O TAMANHO MAIOR) === */
+    .lobby-ui-overlay {
+        /* Padding ajustado para a nova escala */
+        padding: 28% 14% 12% 14%; 
+    }
+
+    /* Fontes maiores para preencher melhor o quadro */
+    .user-welcome { font-size: 22px; margin-bottom: 5px; }
+    .user-stats { font-size: 13px; margin-bottom: 12px; }
+    
+    /* Tabela legível */
+    #ranking-table { font-size: 13px; }
+    #ranking-table th, #ranking-table td { padding: 6px 4px; }
+    .ranking-scroll { margin-bottom: 15px; max-height: 180px; }
+
+    /* Botão JOGAR maior e mais fácil de clicar */
+    #btn-play-match {
+        font-size: 20px;
+        padding: 12px 0;
+        width: 90%;
+        margin-bottom: 8px;
+    }
+    
+    #btn-logout {
+        font-size: 11px;
+        padding: 6px 18px;
+    }
+
+    /* === LOGO DO TOPO (BEM MAIOR) === */
+    .lobby-logo-right {
+        left: 50%;
+        top: 5%; /* Posição no topo */
+        transform: translate(-50%, 0);
+        width: 410px; /* Aumentado significativamente */
+        position: absolute;
+        z-index: 20;
+    }
+}
