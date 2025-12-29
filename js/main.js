@@ -1248,40 +1248,63 @@ function apply3DTilt(element, isHand = false) {
 
 // --- COLOQUE ISSO NO FINAL DO SEU ARQUIVO js/main.js ---
 
-// === SISTEMA DE REDIMENSIONAMENTO AUTOMÁTICO ===
-// Isso corrige o problema de DPI (Tela Gigante) em todos os dispositivos
+// === SISTEMA DE ESCALA INTELIGENTE (1920x1080) ===
 function resizeGame() {
     const gameContainer = document.getElementById('app-scaler');
     if (!gameContainer) return;
 
-    // Resolução de Design (Definida no CSS)
-    const designWidth = 1280;
-    const designHeight = 720;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-    // Tamanho da Janela do Navegador
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
+    // Se estiver em Portrait (Celular em pé), não faz o cálculo de zoom complexo,
+    // pois o CSS vai mostrar o overlay de "Gire o Celular".
+    if (height > width) {
+        // Apenas centraliza básico para não quebrar layout interno
+        gameContainer.style.transform = 'translate(-50%, -50%) scale(0.3)';
+        return;
+    }
 
-    // Calcula a proporção necessária
-    const scaleX = windowWidth / designWidth;
-    const scaleY = windowHeight / designHeight;
+    // Resolução Base (Full HD)
+    const baseWidth = 1920;
+    const baseHeight = 1080;
 
-    // Escolhe a MENOR escala para garantir que o jogo caiba inteiro (Fit)
-    // Se quiser que preencha tudo cortando laterais, use Math.max (não recomendado para card game)
-    const scale = Math.min(scaleX, scaleY);
+    // Calcula as escalas
+    const scaleX = width / baseWidth;
+    const scaleY = height / baseHeight;
 
-    // Aplica a transformação
-    gameContainer.style.transform = `scale(${scale})`;
-
-    // Opcional: Centraliza visualmente se sobrar espaço (Letterboxing)
-    // Como usamos display: flex no body, isso já é parcialmente automático, mas
-    // podemos forçar margens se necessário.
+    // "fit": Usa a MENOR escala para garantir que TUDO apareça na tela (sem cortes)
+    // Isso pode gerar barras laterais em celulares ultra-wide, mas o jogo fica 100% jogável.
+    let scale = Math.min(scaleX, scaleY);
+    
+    // Aplica o Zoom
+    gameContainer.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    
+    // Centraliza Absolutamente
+    gameContainer.style.position = 'absolute';
+    gameContainer.style.left = '50%';
+    gameContainer.style.top = '50%';
 }
 
-// Executa ao carregar e ao redimensionar
+// Ouve eventos de redimensionamento e rotação
 window.addEventListener('resize', resizeGame);
-window.addEventListener('orientationchange', () => setTimeout(resizeGame, 200));
+window.addEventListener('orientationchange', () => {
+    // Pequeno delay para o celular terminar de girar a UI
+    setTimeout(resizeGame, 200);
+});
 window.addEventListener('load', resizeGame);
 
-// Chama imediatamente para garantir
+// Adiciona o HTML do Aviso de Rotação se não existir
+(function createRotateWarning() {
+    if (!document.getElementById('rotate-overlay')) {
+        const div = document.createElement('div');
+        div.id = 'rotate-overlay';
+        div.innerHTML = `
+            <div class="rotate-icon">↻</div>
+            <div class="rotate-text">GIRE O CELULAR<br>PARA JOGAR</div>
+        `;
+        document.body.appendChild(div);
+    }
+})();
+
+// Chama imediatamente
 resizeGame();
