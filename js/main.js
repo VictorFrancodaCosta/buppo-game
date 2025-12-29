@@ -1456,3 +1456,178 @@ function enterMatch(matchId) {
         
     }, 1500);
 }
+
+// ======================================================
+// SINCRONIA DA PARTIDA (PVP LOOP)
+// ======================================================
+
+let matchUnsub = null; // Variável para controlar o listener da partida
+window.isGameRunning = false; // Evita que a transição ocorra duas vezes
+
+// 1. ATUALIZADO: Entrar na Partida e Ligar o Listener
+function enterMatch(matchId) {
+    console.log("PARTIDA ENCONTRADA! ID:", matchId);
+    
+    // Limpa processos de busca
+    if (queueListener) queueListener(); 
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+
+    // Feedback Visual (Verde)
+    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
+    document.querySelector('.mm-title').style.color = "#2ecc71";
+    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
+    document.querySelector('.radar-spinner').style.animation = "none";
+    document.querySelector('.cancel-btn').style.display = "none";
+
+    setTimeout(() => {
+        // Fecha tela de busca
+        document.getElementById('matchmaking-screen').style.display = 'none';
+        
+        // Salva ID globalmente
+        window.currentMatchId = matchId;
+        window.isGameRunning = false;
+        
+        // --- LIGA O "OUVIDO" DA PARTIDA ---
+        startMatchListener(matchId);
+        
+        // Abre a seleção de deck
+        window.openDeckSelector(); 
+        
+    }, 1500);
+}
+
+// 2. NOVO: O "Cérebro" que monitora a sala
+function startMatchListener(matchId) {
+    if (matchUnsub) matchUnsub(); // Remove listener antigo se houver
+    
+    // Escuta o documento da partida em tempo real
+    matchUnsub = onSnapshot(doc(db, "matches", matchId), async (docSnap) => {
+        if (!docSnap.exists()) return;
+        const matchData = docSnap.data();
+        
+        // A) INÍCIO DO JOGO: Se o status mudou para 'playing', entra na mesa!
+        if (matchData.status === 'playing' && !window.isGameRunning) {
+            console.log("Tudo pronto! Iniciando jogo...");
+            window.isGameRunning = true;
+            window.transitionToGame(); 
+            // Nota: Precisaremos atualizar o startGameFlow depois para ler do banco
+        }
+
+        // B) LÓGICA DO HOST (JOGADOR 1): Configurar o Jogo
+        // Se eu sou o Player 1 e ambos estão prontos ('ready'), eu crio a mesa.
+        if (currentUser.uid === matchData.player1.uid && 
+            matchData.status === 'waiting_decks' &&
+            matchData.player1.status === 'ready' && 
+            matchData.player2.status === 'ready') {
+            
+            console.log("HOST: Ambos prontos. Gerando decks e iniciando...");
+            await initializeMatchDecks(matchId, matchData);
+        }
+    });
+}
+
+// 3. NOVO: Host gera os decks e mãos iniciais
+async function initializeMatchDecks(matchId, matchData) {
+    // Gera decks baseados na classe escolhida
+    const p1Deck = generateDeckForClass(matchData.player1.class);
+    const p2Deck = generateDeckForClass(matchData.player2.class);
+    
+    // Compra 6 cartas para cada (Mão Inicial)
+    const p1Hand = p1Deck.splice(-6);
+    const p2Hand = p2Deck.splice(-6);
+
+    // Atualiza o banco com tudo pronto e muda status para 'playing'
+    await updateDoc(doc(db, "matches", matchId), {
+        "player1.deck": p1Deck,
+        "player1.hand": p1Hand,
+        "player2.deck": p2Deck,
+        "player2.hand": p2Hand,
+        status: 'playing',
+        turn: 1
+    });
+}
+
+// Helper: Gera baralho embaralhado (Usa seu data.js)
+function generateDeckForClass(className) {
+    let deck = [];
+    // Pega as cartas do template
+    for(let k in DECK_TEMPLATE) {
+        for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k);
+    }
+    // (Futuro: Aqui você pode adicionar cartas específicas de classe se tiver)
+    
+    // Embaralha (Algoritmo Fisher-Yates)
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    return deck;
+}
+
+// 4. ATUALIZADO: Função de Seleção de Deck (Híbrida PvP/PvE)
+window.selectDeck = async function(deckType) {
+    // Efeito Sonoro e Visual Local
+    if(audios['sfx-deck-select']) {
+        audios['sfx-deck-select'].currentTime = 0;
+        audios['sfx-deck-select'].play().catch(()=>{});
+    }
+    window.currentDeck = deckType; 
+    
+    // Aplica o Tema Visualmente (Imediato)
+    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
+    document.body.classList.add(deckType === 'mage' ? 'theme-mago' : 'theme-cavaleiro');
+
+    // Destaque visual na carta escolhida
+    const options = document.querySelectorAll('.deck-option');
+    options.forEach(opt => {
+        if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
+            opt.style.transform = "scale(1.15) translateY(-20px)";
+            opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))";
+            opt.style.opacity = "1";
+        } else {
+            opt.style.transform = "scale(0.8) translateY(10px)";
+            opt.style.opacity = "0.2";
+        }
+    });
+
+    // --- DECISÃO DE FLUXO ---
+    if (window.gameMode === 'pvp') {
+        // MODO PvP: Avisa o banco e ESPERA
+        // Muda o texto do botão para feedback
+        const btn = document.querySelector('.return-btn');
+        if(btn) { btn.innerText = "AGUARDANDO OPONENTE..."; btn.disabled = true; }
+        
+        try {
+            const matchRef = doc(db, "matches", window.currentMatchId);
+            const matchSnap = await getDoc(matchRef);
+            
+            if(matchSnap.exists()) {
+                const data = matchSnap.data();
+                // Descobre se sou player1 ou player2
+                const field = (data.player1.uid === currentUser.uid) ? "player1" : "player2";
+                
+                // Salva minha escolha e diz que estou pronto
+                await updateDoc(matchRef, {
+                    [`${field}.class`]: deckType,
+                    [`${field}.status`]: 'ready'
+                });
+                console.log("Deck escolhido. Aguardando início...");
+            }
+        } catch(e) { console.error("Erro ao salvar deck:", e); }
+
+    } else {
+        // MODO PvE: Comportamento antigo (Transição Imediata)
+        setTimeout(() => {
+            const selectionScreen = document.getElementById('deck-selection-screen');
+            selectionScreen.style.opacity = "0";
+            setTimeout(() => {
+                window.transitionToGame();
+                // Reset visual para a próxima
+                setTimeout(() => {
+                    selectionScreen.style.opacity = "1";
+                    options.forEach(opt => opt.style = "");
+                }, 500);
+            }, 500);
+        }, 400);
+    }
+};
