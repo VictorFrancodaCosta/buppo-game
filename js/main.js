@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL E FUNCIONAL)
+// ARQUIVO: js/main.js (VERSÃO FINAL CORRIGIDA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -44,9 +44,9 @@ let mixerInterval = null;
 // Variáveis de Matchmaking e PvP
 let matchTimerInterval = null;
 let matchSeconds = 0;
-let myQueueRef = null;
-let queueListener = null;
-let matchUnsub = null;
+let myQueueRef = null;      // Referência na fila
+let queueListener = null;   // Listener da fila
+let matchUnsub = null;      // Listener da partida
 window.isGameRunning = false;
 window.currentMatchId = null;
 window.isMatchStarting = false;
@@ -114,6 +114,7 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-tie', src: 'https://files.catbox.moe/sb18ja.mp3' }
     ]
 };
+let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 
 // --- HELPER FUNCTIONS ---
 function getCardArt(cardKey, isPlayer) {
@@ -744,7 +745,7 @@ function startGameFlow() {
         const handEl = document.getElementById('player-hand');
         if(handEl) {
             handEl.classList.remove('preparing');
-            // Força a exibição caso as cartas já estejam lá
+            // Força atualização visual caso as cartas já estejam lá mas ocultas
             Array.from(handEl.children).forEach(c => c.style.opacity = '1');
         }
         return; 
