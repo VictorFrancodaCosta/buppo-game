@@ -93,9 +93,31 @@
                         <p style="text-align:center; color:#ccc; margin-top:20px;">Carregando Ranking...</p>
                     </div>
 
-                    <button id="btn-play-match" onclick="playNavSound(); openDeckSelector()">JOGAR</button>
+                    <div class="lobby-btn-row">
+                        <button id="btn-play-pvp" onclick="startPvPSearch()">
+                            <span class="btn-title">JOGAR PvP</span>
+                            <span class="btn-sub">RANKEADO (+8 PTS)</span>
+                        </button>
+                        
+                        <button id="btn-play-pve" onclick="startPvE()">
+                            <span class="btn-title">JOGAR PvE</span>
+                            <span class="btn-sub">TREINO (+1 PT)</span>
+                        </button>
+                    </div>
+
                     <button id="btn-logout" onclick="handleLogout()">TROCAR DE CONTA</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="matchmaking-screen" class="modal-overlay">
+            <div class="modal-box matchmaking-box">
+                <div class="radar-spinner"></div>
+                <div class="mm-title">PROCURANDO OPONENTE...</div>
+                <div class="mm-desc">Buscando jogadores com nível próximo ao seu</div>
+                <div class="mm-timer" id="mm-timer">00:00</div>
+                
+                <button class="mini-btn cancel-btn" onclick="cancelPvPSearch()">CANCELAR BUSCA</button>
             </div>
         </div>
 
@@ -162,4 +184,5 @@
 
     <script src="js/effects.js"></script> <script type="module" src="js/main.js"></script> </body>
 </html>
+
 
