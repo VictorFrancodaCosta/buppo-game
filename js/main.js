@@ -1175,6 +1175,31 @@ function addMI(parent, key, value, col, ownerId){
     d.onmouseenter = handlers.onmouseenter; d.onmouseleave = () => { tt.style.display = 'none'; }; parent.appendChild(d); 
 }
 
+// --- FUNÇÃO RECUPERADA ---
+function bindFixedTooltip(el, k) { 
+    const updatePos = () => { 
+        let rect = el.getBoundingClientRect(); 
+        // Garante que o tt exista antes de acessar style
+        if(tt) tt.style.left = (rect.left + rect.width / 2) + 'px'; 
+    }; 
+    return { 
+        onmouseenter: (e) => { 
+            showTT(k); 
+            if(tt) {
+                tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
+                tt.style.top = 'auto'; 
+                
+                tt.classList.remove('tooltip-anim-up'); 
+                tt.classList.remove('tooltip-anim-down'); 
+                tt.classList.add('tooltip-anim-up'); 
+                updatePos(); 
+            }
+            el.addEventListener('mousemove', updatePos); 
+        } 
+    }; 
+}
+// --------------------------
+
 function showTT(k) {
     let db = CARDS_DB[k];
     document.getElementById('tt-title').innerHTML = k; 
