@@ -1245,3 +1245,43 @@ function apply3DTilt(element, isHand = false) {
         element.style.setProperty('--ry', 0);
     }); 
 }
+
+// --- COLOQUE ISSO NO FINAL DO SEU ARQUIVO js/main.js ---
+
+// === SISTEMA DE REDIMENSIONAMENTO AUTOMÁTICO ===
+// Isso corrige o problema de DPI (Tela Gigante) em todos os dispositivos
+function resizeGame() {
+    const gameContainer = document.getElementById('app-scaler');
+    if (!gameContainer) return;
+
+    // Resolução de Design (Definida no CSS)
+    const designWidth = 1280;
+    const designHeight = 720;
+
+    // Tamanho da Janela do Navegador
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    // Calcula a proporção necessária
+    const scaleX = windowWidth / designWidth;
+    const scaleY = windowHeight / designHeight;
+
+    // Escolhe a MENOR escala para garantir que o jogo caiba inteiro (Fit)
+    // Se quiser que preencha tudo cortando laterais, use Math.max (não recomendado para card game)
+    const scale = Math.min(scaleX, scaleY);
+
+    // Aplica a transformação
+    gameContainer.style.transform = `scale(${scale})`;
+
+    // Opcional: Centraliza visualmente se sobrar espaço (Letterboxing)
+    // Como usamos display: flex no body, isso já é parcialmente automático, mas
+    // podemos forçar margens se necessário.
+}
+
+// Executa ao carregar e ao redimensionar
+window.addEventListener('resize', resizeGame);
+window.addEventListener('orientationchange', () => setTimeout(resizeGame, 200));
+window.addEventListener('load', resizeGame);
+
+// Chama imediatamente para garantir
+resizeGame();
