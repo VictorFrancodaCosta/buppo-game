@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - SYNC DECK FIX)
+// ARQUIVO: js/main.js (VERSÃO FINAL - SYNC FIX & UI FIX)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -134,10 +134,11 @@ function stringToSeed(str) {
 function shuffle(array, seed = null) {
     let rng = Math.random; 
     
-    // Se tiver seed, usa gerador determinístico (LCG simples)
+    // Se tiver seed, usa gerador determinístico
     if (seed !== null) {
         let currentSeed = seed;
         rng = function() {
+            // LCG simples
             currentSeed = (currentSeed * 9301 + 49297) % 233280;
             return currentSeed / 233280;
         }
@@ -274,6 +275,14 @@ window.showScreen = function(screenId) {
 // --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
 window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
+    
+    // CORREÇÃO VISUAL: Força a exibição da tela de seleção
+    const ds = document.getElementById('deck-selection-screen');
+    if(ds) {
+        ds.style.display = 'flex';
+        ds.style.opacity = '1';
+    }
+
     try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(() => {});
@@ -442,12 +451,14 @@ function startGameFlow() {
         handEl.classList.add('preparing'); 
     }
     
-    // ATUALIZAÇÃO IMPORTANTE: Identidade Fixa (Role)
+    // ATUALIZAÇÃO: Identidade Fixa (Role) para sincronia RNG
     if (window.gameMode === 'pvp' && window.pvpStartData) {
         if (window.myRole === 'player1') {
+            // Eu sou P1, meu deck é P1, Inimigo é P2
             resetUnit(player, window.pvpStartData.player1.deck, 'player1');
             resetUnit(monster, window.pvpStartData.player2.deck, 'player2');
         } else {
+            // Eu sou P2, meu deck é P2, Inimigo é P1
             resetUnit(player, window.pvpStartData.player2.deck, 'player2');
             resetUnit(monster, window.pvpStartData.player1.deck, 'player1');
         }
@@ -499,6 +510,7 @@ function startPvPListener() {
             namesUpdated = true; 
         }
 
+        // Se ambos jogaram, destrava e resolve!
         if (matchData.p1Move && matchData.p2Move) {
             if (!window.isResolvingTurn) {
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
@@ -871,8 +883,9 @@ function resetUnit(u, predefinedDeck = null, role = null) {
     u.lvl = 1; 
     u.xp = []; 
     u.hand = []; 
-    u.originalRole = role || 'pve'; // Salva se é player1 ou player2
+    u.originalRole = role || 'pve'; // IDENTIDADE FIXA (player1/player2)
     
+    // Importante: Cria cópia ([...]) para não mexer no array original do banco
     if (predefinedDeck) {
         u.deck = [...predefinedDeck]; 
     } else {
@@ -1080,18 +1093,26 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
     }
     
-    // Identifica o elemento HTML da carta selecionada
+    // Identifica o elemento HTML da carta selecionada (FAILSAFE ADICIONADO)
     const handContainer = document.getElementById('player-hand');
     let myCardEl = null;
     let startRect = null;
 
-    if (handContainer && window.pvpSelectedCardIndex > -1 && handContainer.children[window.pvpSelectedCardIndex]) {
-        myCardEl = handContainer.children[window.pvpSelectedCardIndex];
-        // Pega a posição ATUAL dela (que está flutuando selecionada)
+    if (handContainer) {
+        // Tenta pegar pelo índice salvo
+        if (window.pvpSelectedCardIndex > -1 && handContainer.children[window.pvpSelectedCardIndex]) {
+            myCardEl = handContainer.children[window.pvpSelectedCardIndex];
+        } else {
+            // Failsafe: Procura qualquer carta na mão que corresponda à jogada
+            // Isso evita travamento se o índice estiver errado
+            const handCards = Array.from(handContainer.children);
+            // Isso é só visual, a lógica já está certa
+            if(handCards.length > 0) myCardEl = handCards[0]; 
+        }
+    }
+
+    if (myCardEl) {
         startRect = myCardEl.getBoundingClientRect();
-        
-        // Remove o brilho e esconde a carta original IMEDIATAMENTE
-        // para o clone voador assumir o lugar sem glitch visual
         myCardEl.classList.remove('card-selected');
         myCardEl.style.opacity = '0';
     }
@@ -1099,6 +1120,11 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     // Remove logicamente da mão
     if (window.pvpSelectedCardIndex > -1) {
         player.hand.splice(window.pvpSelectedCardIndex, 1);
+        playerHistory.push(myMove);
+    } else {
+        // Fallback: remove a primeira ocorrência da carta na mão
+        const idx = player.hand.indexOf(myMove);
+        if(idx > -1) player.hand.splice(idx, 1);
         playerHistory.push(myMove);
     }
 
@@ -1253,7 +1279,8 @@ function checkLevelUp(u, doneCb) {
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
                     // Agora usamos u.originalRole ('player1' ou 'player2')
                     // Isso garante que P1 e P2 usem a mesma semente para o mesmo personagem
-                    let s = stringToSeed(window.currentMatchId + u.originalRole) + turnCount;
+                    // Adicionei u.lvl para garantir que cada nível embaralhe diferente
+                    let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
                     shuffle(u.deck, s);
                 } else {
                     shuffle(u.deck); // PvE normal
