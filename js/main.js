@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - PVP COM SYNC RNG)
+// ARQUIVO: js/main.js (VERSÃO CORRIGIDA E SINCRONIZADA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -121,21 +121,7 @@ function getCardArt(cardKey, isPlayer) {
     return CARDS_DB[cardKey].img;
 }
 
-// --- HELPER: GERA DECK EMBARALHADO (SYNC RNG) ---
-function generateShuffledDeck() {
-    let deck = [];
-    for(let k in DECK_TEMPLATE) {
-        for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k);
-    }
-    // Embaralhamento inicial pode ser randomico local pois é salvo no host
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    return deck;
-}
-
-// --- SYNC RNG HELPERS (PARA LEVEL UP) ---
+// --- SYNC RNG HELPERS (PARA EMBARALHAMENTO IGUAL) ---
 function stringToSeed(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -144,7 +130,34 @@ function stringToSeed(str) {
     return Math.abs(hash);
 }
 
-// Função de embaralhamento que aceita uma SEED opcional
+// Função de embaralhamento ÚNICA (com suporte a seed)
+function shuffle(array, seed = null) {
+    let rng = Math.random; 
+    
+    // Se tiver seed, usa gerador determinístico (LCG simples)
+    if (seed !== null) {
+        let currentSeed = seed;
+        rng = function() {
+            currentSeed = (currentSeed * 9301 + 49297) % 233280;
+            return currentSeed / 233280;
+        }
+    }
+    
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+// Gera deck inicial usando shuffle local (pois é salvo no host)
+function generateShuffledDeck() {
+    let deck = [];
+    for(let k in DECK_TEMPLATE) {
+        for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k);
+    }
+    shuffle(deck);
+    return deck;
+}
 
 const MusicController = {
     currentTrackId: null,
@@ -852,7 +865,7 @@ function triggerBlockEffect(isPlayer) {
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 
-// ATUALIZAÇÃO: Aceita um deck opcional
+// ATUALIZAÇÃO: Aceita um deck opcional e faz cópia segura
 function resetUnit(u, predefinedDeck = null) { 
     u.hp = 6; 
     u.maxHp = 6; 
@@ -875,22 +888,6 @@ function resetUnit(u, predefinedDeck = null) {
     u.disabled = null; 
     u.bonusBlock = 0; 
     u.bonusAtk = 0; 
-}
-function shuffle(array, seed = null) {
-    let rng = Math.random; 
-    
-    if (seed !== null) {
-        let currentSeed = seed;
-        rng = function() {
-            currentSeed = (currentSeed * 9301 + 49297) % 233280;
-            return currentSeed / 233280;
-        }
-    }
-    
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(rng() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
 }
 
 function dealAllInitialCards() {
@@ -1253,10 +1250,6 @@ function checkLevelUp(u, doneCb) {
                 
                 // MÁGICA: No PvP, usa a semente do turno para embaralhar igual
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
-                    // Seed baseada no ID da partida + Turno + Unidade (para diferenciar se precisar, mas aqui queremos sync)
-                    // Na verdade queremos sync total, então a semente DEVE ser derivada de algo comum.
-                    // Se p1 embaralha o deck de p1 e p2 embaralha o deck de p1 (monster), a seed deve ser igual.
-                    // ID da Unidade garante que o deck do P1 e P2 não embaralhem igual entre si, mas igual entre clientes.
                     let s = stringToSeed(window.currentMatchId) + turnCount + (u.id.charCodeAt(0));
                     shuffle(u.deck, s);
                 } else {
