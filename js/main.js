@@ -1374,3 +1374,102 @@ window.startGameFlow = function() {
 
 // Inicializador
 preloadGame();
+
+// --- COLE ISSO NO FINAL DO ARQUIVO MAIN.JS ---
+
+// 1. Função de Fim de Jogo (Essencial para o turno não travar)
+window.checkEndGame = function() {
+    if (player.hp <= 0 || monster.hp <= 0) {
+        window.isGameRunning = false;
+        const endScreen = document.getElementById('end-screen');
+        const endTitle = document.getElementById('end-title');
+        
+        if(endScreen) {
+            endScreen.classList.add('visible');
+            endScreen.style.pointerEvents = "auto";
+        }
+        
+        if(endTitle) {
+            endTitle.classList.remove('win-theme', 'lose-theme', 'tie-theme');
+            
+            if (player.hp <= 0 && monster.hp <= 0) {
+                endTitle.innerText = "EMPATE";
+                endTitle.classList.add('tie-theme');
+                playSound('sfx-tie');
+            } else if (player.hp <= 0) {
+                endTitle.innerText = "DERROTA";
+                endTitle.classList.add('lose-theme');
+                playSound('sfx-lose');
+                if(window.registrarDerrotaOnline) window.registrarDerrotaOnline();
+            } else {
+                endTitle.innerText = "VITÓRIA";
+                endTitle.classList.add('win-theme');
+                playSound('sfx-win');
+                if(window.registrarVitoriaOnline) window.registrarVitoriaOnline();
+            }
+        }
+    }
+}
+
+// 2. Função de Tooltip (Essencial para as cartas aparecerem)
+window.bindFixedTooltip = function(element, cardKey) {
+    return {
+        onmouseenter: (e) => {
+            if(typeof showTT === 'function') showTT(cardKey);
+            
+            // Usa a variável 'tt' que já foi definida no topo do arquivo
+            if(typeof tt !== 'undefined' && tt) {
+                const rect = element.getBoundingClientRect();
+                tt.style.left = (rect.left + rect.width / 2) + 'px';
+                
+                if (rect.top > window.innerHeight / 2) {
+                    tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+                    tt.style.top = 'auto';
+                    tt.classList.remove('tooltip-anim-down');
+                    tt.classList.add('tooltip-anim-up');
+                } else {
+                    tt.style.top = (rect.bottom + 10) + 'px';
+                    tt.style.bottom = 'auto';
+                    tt.classList.remove('tooltip-anim-up');
+                    tt.classList.add('tooltip-anim-down');
+                }
+                tt.style.transform = "translateX(-50%)";
+            }
+        }
+    };
+}
+
+// 3. Função de Início de Fluxo (Essencial para começar/reiniciar)
+window.startGameFlow = function() {
+    console.log("Iniciando Jogo...");
+    const endScreen = document.getElementById('end-screen');
+    if(endScreen) endScreen.classList.remove('visible');
+    
+    isProcessing = false;
+    turnCount = 1;
+    playerHistory = [];
+    
+    resetUnit(player);
+    resetUnit(monster);
+    
+    const turnTxt = document.getElementById('turn-txt');
+    if(turnTxt) turnTxt.innerText = "TURNO 1";
+    
+    const pSlot = document.getElementById('p-slot');
+    const mSlot = document.getElementById('m-slot');
+    if(pSlot) pSlot.innerHTML = '';
+    if(mSlot) mSlot.innerHTML = '';
+    
+    drawCardLogic(player, 6);
+    drawCardLogic(monster, 6);
+    
+    window.isMatchStarting = true;
+    updateUI();
+    
+    const handEl = document.getElementById('player-hand');
+    if(handEl) handEl.classList.add('preparing');
+    
+    setTimeout(() => {
+        dealAllInitialCards();
+    }, 500);
+}
