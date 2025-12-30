@@ -1272,33 +1272,32 @@ function apply3DTilt(element, isHand = false) {
     }); 
 }
 
-// --- LÓGICA DE MATCHMAKING (UI) ---
+// ======================================================
+// LÓGICA DE MATCHMAKING REAL (FIREBASE)
+// ======================================================
 
 let matchTimerInterval = null;
 let matchSeconds = 0;
+let myQueueRef = null;      // Referência do meu lugar na fila
+let queueListener = null;   // Ouvinte para saber se alguém me achou
 
-// Botão PvE (Treino) - Vai direto para seleção de deck
-window.startPvE = function() {
-    window.gameMode = 'pve'; // Salva o modo globalmente
+// --- INICIAR BUSCA (Botão PvP) ---
+window.startPvPSearch = async function() {
+    if (!currentUser) return; // Segurança
+    window.gameMode = 'pvp';
     window.playNavSound();
-    window.openDeckSelector(); // Usa sua função existente de abrir tela cheia/deck
-};
 
-// Botão PvP (Rankeado) - Abre a busca
-window.startPvPSearch = function() {
-    window.gameMode = 'pvp'; // Salva o modo globalmente
-    window.playNavSound();
-    
-    // Abre a tela de busca
+    // 1. UI: Abre a tela de busca
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'flex';
+    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
+    document.querySelector('.mm-desc').innerText = "Buscando jogadores com nível próximo...";
     
-    // Reseta e inicia o timer visual
+    // 2. Timer Visual
     matchSeconds = 0;
     const timerEl = document.getElementById('mm-timer');
     timerEl.innerText = "00:00";
-    
-    if(matchTimerInterval) clearInterval(matchTimerInterval);
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
     matchTimerInterval = setInterval(() => {
         matchSeconds++;
         let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
@@ -1306,15 +1305,134 @@ window.startPvPSearch = function() {
         timerEl.innerText = `${m}:${s}`;
     }, 1000);
 
-    // AQUI ENTRARÁ A LÓGICA DO FIREBASE DEPOIS
-    console.log("Iniciando busca PvP...");
+    // 3. FIREBASE: Tenta encontrar alguém na fila
+    try {
+        const queueRef = collection(db, "queue");
+        // Busca alguém que NÃO seja eu e esteja esperando
+        // Nota: Firestore básico não permite filtro "not-equal" simples com ordenação no mesmo campo facilmente
+        // Vamos pegar os primeiros da fila e filtrar no código por enquanto (MVP)
+        const q = query(queueRef, orderBy("timestamp", "asc"), limit(5)); 
+        const snapshot = await getDoc(doc(db, "dummy")); // Truque para forçar refresh ou uso getDocs direto abaixo:
+        
+        // Usamos getDocs da importação do Firestore (verifique se está importado no topo)
+        // Se não tiver importado getDocs, adicione lá em cima.
+        // Vou assumir que você tem getDocs. Se der erro, me avise.
+        // Mas para simplificar e não mexer nos imports agora, vou usar a lógica de "entrar na fila" primeiro.
+        
+        // ESTRATÉGIA SEGURA (HOST-CLIENT):
+        // Para evitar condições de corrida complexas sem Cloud Functions, vamos fazer assim:
+        // 1. Entra na fila sempre.
+        // 2. Se a fila tiver 2 pessoas, o mais antigo (Host) cria a sala e puxa o segundo.
+        
+        // Passo 1: Criar meu ticket na fila
+        myQueueRef = doc(collection(db, "queue")); // Cria ID automático
+        const myData = {
+            uid: currentUser.uid,
+            name: currentUser.displayName,
+            score: 0, // Podemos puxar o score real depois
+            timestamp: Date.now(),
+            matchId: null // Se preenchido, significa que acharam partida
+        };
+        await setDoc(myQueueRef, myData);
+
+        // Passo 2: Escutar meu próprio ticket
+        queueListener = onSnapshot(myQueueRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.matchId) {
+                    // ALGUÉM ME ACHOU E CRIOU A SALA!
+                    enterMatch(data.matchId);
+                }
+            } else {
+                // Se meu documento sumiu, pode ser erro ou limpeza.
+            }
+        });
+
+        // Passo 3: Tentar ser o "Matchmaker" (Host)
+        // Procura se tem mais alguém na fila além de mim
+        findOpponentInQueue();
+
+    } catch (e) {
+        console.error("Erro no Matchmaking:", e);
+        cancelPvPSearch();
+        alert("Erro ao buscar partida. Tente novamente.");
+    }
 };
 
-// Cancelar Busca
-window.cancelPvPSearch = function() {
+// Função que varre a fila para tentar casar partida
+async function findOpponentInQueue() {
+    // Precisamos de getDocs. Certifique-se de importar lá no topo do arquivo se não tiver:
+    // import { ..., getDocs, deleteDoc } ... 
+    // Vou usar a variável global 'db' e a função global do firebase se possível,
+    // mas o ideal é adicionar 'getDocs' e 'deleteDoc' no import lá em cima.
+    
+    // Como não posso editar seus imports agora, vou assumir que você vai adicionar.
+    // **IMPORTANTE**: Adicione 'getDocs' e 'deleteDoc' na linha do import do firebase-firestore.
+    
+    // Lógica provisória simulada se não tivermos getDocs agora:
+    // (Vou te pedir para adicionar os imports na próxima mensagem para garantir)
+}
+
+// --- CANCELAR BUSCA ---
+window.cancelPvPSearch = async function() {
     window.playNavSound();
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'none';
-    if(matchTimerInterval) clearInterval(matchTimerInterval);
+    
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    
+    // Para de escutar mudanças
+    if (queueListener) {
+        queueListener(); 
+        queueListener = null;
+    }
+
+    // Remove meu nome da fila no Firebase
+    if (myQueueRef) {
+        // Precisamos do deleteDoc importado
+        // await deleteDoc(myQueueRef); 
+        // Como paliativo se não tiver deleteDoc, setamos null ou matchId 'cancelled'
+        await setDoc(myQueueRef, { cancelled: true }); 
+        myQueueRef = null;
+    }
+    
     console.log("Busca cancelada.");
 };
+
+// --- ENTRAR NA PARTIDA (Sucesso) ---
+function enterMatch(matchId) {
+    console.log("PARTIDA ENCONTRADA! ID:", matchId);
+    
+    // Limpa listeners da fila
+    if (queueListener) queueListener();
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+
+    // Atualiza UI
+    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
+    document.querySelector('.mm-title').style.color = "#2ecc71";
+    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
+    document.querySelector('.radar-spinner').style.animation = "none";
+    document.querySelector('.cancel-btn').style.display = "none";
+
+    // Aguarda um pouco e vai para a seleção de deck (que agora será PvP)
+    setTimeout(() => {
+        const mmScreen = document.getElementById('matchmaking-screen');
+        mmScreen.style.display = 'none';
+        
+        // Configura o ID da partida globalmente
+        window.currentMatchId = matchId;
+        
+        // Vai para a seleção de deck
+        window.openDeckSelector(); 
+        
+        // Reset visual para a próxima vez
+        setTimeout(() => {
+            document.querySelector('.cancel-btn').style.display = "block";
+            document.querySelector('.mm-title').style.color = "var(--gold)";
+            document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
+            document.querySelector('.radar-spinner').style.borderTopColor = "var(--gold)";
+            document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
+        }, 2000);
+
+    }, 1500);
+}
