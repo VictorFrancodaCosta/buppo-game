@@ -1281,17 +1281,29 @@ let matchSeconds = 0;
 let myQueueRef = null;      // Referência do meu lugar na fila
 let queueListener = null;   // Ouvinte para saber se alguém me achou
 
+// Botão PvE (Treino) - Vai direto para seleção de deck
+window.startPvE = function() {
+    window.gameMode = 'pve'; 
+    window.playNavSound();
+    window.openDeckSelector(); 
+};
+
 // --- INICIAR BUSCA (Botão PvP) ---
 window.startPvPSearch = async function() {
-    if (!currentUser) return; // Segurança
+    if (!currentUser) return; 
     window.gameMode = 'pvp';
     window.playNavSound();
 
     // 1. UI: Abre a tela de busca
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'flex';
+    // Garante que o texto está resetado caso tenha jogado antes
     document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
-    document.querySelector('.mm-desc').innerText = "Buscando jogadores com nível próximo...";
+    document.querySelector('.mm-title').style.color = "var(--gold)";
+    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
+    document.querySelector('.radar-spinner').style.borderTopColor = "var(--gold)";
+    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
+    document.querySelector('.cancel-btn').style.display = "block";
     
     // 2. Timer Visual
     matchSeconds = 0;
@@ -1305,72 +1317,91 @@ window.startPvPSearch = async function() {
         timerEl.innerText = `${m}:${s}`;
     }, 1000);
 
-    // 3. FIREBASE: Tenta encontrar alguém na fila
+    // 3. FIREBASE: Entrar na Fila
     try {
-        const queueRef = collection(db, "queue");
-        // Busca alguém que NÃO seja eu e esteja esperando
-        // Nota: Firestore básico não permite filtro "not-equal" simples com ordenação no mesmo campo facilmente
-        // Vamos pegar os primeiros da fila e filtrar no código por enquanto (MVP)
-        const q = query(queueRef, orderBy("timestamp", "asc"), limit(5)); 
-        const snapshot = await getDoc(doc(db, "dummy")); // Truque para forçar refresh ou uso getDocs direto abaixo:
-        
-        // Usamos getDocs da importação do Firestore (verifique se está importado no topo)
-        // Se não tiver importado getDocs, adicione lá em cima.
-        // Vou assumir que você tem getDocs. Se der erro, me avise.
-        // Mas para simplificar e não mexer nos imports agora, vou usar a lógica de "entrar na fila" primeiro.
-        
-        // ESTRATÉGIA SEGURA (HOST-CLIENT):
-        // Para evitar condições de corrida complexas sem Cloud Functions, vamos fazer assim:
-        // 1. Entra na fila sempre.
-        // 2. Se a fila tiver 2 pessoas, o mais antigo (Host) cria a sala e puxa o segundo.
-        
-        // Passo 1: Criar meu ticket na fila
-        myQueueRef = doc(collection(db, "queue")); // Cria ID automático
+        // Passo A: Criar meu ticket na fila
+        myQueueRef = doc(collection(db, "queue")); 
         const myData = {
             uid: currentUser.uid,
             name: currentUser.displayName,
-            score: 0, // Podemos puxar o score real depois
+            score: 0, // Futuramente puxar do userSnap
             timestamp: Date.now(),
             matchId: null // Se preenchido, significa que acharam partida
         };
         await setDoc(myQueueRef, myData);
 
-        // Passo 2: Escutar meu próprio ticket
+        // Passo B: Escutar meu próprio ticket para ver se alguém me puxou
         queueListener = onSnapshot(myQueueRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 if (data.matchId) {
-                    // ALGUÉM ME ACHOU E CRIOU A SALA!
-                    enterMatch(data.matchId);
+                    enterMatch(data.matchId); // ALGUÉM ME ACHOU!
                 }
-            } else {
-                // Se meu documento sumiu, pode ser erro ou limpeza.
             }
         });
 
-        // Passo 3: Tentar ser o "Matchmaker" (Host)
-        // Procura se tem mais alguém na fila além de mim
+        // Passo C: Tentar achar alguém que já esteja lá (Ser o Host)
         findOpponentInQueue();
 
     } catch (e) {
         console.error("Erro no Matchmaking:", e);
         cancelPvPSearch();
-        alert("Erro ao buscar partida. Tente novamente.");
     }
 };
 
-// Função que varre a fila para tentar casar partida
+// Função que procura oponentes na fila (Host Logic)
 async function findOpponentInQueue() {
-    // Precisamos de getDocs. Certifique-se de importar lá no topo do arquivo se não tiver:
-    // import { ..., getDocs, deleteDoc } ... 
-    // Vou usar a variável global 'db' e a função global do firebase se possível,
-    // mas o ideal é adicionar 'getDocs' e 'deleteDoc' no import lá em cima.
-    
-    // Como não posso editar seus imports agora, vou assumir que você vai adicionar.
-    // **IMPORTANTE**: Adicione 'getDocs' e 'deleteDoc' na linha do import do firebase-firestore.
-    
-    // Lógica provisória simulada se não tivermos getDocs agora:
-    // (Vou te pedir para adicionar os imports na próxima mensagem para garantir)
+    try {
+        const queueRef = collection(db, "queue");
+        // Pega os 10 primeiros da fila
+        const q = query(queueRef, orderBy("timestamp", "asc"), limit(10));
+        const querySnapshot = await getDocs(q);
+
+        let opponentDoc = null;
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            // Se não sou eu, e não está cancelado, e ainda não tem partida
+            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
+                opponentDoc = doc;
+            }
+        });
+
+        if (opponentDoc) {
+            // ACHAMOS UM OPONENTE!
+            const opponentId = opponentDoc.data().uid;
+            console.log("Oponente encontrado na fila:", opponentId);
+
+            // 1. Cria o ID da Partida
+            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+
+            // 2. Avisa o oponente (atualiza o doc dele na fila com o ID da partida)
+            await updateDoc(opponentDoc.ref, { matchId: matchId });
+
+            // 3. Avisa a mim mesmo (atualiza meu doc)
+            if (myQueueRef) {
+                await updateDoc(myQueueRef, { matchId: matchId });
+            }
+
+            // 4. Cria o documento da partida (Inicializa a mesa)
+            await createMatchDocument(matchId, currentUser.uid, opponentId);
+        }
+
+    } catch (e) {
+        console.error("Erro ao buscar oponente:", e);
+    }
+}
+
+// Cria a estrutura inicial da partida no banco
+async function createMatchDocument(matchId, p1Id, p2Id) {
+    const matchRef = doc(db, "matches", matchId);
+    await setDoc(matchRef, {
+        player1: { uid: p1Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        player2: { uid: p2Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        turn: 1,
+        status: 'waiting_decks', // Esperando escolherem decks
+        createdAt: Date.now()
+    });
 }
 
 // --- CANCELAR BUSCA ---
@@ -1387,12 +1418,10 @@ window.cancelPvPSearch = async function() {
         queueListener = null;
     }
 
-    // Remove meu nome da fila no Firebase
+    // Remove ou cancela meu nome da fila
     if (myQueueRef) {
-        // Precisamos do deleteDoc importado
-        // await deleteDoc(myQueueRef); 
-        // Como paliativo se não tiver deleteDoc, setamos null ou matchId 'cancelled'
-        await setDoc(myQueueRef, { cancelled: true }); 
+        await updateDoc(myQueueRef, { cancelled: true }); 
+        // Idealmente usaríamos deleteDoc(myQueueRef), mas marcar cancelado é mais seguro para logs
         myQueueRef = null;
     }
     
@@ -1407,7 +1436,7 @@ function enterMatch(matchId) {
     if (queueListener) queueListener();
     if (matchTimerInterval) clearInterval(matchTimerInterval);
 
-    // Atualiza UI
+    // Atualiza UI para Verde
     document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
     document.querySelector('.mm-title').style.color = "#2ecc71";
     document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
@@ -1419,20 +1448,11 @@ function enterMatch(matchId) {
         const mmScreen = document.getElementById('matchmaking-screen');
         mmScreen.style.display = 'none';
         
-        // Configura o ID da partida globalmente
+        // Configura o ID da partida globalmente para usarmos depois
         window.currentMatchId = matchId;
         
         // Vai para a seleção de deck
         window.openDeckSelector(); 
         
-        // Reset visual para a próxima vez
-        setTimeout(() => {
-            document.querySelector('.cancel-btn').style.display = "block";
-            document.querySelector('.mm-title').style.color = "var(--gold)";
-            document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
-            document.querySelector('.radar-spinner').style.borderTopColor = "var(--gold)";
-            document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
-        }, 2000);
-
     }, 1500);
 }
