@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL UNIFICADA)
+// ARQUIVO: js/main.js (VERSÃO FINAL UNIFICADA E CORRIGIDA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -31,6 +31,16 @@ const audios = {};
 let assetsLoaded = 0; 
 window.gameAssets = []; 
 
+// Variáveis de Jogo
+let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+let isProcessing = false; 
+let turnCount = 1; 
+let playerHistory = []; 
+window.masterVol = 1.0; 
+let isLethalHover = false; 
+let mixerInterval = null;
+
 // Variáveis de Matchmaking e PvP
 let matchTimerInterval = null;
 let matchSeconds = 0;
@@ -39,6 +49,8 @@ let queueListener = null;   // Listener da fila
 let matchUnsub = null;      // Listener da partida
 window.isGameRunning = false;
 window.currentMatchId = null;
+window.isMatchStarting = false;
+window.currentDeck = 'knight';
 
 // --- ASSETS ---
 const MAGE_ASSETS = {
@@ -102,17 +114,6 @@ const ASSETS_TO_LOAD = {
     ]
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
-
-let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
-let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
-let isProcessing = false; let turnCount = 1; let playerHistory = []; 
-window.masterVol = 1.0; 
-let isLethalHover = false; 
-let mixerInterval = null;
-
-// --- ESTADOS GLOBAIS DO JOGO ---
-window.isMatchStarting = false;
-window.currentDeck = 'knight';
 
 // --- HELPER: RETORNA ARTE CORRETA ---
 function getCardArt(cardKey, isPlayer) {
@@ -237,7 +238,401 @@ window.openDeckSelector = function() {
     }
 })();
 
-// --- PRELOAD ---
+// ======================================================
+// LÓGICA DE MATCHMAKING REAL & PVP SYNC (FIREBASE)
+// ======================================================
+
+// Botão PvE (Treino)
+window.startPvE = function() {
+    window.gameMode = 'pve'; 
+    window.playNavSound();
+    window.openDeckSelector(); 
+};
+
+// Botão PvP (Rankeado)
+window.startPvPSearch = async function() {
+    if (!currentUser) return; 
+    window.gameMode = 'pvp';
+    window.playNavSound();
+
+    // UI
+    const mmScreen = document.getElementById('matchmaking-screen');
+    mmScreen.style.display = 'flex';
+    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
+    document.querySelector('.mm-title').style.color = "var(--gold)";
+    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
+    document.querySelector('.radar-spinner').style.borderTopColor = "var(--gold)";
+    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
+    document.querySelector('.cancel-btn').style.display = "block";
+    
+    // Timer
+    matchSeconds = 0;
+    const timerEl = document.getElementById('mm-timer');
+    timerEl.innerText = "00:00";
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    matchTimerInterval = setInterval(() => {
+        matchSeconds++;
+        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
+        let s = (matchSeconds % 60).toString().padStart(2, '0');
+        timerEl.innerText = `${m}:${s}`;
+    }, 1000);
+
+    // Firebase
+    try {
+        // A: Criar Ticket
+        myQueueRef = doc(collection(db, "queue")); 
+        const myData = {
+            uid: currentUser.uid,
+            name: currentUser.displayName,
+            score: 0, 
+            timestamp: Date.now(),
+            matchId: null 
+        };
+        await setDoc(myQueueRef, myData);
+
+        // B: Listener
+        queueListener = onSnapshot(myQueueRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.matchId) {
+                    enterMatch(data.matchId); 
+                }
+            }
+        });
+
+        // C: Tentar ser Host
+        findOpponentInQueue();
+
+    } catch (e) {
+        console.error("Erro no Matchmaking:", e);
+        cancelPvPSearch();
+    }
+};
+
+async function findOpponentInQueue() {
+    try {
+        const queueRef = collection(db, "queue");
+        const q = query(queueRef, orderBy("timestamp", "asc"), limit(10));
+        const querySnapshot = await getDocs(q);
+        let opponentDoc = null;
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
+                opponentDoc = doc;
+            }
+        });
+
+        if (opponentDoc) {
+            const opponentId = opponentDoc.data().uid;
+            console.log("Oponente encontrado:", opponentId);
+            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+            await updateDoc(opponentDoc.ref, { matchId: matchId });
+            if (myQueueRef) { await updateDoc(myQueueRef, { matchId: matchId }); }
+            await createMatchDocument(matchId, currentUser.uid, opponentId);
+        }
+    } catch (e) { console.error("Erro ao buscar oponente:", e); }
+}
+
+async function createMatchDocument(matchId, p1Id, p2Id) {
+    const matchRef = doc(db, "matches", matchId);
+    await setDoc(matchRef, {
+        player1: { uid: p1Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        player2: { uid: p2Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        turn: 1,
+        status: 'waiting_decks',
+        createdAt: Date.now()
+    });
+}
+
+window.cancelPvPSearch = async function() {
+    window.playNavSound();
+    const mmScreen = document.getElementById('matchmaking-screen');
+    mmScreen.style.display = 'none';
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    if (queueListener) { queueListener(); queueListener = null; }
+    if (myQueueRef) { await updateDoc(myQueueRef, { cancelled: true }); myQueueRef = null; }
+    console.log("Busca cancelada.");
+};
+
+function enterMatch(matchId) {
+    console.log("PARTIDA ENCONTRADA! ID:", matchId);
+    if (queueListener) queueListener();
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+
+    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
+    document.querySelector('.mm-title').style.color = "#2ecc71";
+    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
+    document.querySelector('.radar-spinner').style.animation = "none";
+    document.querySelector('.cancel-btn').style.display = "none";
+
+    setTimeout(() => {
+        document.getElementById('matchmaking-screen').style.display = 'none';
+        window.currentMatchId = matchId;
+        window.isGameRunning = false;
+        startMatchListener(matchId);
+        window.openDeckSelector(); 
+    }, 1500);
+}
+
+function startMatchListener(matchId) {
+    if (matchUnsub) matchUnsub();
+    matchUnsub = onSnapshot(doc(db, "matches", matchId), async (docSnap) => {
+        if (!docSnap.exists()) return;
+        const matchData = docSnap.data();
+        
+        if (matchData.status === 'playing' && !window.isGameRunning) {
+            console.log("Tudo pronto! Iniciando jogo...");
+            window.isGameRunning = true;
+            window.transitionToGame(); 
+        }
+
+        if (currentUser.uid === matchData.player1.uid && 
+            matchData.status === 'waiting_decks' &&
+            matchData.player1.status === 'ready' && 
+            matchData.player2.status === 'ready') {
+            
+            console.log("HOST: Ambos prontos. Gerando decks...");
+            await initializeMatchDecks(matchId, matchData);
+        }
+    });
+}
+
+async function initializeMatchDecks(matchId, matchData) {
+    const p1Deck = generateDeckForClass(matchData.player1.class);
+    const p2Deck = generateDeckForClass(matchData.player2.class);
+    const p1Hand = p1Deck.splice(-6);
+    const p2Hand = p2Deck.splice(-6);
+
+    await updateDoc(doc(db, "matches", matchId), {
+        "player1.deck": p1Deck, "player1.hand": p1Hand,
+        "player2.deck": p2Deck, "player2.hand": p2Hand,
+        status: 'playing', turn: 1
+    });
+}
+
+function generateDeckForClass(className) {
+    let deck = [];
+    for(let k in DECK_TEMPLATE) { for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k); }
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    return deck;
+}
+
+window.selectDeck = async function(deckType) {
+    if(audios['sfx-deck-select']) { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); }
+    window.currentDeck = deckType; 
+    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
+    document.body.classList.add(deckType === 'mage' ? 'theme-mago' : 'theme-cavaleiro');
+
+    const options = document.querySelectorAll('.deck-option');
+    options.forEach(opt => {
+        if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
+            opt.style.transform = "scale(1.15) translateY(-20px)";
+            opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))";
+            opt.style.opacity = "1";
+        } else {
+            opt.style.transform = "scale(0.8) translateY(10px)";
+            opt.style.opacity = "0.2";
+        }
+    });
+
+    if (window.gameMode === 'pvp') {
+        const btn = document.querySelector('.return-btn');
+        if(btn) { btn.innerText = "AGUARDANDO OPONENTE..."; btn.disabled = true; }
+        try {
+            const matchRef = doc(db, "matches", window.currentMatchId);
+            const matchSnap = await getDoc(matchRef);
+            if(matchSnap.exists()) {
+                const data = matchSnap.data();
+                const field = (data.player1.uid === currentUser.uid) ? "player1" : "player2";
+                await updateDoc(matchRef, { [`${field}.class`]: deckType, [`${field}.status`]: 'ready' });
+                console.log("Deck escolhido. Aguardando início...");
+            }
+        } catch(e) { console.error("Erro ao salvar deck:", e); }
+    } else {
+        setTimeout(() => {
+            const selectionScreen = document.getElementById('deck-selection-screen');
+            selectionScreen.style.opacity = "0";
+            setTimeout(() => {
+                window.transitionToGame();
+                setTimeout(() => {
+                    selectionScreen.style.opacity = "1";
+                    options.forEach(opt => opt.style = "");
+                }, 500);
+            }, 500);
+        }, 400);
+    }
+};
+
+window.transitionToGame = function() {
+    const transScreen = document.getElementById('transition-overlay');
+    const transText = transScreen.querySelector('.trans-text');
+    if(transText) transText.innerText = "PREPARANDO BATALHA...";
+    if(transScreen) transScreen.classList.add('active');
+    setTimeout(() => {
+        MusicController.play('bgm-loop'); 
+        let bg = document.getElementById('game-background');
+        if(bg) bg.classList.remove('lobby-mode');
+        window.showScreen('game-screen');
+        const handEl = document.getElementById('player-hand'); 
+        if(handEl) handEl.innerHTML = '';
+        setTimeout(() => {
+            if(transScreen) transScreen.classList.remove('active');
+            setTimeout(() => { startGameFlow(); }, 200); 
+        }, 1500);
+    }, 500); 
+}
+
+window.transitionToLobby = function() {
+    const transScreen = document.getElementById('transition-overlay');
+    const transText = transScreen.querySelector('.trans-text');
+    if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
+    if(transScreen) transScreen.classList.add('active');
+    MusicController.stopCurrent(); 
+    setTimeout(() => {
+        window.goToLobby(false); 
+        setTimeout(() => {
+            if(transScreen) transScreen.classList.remove('active');
+        }, 1000); 
+    }, 500);
+}
+
+window.goToLobby = async function(isAutoLogin = false) {
+    if(!currentUser) {
+        window.showScreen('start-screen');
+        MusicController.play('bgm-menu'); 
+        return;
+    }
+    isProcessing = false; 
+    let bg = document.getElementById('game-background');
+    if(bg) bg.classList.add('lobby-mode');
+    
+    MusicController.play('bgm-menu'); 
+    createLobbyFlares();
+    
+    const userRef = doc(db, "players", currentUser.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+        await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
+        document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
+    } else {
+        const d = userSnap.data();
+        document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+    }
+    const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
+    onSnapshot(q, (snapshot) => {
+        let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
+        let pos = 1;
+        snapshot.forEach((doc) => {
+            const p = doc.data();
+            let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : ""));
+            html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
+            pos++;
+        });
+        html += '</tbody></table>';
+        document.getElementById('ranking-content').innerHTML = html;
+    });
+    window.showScreen('lobby-screen');
+    document.getElementById('end-screen').classList.remove('visible'); 
+};
+
+// --- AUTH LISTENER ---
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentUser = user;
+        window.goToLobby(true); 
+    } else {
+        currentUser = null;
+        window.showScreen('start-screen');
+        const bg = document.getElementById('game-background');
+        if(bg) bg.classList.remove('lobby-mode');
+        const btnTxt = document.getElementById('btn-text');
+        if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
+        MusicController.play('bgm-menu'); 
+    }
+});
+
+// --- FUNÇÃO DE LOGIN WEB SIMPLES ---
+window.googleLogin = async function() {
+    window.playNavSound(); 
+    const btnText = document.getElementById('btn-text');
+    btnText.innerText = "CONECTANDO...";
+
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.error("Erro no Login:", error);
+        btnText.innerText = "ERRO - TENTE NOVAMENTE";
+        setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000);
+    }
+};
+
+window.handleLogout = function() {
+    window.playNavSound();
+    signOut(auth).then(() => { location.reload(); });
+};
+
+// --- FUNÇÕES DE PONTUAÇÃO E ABANDONO ---
+window.registrarVitoriaOnline = async function(modo = 'pve') {
+    if(!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if(userSnap.exists()) {
+            const data = userSnap.data();
+            let modoAtual = window.gameMode || 'pve';
+            let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
+            await updateDoc(userRef, { totalWins: (data.totalWins || 0) + 1, score: (data.score || 0) + pontosGanhos });
+            console.log(`Vitória registrada (${modoAtual}): +${pontosGanhos} pontos.`);
+        }
+    } catch(e) { console.error("Erro ao salvar vitória:", e); }
+};
+
+window.registrarDerrotaOnline = async function(modo = 'pve') {
+    if(!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if(userSnap.exists()) {
+            const data = userSnap.data();
+            let modoAtual = window.gameMode || 'pve';
+            let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3;
+            let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
+            await updateDoc(userRef, { score: novoScore });
+            console.log(`Derrota registrada (${modoAtual}): -${pontosPerdidos} pontos.`);
+        }
+    } catch(e) { console.error("Erro ao salvar derrota:", e); }
+};
+
+window.restartMatch = function() {
+    document.getElementById('end-screen').classList.remove('visible');
+    setTimeout(startGameFlow, 50);
+    MusicController.play('bgm-loop'); 
+}
+
+window.abandonMatch = function() {
+    if(document.getElementById('game-screen').classList.contains('active')) {
+        window.toggleConfig(); 
+        window.openModal(
+            "ABANDONAR?", 
+            "Sair da partida contará como DERROTA. Tem certeza?", 
+            ["CANCELAR", "SAIR"], 
+            (choice) => {
+                if (choice === "SAIR") {
+                    window.registrarDerrotaOnline();
+                    window.transitionToLobby();
+                }
+            }
+        );
+    }
+}
+
+// --- FUNÇÕES DE PRELOAD E INICIALIZAÇÃO ---
 function preloadGame() {
     console.log("Iniciando Preload de " + totalAssets + " recursos...");
     ASSETS_TO_LOAD.images.forEach(src => { 
@@ -273,7 +668,6 @@ function updateLoader() {
     }
 }
 
-// --- LOGIC ---
 function initGlobalHoverLogic() {
     let lastTarget = null;
     document.body.addEventListener('mouseover', (e) => {
@@ -752,288 +1146,6 @@ function apply3DTilt(element, isHand = false) {
 }
 
 // ======================================================
-// LÓGICA DE MATCHMAKING REAL & PVP SYNC (FIREBASE)
-// ======================================================
-
-// Botão PvE (Treino)
-window.startPvE = function() {
-    window.gameMode = 'pve'; 
-    window.playNavSound();
-    window.openDeckSelector(); 
-};
-
-// Botão PvP (Rankeado)
-window.startPvPSearch = async function() {
-    if (!currentUser) return; 
-    window.gameMode = 'pvp';
-    window.playNavSound();
-
-    // UI
-    const mmScreen = document.getElementById('matchmaking-screen');
-    mmScreen.style.display = 'flex';
-    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
-    document.querySelector('.mm-title').style.color = "var(--gold)";
-    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
-    document.querySelector('.radar-spinner').style.borderTopColor = "var(--gold)";
-    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
-    document.querySelector('.cancel-btn').style.display = "block";
-    
-    // Timer
-    matchSeconds = 0;
-    const timerEl = document.getElementById('mm-timer');
-    timerEl.innerText = "00:00";
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    matchTimerInterval = setInterval(() => {
-        matchSeconds++;
-        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
-        let s = (matchSeconds % 60).toString().padStart(2, '0');
-        timerEl.innerText = `${m}:${s}`;
-    }, 1000);
-
-    // Firebase
-    try {
-        // A: Criar Ticket
-        myQueueRef = doc(collection(db, "queue")); 
-        const myData = {
-            uid: currentUser.uid,
-            name: currentUser.displayName,
-            score: 0, 
-            timestamp: Date.now(),
-            matchId: null 
-        };
-        await setDoc(myQueueRef, myData);
-
-        // B: Listener
-        queueListener = onSnapshot(myQueueRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.matchId) {
-                    enterMatch(data.matchId); 
-                }
-            }
-        });
-
-        // C: Tentar ser Host
-        findOpponentInQueue();
-
-    } catch (e) {
-        console.error("Erro no Matchmaking:", e);
-        cancelPvPSearch();
-    }
-};
-
-async function findOpponentInQueue() {
-    try {
-        const queueRef = collection(db, "queue");
-        const q = query(queueRef, orderBy("timestamp", "asc"), limit(10));
-        const querySnapshot = await getDocs(q);
-        let opponentDoc = null;
-
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
-                opponentDoc = doc;
-            }
-        });
-
-        if (opponentDoc) {
-            const opponentId = opponentDoc.data().uid;
-            console.log("Oponente encontrado:", opponentId);
-            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-            await updateDoc(opponentDoc.ref, { matchId: matchId });
-            if (myQueueRef) { await updateDoc(myQueueRef, { matchId: matchId }); }
-            await createMatchDocument(matchId, currentUser.uid, opponentId);
-        }
-    } catch (e) { console.error("Erro ao buscar oponente:", e); }
-}
-
-async function createMatchDocument(matchId, p1Id, p2Id) {
-    const matchRef = doc(db, "matches", matchId);
-    await setDoc(matchRef, {
-        player1: { uid: p1Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
-        player2: { uid: p2Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
-        turn: 1,
-        status: 'waiting_decks',
-        createdAt: Date.now()
-    });
-}
-
-window.cancelPvPSearch = async function() {
-    window.playNavSound();
-    const mmScreen = document.getElementById('matchmaking-screen');
-    mmScreen.style.display = 'none';
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    if (queueListener) { queueListener(); queueListener = null; }
-    if (myQueueRef) { await updateDoc(myQueueRef, { cancelled: true }); myQueueRef = null; }
-    console.log("Busca cancelada.");
-};
-
-function enterMatch(matchId) {
-    console.log("PARTIDA ENCONTRADA! ID:", matchId);
-    if (queueListener) queueListener();
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-
-    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
-    document.querySelector('.mm-title').style.color = "#2ecc71";
-    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
-    document.querySelector('.radar-spinner').style.animation = "none";
-    document.querySelector('.cancel-btn').style.display = "none";
-
-    setTimeout(() => {
-        document.getElementById('matchmaking-screen').style.display = 'none';
-        window.currentMatchId = matchId;
-        window.isGameRunning = false;
-        startMatchListener(matchId);
-        window.openDeckSelector(); 
-    }, 1500);
-}
-
-function startMatchListener(matchId) {
-    if (matchUnsub) matchUnsub();
-    matchUnsub = onSnapshot(doc(db, "matches", matchId), async (docSnap) => {
-        if (!docSnap.exists()) return;
-        const matchData = docSnap.data();
-        
-        if (matchData.status === 'playing' && !window.isGameRunning) {
-            console.log("Tudo pronto! Iniciando jogo...");
-            window.isGameRunning = true;
-            window.transitionToGame(); 
-        }
-
-        if (currentUser.uid === matchData.player1.uid && 
-            matchData.status === 'waiting_decks' &&
-            matchData.player1.status === 'ready' && 
-            matchData.player2.status === 'ready') {
-            
-            console.log("HOST: Ambos prontos. Gerando decks...");
-            await initializeMatchDecks(matchId, matchData);
-        }
-    });
-}
-
-async function initializeMatchDecks(matchId, matchData) {
-    const p1Deck = generateDeckForClass(matchData.player1.class);
-    const p2Deck = generateDeckForClass(matchData.player2.class);
-    const p1Hand = p1Deck.splice(-6);
-    const p2Hand = p2Deck.splice(-6);
-
-    await updateDoc(doc(db, "matches", matchId), {
-        "player1.deck": p1Deck, "player1.hand": p1Hand,
-        "player2.deck": p2Deck, "player2.hand": p2Hand,
-        status: 'playing', turn: 1
-    });
-}
-
-function generateDeckForClass(className) {
-    let deck = [];
-    for(let k in DECK_TEMPLATE) { for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k); }
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    return deck;
-}
-
-window.selectDeck = async function(deckType) {
-    if(audios['sfx-deck-select']) { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); }
-    window.currentDeck = deckType; 
-    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
-    document.body.classList.add(deckType === 'mage' ? 'theme-mago' : 'theme-cavaleiro');
-
-    const options = document.querySelectorAll('.deck-option');
-    options.forEach(opt => {
-        if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
-            opt.style.transform = "scale(1.15) translateY(-20px)";
-            opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))";
-            opt.style.opacity = "1";
-        } else {
-            opt.style.transform = "scale(0.8) translateY(10px)";
-            opt.style.opacity = "0.2";
-        }
-    });
-
-    if (window.gameMode === 'pvp') {
-        const btn = document.querySelector('.return-btn');
-        if(btn) { btn.innerText = "AGUARDANDO OPONENTE..."; btn.disabled = true; }
-        try {
-            const matchRef = doc(db, "matches", window.currentMatchId);
-            const matchSnap = await getDoc(matchRef);
-            if(matchSnap.exists()) {
-                const data = matchSnap.data();
-                const field = (data.player1.uid === currentUser.uid) ? "player1" : "player2";
-                await updateDoc(matchRef, { [`${field}.class`]: deckType, [`${field}.status`]: 'ready' });
-                console.log("Deck escolhido. Aguardando início...");
-            }
-        } catch(e) { console.error("Erro ao salvar deck:", e); }
-    } else {
-        setTimeout(() => {
-            const selectionScreen = document.getElementById('deck-selection-screen');
-            selectionScreen.style.opacity = "0";
-            setTimeout(() => {
-                window.transitionToGame();
-                setTimeout(() => {
-                    selectionScreen.style.opacity = "1";
-                    options.forEach(opt => opt.style = "");
-                }, 500);
-            }, 500);
-        }, 400);
-    }
-};
-
-// --- FUNÇÕES DE PONTUAÇÃO E ABANDONO ---
-window.registrarVitoriaOnline = async function(modo = 'pve') {
-    if(!currentUser) return;
-    try {
-        const userRef = doc(db, "players", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        if(userSnap.exists()) {
-            const data = userSnap.data();
-            let modoAtual = window.gameMode || 'pve';
-            let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
-            await updateDoc(userRef, { totalWins: (data.totalWins || 0) + 1, score: (data.score || 0) + pontosGanhos });
-            console.log(`Vitória registrada (${modoAtual}): +${pontosGanhos} pontos.`);
-        }
-    } catch(e) { console.error("Erro ao salvar vitória:", e); }
-};
-
-window.registrarDerrotaOnline = async function(modo = 'pve') {
-    if(!currentUser) return;
-    try {
-        const userRef = doc(db, "players", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        if(userSnap.exists()) {
-            const data = userSnap.data();
-            let modoAtual = window.gameMode || 'pve';
-            let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3;
-            let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
-            await updateDoc(userRef, { score: novoScore });
-            console.log(`Derrota registrada (${modoAtual}): -${pontosPerdidos} pontos.`);
-        }
-    } catch(e) { console.error("Erro ao salvar derrota:", e); }
-};
-
-window.restartMatch = function() {
-    document.getElementById('end-screen').classList.remove('visible');
-    setTimeout(startGameFlow, 50);
-    MusicController.play('bgm-loop'); 
-}
-
-window.abandonMatch = function() {
-    if(document.getElementById('game-screen').classList.contains('active')) {
-        window.toggleConfig(); 
-        window.openModal(
-            "ABANDONAR?", 
-            "Sair da partida contará como DERROTA. Tem certeza?", 
-            ["CANCELAR", "SAIR"], 
-            (choice) => {
-                if (choice === "SAIR") {
-                    window.registrarDerrotaOnline();
-                    window.transitionToLobby();
-                }
-            }
-        );
-    }
-}
-
 // INICIALIZADOR
+// ======================================================
 preloadGame();
