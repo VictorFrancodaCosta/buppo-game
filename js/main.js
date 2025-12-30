@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL REORGANIZADA)
+// ARQUIVO: js/main.js (VERSÃO WEB PURA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -15,191 +15,24 @@ const firebaseConfig = {
     appId: "1:950871979140:web:f2dba12900500c52053ed1"
 };
 
-// --- INICIALIZAÇÃO FIREBASE ---
+// --- INICIALIZAÇÃO SIMPLES ---
 let app, auth, db, provider;
+
 try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
     provider = new GoogleAuthProvider();
     console.log("Firebase Web Iniciado.");
-} catch (e) { console.error("Erro Firebase:", e); }
-
-// ======================================================
-// 1. FUNÇÕES DE UTILIDADE E UI (PRIORIDADE ALTA)
-// ======================================================
-
-// Janela Modal (Abandonar/Desarmar)
-window.openModal = function(title, desc, options, callback) {
-    const overlay = document.getElementById('modal-overlay');
-    if (!overlay) return;
-
-    // Popula o HTML interno da modal
-    overlay.innerHTML = `
-        <div class="modal-content">
-            <h2>${title}</h2>
-            <p>${desc}</p>
-            <div class="modal-buttons" id="modal-btn-container"></div>
-        </div>
-    `;
-
-    const btnContainer = document.getElementById('modal-btn-container');
-    
-    // Cria os botões dinamicamente
-    options.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.className = 'modal-btn';
-        btn.innerText = opt;
-        btn.onclick = () => {
-            overlay.classList.remove('active'); // Fecha modal
-            if (callback) callback(opt); // Executa a ação
-        };
-        btnContainer.appendChild(btn);
-    });
-
-    overlay.classList.add('active'); // Mostra modal
-};
-
-// Texto Flutuante (Dano/Cura)
-window.showFloatingText = function(targetId, text, color) {
-    const target = document.getElementById(targetId);
-    if (!target) return;
-    
-    const rect = target.getBoundingClientRect();
-    const el = document.createElement('div');
-    el.innerText = text;
-    el.className = 'floating-text'; 
-    el.style.color = color || '#fff';
-    
-    el.style.left = (rect.left + rect.width / 2) + 'px';
-    el.style.top = rect.top + 'px';
-    
-    document.body.appendChild(el);
-    
-    setTimeout(() => { el.remove(); }, 1500);
+} catch (e) {
+    console.error("Erro Firebase:", e);
 }
 
-// Tooltip das Cartas
-const tt = document.getElementById('tooltip-box');
-window.bindFixedTooltip = function(element, cardKey) {
-    return {
-        onmouseenter: (e) => {
-            if(typeof showTT === 'function') showTT(cardKey);
-            if(tt) {
-                const rect = element.getBoundingClientRect();
-                tt.style.left = (rect.left + rect.width / 2) + 'px';
-                if (rect.top > window.innerHeight / 2) {
-                    tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
-                    tt.style.top = 'auto';
-                    tt.classList.remove('tooltip-anim-down');
-                    tt.classList.add('tooltip-anim-up');
-                } else {
-                    tt.style.top = (rect.bottom + 10) + 'px';
-                    tt.style.bottom = 'auto';
-                    tt.classList.remove('tooltip-anim-up');
-                    tt.classList.add('tooltip-anim-down');
-                }
-                tt.style.transform = "translateX(-50%)";
-            }
-        }
-    };
-}
-
-// Verificar Fim de Jogo
-window.checkEndGame = function() {
-    if (player.hp <= 0 || monster.hp <= 0) {
-        window.isGameRunning = false;
-        const endScreen = document.getElementById('end-screen');
-        const endTitle = document.getElementById('end-title');
-        
-        if(endScreen) {
-            endScreen.classList.add('visible');
-            endScreen.style.pointerEvents = "auto";
-        }
-        
-        if(endTitle) {
-            endTitle.classList.remove('win-theme', 'lose-theme', 'tie-theme');
-            if (player.hp <= 0 && monster.hp <= 0) {
-                endTitle.innerText = "EMPATE";
-                endTitle.classList.add('tie-theme');
-                playSound('sfx-tie');
-            } else if (player.hp <= 0) {
-                endTitle.innerText = "DERROTA";
-                endTitle.classList.add('lose-theme');
-                playSound('sfx-lose');
-                if(window.registrarDerrotaOnline) window.registrarDerrotaOnline();
-            } else {
-                endTitle.innerText = "VITÓRIA";
-                endTitle.classList.add('win-theme');
-                playSound('sfx-win');
-                if(window.registrarVitoriaOnline) window.registrarVitoriaOnline();
-            }
-        }
-    }
-}
-
-// Fluxo de Início de Jogo
-window.startGameFlow = function() {
-    console.log("Iniciando Fluxo de Jogo...");
-    const endScreen = document.getElementById('end-screen');
-    if(endScreen) endScreen.classList.remove('visible');
-    
-    isProcessing = false;
-    turnCount = 1;
-    playerHistory = [];
-    
-    resetUnit(player);
-    resetUnit(monster);
-    
-    const turnTxt = document.getElementById('turn-txt');
-    if(turnTxt) turnTxt.innerText = "TURNO 1";
-    
-    const pSlot = document.getElementById('p-slot');
-    const mSlot = document.getElementById('m-slot');
-    if(pSlot) pSlot.innerHTML = '';
-    if(mSlot) mSlot.innerHTML = '';
-    
-    drawCardLogic(player, 6);
-    drawCardLogic(monster, 6);
-    
-    window.isMatchStarting = true;
-    updateUI();
-    
-    const handEl = document.getElementById('player-hand');
-    if(handEl) handEl.classList.add('preparing');
-    
-    setTimeout(() => { dealAllInitialCards(); }, 500);
-}
-
-// ======================================================
-// 2. VARIÁVEIS GLOBAIS E ASSETS
-// ======================================================
+// --- VARIÁVEIS GLOBAIS DO JOGO ---
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
 window.gameAssets = []; 
-
-// Variáveis de Jogo
-let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
-let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
-let isProcessing = false; 
-let turnCount = 1; 
-let playerHistory = []; 
-window.masterVol = 1.0; 
-let isLethalHover = false; 
-let mixerInterval = null;
-
-// Variáveis de Matchmaking e PvP
-let matchTimerInterval = null;
-let matchSeconds = 0;
-let myQueueRef = null;      
-let queueListener = null;   
-let matchUnsub = null;      
-window.isGameRunning = false;
-window.currentMatchId = null;
-window.isMatchStarting = false;
-window.currentDeck = 'knight';
-window.gameMode = 'pve';
 
 // --- ASSETS ---
 const MAGE_ASSETS = {
@@ -215,8 +48,8 @@ const MAGE_ASSETS = {
 const ASSETS_TO_LOAD = {
     images: [
         'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png',
-        'https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png',
-        'https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png',
+        'https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png', // Atualizado para nova mesa Cavaleiro
+        'https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png', // Atualizado para nova mesa Mago
         'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png',
         'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',
         'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',
@@ -264,6 +97,17 @@ const ASSETS_TO_LOAD = {
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 
+let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+let isProcessing = false; let turnCount = 1; let playerHistory = []; 
+window.masterVol = 1.0; 
+let isLethalHover = false; 
+let mixerInterval = null;
+
+// --- ESTADOS GLOBAIS ---
+window.isMatchStarting = false;
+window.currentDeck = 'knight';
+
 // --- HELPER: RETORNA ARTE CORRETA ---
 function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
@@ -274,26 +118,28 @@ function getCardArt(cardKey, isPlayer) {
 
 const MusicController = {
     currentTrackId: null,
+    fadeTimer: null,
     play(trackId) {
         if (this.currentTrackId === trackId) {
             if (audios[trackId] && audios[trackId].paused && !window.isMuted) {
                 const audio = audios[trackId];
                 audio.volume = 0;
-                audio.play().catch(()=>{});
+                audio.play().catch(e => console.warn("Autoplay prevent", e));
                 this.fadeIn(audio, 0.5 * window.masterVol);
             }
             return; 
         } 
         const maxVol = 0.5 * window.masterVol;
         if (this.currentTrackId && audios[this.currentTrackId]) {
-            this.fadeOut(audios[this.currentTrackId]);
+            const oldAudio = audios[this.currentTrackId];
+            this.fadeOut(oldAudio);
         }
         if (trackId && audios[trackId]) {
             const newAudio = audios[trackId];
             newAudio.currentTime = 0;
             if (!window.isMuted) {
                 newAudio.volume = 0; 
-                newAudio.play().catch(()=>{});
+                newAudio.play().catch(e => console.warn("Autoplay prevent", e));
                 this.fadeIn(newAudio, maxVol);
             }
         }
@@ -308,14 +154,27 @@ const MusicController = {
     fadeOut(audio) {
         let vol = audio.volume;
         const fadeOutInt = setInterval(() => {
-            if (vol > 0.05) { vol -= 0.05; audio.volume = vol; } else { audio.volume = 0; audio.pause(); clearInterval(fadeOutInt); }
+            if (vol > 0.05) {
+                vol -= 0.05;
+                audio.volume = vol;
+            } else {
+                audio.volume = 0;
+                audio.pause();
+                clearInterval(fadeOutInt);
+            }
         }, 50);
     },
     fadeIn(audio, targetVol) {
         let vol = 0;
         audio.volume = 0;
         const fadeInInt = setInterval(() => {
-            if (vol < targetVol - 0.05) { vol += 0.05; audio.volume = vol; } else { audio.volume = targetVol; clearInterval(fadeInInt); }
+            if (vol < targetVol - 0.05) {
+                vol += 0.05;
+                audio.volume = vol;
+            } else {
+                audio.volume = targetVol;
+                clearInterval(fadeInInt);
+            }
         }, 50);
     }
 };
@@ -343,9 +202,13 @@ let lastHoverTime = 0;
 window.playUIHoverSound = function() {
     let now = Date.now();
     if (now - lastHoverTime < 50) return; 
+
     let base = audios['sfx-ui-hover'];
     if(base && !window.isMuted) { 
-        let s = base.cloneNode(); s.volume = 0.3 * (window.masterVol || 1.0); s.play().catch(()=>{}); lastHoverTime = now;
+        let s = base.cloneNode(); 
+        s.volume = 0.3 * (window.masterVol || 1.0);
+        s.play().catch(()=>{}); 
+        lastHoverTime = now;
     }
 };
 
@@ -365,8 +228,12 @@ window.showScreen = function(screenId) {
     }
 }
 
+// --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
 window.openDeckSelector = function() {
+    // 1. Marca o corpo da página para exigir modo paisagem via CSS
     document.body.classList.add('force-landscape');
+
+    // 2. Tenta Fullscreen e Trava (Funciona bem no Android)
     try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(() => {});
@@ -375,284 +242,76 @@ window.openDeckSelector = function() {
             screen.orientation.lock('landscape').catch(() => {});
         }
     } catch (e) { console.log(e); }
+
+    // 3. Vai para a seleção
     window.showScreen('deck-selection-screen');
 };
 
+// --- AVISO DE ROTAÇÃO PARA CELULAR ---
 (function createRotateOverlay() {
     if (!document.getElementById('rotate-overlay')) {
         const div = document.createElement('div');
         div.id = 'rotate-overlay';
-        div.innerHTML = `<div style="font-size: 50px; margin-bottom: 20px;">↻</div><div>GIRE O CELULAR<br>PARA JOGAR</div>`;
+        div.innerHTML = `
+            <div style="font-size: 50px; margin-bottom: 20px;">↻</div>
+            <div>GIRE O CELULAR<br>PARA JOGAR</div>
+        `;
         document.body.appendChild(div);
     }
 })();
 
-// ======================================================
-// LÓGICA DE MATCHMAKING REAL & PVP SYNC (FIREBASE)
-// ======================================================
-
-// Botão PvE (Treino)
-window.startPvE = function() {
-    window.gameMode = 'pve'; 
-    window.playNavSound();
-    window.openDeckSelector(); 
-};
-
-// Botão PvP (Rankeado)
-window.startPvPSearch = async function() {
-    if (!currentUser) return; 
-    window.gameMode = 'pvp';
-    window.playNavSound();
-
-    // UI
-    const mmScreen = document.getElementById('matchmaking-screen');
-    mmScreen.style.display = 'flex';
-    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
-    document.querySelector('.mm-title').style.color = "var(--gold)";
-    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
-    document.querySelector('.radar-spinner').style.borderTopColor = "var(--gold)";
-    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
-    document.querySelector('.cancel-btn').style.display = "block";
-    
-    // Timer
-    matchSeconds = 0;
-    const timerEl = document.getElementById('mm-timer');
-    timerEl.innerText = "00:00";
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    matchTimerInterval = setInterval(() => {
-        matchSeconds++;
-        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
-        let s = (matchSeconds % 60).toString().padStart(2, '0');
-        timerEl.innerText = `${m}:${s}`;
-    }, 1000);
-
-    // Firebase
-    try {
-        // A: Criar Ticket
-        myQueueRef = doc(collection(db, "queue")); 
-        const myData = {
-            uid: currentUser.uid,
-            name: currentUser.displayName,
-            score: 0, 
-            timestamp: Date.now(),
-            matchId: null 
-        };
-        await setDoc(myQueueRef, myData);
-
-        // B: Listener
-        queueListener = onSnapshot(myQueueRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.matchId) {
-                    enterMatch(data.matchId); 
-                }
-            }
-        });
-
-        // C: Tentar ser Host
-        findOpponentInQueue();
-
-    } catch (e) {
-        console.error("Erro no Matchmaking:", e);
-        cancelPvPSearch();
+// --- SELEÇÃO DE DECK ---
+window.selectDeck = function(deckType) {
+    if(audios['sfx-deck-select']) {
+        audios['sfx-deck-select'].currentTime = 0;
+        audios['sfx-deck-select'].play().catch(()=>{});
     }
-};
 
-async function findOpponentInQueue() {
-    try {
-        const queueRef = collection(db, "queue");
-        const q = query(queueRef, orderBy("timestamp", "asc"), limit(10));
-        const querySnapshot = await getDocs(q);
-        let opponentDoc = null;
-
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
-                opponentDoc = doc;
-            }
-        });
-
-        if (opponentDoc) {
-            const opponentId = opponentDoc.data().uid;
-            console.log("Oponente encontrado:", opponentId);
-            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-            await updateDoc(opponentDoc.ref, { matchId: matchId });
-            if (myQueueRef) { await updateDoc(myQueueRef, { matchId: matchId }); }
-            await createMatchDocument(matchId, currentUser.uid, opponentId);
-        }
-    } catch (e) { console.error("Erro ao buscar oponente:", e); }
-}
-
-async function createMatchDocument(matchId, p1Id, p2Id) {
-    const matchRef = doc(db, "matches", matchId);
-    await setDoc(matchRef, {
-        player1: { uid: p1Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
-        player2: { uid: p2Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
-        turn: 1,
-        status: 'waiting_decks',
-        createdAt: Date.now()
-    });
-}
-
-window.cancelPvPSearch = async function() {
-    window.playNavSound();
-    const mmScreen = document.getElementById('matchmaking-screen');
-    mmScreen.style.display = 'none';
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    if (queueListener) { queueListener(); queueListener = null; }
-    if (myQueueRef) { await updateDoc(myQueueRef, { cancelled: true }); myQueueRef = null; }
-    console.log("Busca cancelada.");
-};
-
-function enterMatch(matchId) {
-    console.log("PARTIDA ENCONTRADA! ID:", matchId);
-    if (queueListener) queueListener();
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-
-    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
-    document.querySelector('.mm-title').style.color = "#2ecc71";
-    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
-    document.querySelector('.radar-spinner').style.animation = "none";
-    document.querySelector('.cancel-btn').style.display = "none";
-
-    setTimeout(() => {
-        document.getElementById('matchmaking-screen').style.display = 'none';
-        window.currentMatchId = matchId;
-        window.isGameRunning = false;
-        startMatchListener(matchId);
-        window.openDeckSelector(); 
-    }, 1500);
-}
-
-function startMatchListener(matchId) {
-    if (matchUnsub) matchUnsub();
-    matchUnsub = onSnapshot(doc(db, "matches", matchId), async (docSnap) => {
-        if (!docSnap.exists()) return;
-        const matchData = docSnap.data();
-        
-        if (matchData.status === 'playing' && !window.isGameRunning) {
-            console.log("Tudo pronto! Iniciando jogo...");
-            window.isGameRunning = true;
-            window.transitionToGame(); 
-        }
-
-        // --- ATUALIZAÇÃO (SYNC) ---
-        if (matchData.status === 'playing') {
-            syncMatchState(matchData);
-        }
-
-        if (currentUser.uid === matchData.player1.uid && 
-            matchData.status === 'waiting_decks' &&
-            matchData.player1.status === 'ready' && 
-            matchData.player2.status === 'ready') {
-            
-            console.log("HOST: Ambos prontos. Gerando decks...");
-            await initializeMatchDecks(matchId, matchData);
-        }
-    });
-}
-
-// --- NOVA FUNÇÃO: O CÉREBRO DA SINCRONIZAÇÃO ---
-function syncMatchState(data) {
-    const isP1 = (currentUser.uid === data.player1.uid);
-    const myData = isP1 ? data.player1 : data.player2;
-    const oppData = isP1 ? data.player2 : data.player1;
-
-    player.hp = myData.hp;
-    player.maxHp = 6 + (myData.maxHpBonus || 0);
-    player.lvl = 1 + (myData.xp ? Math.floor(myData.xp.length / 5) : 0);
-    player.hand = myData.hand || [];
-    player.deck = myData.deck || [];
-    player.xp = myData.xp || [];
-    player.disabled = myData.disabled || null;
-
-    monster.name = oppData.class === 'mage' ? "MAGO RIVAL" : "CAVALEIRO RIVAL";
-    monster.hp = oppData.hp;
-    monster.maxHp = 6 + (oppData.maxHpBonus || 0);
-    monster.lvl = 1 + (oppData.xp ? Math.floor(oppData.xp.length / 5) : 0);
-    // Para o inimigo, não precisamos saber a mão exata, apenas a quantidade
-    monster.hand = new Array(oppData.hand ? oppData.hand.length : 0).fill('unknown'); 
-    monster.deck = oppData.deck || [];
-    monster.xp = oppData.xp || [];
-    monster.disabled = oppData.disabled || null;
-
-    turnCount = data.turn;
-    updateUI();
-
-    const handEl = document.getElementById('player-hand');
-    if (handEl && handEl.classList.contains('preparing') && player.hand.length > 0) {
-        handEl.classList.remove('preparing');
-        dealAllInitialCards(); 
-    }
-}
-
-async function initializeMatchDecks(matchId, matchData) {
-    const p1Deck = generateDeckForClass(matchData.player1.class);
-    const p2Deck = generateDeckForClass(matchData.player2.class);
-    const p1Hand = p1Deck.splice(-6);
-    const p2Hand = p2Deck.splice(-6);
-
-    await updateDoc(doc(db, "matches", matchId), {
-        "player1.deck": p1Deck, "player1.hand": p1Hand,
-        "player2.deck": p2Deck, "player2.hand": p2Hand,
-        status: 'playing', turn: 1
-    });
-}
-
-function generateDeckForClass(className) {
-    let deck = [];
-    for(let k in DECK_TEMPLATE) { for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k); }
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    return deck;
-}
-
-window.selectDeck = async function(deckType) {
-    if(audios['sfx-deck-select']) { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); }
     window.currentDeck = deckType; 
-    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
-    document.body.classList.add(deckType === 'mage' ? 'theme-mago' : 'theme-cavaleiro');
+    
+    // --- NOVO CÓDIGO: APLICA O TEMA AO BODY ---
+    document.body.classList.remove('theme-cavaleiro', 'theme-mago'); // Limpa temas anteriores
+    if (deckType === 'mage') {
+        document.body.classList.add('theme-mago');
+    } else {
+        document.body.classList.add('theme-cavaleiro');
+    }
+    // ------------------------------------------
 
     const options = document.querySelectorAll('.deck-option');
     options.forEach(opt => {
         if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
+            opt.style.transition = "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
             opt.style.transform = "scale(1.15) translateY(-20px)";
             opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))";
-            opt.style.opacity = "1";
+            opt.style.zIndex = "100";
+            const img = opt.querySelector('img');
+            if(img) img.style.filter = "grayscale(0%) brightness(1.2)";
         } else {
+            opt.style.transition = "all 0.3s ease";
             opt.style.transform = "scale(0.8) translateY(10px)";
             opt.style.opacity = "0.2";
+            opt.style.filter = "grayscale(100%)";
         }
     });
 
-    if (window.gameMode === 'pvp') {
-        const btn = document.querySelector('.return-btn');
-        if(btn) { btn.innerText = "AGUARDANDO OPONENTE..."; btn.disabled = true; }
-        try {
-            const matchRef = doc(db, "matches", window.currentMatchId);
-            const matchSnap = await getDoc(matchRef);
-            if(matchSnap.exists()) {
-                const data = matchSnap.data();
-                const field = (data.player1.uid === currentUser.uid) ? "player1" : "player2";
-                await updateDoc(matchRef, { [`${field}.class`]: deckType, [`${field}.status`]: 'ready' });
-                console.log("Deck escolhido. Aguardando início...");
-            }
-        } catch(e) { console.error("Erro ao salvar deck:", e); }
-    } else {
+    setTimeout(() => {
+        const selectionScreen = document.getElementById('deck-selection-screen');
+        selectionScreen.style.transition = "opacity 0.5s";
+        selectionScreen.style.opacity = "0";
+
         setTimeout(() => {
-            const selectionScreen = document.getElementById('deck-selection-screen');
-            selectionScreen.style.opacity = "0";
+            window.transitionToGame();
             setTimeout(() => {
-                window.transitionToGame();
-                setTimeout(() => {
-                    selectionScreen.style.opacity = "1";
-                    options.forEach(opt => opt.style = "");
-                }, 500);
+                selectionScreen.style.opacity = "1";
+                options.forEach(opt => {
+                    opt.style = "";
+                    const img = opt.querySelector('img');
+                    if(img) img.style = "";
+                });
             }, 500);
-        }, 400);
-    }
+        }, 500);
+    }, 400);
 };
 
 window.transitionToGame = function() {
@@ -729,6 +388,51 @@ window.goToLobby = async function(isAutoLogin = false) {
     document.getElementById('end-screen').classList.remove('visible'); 
 };
 
+function startGameFlow() {
+    document.getElementById('end-screen').classList.remove('visible');
+    isProcessing = false; 
+    startCinematicLoop(); 
+    
+    window.isMatchStarting = true;
+    const handEl = document.getElementById('player-hand');
+    if (handEl) {
+        handEl.innerHTML = '';
+        handEl.classList.add('preparing'); 
+    }
+    
+    resetUnit(player); 
+    resetUnit(monster); 
+    turnCount = 1; 
+    playerHistory = [];
+    drawCardLogic(monster, 6); 
+    drawCardLogic(player, 6); 
+    updateUI(); 
+    dealAllInitialCards();
+}
+
+function checkEndGame(){ 
+    if(player.hp<=0 || monster.hp<=0) { 
+        isProcessing = true; 
+        isLethalHover = false; 
+        MusicController.stopCurrent();
+        setTimeout(()=>{ 
+            let title = document.getElementById('end-title'); 
+            let isWin = player.hp > 0;
+            let isTie = player.hp <= 0 && monster.hp <= 0;
+            if(isTie) { 
+                title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); 
+            } else if(isWin) { 
+                title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); 
+            } else { 
+                title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); 
+            } 
+            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(); } 
+            else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
+            document.getElementById('end-screen').classList.add('visible'); 
+        }, 1000); 
+    } else { isProcessing = false; } 
+}
+
 // --- AUTH LISTENER ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -765,17 +469,24 @@ window.handleLogout = function() {
     signOut(auth).then(() => { location.reload(); });
 };
 
-// --- FUNÇÕES DE PONTUAÇÃO E ABANDONO ---
+// --- SISTEMA DE PONTUAÇÃO (PvP e PvE) ---
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!currentUser) return;
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
+        
         if(userSnap.exists()) {
             const data = userSnap.data();
+            
+            // Define pontos ganhos: 8 para PvP, 1 para PvE
             let modoAtual = window.gameMode || 'pve';
             let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
-            await updateDoc(userRef, { totalWins: (data.totalWins || 0) + 1, score: (data.score || 0) + pontosGanhos });
+
+            await updateDoc(userRef, {
+                totalWins: (data.totalWins || 0) + 1,
+                score: (data.score || 0) + pontosGanhos
+            });
             console.log(`Vitória registrada (${modoAtual}): +${pontosGanhos} pontos.`);
         }
     } catch(e) { console.error("Erro ao salvar vitória:", e); }
@@ -786,12 +497,19 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
+        
         if(userSnap.exists()) {
             const data = userSnap.data();
+            
             let modoAtual = window.gameMode || 'pve';
             let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3;
+            
+            // Evita pontuação negativa
             let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
-            await updateDoc(userRef, { score: novoScore });
+
+            await updateDoc(userRef, {
+                score: novoScore
+            });
             console.log(`Derrota registrada (${modoAtual}): -${pontosPerdidos} pontos.`);
         }
     } catch(e) { console.error("Erro ao salvar derrota:", e); }
@@ -804,36 +522,60 @@ window.restartMatch = function() {
 }
 
 window.abandonMatch = function() {
+    // Verifica se está na tela de jogo
     if(document.getElementById('game-screen').classList.contains('active')) {
+        // Fecha o painel de configuração (a engrenagem)
         window.toggleConfig(); 
+
+        // Abre a Janela Interna do Jogo (Modal)
         window.openModal(
-            "ABANDONAR?", 
-            "Sair da partida contará como DERROTA. Tem certeza?", 
-            ["CANCELAR", "SAIR"], 
+            "ABANDONAR?", // Título
+            "Sair da partida contará como DERROTA. Tem certeza?", // Descrição
+            ["CANCELAR", "SAIR"], // Botões
             (choice) => {
+                // Callback: o que fazer quando o jogador clica
                 if (choice === "SAIR") {
                     window.registrarDerrotaOnline();
                     window.transitionToLobby();
                 }
+                // Se clicar em "CANCELAR", o modal fecha sozinho automaticamente
             }
         );
     }
 }
 
-// --- FUNÇÕES DE PRELOAD E INICIALIZAÇÃO ---
 function preloadGame() {
     console.log("Iniciando Preload de " + totalAssets + " recursos...");
+    
     ASSETS_TO_LOAD.images.forEach(src => { 
-        let img = new Image(); img.src = src; window.gameAssets.push(img);
+        let img = new Image(); 
+        img.src = src; 
+        window.gameAssets.push(img);
+        
         img.onload = () => updateLoader(); 
-        img.onerror = () => { console.warn("Erro ao carregar imagem: " + src); updateLoader(); }; 
+        img.onerror = () => {
+            console.warn("Erro ao carregar imagem: " + src);
+            updateLoader(); 
+        }; 
     });
+
     ASSETS_TO_LOAD.audio.forEach(a => { 
-        let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; 
-        audios[a.id] = s; window.gameAssets.push(s);
+        let s = new Audio(); 
+        s.src = a.src; 
+        s.preload = 'auto'; 
+        if(a.loop) s.loop = true; 
+        audios[a.id] = s; 
+        window.gameAssets.push(s);
+
         s.onloadedmetadata = () => updateLoader(); 
-        s.onerror = () => { console.warn("Erro ao carregar áudio: " + a.src); updateLoader(); }; 
-        setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 3000); 
+        s.onerror = () => {
+            console.warn("Erro ao carregar áudio: " + a.src);
+            updateLoader();
+        }; 
+        
+        setTimeout(() => { 
+            if(s.readyState === 0) updateLoader(); 
+        }, 3000); 
     });
 }
 
@@ -842,16 +584,28 @@ function updateLoader() {
     let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
     const fill = document.getElementById('loader-fill');
     if(fill) fill.style.width = pct + '%';
+    
     if(assetsLoaded >= totalAssets) {
         console.log("Preload completo!");
+        
         if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
+        
         setTimeout(() => {
             const loading = document.getElementById('loading-screen');
-            if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
-            if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
+            if(loading) {
+                loading.style.opacity = '0';
+                setTimeout(() => loading.style.display = 'none', 500);
+            }
+            if(!window.hoverLogicInitialized) {
+                initGlobalHoverLogic();
+                window.hoverLogicInitialized = true;
+            }
         }, 800); 
+        
         document.body.addEventListener('click', () => { 
-            if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) { MusicController.play('bgm-menu'); }
+            if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) {
+                MusicController.play('bgm-menu');
+            }
         }, { once: true });
     }
 }
@@ -861,16 +615,25 @@ function initGlobalHoverLogic() {
     document.body.addEventListener('mouseover', (e) => {
         const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn';
         const target = e.target.closest(selector);
-        if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } 
-        else if (!target) { lastTarget = null; }
+        if (target && target !== lastTarget) {
+            lastTarget = target;
+            window.playUIHoverSound();
+        } else if (!target) {
+            lastTarget = null;
+        }
     });
 }
+
+preloadGame();
 
 window.onload = function() {
     const btnSound = document.getElementById('btn-sound');
     if (btnSound) {
         btnSound.onclick = null; 
-        btnSound.addEventListener('click', (e) => { e.stopPropagation(); window.toggleMute(); });
+        btnSound.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            window.toggleMute();
+        });
     }
 };
 
@@ -886,10 +649,13 @@ function createLobbyFlares() {
     for(let i=0; i < 70; i++) {
         let flare = document.createElement('div');
         flare.className = 'lobby-flare';
-        flare.style.left = Math.random() * 100 + '%'; flare.style.top = Math.random() * 100 + '%';
+        flare.style.left = Math.random() * 100 + '%';
+        flare.style.top = Math.random() * 100 + '%';
         let size = 4 + Math.random() * 18; 
-        flare.style.width = size + 'px'; flare.style.height = size + 'px';
-        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; flare.style.animationDelay = (Math.random() * 4) + 's';
+        flare.style.width = size + 'px';
+        flare.style.height = size + 'px';
+        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
+        flare.style.animationDelay = (Math.random() * 4) + 's';
         container.appendChild(flare);
     }
 }
@@ -897,8 +663,10 @@ function createLobbyFlares() {
 function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
 
 function updateAudioMixer() { 
-    const cineAudio = audios['sfx-cine']; if(!cineAudio) return; 
-    const mVol = window.masterVol || 1.0; const maxCine = 0.6 * mVol; 
+    const cineAudio = audios['sfx-cine']; 
+    if(!cineAudio) return; 
+    const mVol = window.masterVol || 1.0;
+    const maxCine = 0.6 * mVol; 
     let targetCine = isLethalHover ? maxCine : 0; 
     if(window.isMuted) { cineAudio.volume = 0; return; }
     if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
@@ -915,10 +683,15 @@ window.updateVol = function(type, val) {
      'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) {
             let vol = window.masterVol || 1.0;
-            if(k === 'sfx-ui-hover') audios[k].volume = 0.3 * vol;
-            else if (k === 'sfx-levelup') audios[k].volume = 1.0 * vol;
-            else if (k === 'sfx-train') audios[k].volume = 0.5 * vol;
-            else audios[k].volume = 0.8 * vol;
+            if(k === 'sfx-ui-hover') {
+                audios[k].volume = 0.3 * vol;
+            } else if (k === 'sfx-levelup') {
+                audios[k].volume = 1.0 * vol;
+            } else if (k === 'sfx-train') {
+                audios[k].volume = 0.5 * vol;
+            } else {
+                audios[k].volume = 0.8 * vol;
+            }
         }
     }); 
 }
@@ -926,10 +699,14 @@ function playSound(key) {
     if(audios[key]) { 
         if (key === 'sfx-levelup') {
             audios[key].volume = 1.0 * (window.masterVol || 1.0);
-            audios[key].currentTime = 0; audios[key].play().catch(()=>{});
-            let clone = audios[key].cloneNode(); clone.volume = audios[key].volume; clone.play().catch(()=>{});
+            audios[key].currentTime = 0; 
+            audios[key].play().catch(e => console.log("Audio prevented:", e));
+            let clone = audios[key].cloneNode();
+            clone.volume = audios[key].volume;
+            clone.play().catch(()=>{});
         } else {
-            audios[key].currentTime = 0; audios[key].play().catch(()=>{}); 
+            audios[key].currentTime = 0; 
+            audios[key].play().catch(e => console.log("Audio prevented:", e)); 
         }
     } 
 }
@@ -942,16 +719,28 @@ function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = documen
 function triggerDamageEffect(isPlayer, playAudio = true) { 
     try { 
         if(playAudio) {
-            if(!isPlayer && window.currentDeck === 'mage') playSound('sfx-hit-mage');
-            else playSound('sfx-hit'); 
+            if(!isPlayer && window.currentDeck === 'mage') {
+                playSound('sfx-hit-mage');
+            } else {
+                playSound('sfx-hit'); 
+            }
         } 
-        let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); 
-        if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } 
+        
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
+        let slot = document.getElementById(elId); 
+        if(slot) { 
+            let r = slot.getBoundingClientRect(); 
+            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); 
+        } 
+
         if (isPlayer) {
-            document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
+            document.body.classList.add('shake-screen'); 
+            setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
             if(window.triggerDamageEffect) window.triggerDamageEffect(); 
-            let ov = document.getElementById('dmg-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
+            let ov = document.getElementById('dmg-overlay'); 
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
         }
+
     } catch(e) {} 
 }
 
@@ -959,23 +748,35 @@ function triggerCritEffect() { let ov = document.getElementById('crit-overlay');
 
 function triggerHealEffect(isPlayer) { 
     try { 
-        let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId); 
-        if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } 
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
+        let slot = document.getElementById(elId); 
+        if(slot) { 
+            let r = slot.getBoundingClientRect(); 
+            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); 
+        } 
+        
         if (isPlayer) {
             if(window.triggerHealEffect) window.triggerHealEffect();
-            let ov = document.getElementById('heal-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
+            let ov = document.getElementById('heal-overlay'); 
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
         }
     } catch(e) {} 
 }
 
 function triggerBlockEffect(isPlayer) { 
     try { 
-        if(isPlayer && window.currentDeck === 'mage') playSound('sfx-block-mage');
-        else playSound('sfx-block'); 
+        if(isPlayer && window.currentDeck === 'mage') {
+             playSound('sfx-block-mage');
+        } else {
+             playSound('sfx-block'); 
+        }
+        
         if (!isPlayer) {
              if(window.triggerBlockEffect) window.triggerBlockEffect();
-             let ov = document.getElementById('block-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
-             document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+             let ov = document.getElementById('block-overlay'); 
+             if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
+             document.body.classList.add('shake-screen'); 
+             setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
         }
     } catch(e) {} 
 }
@@ -986,12 +787,29 @@ function resetUnit(u) { u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []
 function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
 function dealAllInitialCards() {
-    isProcessing = true; playSound('sfx-deal'); 
-    const handEl = document.getElementById('player-hand'); const cards = Array.from(handEl.children);
-    cards.forEach((cardEl, i) => { cardEl.classList.add('intro-anim'); cardEl.style.animationDelay = (i * 0.1) + 's'; cardEl.style.opacity = ''; });
+    isProcessing = true; 
+    playSound('sfx-deal'); 
+    
+    const handEl = document.getElementById('player-hand'); 
+    const cards = Array.from(handEl.children);
+    
+    cards.forEach((cardEl, i) => {
+        cardEl.classList.add('intro-anim');
+        cardEl.style.animationDelay = (i * 0.1) + 's';
+        cardEl.style.opacity = ''; 
+    });
+
     window.isMatchStarting = false;
+    
     if(handEl) handEl.classList.remove('preparing');
-    setTimeout(() => { cards.forEach(c => { c.classList.remove('intro-anim'); c.style.animationDelay = ''; }); isProcessing = false; }, 2000); 
+
+    setTimeout(() => {
+        cards.forEach(c => {
+            c.classList.remove('intro-anim');
+            c.style.animationDelay = '';
+        });
+        isProcessing = false;
+    }, 2000); 
 }
 
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
@@ -1008,7 +826,11 @@ function onCardClick(index) {
 
 function getBestAIMove() {
     let moves = []; 
-    monster.hand.forEach((card, index) => { if(card !== monster.disabled) moves.push({ card: card, index: index, score: 0 }); });
+    monster.hand.forEach((card, index) => { 
+        if(card !== monster.disabled) {
+            moves.push({ card: card, index: index, score: 0 }); 
+        }
+    });
     if(moves.length === 0) return null;
     let recentHistory = playerHistory.slice(-5);
     let attackCount = recentHistory.filter(c => c === 'ATAQUE').length;
@@ -1063,7 +885,9 @@ function playCardFlow(index, pDisarmChoice) {
         realCardEl.style.setProperty('opacity', '0', 'important');
         realCardEl.style.setProperty('visibility', 'hidden', 'important');
         realCardEl.innerHTML = '';
-        realCardEl.style.border = 'none'; realCardEl.style.background = 'none'; realCardEl.style.boxShadow = 'none';
+        realCardEl.style.border = 'none';
+        realCardEl.style.background = 'none';
+        realCardEl.style.boxShadow = 'none';
     }
     
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
@@ -1080,6 +904,7 @@ function playCardFlow(index, pDisarmChoice) {
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
+    
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
 
@@ -1091,7 +916,9 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let clash = false;
     let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); 
     let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE'); 
-    if(pBlocks) { clash = true; triggerBlockEffect(true); } else if(mBlocks) { clash = true; triggerBlockEffect(false); }
+    
+    if(pBlocks) { clash = true; triggerBlockEffect(true); }
+    else if(mBlocks) { clash = true; triggerBlockEffect(false); }
 
     let nextPlayerDisabled = null; let nextMonsterDisabled = null;
     if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
@@ -1102,13 +929,19 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
 
     if(pDmg > 0) { 
-        player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); 
-        let soundOn = !(clash && mAct === 'BLOQUEIO'); if (!mBlocks) triggerDamageEffect(true, soundOn);
+        player.hp -= pDmg; 
+        showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); 
+        let soundOn = !(clash && mAct === 'BLOQUEIO'); 
+        if (!mBlocks) { triggerDamageEffect(true, soundOn); }
     }
+
     if(mDmg > 0) { 
-        monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); 
-        let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn); 
+        monster.hp -= mDmg; 
+        showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); 
+        let soundOn = !(clash && pAct === 'BLOQUEIO'); 
+        triggerDamageEffect(false, soundOn); 
     }
+    
     updateUI();
     let pDead = player.hp <= 0, mDead = monster.hp <= 0;
     
@@ -1118,7 +951,9 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     function handleExtraXP(u) { 
         if(u.deck.length > 0) { 
             let card = u.deck.pop(); 
-            animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }, false, false, (u.id === 'p')); 
+            animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
+                u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
+            }, false, false, (u.id === 'p')); 
         } 
     }
     if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
@@ -1136,8 +971,12 @@ function checkLevelUp(u, doneCb) {
         let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
         minis.forEach(realCard => {
             let rect = realCard.getBoundingClientRect(); 
-            let clone = document.createElement('div'); clone.className = 'xp-anim-clone';
-            clone.style.left = rect.left + 'px'; clone.style.top = rect.top + 'px'; clone.style.width = rect.width + 'px'; clone.style.height = rect.height + 'px'; 
+            let clone = document.createElement('div'); 
+            clone.className = 'xp-anim-clone';
+            clone.style.left = rect.left + 'px'; 
+            clone.style.top = rect.top + 'px'; 
+            clone.style.width = rect.width + 'px'; 
+            clone.style.height = rect.height + 'px'; 
             clone.style.backgroundImage = realCard.style.backgroundImage;
             if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down');
             document.body.appendChild(clone);
@@ -1145,16 +984,26 @@ function checkLevelUp(u, doneCb) {
         minis.forEach(m => m.style.opacity = '0');
 
         setTimeout(() => {
-            let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); 
-            let triggers = []; for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
+            let counts = {}; 
+            u.xp.forEach(x => counts[x] = (counts[x]||0)+1); 
+            let triggers = []; 
+            for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
             
             processMasteries(u, triggers, () => {
-                let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; 
-                lvlEl.classList.add('level-up-anim'); triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); 
+                let lvlEl = document.getElementById(u.id+'-lvl'); 
+                u.lvl++; 
+                lvlEl.classList.add('level-up-anim'); 
+                triggerLevelUpVisuals(u.id); 
+                playSound('sfx-levelup'); 
                 setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
-                u.xp.forEach(x => u.deck.push(x)); u.xp = []; shuffle(u.deck); 
-                let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
-                updateUI(); doneCb();
+
+                u.xp.forEach(x => u.deck.push(x)); 
+                u.xp = []; 
+                shuffle(u.deck); 
+                let clones = document.getElementsByClassName('xp-anim-clone'); 
+                while(clones.length > 0) clones[0].remove();
+                updateUI(); 
+                doneCb();
             });
         }, 1000); 
     } else { doneCb(); }
@@ -1164,9 +1013,12 @@ function triggerLevelUpVisuals(unitId) {
     let clusterId = (unitId === 'p') ? 'p-stats-cluster' : 'm-stats-cluster';
     let cluster = document.getElementById(clusterId);
     if(!cluster) return;
-    const text = document.createElement('div'); text.innerText = "LEVEL UP!"; text.className = 'levelup-text'; 
+    const text = document.createElement('div');
+    text.innerText = "LEVEL UP!";
+    text.className = 'levelup-text'; 
     if (unitId === 'p') { text.classList.add('lvl-anim-up'); } else { text.classList.add('lvl-anim-down'); }
-    cluster.appendChild(text); setTimeout(() => { text.remove(); }, 2000);
+    cluster.appendChild(text);
+    setTimeout(() => { text.remove(); }, 2000);
 }
 
 function processMasteries(u, triggers, cb) {
@@ -1194,7 +1046,9 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
     let e = { top: 0, left: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
 
-    const fly = document.createElement('div'); fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
+    const fly = document.createElement('div');
+    fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
+    
     let imgUrl = getCardArt(cardKey, isPlayer);
     fly.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
     if (isToTable) fly.classList.add('card-bounce');
@@ -1214,11 +1068,15 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
     setTimeout(() => { fly.remove(); if(cb) cb(); }, 250);
 }
 
-function drawCardAnimated(unit, deckId, handId, cb) { if(cb) cb(); }
+function drawCardAnimated(unit, deckId, handId, cb) { 
+    if(cb) cb(); 
+}
 
 function renderTable(key, slotId, isPlayer = false) { 
-    let el = document.getElementById(slotId); el.innerHTML = ''; 
-    let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`; 
+    let el = document.getElementById(slotId); 
+    el.innerHTML = ''; 
+    let card = document.createElement('div'); 
+    card.className = `card ${CARDS_DB[key].color} card-on-table`; 
     let imgUrl = getCardArt(key, isPlayer);
     card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`; 
     el.appendChild(card); 
@@ -1236,7 +1094,11 @@ function updateUnit(u) {
     
     if(u === player) {
         let deckImgEl = document.getElementById('p-deck-img');
-        deckImgEl.src = (window.currentDeck === 'mage') ? MAGE_ASSETS.DECK_IMG : 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png';
+        if(window.currentDeck === 'mage') {
+            deckImgEl.src = MAGE_ASSETS.DECK_IMG;
+        } else {
+            deckImgEl.src = 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png';
+        }
     }
 
     if(u===player) {
@@ -1245,12 +1107,19 @@ function updateUnit(u) {
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
-            if(window.isMatchStarting) c.style.opacity = '0'; else c.style.opacity = '1';
+            
+            if(window.isMatchStarting) {
+                c.style.opacity = '0';
+            } else {
+                c.style.opacity = '1';
+            }
 
             let lethalType = checkCardLethality(k); 
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
+            
             let imgUrl = getCardArt(k, true);
             c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
+            
             c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
             c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
             c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
@@ -1260,8 +1129,10 @@ function updateUnit(u) {
     
     let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
     u.xp.forEach(k=>{ 
-        let d=document.createElement('div'); d.className='xp-mini'; 
-        let imgUrl = getCardArt(k, (u === player)); d.style.backgroundImage = `url('${imgUrl}')`; 
+        let d=document.createElement('div'); 
+        d.className='xp-mini'; 
+        let imgUrl = getCardArt(k, (u === player));
+        d.style.backgroundImage = `url('${imgUrl}')`; 
         d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; 
         d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; 
         xc.appendChild(d); 
@@ -1280,10 +1151,19 @@ function bindMasteryTooltip(el, key, value, ownerId) {
             document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
             tt.style.display = 'block';
             tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); 
-            void tt.offsetWidth; let rect = el.getBoundingClientRect();
-            if(ownerId === 'p') { tt.classList.add('tooltip-anim-up'); tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px'; tt.style.top = 'auto'; } 
-            else { tt.classList.add('tooltip-anim-down'); tt.style.top = (rect.bottom + 10) + 'px'; tt.style.bottom = 'auto'; }
-            tt.style.left = (rect.left + rect.width/2) + 'px'; tt.style.transform = "translateX(-50%)"; 
+            void tt.offsetWidth; 
+            let rect = el.getBoundingClientRect();
+            if(ownerId === 'p') {
+                tt.classList.add('tooltip-anim-up');
+                tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+                tt.style.top = 'auto';
+            } else {
+                tt.classList.add('tooltip-anim-down');
+                tt.style.top = (rect.bottom + 10) + 'px';
+                tt.style.bottom = 'auto';
+            }
+            tt.style.left = (rect.left + rect.width/2) + 'px';
+            tt.style.transform = "translateX(-50%)"; 
         }
     };
 }
@@ -1293,7 +1173,50 @@ function addMI(parent, key, value, col, ownerId){
     d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`;
     d.style.borderColor = col; 
     let handlers = bindMasteryTooltip(d, key, value, ownerId);
-    d.onmouseenter = handlers.onmouseenter; d.onmouseleave = () => { tt.style.display = 'none'; }; parent.appendChild(d); 
+    d.onmouseenter = handlers.onmouseenter;
+    d.onmouseleave = () => { tt.style.display = 'none'; }; 
+    parent.appendChild(d); 
+}
+
+function showFloatingText(eid, txt, col) { 
+    let el = document.createElement('div'); 
+    el.className='floating-text'; 
+    el.innerText=txt; 
+    el.style.color=col; 
+    let parent = document.getElementById(eid);
+    if(parent) {
+        let rect = parent.getBoundingClientRect();
+        el.style.left = (rect.left + rect.width/2) + 'px';
+        el.style.top = (rect.top) + 'px';
+        document.body.appendChild(el); 
+    } else {
+         document.body.appendChild(el);
+    }
+    setTimeout(()=>el.remove(), 2000); 
+}
+
+window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
+window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
+const tt=document.getElementById('tooltip-box');
+
+function bindFixedTooltip(el,k) { 
+    const updatePos = () => { 
+        let rect = el.getBoundingClientRect(); 
+        tt.style.left = (rect.left + rect.width / 2) + 'px'; 
+    }; 
+    return { 
+        onmouseenter: (e) => { 
+            showTT(k); 
+            tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
+            tt.style.top = 'auto'; 
+            
+            tt.classList.remove('tooltip-anim-up'); 
+            tt.classList.remove('tooltip-anim-down'); 
+            tt.classList.add('tooltip-anim-up'); 
+            updatePos(); 
+            el.addEventListener('mousemove', updatePos); 
+        } 
+    }; 
 }
 
 function showTT(k) {
@@ -1308,32 +1231,228 @@ function showTT(k) {
         content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
         document.getElementById('tt-content').innerHTML = content;
     } else {
-        document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`;
+        document.getElementById('tt-content').innerHTML = `
+            <span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span>
+            <span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>
+            <span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>
+        `;
     }
     tt.style.display = 'block';
 }
 
 function apply3DTilt(element, isHand = false) { 
     if(window.innerWidth < 768) return; 
+    
     element.addEventListener('mousemove', (e) => { 
         const rect = element.getBoundingClientRect(); 
-        const x = e.clientX - rect.left; const y = e.clientY - rect.top; 
-        const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; 
-        element.style.setProperty('--rx', xPct); element.style.setProperty('--ry', yPct);
+        const x = e.clientX - rect.left; 
+        const y = e.clientY - rect.top; 
+        const xPct = (x / rect.width) - 0.5; 
+        const yPct = (y / rect.height) - 0.5; 
+        
+        element.style.setProperty('--rx', xPct);
+        element.style.setProperty('--ry', yPct);
+
         let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
         let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
         if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
+        
         element.style.transform = `${lift} ${rotate}`; 
-        let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
+        
+        let art = element.querySelector('.card-art'); 
+        if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
     }); 
+    
     element.addEventListener('mouseleave', () => { 
         element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
-        let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; 
-        element.style.setProperty('--rx', 0); element.style.setProperty('--ry', 0);
+        let art = element.querySelector('.card-art'); 
+        if(art) art.style.backgroundPosition = 'center'; 
+        element.style.setProperty('--rx', 0);
+        element.style.setProperty('--ry', 0);
     }); 
 }
 
 // ======================================================
-// INICIALIZADOR
+// LÓGICA DE MATCHMAKING REAL (FIREBASE)
 // ======================================================
-preloadGame();
+
+let matchTimerInterval = null;
+let matchSeconds = 0;
+let myQueueRef = null;      // Referência do meu lugar na fila
+let queueListener = null;   // Ouvinte para saber se alguém me achou
+
+// Botão PvE (Treino) - Vai direto para seleção de deck
+window.startPvE = function() {
+    window.gameMode = 'pve'; 
+    window.playNavSound();
+    window.openDeckSelector(); 
+};
+
+// --- INICIAR BUSCA (Botão PvP) ---
+window.startPvPSearch = async function() {
+    if (!currentUser) return; 
+    window.gameMode = 'pvp';
+    window.playNavSound();
+
+    // 1. UI: Abre a tela de busca
+    const mmScreen = document.getElementById('matchmaking-screen');
+    mmScreen.style.display = 'flex';
+    // Garante que o texto está resetado caso tenha jogado antes
+    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
+    document.querySelector('.mm-title').style.color = "var(--gold)";
+    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
+    document.querySelector('.radar-spinner').style.borderTopColor = "var(--gold)";
+    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
+    document.querySelector('.cancel-btn').style.display = "block";
+    
+    // 2. Timer Visual
+    matchSeconds = 0;
+    const timerEl = document.getElementById('mm-timer');
+    timerEl.innerText = "00:00";
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    matchTimerInterval = setInterval(() => {
+        matchSeconds++;
+        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
+        let s = (matchSeconds % 60).toString().padStart(2, '0');
+        timerEl.innerText = `${m}:${s}`;
+    }, 1000);
+
+    // 3. FIREBASE: Entrar na Fila
+    try {
+        // Passo A: Criar meu ticket na fila
+        myQueueRef = doc(collection(db, "queue")); 
+        const myData = {
+            uid: currentUser.uid,
+            name: currentUser.displayName,
+            score: 0, // Futuramente puxar do userSnap
+            timestamp: Date.now(),
+            matchId: null // Se preenchido, significa que acharam partida
+        };
+        await setDoc(myQueueRef, myData);
+
+        // Passo B: Escutar meu próprio ticket para ver se alguém me puxou
+        queueListener = onSnapshot(myQueueRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.matchId) {
+                    enterMatch(data.matchId); // ALGUÉM ME ACHOU!
+                }
+            }
+        });
+
+        // Passo C: Tentar achar alguém que já esteja lá (Ser o Host)
+        findOpponentInQueue();
+
+    } catch (e) {
+        console.error("Erro no Matchmaking:", e);
+        cancelPvPSearch();
+    }
+};
+
+// Função que procura oponentes na fila (Host Logic)
+async function findOpponentInQueue() {
+    try {
+        const queueRef = collection(db, "queue");
+        // Pega os 10 primeiros da fila
+        const q = query(queueRef, orderBy("timestamp", "asc"), limit(10));
+        const querySnapshot = await getDocs(q);
+
+        let opponentDoc = null;
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            // Se não sou eu, e não está cancelado, e ainda não tem partida
+            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
+                opponentDoc = doc;
+            }
+        });
+
+        if (opponentDoc) {
+            // ACHAMOS UM OPONENTE!
+            const opponentId = opponentDoc.data().uid;
+            console.log("Oponente encontrado na fila:", opponentId);
+
+            // 1. Cria o ID da Partida
+            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+
+            // 2. Avisa o oponente (atualiza o doc dele na fila com o ID da partida)
+            await updateDoc(opponentDoc.ref, { matchId: matchId });
+
+            // 3. Avisa a mim mesmo (atualiza meu doc)
+            if (myQueueRef) {
+                await updateDoc(myQueueRef, { matchId: matchId });
+            }
+
+            // 4. Cria o documento da partida (Inicializa a mesa)
+            await createMatchDocument(matchId, currentUser.uid, opponentId);
+        }
+
+    } catch (e) {
+        console.error("Erro ao buscar oponente:", e);
+    }
+}
+
+// Cria a estrutura inicial da partida no banco
+async function createMatchDocument(matchId, p1Id, p2Id) {
+    const matchRef = doc(db, "matches", matchId);
+    await setDoc(matchRef, {
+        player1: { uid: p1Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        player2: { uid: p2Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        turn: 1,
+        status: 'waiting_decks', // Esperando escolherem decks
+        createdAt: Date.now()
+    });
+}
+
+// --- CANCELAR BUSCA ---
+window.cancelPvPSearch = async function() {
+    window.playNavSound();
+    const mmScreen = document.getElementById('matchmaking-screen');
+    mmScreen.style.display = 'none';
+    
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    
+    // Para de escutar mudanças
+    if (queueListener) {
+        queueListener(); 
+        queueListener = null;
+    }
+
+    // Remove ou cancela meu nome da fila
+    if (myQueueRef) {
+        await updateDoc(myQueueRef, { cancelled: true }); 
+        // Idealmente usaríamos deleteDoc(myQueueRef), mas marcar cancelado é mais seguro para logs
+        myQueueRef = null;
+    }
+    
+    console.log("Busca cancelada.");
+};
+
+// --- ENTRAR NA PARTIDA (Sucesso) ---
+function enterMatch(matchId) {
+    console.log("PARTIDA ENCONTRADA! ID:", matchId);
+    
+    // Limpa listeners da fila
+    if (queueListener) queueListener();
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+
+    // Atualiza UI para Verde
+    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
+    document.querySelector('.mm-title').style.color = "#2ecc71";
+    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
+    document.querySelector('.radar-spinner').style.animation = "none";
+    document.querySelector('.cancel-btn').style.display = "none";
+
+    // Aguarda um pouco e vai para a seleção de deck (que agora será PvP)
+    setTimeout(() => {
+        const mmScreen = document.getElementById('matchmaking-screen');
+        mmScreen.style.display = 'none';
+        
+        // Configura o ID da partida globalmente para usarmos depois
+        window.currentMatchId = matchId;
+        
+        // Vai para a seleção de deck
+        window.openDeckSelector(); 
+        
+    }, 1500);
+}
