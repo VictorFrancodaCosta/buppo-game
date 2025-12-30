@@ -1174,4 +1174,17 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 }
 
+/* Efeito de Carta Selecionada na Mão (Aguardando oponente) */
+.card-selected {
+    border: 3px solid var(--accent-blue) !important;
+    box-shadow: 0 0 25px var(--accent-blue), 0 0 50px rgba(0, 206, 201, 0.4) !important;
+    transform: translateY(-40px) scale(1.15) !important;
+    z-index: 100 !important;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+/* Quando selecionada, ignorar eventos de mouse (para não bugar o hover 3D) */
+.card-selected:hover {
+    transform: translateY(-40px) scale(1.15) !important;
+}
  
