@@ -46,15 +46,31 @@ const MAGE_ASSETS = {
 };
 
 const ASSETS_TO_LOAD = {
-   images: [
-        'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png', 'https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png', 'https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png',
-        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png', 'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png', 'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',
-        'https://i.ibb.co/fzr36qbR/SELE-O-DE-DECK-CAVALEIRO.png', 'https://i.ibb.co/bjBcKN6c/SELE-O-DE-DECK-MAGO.png', 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
-        'https://i.ibb.co/jdZmTHC/CARDBACK.png', 'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png', 'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png',
-        'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png', 'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png', 'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
-        'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png', 'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png', 'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
-        'https://i.ibb.co/sv98P3JK/03-DESCANSAR-MAGO.png', 'https://i.ibb.co/Q7SmhYQk/04-DESARMAR-MAGO.png', 'https://i.ibb.co/8LGTJCn4/05-TREINAR-MAGO.png',
-        'https://i.ibb.co/XZ8qc166/DECK-MAGO.png', 'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png', 'https://i.ibb.co/SXPndxhb/AREA-DE-EXPERIENCIA.png'
+    images: [
+        'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png',
+        'https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png', // Atualizado para nova mesa Cavaleiro
+        'https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png', // Atualizado para nova mesa Mago
+        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png',
+        'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',
+        'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',
+        'https://i.ibb.co/fzr36qbR/SELE-O-DE-DECK-CAVALEIRO.png',
+        'https://i.ibb.co/bjBcKN6c/SELE-O-DE-DECK-MAGO.png',
+        'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
+        'https://i.ibb.co/jdZmTHC/CARDBACK.png',
+        'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png',
+        'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png',
+        'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png',
+        'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png',
+        'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
+        'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png',
+        'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png',
+        'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
+        'https://i.ibb.co/sv98P3JK/03-DESCANSAR-MAGO.png',
+        'https://i.ibb.co/Q7SmhYQk/04-DESARMAR-MAGO.png',
+        'https://i.ibb.co/8LGTJCn4/05-TREINAR-MAGO.png',
+        'https://i.ibb.co/XZ8qc166/DECK-MAGO.png',
+        'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png',
+        'https://i.ibb.co/SXPndxhb/AREA-DE-EXPERIENCIA.png'
     ],
     audio: [
         { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
@@ -212,8 +228,7 @@ window.showScreen = function(screenId) {
     }
 }
 
-// --- ATUALIZAÇÃO NO js/main.js ---
-
+// --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
 window.openDeckSelector = function() {
     // 1. Marca o corpo da página para exigir modo paisagem via CSS
     document.body.classList.add('force-landscape');
@@ -232,8 +247,7 @@ window.openDeckSelector = function() {
     window.showScreen('deck-selection-screen');
 };
 
-// --- IMPORTANTE: ADICIONE ISSO TAMBÉM NO FINAL DO ARQUIVO MAIN.JS ---
-// (Isso cria o aviso visual de "Gire o Celular" automaticamente no HTML)
+// --- AVISO DE ROTAÇÃO PARA CELULAR ---
 (function createRotateOverlay() {
     if (!document.getElementById('rotate-overlay')) {
         const div = document.createElement('div');
@@ -246,8 +260,7 @@ window.openDeckSelector = function() {
     }
 })();
 
-// --- DENTRO DE js/main.js ---
-
+// --- SELEÇÃO DE DECK ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         audios['sfx-deck-select'].currentTime = 0;
@@ -456,33 +469,50 @@ window.handleLogout = function() {
     signOut(auth).then(() => { location.reload(); });
 };
 
-window.registrarVitoriaOnline = async function() {
+// --- SISTEMA DE PONTUAÇÃO (PvP e PvE) ---
+window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!currentUser) return;
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
+        
         if(userSnap.exists()) {
             const data = userSnap.data();
+            
+            // Define pontos ganhos: 8 para PvP, 1 para PvE
+            let modoAtual = window.gameMode || 'pve';
+            let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
+
             await updateDoc(userRef, {
                 totalWins: (data.totalWins || 0) + 1,
-                score: (data.score || 0) + 100
+                score: (data.score || 0) + pontosGanhos
             });
+            console.log(`Vitória registrada (${modoAtual}): +${pontosGanhos} pontos.`);
         }
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error("Erro ao salvar vitória:", e); }
 };
 
-window.registrarDerrotaOnline = async function() {
+window.registrarDerrotaOnline = async function(modo = 'pve') {
     if(!currentUser) return;
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
+        
         if(userSnap.exists()) {
             const data = userSnap.data();
+            
+            let modoAtual = window.gameMode || 'pve';
+            let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3;
+            
+            // Evita pontuação negativa
+            let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
+
             await updateDoc(userRef, {
-                score: (data.score || 0) + 10 
+                score: novoScore
             });
+            console.log(`Derrota registrada (${modoAtual}): -${pontosPerdidos} pontos.`);
         }
-    } catch(e) {}
+    } catch(e) { console.error("Erro ao salvar derrota:", e); }
 };
 
 window.restartMatch = function() {
@@ -491,13 +521,9 @@ window.restartMatch = function() {
     MusicController.play('bgm-loop'); 
 }
 
-// --- ARQUIVO: js/main.js ---
-// Substitua a função window.abandonMatch por esta:
-
 window.abandonMatch = function() {
     // Verifica se está na tela de jogo
     if(document.getElementById('game-screen').classList.contains('active')) {
-        
         // Fecha o painel de configuração (a engrenagem)
         window.toggleConfig(); 
 
@@ -1251,16 +1277,16 @@ function apply3DTilt(element, isHand = false) {
 let matchTimerInterval = null;
 let matchSeconds = 0;
 
-// Botão PvE (Treino) - Vai direto para seleção de deck (como era antes)
+// Botão PvE (Treino) - Vai direto para seleção de deck
 window.startPvE = function() {
-    window.gameMode = 'pve'; // Salva o modo
+    window.gameMode = 'pve'; // Salva o modo globalmente
     window.playNavSound();
     window.openDeckSelector(); // Usa sua função existente de abrir tela cheia/deck
 };
 
 // Botão PvP (Rankeado) - Abre a busca
 window.startPvPSearch = function() {
-    window.gameMode = 'pvp'; // Salva o modo
+    window.gameMode = 'pvp'; // Salva o modo globalmente
     window.playNavSound();
     
     // Abre a tela de busca
