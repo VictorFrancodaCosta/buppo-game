@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO WEB PURA - COM PVP FUNCIONAL)
+// ARQUIVO: js/main.js (VERSÃO COMPLETA E CORRIGIDA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -108,6 +108,7 @@ let mixerInterval = null;
 window.isMatchStarting = false;
 window.currentDeck = 'knight';
 window.myRole = null; // 'player1' ou 'player2'
+window.currentMatchId = null;
 
 // --- HELPER: RETORNA ARTE CORRETA ---
 function getCardArt(cardKey, isPlayer) {
@@ -231,10 +232,7 @@ window.showScreen = function(screenId) {
 
 // --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
 window.openDeckSelector = function() {
-    // 1. Marca o corpo da página para exigir modo paisagem via CSS
     document.body.classList.add('force-landscape');
-
-    // 2. Tenta Fullscreen e Trava (Funciona bem no Android)
     try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(() => {});
@@ -243,8 +241,6 @@ window.openDeckSelector = function() {
             screen.orientation.lock('landscape').catch(() => {});
         }
     } catch (e) { console.log(e); }
-
-    // 3. Vai para a seleção
     window.showScreen('deck-selection-screen');
 };
 
@@ -261,7 +257,7 @@ window.openDeckSelector = function() {
     }
 })();
 
-// ATUALIZAÇÃO 2: Seleção de Deck direciona para Fila (se PvP) ou Jogo (se PvE)
+// --- SELEÇÃO DE DECK (AGORA INICIA A BUSCA SE FOR PVP) ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         audios['sfx-deck-select'].currentTime = 0;
@@ -270,7 +266,6 @@ window.selectDeck = function(deckType) {
 
     window.currentDeck = deckType; 
     
-    // Aplica o tema ao body
     document.body.classList.remove('theme-cavaleiro', 'theme-mago'); 
     if (deckType === 'mage') {
         document.body.classList.add('theme-mago');
@@ -278,7 +273,6 @@ window.selectDeck = function(deckType) {
         document.body.classList.add('theme-cavaleiro');
     }
 
-    // Animação visual das cartas (Mantendo seu código visual)
     const options = document.querySelectorAll('.deck-option');
     options.forEach(opt => {
         if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
@@ -286,6 +280,8 @@ window.selectDeck = function(deckType) {
             opt.style.transform = "scale(1.15) translateY(-20px)";
             opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))";
             opt.style.zIndex = "100";
+            const img = opt.querySelector('img');
+            if(img) img.style.filter = "grayscale(0%) brightness(1.2)";
         } else {
             opt.style.transition = "all 0.3s ease";
             opt.style.transform = "scale(0.8) translateY(10px)";
@@ -294,7 +290,6 @@ window.selectDeck = function(deckType) {
         }
     });
 
-    // DECISÃO DE FLUXO
     setTimeout(() => {
         const selectionScreen = document.getElementById('deck-selection-screen');
         selectionScreen.style.transition = "opacity 0.5s";
@@ -303,18 +298,20 @@ window.selectDeck = function(deckType) {
         setTimeout(() => {
             // Se for PVP, iniciamos a busca AGORA (com o deck já escolhido)
             if (window.gameMode === 'pvp') {
-                // Esconde a tela de deck mas não transiciona pro jogo ainda
                 selectionScreen.style.display = 'none'; 
-                initiateMatchmaking(); // <--- NOVA FUNÇÃO QUE VAMOS CRIAR ABAIXO
+                initiateMatchmaking(); // <--- CHAMA A FILA AQUI
             } else {
-                // Se for PvE, segue o fluxo normal antigo
+                // Se for PvE, segue normal
                 window.transitionToGame();
             }
 
-            // Reseta visual da tela de seleção para a próxima vez
             setTimeout(() => {
                 if(window.gameMode !== 'pvp') selectionScreen.style.opacity = "1";
-                options.forEach(opt => { opt.style = ""; });
+                options.forEach(opt => {
+                    opt.style = "";
+                    const img = opt.querySelector('img');
+                    if(img) img.style = "";
+                });
             }, 500);
         }, 500);
     }, 400);
@@ -421,20 +418,18 @@ function startGameFlow() {
     }
 }
 
-// ATUALIZAÇÃO 3: Ler os nomes e atualizar a tela
+// --- ESCUTA MUDANÇAS NA PARTIDA (PVP) ---
 function startPvPListener() {
     if(!window.currentMatchId) return;
 
     const matchRef = doc(db, "matches", window.currentMatchId);
-    
-    // Variável para controlar se já atualizamos os nomes (para não fazer isso toda hora)
     let namesUpdated = false;
 
     onSnapshot(matchRef, (docSnap) => {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
 
-        // --- ATUALIZAÇÃO DOS NOMES NA TELA ---
+        // ATUALIZAÇÃO DOS NOMES
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
 
@@ -447,17 +442,16 @@ function startPvPListener() {
             }
 
             // Seleciona os elementos no HTML e troca o texto
-            // Nota: Usamos querySelector buscando dentro dos clusters de status
             const pNameEl = document.querySelector('#p-stats-cluster .unit-name');
             const mNameEl = document.querySelector('#m-stats-cluster .unit-name');
 
             if(pNameEl) pNameEl.innerText = myName;
             if(mNameEl) mNameEl.innerText = enemyName;
 
-            namesUpdated = true; // Marca como feito
+            namesUpdated = true; 
         }
-        // --------------------------------------
 
+        // Verifica se ambos jogaram (resolve o turno)
         if (matchData.p1Move && matchData.p2Move && !isProcessing) {
             resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
         }
@@ -503,12 +497,10 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// --- FUNÇÃO DE LOGIN WEB SIMPLES ---
 window.googleLogin = async function() {
     window.playNavSound(); 
     const btnText = document.getElementById('btn-text');
     btnText.innerText = "CONECTANDO...";
-
     try {
         await signInWithPopup(auth, provider);
     } catch (error) {
@@ -532,8 +524,6 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
         
         if(userSnap.exists()) {
             const data = userSnap.data();
-            
-            // Define pontos ganhos: 8 para PvP, 1 para PvE
             let modoAtual = window.gameMode || 'pve';
             let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
 
@@ -554,11 +544,8 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
         
         if(userSnap.exists()) {
             const data = userSnap.data();
-            
             let modoAtual = window.gameMode || 'pve';
             let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3;
-            
-            // Evita pontuação negativa
             let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
 
             await updateDoc(userRef, {
@@ -576,23 +563,17 @@ window.restartMatch = function() {
 }
 
 window.abandonMatch = function() {
-    // Verifica se está na tela de jogo
     if(document.getElementById('game-screen').classList.contains('active')) {
-        // Fecha o painel de configuração (a engrenagem)
         window.toggleConfig(); 
-
-        // Abre a Janela Interna do Jogo (Modal)
         window.openModal(
-            "ABANDONAR?", // Título
-            "Sair da partida contará como DERROTA. Tem certeza?", // Descrição
-            ["CANCELAR", "SAIR"], // Botões
+            "ABANDONAR?", 
+            "Sair da partida contará como DERROTA. Tem certeza?", 
+            ["CANCELAR", "SAIR"], 
             (choice) => {
-                // Callback: o que fazer quando o jogador clica
                 if (choice === "SAIR") {
                     window.registrarDerrotaOnline(window.gameMode);
                     window.transitionToLobby();
                 }
-                // Se clicar em "CANCELAR", o modal fecha sozinho automaticamente
             }
         );
     }
@@ -677,8 +658,6 @@ function initGlobalHoverLogic() {
         }
     });
 }
-
-preloadGame();
 
 window.onload = function() {
     const btnSound = document.getElementById('btn-sound');
@@ -924,9 +903,8 @@ async function playCardFlow(index, pDisarmChoice) {
             [disarmField]: pDisarmChoice || null
         });
         
-        // Renderiza sua carta na mesa
         renderTable(cardKey, 'p-slot', true);
-        return; // Sai da função e espera o Listener resolver
+        return; 
     }
 
     // --- MODO PvE (IA) ---
@@ -978,7 +956,6 @@ async function playCardFlow(index, pDisarmChoice) {
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     isProcessing = true;
     
-    // Define quem jogou o quê baseado no meu papel
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
 
     if (window.myRole === 'player1') {
@@ -993,20 +970,16 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         enemyDisarmChoice = p1Disarm;
     }
 
-    // Animação da carta do inimigo vindo (ela estava oculta até agora)
     const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 };
     
-    // Anima a carta inimiga voando
     animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => { 
         renderTable(enemyMove, 'm-slot', false);
         
-        // Resolve a lógica
         setTimeout(() => {
              resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
         }, 500);
     }, false, true, false);
     
-    // Limpa as jogadas no Banco para o próximo turno (apenas o Player1 faz isso)
     if (window.myRole === 'player1') {
         const matchRef = doc(db, "matches", window.currentMatchId);
         setTimeout(() => {
@@ -1392,13 +1365,13 @@ function apply3DTilt(element, isHand = false) {
 }
 
 // ======================================================
-// LÓGICA DE MATCHMAKING REAL (FIREBASE)
+// LÓGICA DE MATCHMAKING E DECK
 // ======================================================
 
 let matchTimerInterval = null;
 let matchSeconds = 0;
-let myQueueRef = null;      // Referência do meu lugar na fila
-let queueListener = null;   // Ouvinte para saber se alguém me achou
+let myQueueRef = null; 
+let queueListener = null;
 
 // Botão PvE (Treino) - Vai direto para seleção de deck
 window.startPvE = function() {
@@ -1407,72 +1380,16 @@ window.startPvE = function() {
     window.openDeckSelector(); 
 };
 
-// ATUALIZAÇÃO 1: Botão PvP apenas abre a seleção de deck
+// --- INICIAR JOGO (Botão PvP) ---
 window.startPvPSearch = function() {
     if (!currentUser) return; 
     window.gameMode = 'pvp'; // Define que é PvP
     window.playNavSound();
-    window.openDeckSelector(); // Vai para a escolha de cartas
+    window.openDeckSelector(); // Vai para a escolha de cartas PRIMEIRO
 };
 
-    // 1. UI: Abre a tela de busca
-    const mmScreen = document.getElementById('matchmaking-screen');
-    mmScreen.style.display = 'flex';
-    // Garante que o texto está resetado caso tenha jogado antes
-    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
-    document.querySelector('.mm-title').style.color = "var(--gold)";
-    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
-    document.querySelector('.radar-spinner').style.borderTopColor = "var(--gold)";
-    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
-    document.querySelector('.cancel-btn').style.display = "block";
-    
-    // 2. Timer Visual
-    matchSeconds = 0;
-    const timerEl = document.getElementById('mm-timer');
-    timerEl.innerText = "00:00";
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    matchTimerInterval = setInterval(() => {
-        matchSeconds++;
-        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
-        let s = (matchSeconds % 60).toString().padStart(2, '0');
-        timerEl.innerText = `${m}:${s}`;
-    }, 1000);
-
-    // 3. FIREBASE: Entrar na Fila
-    try {
-        // Passo A: Criar meu ticket na fila
-        myQueueRef = doc(collection(db, "queue")); 
-        const myData = {
-            uid: currentUser.uid,
-            name: currentUser.displayName,
-            score: 0, // Futuramente puxar do userSnap
-            timestamp: Date.now(),
-            matchId: null // Se preenchido, significa que acharam partida
-        };
-        await setDoc(myQueueRef, myData);
-
-        // Passo B: Escutar meu próprio ticket para ver se alguém me puxou
-        queueListener = onSnapshot(myQueueRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.matchId) {
-                    enterMatch(data.matchId); // ALGUÉM ME ACHOU!
-                }
-            }
-        });
-
-        // Passo C: Tentar achar alguém que já esteja lá (Ser o Host)
-        findOpponentInQueue();
-
-    } catch (e) {
-        console.error("Erro no Matchmaking:", e);
-        cancelPvPSearch();
-    }
-}
-
-// ATUALIZAÇÃO 3: Lógica Real da Fila (Agora chamada APÓS escolher o deck)
+// --- FUNÇÃO QUE INICIA A FILA APÓS ESCOLHER O DECK ---
 async function initiateMatchmaking() {
-    // UI: Abre a tela de busca (Overlay)
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'flex';
     document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
@@ -1481,7 +1398,6 @@ async function initiateMatchmaking() {
     document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
     document.querySelector('.cancel-btn').style.display = "block";
     
-    // Timer
     matchSeconds = 0;
     const timerEl = document.getElementById('mm-timer');
     timerEl.innerText = "00:00";
@@ -1493,13 +1409,12 @@ async function initiateMatchmaking() {
         timerEl.innerText = `${m}:${s}`;
     }, 1000);
 
-    // FIREBASE
     try {
         myQueueRef = doc(collection(db, "queue")); 
         const myData = {
             uid: currentUser.uid,
             name: currentUser.displayName,
-            deck: window.currentDeck, // <--- IMPORTANTE: Salvamos o deck escolhido
+            deck: window.currentDeck, // <--- SALVA O DECK
             score: 0, 
             timestamp: Date.now(),
             matchId: null
@@ -1523,10 +1438,10 @@ async function initiateMatchmaking() {
     }
 }
 
-// ATUALIZAÇÃO 4: Passando Deck e Nome para a criação
 async function findOpponentInQueue() {
     try {
         const queueRef = collection(db, "queue");
+        // Limite aumentado para 50 para evitar tickets fantasmas
         const q = query(queueRef, orderBy("timestamp", "asc"), limit(50));
         const querySnapshot = await getDocs(q);
 
@@ -1553,26 +1468,25 @@ async function findOpponentInQueue() {
                 await updateDoc(myQueueRef, { matchId: matchId });
             }
 
-            // Passamos: IDs, Nomes e DECKS
+            // Cria a partida passando nomes e decks
             await createMatchDocument(
                 matchId, 
                 currentUser.uid, oppData.uid, 
                 currentUser.displayName, oppData.name,
-                window.currentDeck, oppData.deck // <--- Passando os decks
+                window.currentDeck, oppData.deck 
             );
         } 
     } catch (e) {
         console.error("Erro ao buscar oponente:", e);
     }
 }
-// ATUALIZAÇÃO 5: Salvando os decks no objeto da partida
+
 async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1Deck, p2Deck) {
     const matchRef = doc(db, "matches", matchId);
     
     const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1";
     const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
 
-    // Fallback caso o deck não venha (padrão knight)
     const d1 = p1Deck || 'knight';
     const d2 = p2Deck || 'knight';
 
@@ -1580,41 +1494,38 @@ async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1Deck, 
         player1: { uid: p1Id, name: cleanName1, deckType: d1, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
         player2: { uid: p2Id, name: cleanName2, deckType: d2, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
         turn: 1,
-        status: 'playing', // Já começamos jogando, pois os decks já foram escolhidos!
+        status: 'playing', 
         createdAt: Date.now()
     });
 }
 
-// ATUALIZAÇÃO 7: Cancelar volta a mostrar a seleção de deck
+// --- CANCELAR BUSCA ---
 window.cancelPvPSearch = async function() {
     window.playNavSound();
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'none';
     
     if (matchTimerInterval) clearInterval(matchTimerInterval);
-    
     if (queueListener) { queueListener(); queueListener = null; }
-
     if (myQueueRef) {
         await updateDoc(myQueueRef, { cancelled: true }); 
         myQueueRef = null;
     }
     
-    // Volta a mostrar a tela de seleção de deck
     const selectionScreen = document.getElementById('deck-selection-screen');
     selectionScreen.style.display = 'flex';
     selectionScreen.style.opacity = '1';
 
     console.log("Busca cancelada.");
 };
-// ATUALIZAÇÃO 6: Entrar na partida vai direto para o jogo (TransitionToGame)
+
+// --- ENTRAR NA PARTIDA (Sucesso) ---
 async function enterMatch(matchId) {
     console.log("PARTIDA ENCONTRADA! ID:", matchId);
     
     if (queueListener) queueListener();
     if (matchTimerInterval) clearInterval(matchTimerInterval);
 
-    // Descobre quem sou eu novamente (segurança)
     const matchRef = doc(db, "matches", matchId);
     const matchSnap = await getDoc(matchRef);
     if(matchSnap.exists()) {
@@ -1623,7 +1534,6 @@ async function enterMatch(matchId) {
         else window.myRole = 'player2';
     }
 
-    // UI Verde
     document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
     document.querySelector('.mm-title').style.color = "#2ecc71";
     document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
@@ -1633,11 +1543,9 @@ async function enterMatch(matchId) {
     setTimeout(() => {
         const mmScreen = document.getElementById('matchmaking-screen');
         mmScreen.style.display = 'none';
-        
         window.currentMatchId = matchId;
-        
-        // AQUI ESTÁ A MUDANÇA: Direto para o jogo!
         window.transitionToGame(); 
-        
     }, 1500);
 }
+
+preloadGame();
