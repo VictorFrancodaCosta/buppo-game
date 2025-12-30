@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL COMPLETA)
+// ARQUIVO: js/main.js (VERSÃO FINAL COMPLETA E CORRIGIDA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -31,7 +31,7 @@ const audios = {};
 let assetsLoaded = 0; 
 window.gameAssets = []; 
 
-// Variável global de tooltip (declarada apenas uma vez)
+// Variável global de tooltip
 const tt = document.getElementById('tooltip-box');
 
 // Variáveis de Jogo
@@ -1188,8 +1188,40 @@ function apply3DTilt(element, isHand = false) {
     }); 
 }
 
-// --- FUNÇÕES ESSENCIAIS DE UI E FLUXO ---
+// --- FUNÇÕES ESSENCIAIS QUE FALTAVAM ---
 
+// 1. Função de Janela Modal (CORRIGE O ERRO DE TYPE ERROR)
+window.openModal = function(title, desc, options, callback) {
+    const overlay = document.getElementById('modal-overlay');
+    if (!overlay) return;
+
+    // Popula o HTML interno da modal
+    overlay.innerHTML = `
+        <div class="modal-content">
+            <h2>${title}</h2>
+            <p>${desc}</p>
+            <div class="modal-buttons" id="modal-btn-container"></div>
+        </div>
+    `;
+
+    const btnContainer = document.getElementById('modal-btn-container');
+    
+    // Cria os botões dinamicamente
+    options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'modal-btn'; // Usa estilo existente
+        btn.innerText = opt;
+        btn.onclick = () => {
+            overlay.classList.remove('active'); // Fecha modal
+            if (callback) callback(opt); // Executa a ação
+        };
+        btnContainer.appendChild(btn);
+    });
+
+    overlay.classList.add('active'); // Mostra modal
+};
+
+// 2. Função de Texto Flutuante (CORRIGE O ERRO DE REFERENCE ERROR)
 window.showFloatingText = function(targetId, text, color) {
     const target = document.getElementById(targetId);
     if (!target) return;
@@ -1197,10 +1229,9 @@ window.showFloatingText = function(targetId, text, color) {
     const rect = target.getBoundingClientRect();
     const el = document.createElement('div');
     el.innerText = text;
-    el.className = 'floating-text'; // Classe CSS existente
+    el.className = 'floating-text'; 
     el.style.color = color || '#fff';
     
-    // Posiciona sobre o elemento alvo
     el.style.left = (rect.left + rect.width / 2) + 'px';
     el.style.top = rect.top + 'px';
     
@@ -1211,6 +1242,7 @@ window.showFloatingText = function(targetId, text, color) {
     }, 1500);
 }
 
+// 3. Função de Fim de Jogo 
 window.checkEndGame = function() {
     if (player.hp <= 0 || monster.hp <= 0) {
         window.isGameRunning = false;
@@ -1244,6 +1276,7 @@ window.checkEndGame = function() {
     }
 }
 
+// 4. Função de Tooltip
 window.bindFixedTooltip = function(element, cardKey) {
     return {
         onmouseenter: (e) => {
@@ -1270,6 +1303,7 @@ window.bindFixedTooltip = function(element, cardKey) {
     };
 }
 
+// 5. Função de Início de Fluxo
 window.startGameFlow = function() {
     console.log("Iniciando Fluxo de Jogo...");
     const endScreen = document.getElementById('end-screen');
@@ -1304,5 +1338,7 @@ window.startGameFlow = function() {
     }, 500);
 }
 
-// Inicializador
+// ======================================================
+// INICIALIZADOR
+// ======================================================
 preloadGame();
