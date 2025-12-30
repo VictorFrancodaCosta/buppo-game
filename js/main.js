@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL UNIFICADA)
+// ARQUIVO: js/main.js (VERSÃO FINAL COMPLETA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -31,6 +31,7 @@ const audios = {};
 let assetsLoaded = 0; 
 window.gameAssets = []; 
 
+// Variável global de tooltip (declarada apenas uma vez)
 const tt = document.getElementById('tooltip-box');
 
 // Variáveis de Jogo
@@ -1187,197 +1188,29 @@ function apply3DTilt(element, isHand = false) {
     }); 
 }
 
-// --- FUNÇÕES DE START DO JOGO (PvE e PvP) ---
+// --- FUNÇÕES ESSENCIAIS DE UI E FLUXO ---
 
-function startGameFlow() {
-    document.getElementById('end-screen').classList.remove('visible');
-    isProcessing = false; 
-    startCinematicLoop(); 
+window.showFloatingText = function(targetId, text, color) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
     
-    window.isMatchStarting = true;
-    const handEl = document.getElementById('player-hand');
-    if (handEl) {
-        handEl.innerHTML = '';
-        handEl.classList.add('preparing'); 
-    }
+    const rect = target.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.innerText = text;
+    el.className = 'floating-text'; // Classe CSS existente
+    el.style.color = color || '#fff';
     
-    // SE FOR PVP, PAUSA AQUI E DEIXA O FIREBASE (syncMatchState) PREENCHER
-    if (window.gameMode === 'pvp') {
-        return; 
-    }
+    // Posiciona sobre o elemento alvo
+    el.style.left = (rect.left + rect.width / 2) + 'px';
+    el.style.top = rect.top + 'px';
     
-    // SE FOR PVE, PREENCHE LOCALMENTE
-    resetUnit(player); 
-    resetUnit(monster); 
-    turnCount = 1; 
-    playerHistory = [];
-    drawCardLogic(monster, 6); 
-    drawCardLogic(player, 6); 
-    updateUI(); 
-    dealAllInitialCards();
-}
-
-// --- FUNÇÕES QUE FALTAVAM ---
-
-function bindFixedTooltip(element, cardKey) {
-    return {
-        onmouseenter: (e) => {
-            showTT(cardKey); // Mostra o texto
-            
-            // Lógica de Posição (Acima da carta)
-            const rect = element.getBoundingClientRect();
-            if(tt) {
-                tt.style.left = (rect.left + rect.width / 2) + 'px';
-                tt.style.bottom = (window.innerHeight - rect.top + 20) + 'px';
-                tt.style.top = 'auto';
-                tt.style.transform = "translateX(-50%)";
-                
-                // Animação
-                tt.classList.remove('tooltip-anim-down');
-                tt.classList.add('tooltip-anim-up');
-            }
-        }
-    };
-}
-
-function checkEndGame() {
-    if (player.hp <= 0 || monster.hp <= 0) {
-        window.isGameRunning = false;
-        const endScreen = document.getElementById('end-screen');
-        const endTitle = document.getElementById('end-title');
-        
-        if(endScreen) endScreen.classList.add('visible');
-        
-        // Remove classes de cor anteriores
-        if(endTitle) {
-            endTitle.classList.remove('win-theme', 'lose-theme', 'tie-theme');
-            
-            if (player.hp <= 0 && monster.hp <= 0) {
-                endTitle.innerText = "EMPATE";
-                endTitle.classList.add('tie-theme');
-                playSound('sfx-tie');
-            } else if (player.hp <= 0) {
-                endTitle.innerText = "DERROTA";
-                endTitle.classList.add('lose-theme');
-                playSound('sfx-lose');
-                window.registrarDerrotaOnline();
-            } else {
-                endTitle.innerText = "VITÓRIA";
-                endTitle.classList.add('win-theme');
-                playSound('sfx-win');
-                window.registrarVitoriaOnline();
-            }
-        }
-    }
-}
-
-// --- COLE ISSO NO FINAL DO SEU MAIN.JS ---
-
-// 2. Função que verifica Fim de Jogo (Obrigatória para o turno rodar)
-window.checkEndGame = function() {
-    if (player.hp <= 0 || monster.hp <= 0) {
-        window.isGameRunning = false;
-        const endScreen = document.getElementById('end-screen');
-        const endTitle = document.getElementById('end-title');
-        
-        if(endScreen) {
-            endScreen.classList.add('visible');
-            endScreen.style.pointerEvents = "auto"; // Garante que o clique funcione
-        }
-        
-        if(endTitle) {
-            endTitle.classList.remove('win-theme', 'lose-theme', 'tie-theme');
-            
-            if (player.hp <= 0 && monster.hp <= 0) {
-                endTitle.innerText = "EMPATE";
-                endTitle.classList.add('tie-theme');
-                playSound('sfx-tie');
-            } else if (player.hp <= 0) {
-                endTitle.innerText = "DERROTA";
-                endTitle.classList.add('lose-theme');
-                playSound('sfx-lose');
-                if(window.registrarDerrotaOnline) window.registrarDerrotaOnline();
-            } else {
-                endTitle.innerText = "VITÓRIA";
-                endTitle.classList.add('win-theme');
-                playSound('sfx-win');
-                if(window.registrarVitoriaOnline) window.registrarVitoriaOnline();
-            }
-        }
-    }
-}
-
-// 3. Função que liga o Tooltip nas cartas (Obrigatória para as cartas aparecerem)
-window.bindFixedTooltip = function(element, cardKey) {
-    return {
-        onmouseenter: (e) => {
-            if(typeof showTT === 'function') showTT(cardKey);
-            
-            if(tt) {
-                const rect = element.getBoundingClientRect();
-                tt.style.left = (rect.left + rect.width / 2) + 'px';
-                // Detecta se é o Jogador (embaixo) ou Inimigo (em cima) pela posição Y
-                if (rect.top > window.innerHeight / 2) {
-                    // Jogador: Tooltip aparece EM CIMA da carta
-                    tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
-                    tt.style.top = 'auto';
-                    tt.classList.remove('tooltip-anim-down');
-                    tt.classList.add('tooltip-anim-up');
-                } else {
-                    // Inimigo/Mesa: Tooltip aparece EM BAIXO da carta
-                    tt.style.top = (rect.bottom + 10) + 'px';
-                    tt.style.bottom = 'auto';
-                    tt.classList.remove('tooltip-anim-up');
-                    tt.classList.add('tooltip-anim-down');
-                }
-                tt.style.transform = "translateX(-50%)";
-            }
-        }
-    };
-}
-
-// 4. Função de Start (Garante que o botão "Jogar Novamente" funcione)
-window.startGameFlow = function() {
-    console.log("Iniciando Jogo...");
-    document.getElementById('end-screen').classList.remove('visible');
-    
-    // Reseta estado
-    isProcessing = false;
-    turnCount = 1;
-    playerHistory = [];
-    
-    // Reseta Unidades
-    resetUnit(player);
-    resetUnit(monster);
-    
-    // Limpa UI
-    document.getElementById('turn-txt').innerText = "TURNO 1";
-    document.getElementById('p-slot').innerHTML = '';
-    document.getElementById('m-slot').innerHTML = '';
-    
-    // Compra cartas iniciais
-    drawCardLogic(player, 6);
-    drawCardLogic(monster, 6);
-    
-    // Atualiza Visual
-    window.isMatchStarting = true;
-    updateUI();
-    
-    // Animação de entrada
-    const handEl = document.getElementById('player-hand');
-    if(handEl) handEl.classList.add('preparing');
+    document.body.appendChild(el);
     
     setTimeout(() => {
-        dealAllInitialCards();
-    }, 500);
+        el.remove();
+    }, 1500);
 }
 
-// Inicializador
-preloadGame();
-
-// --- COLE ISSO NO FINAL DO ARQUIVO MAIN.JS ---
-
-// 1. Função de Fim de Jogo (Essencial para o turno não travar)
 window.checkEndGame = function() {
     if (player.hp <= 0 || monster.hp <= 0) {
         window.isGameRunning = false;
@@ -1411,13 +1244,11 @@ window.checkEndGame = function() {
     }
 }
 
-// 2. Função de Tooltip (Essencial para as cartas aparecerem)
 window.bindFixedTooltip = function(element, cardKey) {
     return {
         onmouseenter: (e) => {
             if(typeof showTT === 'function') showTT(cardKey);
             
-            // Usa a variável 'tt' que já foi definida no topo do arquivo
             if(typeof tt !== 'undefined' && tt) {
                 const rect = element.getBoundingClientRect();
                 tt.style.left = (rect.left + rect.width / 2) + 'px';
@@ -1439,9 +1270,8 @@ window.bindFixedTooltip = function(element, cardKey) {
     };
 }
 
-// 3. Função de Início de Fluxo (Essencial para começar/reiniciar)
 window.startGameFlow = function() {
-    console.log("Iniciando Jogo...");
+    console.log("Iniciando Fluxo de Jogo...");
     const endScreen = document.getElementById('end-screen');
     if(endScreen) endScreen.classList.remove('visible');
     
@@ -1473,3 +1303,6 @@ window.startGameFlow = function() {
         dealAllInitialCards();
     }, 500);
 }
+
+// Inicializador
+preloadGame();
