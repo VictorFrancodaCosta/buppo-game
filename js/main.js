@@ -31,6 +31,8 @@ const audios = {};
 let assetsLoaded = 0; 
 window.gameAssets = []; 
 
+const tt = document.getElementById('tooltip-box');
+
 // Variáveis de Jogo
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
@@ -1213,6 +1215,60 @@ function startGameFlow() {
     drawCardLogic(player, 6); 
     updateUI(); 
     dealAllInitialCards();
+}
+
+// --- FUNÇÕES QUE FALTAVAM ---
+
+function bindFixedTooltip(element, cardKey) {
+    return {
+        onmouseenter: (e) => {
+            showTT(cardKey); // Mostra o texto
+            
+            // Lógica de Posição (Acima da carta)
+            const rect = element.getBoundingClientRect();
+            if(tt) {
+                tt.style.left = (rect.left + rect.width / 2) + 'px';
+                tt.style.bottom = (window.innerHeight - rect.top + 20) + 'px';
+                tt.style.top = 'auto';
+                tt.style.transform = "translateX(-50%)";
+                
+                // Animação
+                tt.classList.remove('tooltip-anim-down');
+                tt.classList.add('tooltip-anim-up');
+            }
+        }
+    };
+}
+
+function checkEndGame() {
+    if (player.hp <= 0 || monster.hp <= 0) {
+        window.isGameRunning = false;
+        const endScreen = document.getElementById('end-screen');
+        const endTitle = document.getElementById('end-title');
+        
+        if(endScreen) endScreen.classList.add('visible');
+        
+        // Remove classes de cor anteriores
+        if(endTitle) {
+            endTitle.classList.remove('win-theme', 'lose-theme', 'tie-theme');
+            
+            if (player.hp <= 0 && monster.hp <= 0) {
+                endTitle.innerText = "EMPATE";
+                endTitle.classList.add('tie-theme');
+                playSound('sfx-tie');
+            } else if (player.hp <= 0) {
+                endTitle.innerText = "DERROTA";
+                endTitle.classList.add('lose-theme');
+                playSound('sfx-lose');
+                window.registrarDerrotaOnline();
+            } else {
+                endTitle.innerText = "VITÓRIA";
+                endTitle.classList.add('win-theme');
+                playSound('sfx-win');
+                window.registrarVitoriaOnline();
+            }
+        }
+    }
 }
 
 // Inicializador
