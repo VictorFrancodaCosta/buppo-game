@@ -847,14 +847,87 @@ function dealAllInitialCards() {
 
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
 
+// VARIÁVEL NOVA PARA CONTROLAR A SELEÇÃO
+window.pvpSelectedCardIndex = null; // Guarda qual carta (índice) eu escolhi
+
+// 1. ATUALIZAR O CLIQUE NA CARTA
 function onCardClick(index) {
-    if(isProcessing) return; if (!player.hand[index]) return;
-    playSound('sfx-play'); document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active');
-    document.getElementById('tooltip-box').style.display = 'none'; isLethalHover = false; 
+    if(isProcessing) return; 
+    if (!player.hand[index]) return;
+    
+    // Se já escolheu uma carta no PvP, não deixa clicar em outra
+    if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
+
+    playSound('sfx-play'); 
+    
+    // Limpa estados de hover visual
+    document.body.classList.remove('focus-hand'); 
+    document.body.classList.remove('cinematic-active'); 
+    document.body.classList.remove('tension-active');
+    document.getElementById('tooltip-box').style.display = 'none'; 
+    isLethalHover = false; 
+
     let cardKey = player.hand[index];
-    if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
-    if(cardKey === 'DESARMAR') { window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => playCardFlow(index, choice)); } 
-    else { playCardFlow(index, null); }
+    
+    if(player.disabled === cardKey) { 
+        showCenterText("DESARMADA!"); 
+        return; 
+    }
+
+    // LÓGICA DE ESCOLHA DE DESARME (Janela Modal)
+    if(cardKey === 'DESARMAR') { 
+        window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => {
+            if(window.gameMode === 'pvp') {
+                lockInPvPMove(index, choice); // <--- Chama a nova função PvP
+            } else {
+                playCardFlow(index, choice); // PvE normal
+            }
+        }); 
+    } else { 
+        if(window.gameMode === 'pvp') {
+            lockInPvPMove(index, null); // <--- Chama a nova função PvP
+        } else {
+            playCardFlow(index, null); // PvE normal
+        }
+    }
+}
+
+// 2. NOVA FUNÇÃO: TRAVAR CARTA NO PVP
+async function lockInPvPMove(index, disarmChoice) {
+    // Marca visualmente a carta
+    const handContainer = document.getElementById('player-hand');
+    const cardEl = handContainer.children[index];
+    if(cardEl) {
+        cardEl.classList.add('card-selected');
+    }
+
+    // Salva o índice para usarmos na animação depois
+    window.pvpSelectedCardIndex = index;
+    
+    // Bloqueia interações
+    isProcessing = true; 
+    showCenterText("AGUARDANDO OPONENTE...", "#ffd700");
+
+    // Envia para o Firebase
+    const cardKey = player.hand[index];
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    
+    // Define os campos baseados em quem sou eu
+    const updateField = (window.myRole === 'player1') ? 'p1Move' : 'p2Move';
+    const disarmField = (window.myRole === 'player1') ? 'p1Disarm' : 'p2Disarm';
+    
+    try {
+        await updateDoc(matchRef, {
+            [updateField]: cardKey,
+            [disarmField]: disarmChoice || null
+        });
+        // Não removemos a carta da mão ainda! Ela fica brilhando lá.
+    } catch (e) {
+        console.error("Erro ao enviar jogada:", e);
+        isProcessing = false;
+        window.pvpSelectedCardIndex = null;
+        if(cardEl) cardEl.classList.remove('card-selected');
+    }
 }
 
 function getBestAIMove() {
@@ -953,45 +1026,81 @@ async function playCardFlow(index, pDisarmChoice) {
     }, false, true, false);
 }
 
+// 3. ATUALIZAR A RESOLUÇÃO PVP (ANIMAÇÃO SIMULTÂNEA)
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     isProcessing = true;
     
+    // Define quem jogou o quê
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
-
     if (window.myRole === 'player1') {
-        myMove = p1Move;
-        enemyMove = p2Move;
-        myDisarmChoice = p1Disarm;
-        enemyDisarmChoice = p2Disarm;
+        myMove = p1Move; enemyMove = p2Move;
+        myDisarmChoice = p1Disarm; enemyDisarmChoice = p2Disarm;
     } else {
-        myMove = p2Move;
-        enemyMove = p1Move;
-        myDisarmChoice = p2Disarm;
-        enemyDisarmChoice = p1Disarm;
+        myMove = p2Move; enemyMove = p1Move;
+        myDisarmChoice = p2Disarm; enemyDisarmChoice = p1Disarm;
     }
 
+    // 1. Processar a MINHA carta (que estava parada na mão)
+    // Se por algum erro o índice for nulo, tenta achar a primeira carta igual na mão
+    if (window.pvpSelectedCardIndex === null) {
+        window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
+    }
+    
+    // Remove a carta da mão (logicamente)
+    // Nota: Como o índice está salvo, removemos exatamente aquela carta
+    if (window.pvpSelectedCardIndex !== -1 && player.hand[window.pvpSelectedCardIndex]) {
+        player.hand.splice(window.pvpSelectedCardIndex, 1);
+        playerHistory.push(myMove);
+    }
+
+    // Efeitos Visuais da Minha Carta Voando
+    const handContainer = document.getElementById('player-hand');
+    let startRect = null;
+    
+    // Tenta pegar a posição da carta que estava selecionada
+    if (handContainer && handContainer.children[window.pvpSelectedCardIndex]) {
+        const el = handContainer.children[window.pvpSelectedCardIndex];
+        startRect = el.getBoundingClientRect();
+        // Esconde a carta original imediatamente
+        el.style.opacity = '0'; 
+        el.style.visibility = 'hidden';
+    }
+
+    // 2. Animar AMBAS as cartas voando para a mesa JUNTAS
     const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 };
     
-    animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => { 
-        renderTable(enemyMove, 'm-slot', false);
-        
-        setTimeout(() => {
-             resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
-        }, 500);
-    }, false, true, false);
-    
-    if (window.myRole === 'player1') {
-        const matchRef = doc(db, "matches", window.currentMatchId);
-        setTimeout(() => {
-            updateDoc(matchRef, {
-                p1Move: null,
-                p2Move: null,
-                p1Disarm: null,
-                p2Disarm: null,
-                turn: increment(1) 
-            });
-        }, 2000); 
-    }
+    // Minha carta voa
+    animateFly(startRect || 'player-hand', 'p-slot', myMove, () => {
+        renderTable(myMove, 'p-slot', true);
+    }, false, true, true);
+
+    // Carta do inimigo voa (com um delay minúsculo para efeito dramático)
+    setTimeout(() => {
+        animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => {
+            renderTable(enemyMove, 'm-slot', false);
+            
+            // 3. Resolver a lógica do combate
+            setTimeout(() => {
+                resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
+                
+                // Resetar estado PvP para o próximo turno
+                window.pvpSelectedCardIndex = null;
+                
+                // Limpar Firebase (Apenas Host/P1 faz isso)
+                if (window.myRole === 'player1') {
+                    const matchRef = doc(db, "matches", window.currentMatchId);
+                    // Dá um tempo para lerem o resultado antes de limpar
+                    setTimeout(() => {
+                        updateDoc(matchRef, {
+                            p1Move: null, p2Move: null,
+                            p1Disarm: null, p2Disarm: null,
+                            turn: increment(1) 
+                        });
+                    }, 2500); 
+                }
+            }, 600); // Tempo após as cartas baterem na mesa
+        }, false, true, false);
+    }, 100);
 }
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
