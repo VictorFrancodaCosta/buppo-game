@@ -145,23 +145,6 @@ function stringToSeed(str) {
 }
 
 // Função de embaralhamento que aceita uma SEED opcional
-function shuffle(array, seed = null) {
-    let rng = Math.random; // Padrão
-    
-    // Se tiver seed, usa gerador determinístico (LCG simples)
-    if (seed !== null) {
-        let currentSeed = seed;
-        rng = function() {
-            currentSeed = (currentSeed * 9301 + 49297) % 233280;
-            return currentSeed / 233280;
-        }
-    }
-    
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(rng() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-}
 
 const MusicController = {
     currentTrackId: null,
