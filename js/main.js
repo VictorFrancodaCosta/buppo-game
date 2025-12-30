@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL COMPLETA E CORRIGIDA)
+// ARQUIVO: js/main.js (VERSÃO FINAL COM MODAL CORRIGIDO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -1188,9 +1188,9 @@ function apply3DTilt(element, isHand = false) {
     }); 
 }
 
-// --- FUNÇÕES ESSENCIAIS QUE FALTAVAM ---
+// --- FUNÇÕES ESSENCIAIS DE UI, FLUXO E MODAL ---
 
-// 1. Função de Janela Modal (CORRIGE O ERRO DE TYPE ERROR)
+// 1. Função de Janela Modal (CORRIGIDA)
 window.openModal = function(title, desc, options, callback) {
     const overlay = document.getElementById('modal-overlay');
     if (!overlay) return;
@@ -1221,7 +1221,7 @@ window.openModal = function(title, desc, options, callback) {
     overlay.classList.add('active'); // Mostra modal
 };
 
-// 2. Função de Texto Flutuante (CORRIGE O ERRO DE REFERENCE ERROR)
+// 2. Função de Texto Flutuante
 window.showFloatingText = function(targetId, text, color) {
     const target = document.getElementById(targetId);
     if (!target) return;
@@ -1232,6 +1232,7 @@ window.showFloatingText = function(targetId, text, color) {
     el.className = 'floating-text'; 
     el.style.color = color || '#fff';
     
+    // Posiciona sobre o elemento alvo
     el.style.left = (rect.left + rect.width / 2) + 'px';
     el.style.top = rect.top + 'px';
     
