@@ -1438,42 +1438,48 @@ window.startPvPSearch = async function() {
     }
 };
 
-// Função que procura oponentes na fila (Host Logic)
+// VERSÃO CORRIGIDA DA FUNÇÃO DE BUSCA
 async function findOpponentInQueue() {
     try {
         const queueRef = collection(db, "queue");
-        // Pega os 10 primeiros da fila
-        const q = query(queueRef, orderBy("timestamp", "asc"), limit(10));
+        
+        // 1. AUMENTADO O LIMITE PARA 50 (Evita ficar preso atrás de "fantasmas")
+        const q = query(queueRef, orderBy("timestamp", "asc"), limit(50));
         const querySnapshot = await getDocs(q);
 
         let opponentDoc = null;
+        const now = Date.now();
+        const MAX_WAIT_TIME = 120000; // 2 minutos de validade
 
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            // Se não sou eu, e não está cancelado, e ainda não tem partida
-            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
+            
+            // Verifica se o ticket na fila é recente (evita parelhar com abas fechadas)
+            const isRecent = (now - data.timestamp) < MAX_WAIT_TIME;
+
+            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled && isRecent) {
                 opponentDoc = doc;
             }
         });
 
         if (opponentDoc) {
-            // ACHAMOS UM OPONENTE!
-            const opponentId = opponentDoc.data().uid;
-            console.log("Oponente encontrado na fila:", opponentId);
+            console.log("Oponente encontrado:", opponentDoc.data().name);
 
             // 1. Cria o ID da Partida
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
 
-            // 2. Avisa o oponente (atualiza o doc dele na fila com o ID da partida)
+            // 2. Avisa o oponente
             await updateDoc(opponentDoc.ref, { matchId: matchId });
 
-            // 3. Avisa a mim mesmo (atualiza meu doc)
+            // 3. Avisa a mim mesmo
             if (myQueueRef) {
                 await updateDoc(myQueueRef, { matchId: matchId });
             }
 
-            // 4. Cria o documento da partida (Inicializa a mesa)
-            await createMatchDocument(matchId, currentUser.uid, opponentId);
+            // 4. Cria a partida
+            await createMatchDocument(matchId, currentUser.uid, opponentDoc.data().uid);
+        } else {
+            console.log("Nenhum oponente válido encontrado nesta rodada.");
         }
 
     } catch (e) {
