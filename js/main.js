@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO COMPLETA E CORRIGIDA)
+// ARQUIVO: js/main.js (VERSÃO FINAL - PVP SINCRONIZADO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -109,6 +109,9 @@ window.isMatchStarting = false;
 window.currentDeck = 'knight';
 window.myRole = null; // 'player1' ou 'player2'
 window.currentMatchId = null;
+window.pvpSelectedCardIndex = null; // Índice da carta selecionada na mão (PvP)
+window.isResolvingTurn = false; // Trava para não executar animações duplicadas
+window.pvpStartData = null; // Dados baixados do Firebase (decks, nomes)
 
 // --- HELPER: RETORNA ARTE CORRETA ---
 function getCardArt(cardKey, isPlayer) {
@@ -116,6 +119,19 @@ function getCardArt(cardKey, isPlayer) {
         return MAGE_ASSETS[cardKey];
     }
     return CARDS_DB[cardKey].img;
+}
+
+// --- HELPER: GERA DECK EMBARALHADO ---
+function generateShuffledDeck() {
+    let deck = [];
+    for(let k in DECK_TEMPLATE) {
+        for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k);
+    }
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    return deck;
 }
 
 const MusicController = {
@@ -296,12 +312,10 @@ window.selectDeck = function(deckType) {
         selectionScreen.style.opacity = "0";
 
         setTimeout(() => {
-            // Se for PVP, iniciamos a busca AGORA (com o deck já escolhido)
             if (window.gameMode === 'pvp') {
                 selectionScreen.style.display = 'none'; 
                 initiateMatchmaking(); // <--- CHAMA A FILA AQUI
             } else {
-                // Se for PvE, segue normal
                 window.transitionToGame();
             }
 
@@ -391,7 +405,6 @@ window.goToLobby = async function(isAutoLogin = false) {
     document.getElementById('end-screen').classList.remove('visible'); 
 };
 
-// ATUALIZAÇÃO: Injeta os decks do PvP
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
@@ -404,30 +417,24 @@ function startGameFlow() {
         handEl.classList.add('preparing'); 
     }
     
-    // LÓGICA DE DECKS (PvP vs PvE)
+    // ATUALIZAÇÃO: Carrega decks sincronizados no PvP
     if (window.gameMode === 'pvp' && window.pvpStartData) {
-        // Se sou Player 1, meu deck é player1.deck e o monstro é player2.deck
         if (window.myRole === 'player1') {
             resetUnit(player, window.pvpStartData.player1.deck);
             resetUnit(monster, window.pvpStartData.player2.deck);
         } else {
-            // Se sou Player 2, meu deck é player2.deck e o monstro é player1.deck
             resetUnit(player, window.pvpStartData.player2.deck);
             resetUnit(monster, window.pvpStartData.player1.deck);
         }
     } else {
-        // PvE Normal (Gera aleatório)
         resetUnit(player); 
         resetUnit(monster); 
     }
 
     turnCount = 1; 
     playerHistory = [];
-    
-    // Compra as cartas iniciais (agora puxando dos decks sincronizados!)
     drawCardLogic(monster, 6); 
     drawCardLogic(player, 6); 
-    
     updateUI(); 
     dealAllInitialCards();
 
@@ -435,7 +442,8 @@ function startGameFlow() {
         startPvPListener();
     }
 }
-// ATUALIZAÇÃO: Listener que detecta quando AMBOS jogaram
+
+// --- ATUALIZAÇÃO: LISTENER COM DESTRAVA DE TURNO ---
 function startPvPListener() {
     if(!window.currentMatchId) return;
 
@@ -446,26 +454,28 @@ function startPvPListener() {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
 
-        // 1. Atualiza nomes (igual já estava funcionando)
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
+
             if (window.myRole === 'player1') {
-                myName = matchData.player1.name; enemyName = matchData.player2.name;
+                myName = matchData.player1.name;
+                enemyName = matchData.player2.name;
             } else {
-                myName = matchData.player2.name; enemyName = matchData.player1.name;
+                myName = matchData.player2.name;
+                enemyName = matchData.player1.name;
             }
+
             const pNameEl = document.querySelector('#p-stats-cluster .unit-name');
             const mNameEl = document.querySelector('#m-stats-cluster .unit-name');
+
             if(pNameEl) pNameEl.innerText = myName;
             if(mNameEl) mNameEl.innerText = enemyName;
+
             namesUpdated = true; 
         }
 
-        // 2. O GRANDE GATILHO: Se ambos jogaram, executa a resolução!
-        // Removemos o check de isProcessing aqui para destravar o jogo
+        // Se ambos jogaram, destrava e resolve!
         if (matchData.p1Move && matchData.p2Move) {
-            // Só executa se ainda não estivermos resolvendo ESTE turno especificamente
-            // Usamos uma flag global nova para garantir que rode apenas uma vez por turno
             if (!window.isResolvingTurn) {
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
             }
@@ -496,7 +506,6 @@ function checkEndGame(){
     } else { isProcessing = false; } 
 }
 
-// --- AUTH LISTENER ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
@@ -530,7 +539,6 @@ window.handleLogout = function() {
     signOut(auth).then(() => { location.reload(); });
 };
 
-// --- SISTEMA DE PONTUAÇÃO (PvP e PvE) ---
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!currentUser) return;
     try {
@@ -831,6 +839,7 @@ function triggerBlockEffect(isPlayer) {
 
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
+
 // ATUALIZAÇÃO: Aceita um deck opcional
 function resetUnit(u, predefinedDeck = null) { 
     u.hp = 6; 
@@ -885,72 +894,50 @@ function dealAllInitialCards() {
 
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
 
-// VARIÁVEL NOVA PARA CONTROLAR A SELEÇÃO
-window.pvpSelectedCardIndex = null; // Guarda qual carta (índice) eu escolhi
-
-// 1. ATUALIZAR O CLIQUE NA CARTA
 function onCardClick(index) {
-    if(isProcessing) return; 
-    if (!player.hand[index]) return;
+    if(isProcessing) return; if (!player.hand[index]) return;
     
     // Se já escolheu uma carta no PvP, não deixa clicar em outra
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
 
-    playSound('sfx-play'); 
-    
-    // Limpa estados de hover visual
-    document.body.classList.remove('focus-hand'); 
-    document.body.classList.remove('cinematic-active'); 
-    document.body.classList.remove('tension-active');
-    document.getElementById('tooltip-box').style.display = 'none'; 
-    isLethalHover = false; 
-
+    playSound('sfx-play'); document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active');
+    document.getElementById('tooltip-box').style.display = 'none'; isLethalHover = false; 
     let cardKey = player.hand[index];
+    if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
     
-    if(player.disabled === cardKey) { 
-        showCenterText("DESARMADA!"); 
-        return; 
-    }
-
-    // LÓGICA DE ESCOLHA DE DESARME (Janela Modal)
     if(cardKey === 'DESARMAR') { 
         window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => {
             if(window.gameMode === 'pvp') {
-                lockInPvPMove(index, choice); // <--- Chama a nova função PvP
+                lockInPvPMove(index, choice); 
             } else {
-                playCardFlow(index, choice); // PvE normal
+                playCardFlow(index, choice); 
             }
         }); 
     } else { 
         if(window.gameMode === 'pvp') {
-            lockInPvPMove(index, null); // <--- Chama a nova função PvP
+            lockInPvPMove(index, null); 
         } else {
-            playCardFlow(index, null); // PvE normal
+            playCardFlow(index, null); 
         }
     }
 }
 
-// 2. NOVA FUNÇÃO: TRAVAR CARTA NO PVP
+// ATUALIZAÇÃO: TRAVAR CARTA NO PVP
 async function lockInPvPMove(index, disarmChoice) {
-    // Marca visualmente a carta
     const handContainer = document.getElementById('player-hand');
     const cardEl = handContainer.children[index];
     if(cardEl) {
         cardEl.classList.add('card-selected');
     }
 
-    // Salva o índice para usarmos na animação depois
     window.pvpSelectedCardIndex = index;
     
-    // Bloqueia interações
     isProcessing = true; 
     showCenterText("AGUARDANDO OPONENTE...", "#ffd700");
 
-    // Envia para o Firebase
     const cardKey = player.hand[index];
     const matchRef = doc(db, "matches", window.currentMatchId);
     
-    // Define os campos baseados em quem sou eu
     const updateField = (window.myRole === 'player1') ? 'p1Move' : 'p2Move';
     const disarmField = (window.myRole === 'player1') ? 'p1Disarm' : 'p2Disarm';
     
@@ -959,7 +946,6 @@ async function lockInPvPMove(index, disarmChoice) {
             [updateField]: cardKey,
             [disarmField]: disarmChoice || null
         });
-        // Não removemos a carta da mão ainda! Ela fica brilhando lá.
     } catch (e) {
         console.error("Erro ao enviar jogada:", e);
         isProcessing = false;
@@ -1000,23 +986,6 @@ async function playCardFlow(index, pDisarmChoice) {
     isProcessing = true; 
     let cardKey = player.hand.splice(index, 1)[0]; 
     playerHistory.push(cardKey);
-
-    // --- MODO PVP ---
-    if (window.gameMode === 'pvp') {
-        showCenterText("AGUARDANDO OPONENTE...", "#ffd700");
-        
-        const matchRef = doc(db, "matches", window.currentMatchId);
-        const updateField = (window.myRole === 'player1') ? 'p1Move' : 'p2Move';
-        const disarmField = (window.myRole === 'player1') ? 'p1Disarm' : 'p2Disarm'; 
-        
-        await updateDoc(matchRef, {
-            [updateField]: cardKey,
-            [disarmField]: pDisarmChoice || null
-        });
-        
-        renderTable(cardKey, 'p-slot', true);
-        return; 
-    }
 
     // --- MODO PvE (IA) ---
     let aiMove = getBestAIMove(); 
@@ -1143,9 +1112,6 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
                     turn: increment(1) 
                 }).then(() => {
                     // Destrava para o próximo turno
-                    /* O listener vai detectar a mudança (moves = null)
-                       mas a flag isResolvingTurn nós resetamos aqui ou
-                       no início do draw logic */
                 });
             }, 3000); 
         }
@@ -1157,6 +1123,7 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
 
     }, 600);
 }
+
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
     
@@ -1631,33 +1598,32 @@ async function findOpponentInQueue() {
                 await updateDoc(myQueueRef, { matchId: matchId });
             }
 
-// HELPER: Gera um deck embaralhado baseado no template
-function generateShuffledDeck() {
-    let deck = [];
-    // Cria as cartas baseadas na quantidade definida no DECK_TEMPLATE
-    for(let k in DECK_TEMPLATE) {
-        for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k);
+            // ATUALIZAÇÃO: Gera os decks embaralhados no HOST
+            const p1DeckCards = generateShuffledDeck();
+            const p2DeckCards = generateShuffledDeck();
+
+            // Cria a partida passando nomes e decks
+            await createMatchDocument(
+                matchId, 
+                currentUser.uid, oppData.uid, 
+                currentUser.displayName, oppData.name,
+                window.currentDeck, oppData.deck,
+                p1DeckCards, p2DeckCards
+            );
+        } 
+    } catch (e) {
+        console.error("Erro ao buscar oponente:", e);
     }
-    // Algoritmo de Fisher-Yates para embaralhar
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    return deck;
 }
-            
-           // ATUALIZAÇÃO: Agora salvamos os DECKS COMPLETOS no banco
-async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckType, p2DeckType) {
+
+// ATUALIZAÇÃO: Agora salvamos os DECKS COMPLETOS no banco
+async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckType, p2DeckType, p1DeckCards, p2DeckCards) {
     const matchRef = doc(db, "matches", matchId);
     
     const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1";
     const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
     const d1Type = p1DeckType || 'knight';
     const d2Type = p2DeckType || 'knight';
-
-    // AQUI ESTÁ O SEGREDO: Geramos os decks AGORA e salvamos
-    const p1DeckCards = generateShuffledDeck();
-    const p2DeckCards = generateShuffledDeck();
 
     await setDoc(matchRef, {
         player1: { 
@@ -1680,24 +1646,6 @@ async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckTy
             deck: p2DeckCards, // Salva o array embaralhado
             xp: [] 
         },
-        turn: 1,
-        status: 'playing',
-        createdAt: Date.now()
-    });
-}
-
-async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1Deck, p2Deck) {
-    const matchRef = doc(db, "matches", matchId);
-    
-    const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1";
-    const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
-
-    const d1 = p1Deck || 'knight';
-    const d2 = p2Deck || 'knight';
-
-    await setDoc(matchRef, {
-        player1: { uid: p1Id, name: cleanName1, deckType: d1, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
-        player2: { uid: p2Id, name: cleanName2, deckType: d2, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
         turn: 1,
         status: 'playing', 
         createdAt: Date.now()
@@ -1724,7 +1672,7 @@ window.cancelPvPSearch = async function() {
     console.log("Busca cancelada.");
 };
 
-// ATUALIZAÇÃO: Baixar os dados iniciais (incluindo decks)
+// --- ENTRAR NA PARTIDA (Sucesso) ---
 async function enterMatch(matchId) {
     console.log("PARTIDA ENCONTRADA! ID:", matchId);
     
@@ -1733,18 +1681,16 @@ async function enterMatch(matchId) {
 
     const matchRef = doc(db, "matches", matchId);
     const matchSnap = await getDoc(matchRef);
-    
     if(matchSnap.exists()) {
         const data = matchSnap.data();
         
-        // SALVAR DADOS INICIAIS GLOBALMENTE PARA O STARTGAME USAR
+        // SALVAR DADOS INICIAIS (incluindo decks) GLOBALMENTE
         window.pvpStartData = data; 
 
         if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
         else window.myRole = 'player2';
     }
 
-    // (Resto do código de UI igual...)
     document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
     document.querySelector('.mm-title').style.color = "#2ecc71";
     document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
