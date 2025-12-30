@@ -1,11 +1,14 @@
-// ARQUIVO: js/main.js (VERSÃO CORRIGIDA GLOBAL)
+// ARQUIVO: js/main.js (VERSÃO ESTÁVEL - ORDEM DE LEITURA CORRIGIDA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- 1. CONFIGURAÇÃO FIREBASE ---
+// ======================================================
+// 1. CONFIGURAÇÃO E VARIÁVEIS (TOPO)
+// ======================================================
+
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
     authDomain: "buppo-game.firebaseapp.com",
@@ -24,22 +27,23 @@ try {
     console.log("Firebase Web Iniciado.");
 } catch (e) { console.error("Erro Firebase:", e); }
 
-// --- 2. VARIÁVEIS GLOBAIS ---
+// Estado Geral
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
 window.gameAssets = []; 
+window.masterVol = 1.0; 
 
-// Estados do Jogo
-let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
-let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+// Estado do Jogo
 let isProcessing = false; 
 let turnCount = 1; 
 let playerHistory = []; 
-window.masterVol = 1.0; 
-let isLethalHover = false; 
-let mixerInterval = null;
 let lastHoverTime = 0;
+let isLethalHover = false;
+let mixerInterval = null;
+
+let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
 
 // Matchmaking
 let matchTimerInterval = null;
@@ -53,7 +57,7 @@ window.isMatchStarting = false;
 window.currentDeck = 'knight';
 window.gameMode = 'pve';
 
-// --- 3. ASSETS ---
+// Assets
 const MAGE_ASSETS = {
     'ATAQUE': 'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png',
     'BLOQUEIO': 'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
@@ -91,123 +95,93 @@ const ASSETS_TO_LOAD = {
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 
 // ======================================================
-// 4. FUNÇÕES BÁSICAS E DE UI (EXPOSTAS AO WINDOW)
+// 2. FUNÇÕES GLOBAIS DE SISTEMA (DEFINIDAS PRIMEIRO)
 // ======================================================
 
-function getCardArt(cardKey, isPlayer) {
-    if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) { return MAGE_ASSETS[cardKey]; }
-    return CARDS_DB[cardKey].img;
-}
-
-const tt = document.getElementById('tooltip-box');
-
-// --- TOOLTIPS ---
-window.bindFixedTooltip = function(el, k) { 
-    const updatePos = () => { let rect = el.getBoundingClientRect(); if(tt) tt.style.left = (rect.left + rect.width / 2) + 'px'; }; 
-    return { 
-        onmouseenter: (e) => { 
-            showTT(k); 
-            if(tt) {
-                tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); tt.style.top = 'auto'; 
-                tt.classList.remove('tooltip-anim-up', 'tooltip-anim-down'); tt.classList.add('tooltip-anim-up'); updatePos(); 
-            }
-            el.addEventListener('mousemove', updatePos); 
-        } 
-    }; 
-}
-
-function showTT(k) {
-    let db = CARDS_DB[k]; document.getElementById('tt-title').innerHTML = k; 
-    if (db.customTooltip) {
-        let content = db.customTooltip;
-        let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
-        content = content.replace('{PLAYER_LVL}', currentLvl);
-        let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
-        let reflectDmg = 1 + bonusBlock;
-        content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
-        document.getElementById('tt-content').innerHTML = content;
-    } else {
-        document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>`;
+// Login Google
+window.googleLogin = async function() {
+    window.playNavSound(); 
+    const btnText = document.getElementById('btn-text');
+    btnText.innerText = "CONECTANDO...";
+    try { await signInWithPopup(auth, provider); } 
+    catch (error) { 
+        console.error("Erro no Login:", error); 
+        btnText.innerText = "ERRO - TENTE NOVAMENTE"; 
+        setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000); 
     }
-    tt.style.display = 'block';
-}
-
-function bindMasteryTooltip(el, key, value, ownerId) {
-    return {
-        onmouseenter: (e) => {
-            let db=CARDS_DB[key]; document.getElementById('tt-title').innerHTML = key; 
-            document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Bônus</span><span class='tt-val'>+${value}</span><span class='tt-label'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
-            tt.style.display = 'block'; tt.classList.remove('tooltip-anim-up', 'tooltip-anim-down'); 
-            let rect = el.getBoundingClientRect();
-            if(ownerId === 'p') { tt.classList.add('tooltip-anim-up'); tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px'; tt.style.top = 'auto'; } 
-            else { tt.classList.add('tooltip-anim-down'); tt.style.top = (rect.bottom + 10) + 'px'; tt.style.bottom = 'auto'; }
-            tt.style.left = (rect.left + rect.width/2) + 'px'; tt.style.transform = "translateX(-50%)"; 
-        }
-    };
-}
-
-function addMI(parent, key, value, col, ownerId){ 
-    let d = document.createElement('div'); d.className = 'mastery-icon'; 
-    d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`; d.style.borderColor = col; 
-    let handlers = bindMasteryTooltip(d, key, value, ownerId);
-    d.onmouseenter = handlers.onmouseenter; d.onmouseleave = () => { tt.style.display = 'none'; }; parent.appendChild(d); 
-}
-
-function apply3DTilt(element, isHand = false) { 
-    if(window.innerWidth < 768) return; 
-    element.addEventListener('mousemove', (e) => { 
-        const rect = element.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; 
-        const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; 
-        element.style.setProperty('--rx', xPct); element.style.setProperty('--ry', yPct);
-        let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
-        let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
-        if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
-        element.style.transform = `${lift} ${rotate}`; 
-        let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
-    }); 
-    element.addEventListener('mouseleave', () => { 
-        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
-        let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; 
-        element.style.setProperty('--rx', 0); element.style.setProperty('--ry', 0);
-    }); 
-}
-
-// --- SOM ---
-const MusicController = {
-    currentTrackId: null,
-    play(trackId) {
-        if (this.currentTrackId === trackId) {
-            if (audios[trackId] && audios[trackId].paused && !window.isMuted) {
-                const audio = audios[trackId]; audio.volume = 0; audio.play().catch(()=>{}); this.fadeIn(audio, 0.5 * window.masterVol);
-            } return; 
-        } 
-        const maxVol = 0.5 * window.masterVol;
-        if (this.currentTrackId && audios[this.currentTrackId]) { this.fadeOut(audios[this.currentTrackId]); }
-        if (trackId && audios[trackId]) {
-            const newAudio = audios[trackId]; newAudio.currentTime = 0;
-            if (!window.isMuted) { newAudio.volume = 0; newAudio.play().catch(()=>{}); this.fadeIn(newAudio, maxVol); }
-        }
-        this.currentTrackId = trackId;
-    },
-    stopCurrent() { if(this.currentTrackId && audios[this.currentTrackId]) this.fadeOut(audios[this.currentTrackId]); this.currentTrackId = null; },
-    fadeOut(audio) { let vol = audio.volume; const fadeOutInt = setInterval(() => { if (vol > 0.05) { vol -= 0.05; audio.volume = vol; } else { audio.volume = 0; audio.pause(); clearInterval(fadeOutInt); } }, 50); },
-    fadeIn(audio, targetVol) { let vol = 0; audio.volume = 0; const fadeInInt = setInterval(() => { if (vol < targetVol - 0.05) { vol += 0.05; audio.volume = vol; } else { audio.volume = targetVol; clearInterval(fadeInInt); } }, 50); }
 };
 
-window.playNavSound = function() { let s = audios['sfx-nav']; if(s) { s.currentTime = 0; s.play().catch(()=>{}); } };
-window.playUIHoverSound = function() {
-    let now = Date.now(); if (now - lastHoverTime < 50) return; 
-    let base = audios['sfx-ui-hover']; if(base && !window.isMuted) { let s = base.cloneNode(); s.volume = 0.3 * (window.masterVol || 1.0); s.play().catch(()=>{}); lastHoverTime = now; }
+// Logout
+window.handleLogout = function() {
+    window.playNavSound();
+    signOut(auth).then(() => { location.reload(); });
 };
-function playSound(key) { 
-    if(audios[key]) { let vol = (key === 'sfx-levelup') ? 1.0 : 0.8; audios[key].volume = vol * (window.masterVol || 1.0); audios[key].currentTime = 0; audios[key].play().catch(()=>{}); } 
+
+// Ir para Saguão (Ranking)
+window.goToLobby = async function(isAutoLogin = false) {
+    if(!currentUser) {
+        window.showScreen('start-screen');
+        MusicController.play('bgm-menu'); 
+        return;
+    }
+    isProcessing = false; 
+    let bg = document.getElementById('game-background');
+    if(bg) bg.classList.add('lobby-mode');
+    
+    MusicController.play('bgm-menu'); 
+    createLobbyFlares();
+    
+    // Carrega Ranking e Info do Player
+    const userRef = doc(db, "players", currentUser.uid);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) {
+        await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
+        document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
+    } else {
+        const d = userSnap.data();
+        document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+    }
+    
+    const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
+    onSnapshot(q, (snapshot) => {
+        let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
+        let pos = 1;
+        snapshot.forEach((doc) => {
+            const p = doc.data();
+            let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : ""));
+            html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
+            pos++;
+        });
+        html += '</tbody></table>';
+        document.getElementById('ranking-content').innerHTML = html;
+    });
+    
+    window.showScreen('lobby-screen');
+    document.getElementById('end-screen').classList.remove('visible'); 
+};
+
+window.showScreen = function(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    const configBtn = document.getElementById('btn-config-toggle');
+    const surrenderBtn = document.getElementById('btn-surrender');
+    if(screenId === 'game-screen') { if(surrenderBtn) surrenderBtn.style.display = 'block'; if(configBtn) configBtn.style.display = 'flex'; } 
+    else { if(surrenderBtn) surrenderBtn.style.display = 'none'; if(configBtn) configBtn.style.display = 'none'; const panel = document.getElementById('config-panel'); if(panel) { panel.style.display = 'none'; panel.classList.remove('active'); } }
 }
 
 // ======================================================
-// 5. MATCHMAKING (PVP) - CORRIGIDO
+// 3. FUNÇÕES DE MATCHMAKING
 // ======================================================
 
-// O JOGO PROCURA NO GLOBAL "window.startPvPSearch", POR ISSO PRECISA DO "window."
+window.startPvE = function() { 
+    window.gameMode = 'pve'; 
+    window.playNavSound(); 
+    window.openDeckSelector(); 
+};
+
 window.startPvPSearch = async function() {
     if (!currentUser) return; 
     window.gameMode = 'pvp';
@@ -216,7 +190,6 @@ window.startPvPSearch = async function() {
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'flex';
     document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
-    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
     document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
     document.querySelector('.cancel-btn').style.display = "block";
     
@@ -232,64 +205,44 @@ window.startPvPSearch = async function() {
     }, 1000);
 
     try {
-        // 1. Cria meu ticket
         myQueueRef = doc(collection(db, "queue")); 
         await setDoc(myQueueRef, { uid: currentUser.uid, name: currentUser.displayName, score: 0, timestamp: Date.now(), matchId: null });
 
-        // 2. Ouve se alguém me escolheu
         queueListener = onSnapshot(myQueueRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                if (data.matchId) {
-                    console.log("Fui escolhido! Entrando na partida: " + data.matchId);
-                    enterMatch(data.matchId); 
-                }
+                if (data.matchId) { enterMatch(data.matchId); }
             }
         });
-
-        // 3. Tenta encontrar alguém (Host)
         findOpponentInQueue();
-
     } catch (e) { console.error("Erro no Matchmaking:", e); cancelPvPSearch(); }
 };
 
 async function findOpponentInQueue() {
     try {
         const queueRef = collection(db, "queue");
-        // Pega os 50 mais antigos na fila
+        // Busca os 50 primeiros para evitar ignorar jogadores
         const q = query(queueRef, orderBy("timestamp", "asc"), limit(50));
         const querySnapshot = await getDocs(q);
         let opponentDoc = null;
 
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            // Regra: Não sou eu, não tem match ainda, não está cancelado
-            const isValid = !data.matchId && !data.cancelled; 
-            // Ignora timestamps muito antigos (> 1h) para evitar fantasmas
-            const isRecent = (Date.now() - data.timestamp) < 3600000;
-
-            if (data.uid !== currentUser.uid && isValid && isRecent) {
-                if (!opponentDoc) opponentDoc = doc; // Pega o primeiro válido
-            }
+            const isValid = !data.matchId && !data.cancelled && (Date.now() - data.timestamp < 3600000);
+            if (data.uid !== currentUser.uid && isValid) { if (!opponentDoc) opponentDoc = doc; }
         });
 
         if (opponentDoc) {
             const opponentId = opponentDoc.data().uid;
-            console.log("Oponente encontrado na fila:", opponentId);
-            
-            // Gera ID da Partida
+            console.log("Oponente encontrado:", opponentId);
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
             
-            // AVISA O OPONENTE (Escreve no doc dele na fila)
+            // Trava ambos na partida
             await updateDoc(opponentDoc.ref, { matchId: matchId });
-            
-            // AVISA A MIM MESMO
             if (myQueueRef) { await updateDoc(myQueueRef, { matchId: matchId }); }
             
-            // CRIA A MESA
+            // Cria a mesa
             await createMatchDocument(matchId, currentUser.uid, opponentId);
-        } else {
-            console.log("Nenhum oponente encontrado. Aguardando...");
         }
     } catch (e) { console.error("Erro ao buscar oponente:", e); }
 }
@@ -298,9 +251,7 @@ async function createMatchDocument(matchId, p1Id, p2Id) {
     await setDoc(doc(db, "matches", matchId), {
         player1: { uid: p1Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
         player2: { uid: p2Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
-        turn: 1, 
-        status: 'waiting_decks', 
-        createdAt: Date.now()
+        turn: 1, status: 'waiting_decks', createdAt: Date.now()
     });
 }
 
@@ -315,7 +266,6 @@ window.cancelPvPSearch = async function() {
 function enterMatch(matchId) {
     if (queueListener) queueListener();
     if (matchTimerInterval) clearInterval(matchTimerInterval);
-
     document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
     document.querySelector('.mm-title').style.color = "#2ecc71";
     document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
@@ -327,32 +277,30 @@ function enterMatch(matchId) {
         window.currentMatchId = matchId;
         window.isGameRunning = false;
         
-        // --- AQUI COMEÇA O LISTENER DA PARTIDA ---
+        // Inicia listener da sala
         startMatchListener(matchId);
         
         window.openDeckSelector(); 
     }, 1500);
 }
 
-// Listener da Sala de Jogo (O Cérebro do PvP)
 function startMatchListener(matchId) {
     if (matchUnsub) matchUnsub();
     matchUnsub = onSnapshot(doc(db, "matches", matchId), async (docSnap) => {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
         
-        // Se ambos escolheram deck, inicia o jogo visualmente
+        // Se ambos estiverem prontos (playing)
         if (matchData.status === 'playing') {
             if (!window.isGameRunning) {
-                console.log("Iniciando Jogo PvP...");
                 window.isGameRunning = true;
                 window.transitionToGame();
             }
-            // Sincroniza a cada update
+            // Sincroniza dados da partida
             syncMatchState(matchData);
         }
 
-        // Se sou Player 1 e todos estão prontos, gero o deck
+        // Host gera os decks quando ambos estiverem 'ready'
         if (currentUser.uid === matchData.player1.uid && 
             matchData.status === 'waiting_decks' &&
             matchData.player1.status === 'ready' && 
@@ -363,34 +311,40 @@ function startMatchListener(matchId) {
 }
 
 function syncMatchState(data) {
+    // Descobre quem sou eu
     const isP1 = (currentUser.uid === data.player1.uid);
     const myData = isP1 ? data.player1 : data.player2;
     const oppData = isP1 ? data.player2 : data.player1;
 
-    // Atualiza Eu
+    // Sincroniza Meu Estado
     player.hp = myData.hp;
     player.hand = Array.isArray(myData.hand) ? myData.hand : [];
     player.deck = myData.deck || [];
     player.xp = myData.xp || [];
-    
-    // Atualiza Inimigo
+    player.disabled = myData.disabled || null;
+
+    // Sincroniza Oponente
+    monster.name = oppData.class === 'mage' ? "MAGO RIVAL" : "CAVALEIRO RIVAL";
     monster.hp = oppData.hp;
+    // Cria cartas "falsas" para a mão do inimigo (apenas visual)
     monster.hand = new Array(oppData.hand ? oppData.hand.length : 0).fill('unknown'); 
     monster.deck = oppData.deck || [];
     monster.xp = oppData.xp || [];
+    monster.disabled = oppData.disabled || null;
 
     turnCount = data.turn;
     updateUI();
 
-    // Se as cartas não estão visíveis, mostra elas
+    // Força exibição das cartas se estiverem ocultas
     const handEl = document.getElementById('player-hand');
     if (handEl && player.hand.length > 0) {
         if(handEl.classList.contains('preparing')) {
             handEl.classList.remove('preparing');
             dealAllInitialCards(); 
         }
-        // Garante visibilidade
-        Array.from(handEl.children).forEach(c => c.style.opacity = '1');
+        if (!window.isMatchStarting) {
+            Array.from(handEl.children).forEach(c => c.style.opacity = '1');
+        }
     }
 }
 
@@ -418,14 +372,8 @@ function generateDeckForClass(className) {
 }
 
 // ======================================================
-// 6. LÓGICA DE JOGO (PVE e VISUAL)
+// 4. GAMEPLAY E UI (TODAS AS FUNÇÕES DEFINIDAS)
 // ======================================================
-
-window.startPvE = function() { 
-    window.gameMode = 'pve'; 
-    window.playNavSound(); 
-    window.openDeckSelector(); 
-};
 
 window.selectDeck = async function(deckType) {
     window.currentDeck = deckType; 
@@ -454,7 +402,7 @@ window.selectDeck = async function(deckType) {
                 const field = (data.player1.uid === currentUser.uid) ? "player1" : "player2";
                 await updateDoc(matchRef, { [`${field}.class`]: deckType, [`${field}.status`]: 'ready' });
             }
-        } catch(e) { console.error("Erro deck:", e); }
+        } catch(e) { console.error("Erro Deck PvP:", e); }
     } else {
         setTimeout(() => {
             const selectionScreen = document.getElementById('deck-selection-screen');
@@ -467,12 +415,39 @@ window.selectDeck = async function(deckType) {
     }
 };
 
+window.transitionToGame = function() {
+    const transScreen = document.getElementById('transition-overlay');
+    if(transScreen) transScreen.classList.add('active');
+    setTimeout(() => {
+        MusicController.play('bgm-loop'); 
+        let bg = document.getElementById('game-background');
+        if(bg) bg.classList.remove('lobby-mode');
+        window.showScreen('game-screen');
+        const handEl = document.getElementById('player-hand'); 
+        if(handEl) handEl.innerHTML = '';
+        setTimeout(() => {
+            if(transScreen) transScreen.classList.remove('active');
+            setTimeout(() => { startGameFlow(); }, 200); 
+        }, 1500);
+    }, 500); 
+}
+
+window.transitionToLobby = function() {
+    const transScreen = document.getElementById('transition-overlay');
+    if(transScreen) transScreen.classList.add('active');
+    MusicController.stopCurrent(); 
+    setTimeout(() => {
+        window.goToLobby(false); 
+        setTimeout(() => { if(transScreen) transScreen.classList.remove('active'); }, 1000); 
+    }, 500);
+}
+
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; 
     startCinematicLoop(); 
     
-    // Se for PvP, o Firebase cuida dos dados
+    // PvP: Não reseta, espera sync
     if (window.gameMode === 'pvp') {
         window.isMatchStarting = false;
         const handEl = document.getElementById('player-hand');
@@ -483,7 +458,7 @@ function startGameFlow() {
         return; 
     }
     
-    // Se for PvE, gera dados locais
+    // PvE: Reseta e inicia
     window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand');
     if (handEl) { handEl.innerHTML = ''; handEl.classList.add('preparing'); }
@@ -502,6 +477,11 @@ function updateUI() {
     updateUnit(player); 
     updateUnit(monster); 
     document.getElementById('turn-txt').innerText = "TURNO " + turnCount; 
+}
+
+function getCardArt(cardKey, isPlayer) {
+    if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) { return MAGE_ASSETS[cardKey]; }
+    return CARDS_DB[cardKey].img;
 }
 
 function updateUnit(u) {
@@ -531,9 +511,9 @@ function updateUnit(u) {
             let imgUrl = getCardArt(k, true);
             c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
             
-            // EVENTOS DE CLICK E HOVER
             c.onclick=()=>window.onCardClick(i); 
-            let ttHandler = window.bindFixedTooltip(c,k);
+            
+            let ttHandler = bindFixedTooltip(c,k);
             c.onmouseenter = (e) => { 
                 ttHandler.onmouseenter(e); 
                 document.body.classList.add('focus-hand'); 
@@ -557,15 +537,22 @@ function updateUnit(u) {
     if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
 }
 
-// Torna global para ser chamado no HTML/Click
 window.onCardClick = function(index) {
-    if(isProcessing) return; if (!player.hand[index]) return;
+    if(isProcessing) return; 
+    if (!player.hand[index]) return;
+    
     playSound('sfx-play'); 
-    document.body.classList.remove('focus-hand'); document.getElementById('tooltip-box').style.display = 'none'; isLethalHover = false; 
+    document.body.classList.remove('focus-hand'); document.getElementById('tooltip-box').style.display = 'none'; 
+    isLethalHover = false; 
+    
     let cardKey = player.hand[index];
     if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
-    if(cardKey === 'DESARMAR') { window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => playCardFlow(index, choice)); } 
-    else { playCardFlow(index, null); }
+    
+    if(cardKey === 'DESARMAR') { 
+        window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => playCardFlow(index, choice)); 
+    } else { 
+        playCardFlow(index, null); 
+    }
 }
 
 function playCardFlow(index, pDisarmChoice) {
@@ -575,6 +562,7 @@ function playCardFlow(index, pDisarmChoice) {
 
     let aiMove = getBestAIMove(); 
     let mCardKey = 'ATAQUE'; 
+    
     if(aiMove) { mCardKey = aiMove.card; monster.hand.splice(aiMove.index, 1); } 
     else { if(monster.hand.length > 0) mCardKey = monster.hand.pop(); else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } }
 
@@ -620,7 +608,7 @@ function resolveTurn(pAct, mAct) {
     }, 700);
 }
 
-function checkLevelUp(u) {
+function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         u.lvl++; u.xp = []; playSound('sfx-levelup'); shuffle(u.deck); updateUI();
         let lvlEl = document.getElementById(u.id+'-lvl'); lvlEl.classList.add('level-up-anim'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
@@ -703,17 +691,34 @@ function dealAllInitialCards() {
     }, 2000); 
 }
 
-// --- UTILIDADES ---
-function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
-function showFloatingText(eid, txt, col) { let el = document.createElement('div'); el.className='floating-text'; el.innerText=txt; el.style.color=col; let parent = document.getElementById(eid); if(parent) { let rect = parent.getBoundingClientRect(); el.style.left = (rect.left + rect.width/2) + 'px'; el.style.top = (rect.top) + 'px'; document.body.appendChild(el); } else { document.body.appendChild(el); } setTimeout(()=>el.remove(), 2000); }
+// --- UTILIDADES FINAIS (TOOLTIPS ETC) ---
+const ttBox = document.getElementById('tooltip-box');
+function bindFixedTooltip(el, k) { 
+    const updatePos = () => { let rect = el.getBoundingClientRect(); if(ttBox) ttBox.style.left = (rect.left + rect.width / 2) + 'px'; }; 
+    return { 
+        onmouseenter: (e) => { 
+            showTT(k); 
+            if(ttBox) {
+                ttBox.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); ttBox.style.top = 'auto'; 
+                ttBox.classList.remove('tooltip-anim-up', 'tooltip-anim-down'); ttBox.classList.add('tooltip-anim-up'); updatePos(); 
+            }
+            el.addEventListener('mousemove', updatePos); 
+        } 
+    }; 
+}
+
 window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); } else { p.style.display='flex'; p.classList.add('active'); } }
 window.toggleFullScreen = function() { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); else if (document.exitFullscreen) document.exitFullscreen(); }
 window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
 window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
+function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
+function showFloatingText(eid, txt, col) { let el = document.createElement('div'); el.className='floating-text'; el.innerText=txt; el.style.color=col; let parent = document.getElementById(eid); if(parent) { let rect = parent.getBoundingClientRect(); el.style.left = (rect.left + rect.width/2) + 'px'; el.style.top = (rect.top) + 'px'; document.body.appendChild(el); } else { document.body.appendChild(el); } setTimeout(()=>el.remove(), 2000); }
 
-// ======================================================
-// 7. PRELOAD
-// ======================================================
+// --- LISTENERS FINAIS ---
+onAuthStateChanged(auth, (user) => {
+    if (user) { currentUser = user; window.goToLobby(true); } 
+    else { currentUser = null; window.showScreen('start-screen'); MusicController.play('bgm-menu'); }
+});
 
 function preloadGame() {
     console.log("Iniciando Preload de " + totalAssets + " recursos...");
@@ -761,9 +766,5 @@ function initGlobalHoverLogic() {
     });
 }
 
-onAuthStateChanged(auth, (user) => {
-    if (user) { currentUser = user; window.goToLobby(true); } 
-    else { currentUser = null; window.showScreen('start-screen'); MusicController.play('bgm-menu'); }
-});
-
+// INICIALIZADOR
 preloadGame();
