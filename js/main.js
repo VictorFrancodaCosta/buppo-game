@@ -416,18 +416,43 @@ function startGameFlow() {
     }
 }
 
-// --- ESCUTA MUDANÇAS NA PARTIDA (PVP) ---
+// ATUALIZAÇÃO 3: Ler os nomes e atualizar a tela
 function startPvPListener() {
     if(!window.currentMatchId) return;
 
     const matchRef = doc(db, "matches", window.currentMatchId);
     
-    // Escuta mudanças no documento da partida
+    // Variável para controlar se já atualizamos os nomes (para não fazer isso toda hora)
+    let namesUpdated = false;
+
     onSnapshot(matchRef, (docSnap) => {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
 
-        // Verifica se ambos jogaram (resolve o turno)
+        // --- ATUALIZAÇÃO DOS NOMES NA TELA ---
+        if (!namesUpdated && matchData.player1 && matchData.player2) {
+            let myName, enemyName;
+
+            if (window.myRole === 'player1') {
+                myName = matchData.player1.name;
+                enemyName = matchData.player2.name;
+            } else {
+                myName = matchData.player2.name;
+                enemyName = matchData.player1.name;
+            }
+
+            // Seleciona os elementos no HTML e troca o texto
+            // Nota: Usamos querySelector buscando dentro dos clusters de status
+            const pNameEl = document.querySelector('#p-stats-cluster .unit-name');
+            const mNameEl = document.querySelector('#m-stats-cluster .unit-name');
+
+            if(pNameEl) pNameEl.innerText = myName;
+            if(mNameEl) mNameEl.innerText = enemyName;
+
+            namesUpdated = true; // Marca como feito
+        }
+        // --------------------------------------
+
         if (matchData.p1Move && matchData.p2Move && !isProcessing) {
             resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
         }
@@ -1438,46 +1463,40 @@ window.startPvPSearch = async function() {
     }
 };
 
-// VERSÃO CORRIGIDA DA FUNÇÃO DE BUSCA
+// ATUALIZAÇÃO 1: Pegar os nomes da fila
 async function findOpponentInQueue() {
     try {
         const queueRef = collection(db, "queue");
-        
-        // 1. AUMENTADO O LIMITE PARA 50 (Evita ficar preso atrás de "fantasmas")
+        // Mantemos o limite de 50 e a lógica de tempo que arrumamos antes
         const q = query(queueRef, orderBy("timestamp", "asc"), limit(50));
         const querySnapshot = await getDocs(q);
 
         let opponentDoc = null;
         const now = Date.now();
-        const MAX_WAIT_TIME = 120000; // 2 minutos de validade
+        const MAX_WAIT_TIME = 120000; 
 
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            
-            // Verifica se o ticket na fila é recente (evita parelhar com abas fechadas)
             const isRecent = (now - data.timestamp) < MAX_WAIT_TIME;
-
             if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled && isRecent) {
                 opponentDoc = doc;
             }
         });
 
         if (opponentDoc) {
-            console.log("Oponente encontrado:", opponentDoc.data().name);
+            const oppData = opponentDoc.data();
+            console.log("Oponente encontrado:", oppData.name);
 
-            // 1. Cria o ID da Partida
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
 
-            // 2. Avisa o oponente
             await updateDoc(opponentDoc.ref, { matchId: matchId });
-
-            // 3. Avisa a mim mesmo
             if (myQueueRef) {
                 await updateDoc(myQueueRef, { matchId: matchId });
             }
 
-            // 4. Cria a partida
-            await createMatchDocument(matchId, currentUser.uid, opponentDoc.data().uid);
+            // AQUI É A MUDANÇA: Passamos os NOMES para a criação da partida
+            // currentUser.displayName (Eu) vs oppData.name (Oponente)
+            await createMatchDocument(matchId, currentUser.uid, oppData.uid, currentUser.displayName, oppData.name);
         } else {
             console.log("Nenhum oponente válido encontrado nesta rodada.");
         }
@@ -1487,14 +1506,19 @@ async function findOpponentInQueue() {
     }
 }
 
-// Cria a estrutura inicial da partida no banco
-async function createMatchDocument(matchId, p1Id, p2Id) {
+// ATUALIZAÇÃO 2: Salvar nomes no banco de dados da partida
+async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name) {
     const matchRef = doc(db, "matches", matchId);
+    
+    // Tratamento simples para garantir que nomes longos não quebrem o layout
+    const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1";
+    const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
+
     await setDoc(matchRef, {
-        player1: { uid: p1Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
-        player2: { uid: p2Id, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        player1: { uid: p1Id, name: cleanName1, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        player2: { uid: p2Id, name: cleanName2, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
         turn: 1,
-        status: 'waiting_decks', // Esperando escolherem decks
+        status: 'waiting_decks',
         createdAt: Date.now()
     });
 }
