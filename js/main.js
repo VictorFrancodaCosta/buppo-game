@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO CORRIGIDA E SINCRONIZADA)
+// ARQUIVO: js/main.js (VERSÃO FINAL - SYNC DECK FIX)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -97,8 +97,8 @@ const ASSETS_TO_LOAD = {
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 
-let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
-let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0 };
+let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
+let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let isProcessing = false; let turnCount = 1; let playerHistory = []; 
 window.masterVol = 1.0; 
 let isLethalHover = false; 
@@ -107,7 +107,7 @@ let mixerInterval = null;
 // --- ESTADOS GLOBAIS ---
 window.isMatchStarting = false;
 window.currentDeck = 'knight';
-window.myRole = null; // 'player1' ou 'player2'
+window.myRole = null; 
 window.currentMatchId = null;
 window.pvpSelectedCardIndex = null; 
 window.isResolvingTurn = false; 
@@ -298,7 +298,7 @@ window.openDeckSelector = function() {
     }
 })();
 
-// --- SELEÇÃO DE DECK (AGORA INICIA A BUSCA SE FOR PVP) ---
+// --- SELEÇÃO DE DECK ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         audios['sfx-deck-select'].currentTime = 0;
@@ -339,7 +339,7 @@ window.selectDeck = function(deckType) {
         setTimeout(() => {
             if (window.gameMode === 'pvp') {
                 selectionScreen.style.display = 'none'; 
-                initiateMatchmaking(); // <--- CHAMA A FILA AQUI
+                initiateMatchmaking(); 
             } else {
                 window.transitionToGame();
             }
@@ -442,18 +442,18 @@ function startGameFlow() {
         handEl.classList.add('preparing'); 
     }
     
-    // ATUALIZAÇÃO: Carrega decks sincronizados no PvP
+    // ATUALIZAÇÃO IMPORTANTE: Identidade Fixa (Role)
     if (window.gameMode === 'pvp' && window.pvpStartData) {
         if (window.myRole === 'player1') {
-            resetUnit(player, window.pvpStartData.player1.deck);
-            resetUnit(monster, window.pvpStartData.player2.deck);
+            resetUnit(player, window.pvpStartData.player1.deck, 'player1');
+            resetUnit(monster, window.pvpStartData.player2.deck, 'player2');
         } else {
-            resetUnit(player, window.pvpStartData.player2.deck);
-            resetUnit(monster, window.pvpStartData.player1.deck);
+            resetUnit(player, window.pvpStartData.player2.deck, 'player2');
+            resetUnit(monster, window.pvpStartData.player1.deck, 'player1');
         }
     } else {
-        resetUnit(player); 
-        resetUnit(monster); 
+        resetUnit(player, null, 'pve'); 
+        resetUnit(monster, null, 'pve'); 
     }
 
     turnCount = 1; 
@@ -499,7 +499,6 @@ function startPvPListener() {
             namesUpdated = true; 
         }
 
-        // Se ambos jogaram, destrava e resolve!
         if (matchData.p1Move && matchData.p2Move) {
             if (!window.isResolvingTurn) {
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
@@ -866,17 +865,16 @@ function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 
 // ATUALIZAÇÃO: Aceita um deck opcional e faz cópia segura
-function resetUnit(u, predefinedDeck = null) { 
+function resetUnit(u, predefinedDeck = null, role = null) { 
     u.hp = 6; 
     u.maxHp = 6; 
     u.lvl = 1; 
     u.xp = []; 
     u.hand = []; 
+    u.originalRole = role || 'pve'; // Salva se é player1 ou player2
     
-    // Se passamos um deck pronto (do Firebase), usa ele.
-    // Se não (PvE), cria um novo e embaralha.
     if (predefinedDeck) {
-        u.deck = [...predefinedDeck]; // Clona o array para segurança
+        u.deck = [...predefinedDeck]; 
     } else {
         u.deck = []; 
         for(let k in DECK_TEMPLATE) {
@@ -1197,6 +1195,9 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     function handleExtraXP(u) { 
         if(u.deck.length > 0) { 
             let card = u.deck.pop(); 
+            // Debug para confirmar que a carta é igual para todos
+            console.log(`[SYNC CHECK] Extra XP for ${u.originalRole}: ${card}`);
+            
             animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
                 u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
             }, false, false, (u.id === 'p')); 
@@ -1212,7 +1213,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
-// ATUALIZAÇÃO: CHECK LEVEL UP COM SYNC RNG
+// ATUALIZAÇÃO: CHECK LEVEL UP COM SYNC RNG (CORRIGIDO)
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         let xpContainer = document.getElementById(u.id + '-xp'); 
@@ -1248,9 +1249,11 @@ function checkLevelUp(u, doneCb) {
                 u.xp.forEach(x => u.deck.push(x)); 
                 u.xp = []; 
                 
-                // MÁGICA: No PvP, usa a semente do turno para embaralhar igual
+                // MÁGICA 2.0: No PvP, usa a role ORIGINAL para a semente
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
-                    let s = stringToSeed(window.currentMatchId) + turnCount + (u.id.charCodeAt(0));
+                    // Agora usamos u.originalRole ('player1' ou 'player2')
+                    // Isso garante que P1 e P2 usem a mesma semente para o mesmo personagem
+                    let s = stringToSeed(window.currentMatchId + u.originalRole) + turnCount;
                     shuffle(u.deck, s);
                 } else {
                     shuffle(u.deck); // PvE normal
