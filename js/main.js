@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (AUDIO FIX & NAV FIX)
+// ARQUIVO: js/main.js (AUDIO BLINDADO - VERSÃO FINAL)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -159,41 +159,43 @@ function generateShuffledDeck() {
     return deck;
 }
 
+// CORREÇÃO: MUSIC CONTROLLER BLINDADO
 const MusicController = {
     currentTrackId: null,
     fadeTimer: null,
     play(trackId) {
-        // SEGURANÇA: Se o áudio não existir ou estiver quebrado, ignora
-        if (!audios[trackId] || audios[trackId].readyState < 2) {
-            // Tenta dar play mesmo assim se existir o objeto, mas com catch
-            if(audios[trackId]) audios[trackId].play().catch(()=>{});
-            return;
-        }
-
-        if (this.currentTrackId === trackId) {
-            if (audios[trackId].paused && !window.isMuted) {
-                const audio = audios[trackId];
-                audio.volume = 0;
-                audio.play().catch(e => console.warn("Autoplay prevent", e));
-                this.fadeIn(audio, 0.5 * window.masterVol);
+        // Se o áudio não existe ou está corrompido, retorna sem erro
+        if (!audios[trackId]) return;
+        
+        try {
+            if (this.currentTrackId === trackId) {
+                if (audios[trackId].paused && !window.isMuted) {
+                    const audio = audios[trackId];
+                    if (audio.readyState >= 2) audio.currentTime = 0;
+                    audio.volume = 0;
+                    audio.play().catch(()=>{}); // Ignora erro de play
+                    this.fadeIn(audio, 0.5 * window.masterVol);
+                }
+                return; 
+            } 
+            const maxVol = 0.5 * window.masterVol;
+            if (this.currentTrackId && audios[this.currentTrackId]) {
+                const oldAudio = audios[this.currentTrackId];
+                this.fadeOut(oldAudio);
             }
-            return; 
-        } 
-        const maxVol = 0.5 * window.masterVol;
-        if (this.currentTrackId && audios[this.currentTrackId]) {
-            const oldAudio = audios[this.currentTrackId];
-            this.fadeOut(oldAudio);
-        }
-        if (trackId && audios[trackId]) {
-            const newAudio = audios[trackId];
-            newAudio.currentTime = 0;
-            if (!window.isMuted) {
-                newAudio.volume = 0; 
-                newAudio.play().catch(e => console.warn("Autoplay prevent", e));
-                this.fadeIn(newAudio, maxVol);
+            if (trackId && audios[trackId]) {
+                const newAudio = audios[trackId];
+                if (newAudio.readyState >= 2) newAudio.currentTime = 0;
+                if (!window.isMuted) {
+                    newAudio.volume = 0; 
+                    newAudio.play().catch(()=>{}); // Ignora erro de play
+                    this.fadeIn(newAudio, maxVol);
+                }
             }
+            this.currentTrackId = trackId;
+        } catch(e) {
+            console.warn("MusicController Error (Ignored):", e);
         }
-        this.currentTrackId = trackId;
     },
     stopCurrent() {
         if (this.currentTrackId && audios[this.currentTrackId]) {
@@ -207,8 +209,7 @@ const MusicController = {
         const fadeOutInt = setInterval(() => {
             if (vol > 0.05) {
                 vol -= 0.05;
-                // Proteção contra erro de setar volume em audio não carregado
-                try { audio.volume = vol; } catch(e) { clearInterval(fadeOutInt); }
+                try { audio.volume = vol; } catch(e){ clearInterval(fadeOutInt); }
             } else {
                 try { audio.volume = 0; audio.pause(); } catch(e){}
                 clearInterval(fadeOutInt);
@@ -222,7 +223,7 @@ const MusicController = {
         const fadeInInt = setInterval(() => {
             if (vol < targetVol - 0.05) {
                 vol += 0.05;
-                try { audio.volume = vol; } catch(e) { clearInterval(fadeInInt); }
+                try { audio.volume = vol; } catch(e){ clearInterval(fadeInInt); }
             } else {
                 try { audio.volume = targetVol; } catch(e){}
                 clearInterval(fadeInInt);
@@ -245,20 +246,16 @@ window.toggleMute = function() {
     }
 }
 
-// CORREÇÃO: PlayNavSound blindado contra erros
+// CORREÇÃO: PlayNavSound blindado contra erros fatais
 window.playNavSound = function() { 
     let s = audios['sfx-nav']; 
     if(s) { 
-        s.currentTime = 0; 
         try {
-            let promise = s.play();
-            if(promise !== undefined) {
-                promise.catch(error => {
-                    // Silencia erro de play se o usuario nao interagiu ou arquivo ruim
-                    console.warn("NavSound prevented:", error);
-                });
-            }
-        } catch(e) {}
+            if (s.readyState >= 2) s.currentTime = 0; 
+            s.play().catch(()=>{});
+        } catch(e) {
+            console.warn("Nav Audio Fail", e);
+        }
     } 
 };
 
@@ -332,8 +329,10 @@ window.openDeckSelector = function() {
 // --- SELEÇÃO DE DECK ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
-        audios['sfx-deck-select'].currentTime = 0;
-        audios['sfx-deck-select'].play().catch(()=>{});
+        try {
+            audios['sfx-deck-select'].currentTime = 0;
+            audios['sfx-deck-select'].play().catch(()=>{});
+        } catch(e){}
     }
 
     window.currentDeck = deckType; 
@@ -774,7 +773,7 @@ function createLobbyFlares() {
     }
 }
 
-function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {c.volume = 0; c.play().catch(()=>{}); if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
+function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {try { c.volume = 0; c.play().catch(()=>{}); } catch(e){} if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
 
 function updateAudioMixer() { 
     const cineAudio = audios['sfx-cine']; 
@@ -782,9 +781,11 @@ function updateAudioMixer() {
     const mVol = window.masterVol || 1.0;
     const maxCine = 0.6 * mVol; 
     let targetCine = isLethalHover ? maxCine : 0; 
-    if(window.isMuted) { cineAudio.volume = 0; return; }
-    if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
-    else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
+    if(window.isMuted) { try { cineAudio.volume = 0; } catch(e){} return; }
+    try {
+        if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
+        else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
+    } catch(e){}
 }
 
 window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
@@ -797,33 +798,35 @@ window.updateVol = function(type, val) {
      'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) {
             let vol = window.masterVol || 1.0;
-            if(k === 'sfx-ui-hover') {
-                audios[k].volume = 0.3 * vol;
-            } else if (k === 'sfx-levelup') {
-                audios[k].volume = 1.0 * vol;
-            } else if (k === 'sfx-train') {
-                audios[k].volume = 0.5 * vol;
-            } else {
-                audios[k].volume = 0.8 * vol;
-            }
+            try {
+                if(k === 'sfx-ui-hover') {
+                    audios[k].volume = 0.3 * vol;
+                } else if (k === 'sfx-levelup') {
+                    audios[k].volume = 1.0 * vol;
+                } else if (k === 'sfx-train') {
+                    audios[k].volume = 0.5 * vol;
+                } else {
+                    audios[k].volume = 0.8 * vol;
+                }
+            } catch(e){}
         }
     }); 
 }
 function playSound(key) { 
     if(audios[key]) { 
-        if (key === 'sfx-levelup') {
-            audios[key].volume = 1.0 * (window.masterVol || 1.0);
-            audios[key].currentTime = 0; 
-            try {
+        try {
+            if (key === 'sfx-levelup') {
+                audios[key].volume = 1.0 * (window.masterVol || 1.0);
+                if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
                 audios[key].play().catch(e => console.log("Audio prevented:", e));
                 let clone = audios[key].cloneNode();
                 clone.volume = audios[key].volume;
                 clone.play().catch(()=>{});
-            } catch(e){}
-        } else {
-            audios[key].currentTime = 0; 
-            try { audios[key].play().catch(e => console.log("Audio prevented:", e)); } catch(e){}
-        }
+            } else {
+                if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
+                audios[key].play().catch(e => console.log("Audio prevented:", e)); 
+            }
+        } catch(e){}
     } 
 }
 
