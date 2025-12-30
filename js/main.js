@@ -1245,3 +1245,50 @@ function apply3DTilt(element, isHand = false) {
         element.style.setProperty('--ry', 0);
     }); 
 }
+
+// --- LÓGICA DE MATCHMAKING (UI) ---
+
+let matchTimerInterval = null;
+let matchSeconds = 0;
+
+// Botão PvE (Treino) - Vai direto para seleção de deck (como era antes)
+window.startPvE = function() {
+    window.gameMode = 'pve'; // Salva o modo
+    window.playNavSound();
+    window.openDeckSelector(); // Usa sua função existente de abrir tela cheia/deck
+};
+
+// Botão PvP (Rankeado) - Abre a busca
+window.startPvPSearch = function() {
+    window.gameMode = 'pvp'; // Salva o modo
+    window.playNavSound();
+    
+    // Abre a tela de busca
+    const mmScreen = document.getElementById('matchmaking-screen');
+    mmScreen.style.display = 'flex';
+    
+    // Reseta e inicia o timer visual
+    matchSeconds = 0;
+    const timerEl = document.getElementById('mm-timer');
+    timerEl.innerText = "00:00";
+    
+    if(matchTimerInterval) clearInterval(matchTimerInterval);
+    matchTimerInterval = setInterval(() => {
+        matchSeconds++;
+        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
+        let s = (matchSeconds % 60).toString().padStart(2, '0');
+        timerEl.innerText = `${m}:${s}`;
+    }, 1000);
+
+    // AQUI ENTRARÁ A LÓGICA DO FIREBASE DEPOIS
+    console.log("Iniciando busca PvP...");
+};
+
+// Cancelar Busca
+window.cancelPvPSearch = function() {
+    window.playNavSound();
+    const mmScreen = document.getElementById('matchmaking-screen');
+    mmScreen.style.display = 'none';
+    if(matchTimerInterval) clearInterval(matchTimerInterval);
+    console.log("Busca cancelada.");
+};
