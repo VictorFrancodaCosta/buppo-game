@@ -418,7 +418,7 @@ function startGameFlow() {
     }
 }
 
-// --- ESCUTA MUDANÇAS NA PARTIDA (PVP) ---
+// ATUALIZAÇÃO: Listener que detecta quando AMBOS jogaram
 function startPvPListener() {
     if(!window.currentMatchId) return;
 
@@ -429,31 +429,29 @@ function startPvPListener() {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
 
-        // ATUALIZAÇÃO DOS NOMES
+        // 1. Atualiza nomes (igual já estava funcionando)
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
-
             if (window.myRole === 'player1') {
-                myName = matchData.player1.name;
-                enemyName = matchData.player2.name;
+                myName = matchData.player1.name; enemyName = matchData.player2.name;
             } else {
-                myName = matchData.player2.name;
-                enemyName = matchData.player1.name;
+                myName = matchData.player2.name; enemyName = matchData.player1.name;
             }
-
-            // Seleciona os elementos no HTML e troca o texto
             const pNameEl = document.querySelector('#p-stats-cluster .unit-name');
             const mNameEl = document.querySelector('#m-stats-cluster .unit-name');
-
             if(pNameEl) pNameEl.innerText = myName;
             if(mNameEl) mNameEl.innerText = enemyName;
-
             namesUpdated = true; 
         }
 
-        // Verifica se ambos jogaram (resolve o turno)
-        if (matchData.p1Move && matchData.p2Move && !isProcessing) {
-            resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
+        // 2. O GRANDE GATILHO: Se ambos jogaram, executa a resolução!
+        // Removemos o check de isProcessing aqui para destravar o jogo
+        if (matchData.p1Move && matchData.p2Move) {
+            // Só executa se ainda não estivermos resolvendo ESTE turno especificamente
+            // Usamos uma flag global nova para garantir que rode apenas uma vez por turno
+            if (!window.isResolvingTurn) {
+                resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
+            }
         }
     });
 }
@@ -1026,10 +1024,15 @@ async function playCardFlow(index, pDisarmChoice) {
     }, false, true, false);
 }
 
-// 3. ATUALIZAR A RESOLUÇÃO PVP (ANIMAÇÃO SIMULTÂNEA)
+// ATUALIZAÇÃO: Animação Simultânea e Resolução
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
-    isProcessing = true;
+    window.isResolvingTurn = true; // Trava para não rodar duas vezes
+    isProcessing = true; // Garante que ninguém clica em nada
     
+    // Limpa a mensagem "AGUARDANDO OPONENTE..."
+    const centerTxt = document.querySelector('.center-text');
+    if(centerTxt) centerTxt.remove();
+
     // Define quem jogou o quê
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
     if (window.myRole === 'player1') {
@@ -1040,69 +1043,80 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         myDisarmChoice = p2Disarm; enemyDisarmChoice = p1Disarm;
     }
 
-    // 1. Processar a MINHA carta (que estava parada na mão)
-    // Se por algum erro o índice for nulo, tenta achar a primeira carta igual na mão
-    if (window.pvpSelectedCardIndex === null) {
+    // --- PREPARAÇÃO DA MINHA CARTA ---
+    // Se por acaso perdeu o índice (refresh), tenta achar na mão
+    if (window.pvpSelectedCardIndex === null || window.pvpSelectedCardIndex === undefined) {
         window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
     }
     
-    // Remove a carta da mão (logicamente)
-    // Nota: Como o índice está salvo, removemos exatamente aquela carta
-    if (window.pvpSelectedCardIndex !== -1 && player.hand[window.pvpSelectedCardIndex]) {
+    // Identifica o elemento HTML da carta selecionada
+    const handContainer = document.getElementById('player-hand');
+    let myCardEl = null;
+    let startRect = null;
+
+    if (handContainer && window.pvpSelectedCardIndex > -1 && handContainer.children[window.pvpSelectedCardIndex]) {
+        myCardEl = handContainer.children[window.pvpSelectedCardIndex];
+        // Pega a posição ATUAL dela (que está flutuando selecionada)
+        startRect = myCardEl.getBoundingClientRect();
+        
+        // Remove o brilho e esconde a carta original IMEDIATAMENTE
+        // para o clone voador assumir o lugar sem glitch visual
+        myCardEl.classList.remove('card-selected');
+        myCardEl.style.opacity = '0';
+    }
+
+    // Remove logicamente da mão
+    if (window.pvpSelectedCardIndex > -1) {
         player.hand.splice(window.pvpSelectedCardIndex, 1);
         playerHistory.push(myMove);
     }
 
-    // Efeitos Visuais da Minha Carta Voando
-    const handContainer = document.getElementById('player-hand');
-    let startRect = null;
+    // --- AÇÃO: LANÇAR AS CARTAS AO MESMO TEMPO ---
     
-    // Tenta pegar a posição da carta que estava selecionada
-    if (handContainer && handContainer.children[window.pvpSelectedCardIndex]) {
-        const el = handContainer.children[window.pvpSelectedCardIndex];
-        startRect = el.getBoundingClientRect();
-        // Esconde a carta original imediatamente
-        el.style.opacity = '0'; 
-        el.style.visibility = 'hidden';
-    }
-
-    // 2. Animar AMBAS as cartas voando para a mesa JUNTAS
-    const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 };
-    
-    // Minha carta voa
+    // 1. Minha carta voa da posição "selecionada" para a mesa
     animateFly(startRect || 'player-hand', 'p-slot', myMove, () => {
         renderTable(myMove, 'p-slot', true);
     }, false, true, true);
 
-    // Carta do inimigo voa (com um delay minúsculo para efeito dramático)
-    setTimeout(() => {
-        animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => {
-            renderTable(enemyMove, 'm-slot', false);
-            
-            // 3. Resolver a lógica do combate
-            setTimeout(() => {
-                resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
-                
-                // Resetar estado PvP para o próximo turno
-                window.pvpSelectedCardIndex = null;
-                
-                // Limpar Firebase (Apenas Host/P1 faz isso)
-                if (window.myRole === 'player1') {
-                    const matchRef = doc(db, "matches", window.currentMatchId);
-                    // Dá um tempo para lerem o resultado antes de limpar
-                    setTimeout(() => {
-                        updateDoc(matchRef, {
-                            p1Move: null, p2Move: null,
-                            p1Disarm: null, p2Disarm: null,
-                            turn: increment(1) 
-                        });
-                    }, 2500); 
-                }
-            }, 600); // Tempo após as cartas baterem na mesa
-        }, false, true, false);
-    }, 100);
-}
+    // 2. Carta do inimigo voa do topo para a mesa
+    const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 };
+    animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => {
+        renderTable(enemyMove, 'm-slot', false);
+    }, false, true, false);
 
+    // --- RESOLUÇÃO MATEMÁTICA ---
+    // Espera as cartas chegarem na mesa (aprox 600ms) para calcular dano
+    setTimeout(() => {
+        resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
+
+        // Limpeza Pós-Turno
+        window.pvpSelectedCardIndex = null;
+        
+        // Apenas o HOST (Player 1) limpa o banco para o próximo turno
+        if (window.myRole === 'player1') {
+            const matchRef = doc(db, "matches", window.currentMatchId);
+            // Dá um tempo para lerem o resultado (dano/textos) antes de limpar
+            setTimeout(() => {
+                updateDoc(matchRef, {
+                    p1Move: null, p2Move: null,
+                    p1Disarm: null, p2Disarm: null,
+                    turn: increment(1) 
+                }).then(() => {
+                    // Destrava para o próximo turno
+                    /* O listener vai detectar a mudança (moves = null)
+                       mas a flag isResolvingTurn nós resetamos aqui ou
+                       no início do draw logic */
+                });
+            }, 3000); 
+        }
+        
+        // Destrava a flag local depois de tudo
+        setTimeout(() => {
+            window.isResolvingTurn = false;
+        }, 3500);
+
+    }, 600);
+}
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
     
