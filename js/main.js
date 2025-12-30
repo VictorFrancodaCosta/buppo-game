@@ -1468,7 +1468,7 @@ window.startPvPSearch = function() {
         console.error("Erro no Matchmaking:", e);
         cancelPvPSearch();
     }
-};
+}
 
 // ATUALIZAÇÃO 3: Lógica Real da Fila (Agora chamada APÓS escolher o deck)
 async function initiateMatchmaking() {
