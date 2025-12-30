@@ -261,7 +261,7 @@ window.openDeckSelector = function() {
     }
 })();
 
-// --- SELEÇÃO DE DECK ---
+// ATUALIZAÇÃO 2: Seleção de Deck direciona para Fila (se PvP) ou Jogo (se PvE)
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         audios['sfx-deck-select'].currentTime = 0;
@@ -270,15 +270,15 @@ window.selectDeck = function(deckType) {
 
     window.currentDeck = deckType; 
     
-    // --- NOVO CÓDIGO: APLICA O TEMA AO BODY ---
-    document.body.classList.remove('theme-cavaleiro', 'theme-mago'); // Limpa temas anteriores
+    // Aplica o tema ao body
+    document.body.classList.remove('theme-cavaleiro', 'theme-mago'); 
     if (deckType === 'mage') {
         document.body.classList.add('theme-mago');
     } else {
         document.body.classList.add('theme-cavaleiro');
     }
-    // ------------------------------------------
 
+    // Animação visual das cartas (Mantendo seu código visual)
     const options = document.querySelectorAll('.deck-option');
     options.forEach(opt => {
         if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
@@ -286,8 +286,6 @@ window.selectDeck = function(deckType) {
             opt.style.transform = "scale(1.15) translateY(-20px)";
             opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))";
             opt.style.zIndex = "100";
-            const img = opt.querySelector('img');
-            if(img) img.style.filter = "grayscale(0%) brightness(1.2)";
         } else {
             opt.style.transition = "all 0.3s ease";
             opt.style.transform = "scale(0.8) translateY(10px)";
@@ -296,20 +294,27 @@ window.selectDeck = function(deckType) {
         }
     });
 
+    // DECISÃO DE FLUXO
     setTimeout(() => {
         const selectionScreen = document.getElementById('deck-selection-screen');
         selectionScreen.style.transition = "opacity 0.5s";
         selectionScreen.style.opacity = "0";
 
         setTimeout(() => {
-            window.transitionToGame();
+            // Se for PVP, iniciamos a busca AGORA (com o deck já escolhido)
+            if (window.gameMode === 'pvp') {
+                // Esconde a tela de deck mas não transiciona pro jogo ainda
+                selectionScreen.style.display = 'none'; 
+                initiateMatchmaking(); // <--- NOVA FUNÇÃO QUE VAMOS CRIAR ABAIXO
+            } else {
+                // Se for PvE, segue o fluxo normal antigo
+                window.transitionToGame();
+            }
+
+            // Reseta visual da tela de seleção para a próxima vez
             setTimeout(() => {
-                selectionScreen.style.opacity = "1";
-                options.forEach(opt => {
-                    opt.style = "";
-                    const img = opt.querySelector('img');
-                    if(img) img.style = "";
-                });
+                if(window.gameMode !== 'pvp') selectionScreen.style.opacity = "1";
+                options.forEach(opt => { opt.style = ""; });
             }, 500);
         }, 500);
     }, 400);
@@ -1402,11 +1407,13 @@ window.startPvE = function() {
     window.openDeckSelector(); 
 };
 
-// --- INICIAR BUSCA (Botão PvP) ---
-window.startPvPSearch = async function() {
+// ATUALIZAÇÃO 1: Botão PvP apenas abre a seleção de deck
+window.startPvPSearch = function() {
     if (!currentUser) return; 
-    window.gameMode = 'pvp';
+    window.gameMode = 'pvp'; // Define que é PvP
     window.playNavSound();
+    window.openDeckSelector(); // Vai para a escolha de cartas
+};
 
     // 1. UI: Abre a tela de busca
     const mmScreen = document.getElementById('matchmaking-screen');
@@ -1463,11 +1470,63 @@ window.startPvPSearch = async function() {
     }
 };
 
-// ATUALIZAÇÃO 1: Pegar os nomes da fila
+// ATUALIZAÇÃO 3: Lógica Real da Fila (Agora chamada APÓS escolher o deck)
+async function initiateMatchmaking() {
+    // UI: Abre a tela de busca (Overlay)
+    const mmScreen = document.getElementById('matchmaking-screen');
+    mmScreen.style.display = 'flex';
+    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
+    document.querySelector('.mm-title').style.color = "var(--gold)";
+    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
+    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
+    document.querySelector('.cancel-btn').style.display = "block";
+    
+    // Timer
+    matchSeconds = 0;
+    const timerEl = document.getElementById('mm-timer');
+    timerEl.innerText = "00:00";
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    matchTimerInterval = setInterval(() => {
+        matchSeconds++;
+        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
+        let s = (matchSeconds % 60).toString().padStart(2, '0');
+        timerEl.innerText = `${m}:${s}`;
+    }, 1000);
+
+    // FIREBASE
+    try {
+        myQueueRef = doc(collection(db, "queue")); 
+        const myData = {
+            uid: currentUser.uid,
+            name: currentUser.displayName,
+            deck: window.currentDeck, // <--- IMPORTANTE: Salvamos o deck escolhido
+            score: 0, 
+            timestamp: Date.now(),
+            matchId: null
+        };
+        await setDoc(myQueueRef, myData);
+
+        queueListener = onSnapshot(myQueueRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.matchId) {
+                    enterMatch(data.matchId); 
+                }
+            }
+        });
+
+        findOpponentInQueue();
+
+    } catch (e) {
+        console.error("Erro no Matchmaking:", e);
+        cancelPvPSearch();
+    }
+}
+
+// ATUALIZAÇÃO 4: Passando Deck e Nome para a criação
 async function findOpponentInQueue() {
     try {
         const queueRef = collection(db, "queue");
-        // Mantemos o limite de 50 e a lógica de tempo que arrumamos antes
         const q = query(queueRef, orderBy("timestamp", "asc"), limit(50));
         const querySnapshot = await getDocs(q);
 
@@ -1494,36 +1553,39 @@ async function findOpponentInQueue() {
                 await updateDoc(myQueueRef, { matchId: matchId });
             }
 
-            // AQUI É A MUDANÇA: Passamos os NOMES para a criação da partida
-            // currentUser.displayName (Eu) vs oppData.name (Oponente)
-            await createMatchDocument(matchId, currentUser.uid, oppData.uid, currentUser.displayName, oppData.name);
-        } else {
-            console.log("Nenhum oponente válido encontrado nesta rodada.");
-        }
-
+            // Passamos: IDs, Nomes e DECKS
+            await createMatchDocument(
+                matchId, 
+                currentUser.uid, oppData.uid, 
+                currentUser.displayName, oppData.name,
+                window.currentDeck, oppData.deck // <--- Passando os decks
+            );
+        } 
     } catch (e) {
         console.error("Erro ao buscar oponente:", e);
     }
 }
-
-// ATUALIZAÇÃO 2: Salvar nomes no banco de dados da partida
-async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name) {
+// ATUALIZAÇÃO 5: Salvando os decks no objeto da partida
+async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1Deck, p2Deck) {
     const matchRef = doc(db, "matches", matchId);
     
-    // Tratamento simples para garantir que nomes longos não quebrem o layout
     const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1";
     const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
 
+    // Fallback caso o deck não venha (padrão knight)
+    const d1 = p1Deck || 'knight';
+    const d2 = p2Deck || 'knight';
+
     await setDoc(matchRef, {
-        player1: { uid: p1Id, name: cleanName1, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
-        player2: { uid: p2Id, name: cleanName2, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        player1: { uid: p1Id, name: cleanName1, deckType: d1, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
+        player2: { uid: p2Id, name: cleanName2, deckType: d2, hp: 6, status: 'selecting', hand: [], deck: [], xp: [] },
         turn: 1,
-        status: 'waiting_decks',
+        status: 'playing', // Já começamos jogando, pois os decks já foram escolhidos!
         createdAt: Date.now()
     });
 }
 
-// --- CANCELAR BUSCA ---
+// ATUALIZAÇÃO 7: Cancelar volta a mostrar a seleção de deck
 window.cancelPvPSearch = async function() {
     window.playNavSound();
     const mmScreen = document.getElementById('matchmaking-screen');
@@ -1531,61 +1593,51 @@ window.cancelPvPSearch = async function() {
     
     if (matchTimerInterval) clearInterval(matchTimerInterval);
     
-    // Para de escutar mudanças
-    if (queueListener) {
-        queueListener(); 
-        queueListener = null;
-    }
+    if (queueListener) { queueListener(); queueListener = null; }
 
-    // Remove ou cancela meu nome da fila
     if (myQueueRef) {
         await updateDoc(myQueueRef, { cancelled: true }); 
-        // Idealmente usaríamos deleteDoc(myQueueRef), mas marcar cancelado é mais seguro para logs
         myQueueRef = null;
     }
     
+    // Volta a mostrar a tela de seleção de deck
+    const selectionScreen = document.getElementById('deck-selection-screen');
+    selectionScreen.style.display = 'flex';
+    selectionScreen.style.opacity = '1';
+
     console.log("Busca cancelada.");
 };
-
-// --- ENTRAR NA PARTIDA (Sucesso) ---
+// ATUALIZAÇÃO 6: Entrar na partida vai direto para o jogo (TransitionToGame)
 async function enterMatch(matchId) {
     console.log("PARTIDA ENCONTRADA! ID:", matchId);
     
-    // Limpa listeners da fila
     if (queueListener) queueListener();
     if (matchTimerInterval) clearInterval(matchTimerInterval);
 
-    // 1. Descobrir se sou Player 1 ou Player 2
+    // Descobre quem sou eu novamente (segurança)
     const matchRef = doc(db, "matches", matchId);
     const matchSnap = await getDoc(matchRef);
-    
     if(matchSnap.exists()) {
         const data = matchSnap.data();
-        if(data.player1.uid === currentUser.uid) {
-            window.myRole = 'player1';
-        } else {
-            window.myRole = 'player2';
-        }
-        console.log("Eu sou: " + window.myRole);
+        if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
+        else window.myRole = 'player2';
     }
 
-    // Atualiza UI para Verde
+    // UI Verde
     document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
     document.querySelector('.mm-title').style.color = "#2ecc71";
     document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
     document.querySelector('.radar-spinner').style.animation = "none";
     document.querySelector('.cancel-btn').style.display = "none";
 
-    // Aguarda um pouco e vai para a seleção de deck (que agora será PvP)
     setTimeout(() => {
         const mmScreen = document.getElementById('matchmaking-screen');
         mmScreen.style.display = 'none';
         
-        // Configura o ID da partida globalmente para usarmos depois
         window.currentMatchId = matchId;
         
-        // Vai para a seleção de deck
-        window.openDeckSelector(); 
+        // AQUI ESTÁ A MUDANÇA: Direto para o jogo!
+        window.transitionToGame(); 
         
     }, 1500);
 }
