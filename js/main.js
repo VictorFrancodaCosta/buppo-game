@@ -1,9 +1,9 @@
-// ARQUIVO: js/main.js (VERSÃO WEB PURA)
+// ARQUIVO: js/main.js (VERSÃO WEB PURA - COM PVP FUNCIONAL)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
@@ -48,8 +48,8 @@ const MAGE_ASSETS = {
 const ASSETS_TO_LOAD = {
     images: [
         'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png',
-        'https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png', // Atualizado para nova mesa Cavaleiro
-        'https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png', // Atualizado para nova mesa Mago
+        'https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png',
+        'https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png',
         'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png',
         'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',
         'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',
@@ -107,6 +107,7 @@ let mixerInterval = null;
 // --- ESTADOS GLOBAIS ---
 window.isMatchStarting = false;
 window.currentDeck = 'knight';
+window.myRole = null; // 'player1' ou 'player2'
 
 // --- HELPER: RETORNA ARTE CORRETA ---
 function getCardArt(cardKey, isPlayer) {
@@ -408,6 +409,29 @@ function startGameFlow() {
     drawCardLogic(player, 6); 
     updateUI(); 
     dealAllInitialCards();
+
+    // --- LÓGICA PVP LISTENER ---
+    if(window.gameMode === 'pvp') {
+        startPvPListener();
+    }
+}
+
+// --- ESCUTA MUDANÇAS NA PARTIDA (PVP) ---
+function startPvPListener() {
+    if(!window.currentMatchId) return;
+
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    
+    // Escuta mudanças no documento da partida
+    onSnapshot(matchRef, (docSnap) => {
+        if (!docSnap.exists()) return;
+        const matchData = docSnap.data();
+
+        // Verifica se ambos jogaram (resolve o turno)
+        if (matchData.p1Move && matchData.p2Move && !isProcessing) {
+            resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
+        }
+    });
 }
 
 function checkEndGame(){ 
@@ -426,8 +450,8 @@ function checkEndGame(){
             } else { 
                 title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); 
             } 
-            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(); } 
-            else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
+            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(window.gameMode); } 
+            else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(window.gameMode); }
             document.getElementById('end-screen').classList.add('visible'); 
         }, 1000); 
     } else { isProcessing = false; } 
@@ -535,7 +559,7 @@ window.abandonMatch = function() {
             (choice) => {
                 // Callback: o que fazer quando o jogador clica
                 if (choice === "SAIR") {
-                    window.registrarDerrotaOnline();
+                    window.registrarDerrotaOnline(window.gameMode);
                     window.transitionToLobby();
                 }
                 // Se clicar em "CANCELAR", o modal fecha sozinho automaticamente
@@ -852,11 +876,30 @@ function getBestAIMove() {
     return moves[0];
 }
 
-function playCardFlow(index, pDisarmChoice) {
+async function playCardFlow(index, pDisarmChoice) {
     isProcessing = true; 
     let cardKey = player.hand.splice(index, 1)[0]; 
     playerHistory.push(cardKey);
 
+    // --- MODO PVP ---
+    if (window.gameMode === 'pvp') {
+        showCenterText("AGUARDANDO OPONENTE...", "#ffd700");
+        
+        const matchRef = doc(db, "matches", window.currentMatchId);
+        const updateField = (window.myRole === 'player1') ? 'p1Move' : 'p2Move';
+        const disarmField = (window.myRole === 'player1') ? 'p1Disarm' : 'p2Disarm'; 
+        
+        await updateDoc(matchRef, {
+            [updateField]: cardKey,
+            [disarmField]: pDisarmChoice || null
+        });
+        
+        // Renderiza sua carta na mesa
+        renderTable(cardKey, 'p-slot', true);
+        return; // Sai da função e espera o Listener resolver
+    }
+
+    // --- MODO PvE (IA) ---
     let aiMove = getBestAIMove(); 
     let mCardKey = 'ATAQUE'; 
     let mDisarmTarget = null; 
@@ -900,6 +943,52 @@ function playCardFlow(index, pDisarmChoice) {
         renderTable(mCardKey, 'm-slot', false); 
         setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); 
     }, false, true, false);
+}
+
+async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
+    isProcessing = true;
+    
+    // Define quem jogou o quê baseado no meu papel
+    let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
+
+    if (window.myRole === 'player1') {
+        myMove = p1Move;
+        enemyMove = p2Move;
+        myDisarmChoice = p1Disarm;
+        enemyDisarmChoice = p2Disarm;
+    } else {
+        myMove = p2Move;
+        enemyMove = p1Move;
+        myDisarmChoice = p2Disarm;
+        enemyDisarmChoice = p1Disarm;
+    }
+
+    // Animação da carta do inimigo vindo (ela estava oculta até agora)
+    const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 };
+    
+    // Anima a carta inimiga voando
+    animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => { 
+        renderTable(enemyMove, 'm-slot', false);
+        
+        // Resolve a lógica
+        setTimeout(() => {
+             resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
+        }, 500);
+    }, false, true, false);
+    
+    // Limpa as jogadas no Banco para o próximo turno (apenas o Player1 faz isso)
+    if (window.myRole === 'player1') {
+        const matchRef = doc(db, "matches", window.currentMatchId);
+        setTimeout(() => {
+            updateDoc(matchRef, {
+                p1Move: null,
+                p2Move: null,
+                p1Disarm: null,
+                p2Disarm: null,
+                turn: increment(1) 
+            });
+        }, 2000); 
+    }
 }
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
@@ -1429,12 +1518,26 @@ window.cancelPvPSearch = async function() {
 };
 
 // --- ENTRAR NA PARTIDA (Sucesso) ---
-function enterMatch(matchId) {
+async function enterMatch(matchId) {
     console.log("PARTIDA ENCONTRADA! ID:", matchId);
     
     // Limpa listeners da fila
     if (queueListener) queueListener();
     if (matchTimerInterval) clearInterval(matchTimerInterval);
+
+    // 1. Descobrir se sou Player 1 ou Player 2
+    const matchRef = doc(db, "matches", matchId);
+    const matchSnap = await getDoc(matchRef);
+    
+    if(matchSnap.exists()) {
+        const data = matchSnap.data();
+        if(data.player1.uid === currentUser.uid) {
+            window.myRole = 'player1';
+        } else {
+            window.myRole = 'player2';
+        }
+        console.log("Eu sou: " + window.myRole);
+    }
 
     // Atualiza UI para Verde
     document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
