@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - SYNC FIX & UI FIX)
+// ARQUIVO: js/main.js (AUDIO FIX & NAV FIX)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -134,11 +134,10 @@ function stringToSeed(str) {
 function shuffle(array, seed = null) {
     let rng = Math.random; 
     
-    // Se tiver seed, usa gerador determinístico
+    // Se tiver seed, usa gerador determinístico (LCG simples)
     if (seed !== null) {
         let currentSeed = seed;
         rng = function() {
-            // LCG simples
             currentSeed = (currentSeed * 9301 + 49297) % 233280;
             return currentSeed / 233280;
         }
@@ -164,8 +163,15 @@ const MusicController = {
     currentTrackId: null,
     fadeTimer: null,
     play(trackId) {
+        // SEGURANÇA: Se o áudio não existir ou estiver quebrado, ignora
+        if (!audios[trackId] || audios[trackId].readyState < 2) {
+            // Tenta dar play mesmo assim se existir o objeto, mas com catch
+            if(audios[trackId]) audios[trackId].play().catch(()=>{});
+            return;
+        }
+
         if (this.currentTrackId === trackId) {
-            if (audios[trackId] && audios[trackId].paused && !window.isMuted) {
+            if (audios[trackId].paused && !window.isMuted) {
                 const audio = audios[trackId];
                 audio.volume = 0;
                 audio.play().catch(e => console.warn("Autoplay prevent", e));
@@ -196,27 +202,29 @@ const MusicController = {
         this.currentTrackId = null;
     },
     fadeOut(audio) {
+        if(!audio) return;
         let vol = audio.volume;
         const fadeOutInt = setInterval(() => {
             if (vol > 0.05) {
                 vol -= 0.05;
-                audio.volume = vol;
+                // Proteção contra erro de setar volume em audio não carregado
+                try { audio.volume = vol; } catch(e) { clearInterval(fadeOutInt); }
             } else {
-                audio.volume = 0;
-                audio.pause();
+                try { audio.volume = 0; audio.pause(); } catch(e){}
                 clearInterval(fadeOutInt);
             }
         }, 50);
     },
     fadeIn(audio, targetVol) {
+        if(!audio) return;
         let vol = 0;
         audio.volume = 0;
         const fadeInInt = setInterval(() => {
             if (vol < targetVol - 0.05) {
                 vol += 0.05;
-                audio.volume = vol;
+                try { audio.volume = vol; } catch(e) { clearInterval(fadeInInt); }
             } else {
-                audio.volume = targetVol;
+                try { audio.volume = targetVol; } catch(e){}
                 clearInterval(fadeInInt);
             }
         }, 50);
@@ -233,13 +241,25 @@ window.toggleMute = function() {
     Object.values(audios).forEach(audio => { if(audio) audio.muted = window.isMuted; });
     if(!window.isMuted && MusicController.currentTrackId) {
         const audio = audios[MusicController.currentTrackId];
-        if(audio && audio.paused) audio.play();
+        if(audio && audio.paused) audio.play().catch(()=>{});
     }
 }
 
+// CORREÇÃO: PlayNavSound blindado contra erros
 window.playNavSound = function() { 
     let s = audios['sfx-nav']; 
-    if(s) { s.currentTime = 0; s.play().catch(()=>{}); } 
+    if(s) { 
+        s.currentTime = 0; 
+        try {
+            let promise = s.play();
+            if(promise !== undefined) {
+                promise.catch(error => {
+                    // Silencia erro de play se o usuario nao interagiu ou arquivo ruim
+                    console.warn("NavSound prevented:", error);
+                });
+            }
+        } catch(e) {}
+    } 
 };
 
 let lastHoverTime = 0;
@@ -249,10 +269,12 @@ window.playUIHoverSound = function() {
 
     let base = audios['sfx-ui-hover'];
     if(base && !window.isMuted) { 
-        let s = base.cloneNode(); 
-        s.volume = 0.3 * (window.masterVol || 1.0);
-        s.play().catch(()=>{}); 
-        lastHoverTime = now;
+        try {
+            let s = base.cloneNode(); 
+            s.volume = 0.3 * (window.masterVol || 1.0);
+            s.play().catch(()=>{}); 
+            lastHoverTime = now;
+        } catch(e){}
     }
 };
 
@@ -384,12 +406,16 @@ window.transitionToGame = function() {
     }, 500); 
 }
 
+// CORREÇÃO: Garante que a transição ocorra mesmo se o áudio falhar
 window.transitionToLobby = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
     if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
     if(transScreen) transScreen.classList.add('active');
-    MusicController.stopCurrent(); 
+    
+    // Tenta parar a música, se der erro, segue a vida
+    try { MusicController.stopCurrent(); } catch(e){}
+    
     setTimeout(() => {
         window.goToLobby(false); 
         setTimeout(() => {
@@ -451,14 +477,12 @@ function startGameFlow() {
         handEl.classList.add('preparing'); 
     }
     
-    // ATUALIZAÇÃO: Identidade Fixa (Role) para sincronia RNG
+    // Identidade Fixa (Role) para sincronia RNG
     if (window.gameMode === 'pvp' && window.pvpStartData) {
         if (window.myRole === 'player1') {
-            // Eu sou P1, meu deck é P1, Inimigo é P2
             resetUnit(player, window.pvpStartData.player1.deck, 'player1');
             resetUnit(monster, window.pvpStartData.player2.deck, 'player2');
         } else {
-            // Eu sou P2, meu deck é P2, Inimigo é P1
             resetUnit(player, window.pvpStartData.player2.deck, 'player2');
             resetUnit(monster, window.pvpStartData.player1.deck, 'player1');
         }
@@ -479,7 +503,6 @@ function startGameFlow() {
     }
 }
 
-// --- LISTENER COM DESTRAVA DE TURNO ---
 function startPvPListener() {
     if(!window.currentMatchId) return;
 
@@ -510,7 +533,6 @@ function startPvPListener() {
             namesUpdated = true; 
         }
 
-        // Se ambos jogaram, destrava e resolve!
         if (matchData.p1Move && matchData.p2Move) {
             if (!window.isResolvingTurn) {
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
@@ -792,13 +814,15 @@ function playSound(key) {
         if (key === 'sfx-levelup') {
             audios[key].volume = 1.0 * (window.masterVol || 1.0);
             audios[key].currentTime = 0; 
-            audios[key].play().catch(e => console.log("Audio prevented:", e));
-            let clone = audios[key].cloneNode();
-            clone.volume = audios[key].volume;
-            clone.play().catch(()=>{});
+            try {
+                audios[key].play().catch(e => console.log("Audio prevented:", e));
+                let clone = audios[key].cloneNode();
+                clone.volume = audios[key].volume;
+                clone.play().catch(()=>{});
+            } catch(e){}
         } else {
             audios[key].currentTime = 0; 
-            audios[key].play().catch(e => console.log("Audio prevented:", e)); 
+            try { audios[key].play().catch(e => console.log("Audio prevented:", e)); } catch(e){}
         }
     } 
 }
@@ -1093,7 +1117,7 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
     }
     
-    // Identifica o elemento HTML da carta selecionada (FAILSAFE ADICIONADO)
+    // Identifica o elemento HTML da carta selecionada
     const handContainer = document.getElementById('player-hand');
     let myCardEl = null;
     let startRect = null;
@@ -1104,9 +1128,7 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
             myCardEl = handContainer.children[window.pvpSelectedCardIndex];
         } else {
             // Failsafe: Procura qualquer carta na mão que corresponda à jogada
-            // Isso evita travamento se o índice estiver errado
             const handCards = Array.from(handContainer.children);
-            // Isso é só visual, a lógica já está certa
             if(handCards.length > 0) myCardEl = handCards[0]; 
         }
     }
@@ -1122,7 +1144,6 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         player.hand.splice(window.pvpSelectedCardIndex, 1);
         playerHistory.push(myMove);
     } else {
-        // Fallback: remove a primeira ocorrência da carta na mão
         const idx = player.hand.indexOf(myMove);
         if(idx > -1) player.hand.splice(idx, 1);
         playerHistory.push(myMove);
