@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - PVP SINCRONIZADO)
+// ARQUIVO: js/main.js (VERSÃO FINAL - PVP COM SYNC RNG)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -109,9 +109,9 @@ window.isMatchStarting = false;
 window.currentDeck = 'knight';
 window.myRole = null; // 'player1' ou 'player2'
 window.currentMatchId = null;
-window.pvpSelectedCardIndex = null; // Índice da carta selecionada na mão (PvP)
-window.isResolvingTurn = false; // Trava para não executar animações duplicadas
-window.pvpStartData = null; // Dados baixados do Firebase (decks, nomes)
+window.pvpSelectedCardIndex = null; 
+window.isResolvingTurn = false; 
+window.pvpStartData = null; 
 
 // --- HELPER: RETORNA ARTE CORRETA ---
 function getCardArt(cardKey, isPlayer) {
@@ -121,17 +121,46 @@ function getCardArt(cardKey, isPlayer) {
     return CARDS_DB[cardKey].img;
 }
 
-// --- HELPER: GERA DECK EMBARALHADO ---
+// --- HELPER: GERA DECK EMBARALHADO (SYNC RNG) ---
 function generateShuffledDeck() {
     let deck = [];
     for(let k in DECK_TEMPLATE) {
         for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k);
     }
+    // Embaralhamento inicial pode ser randomico local pois é salvo no host
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
     }
     return deck;
+}
+
+// --- SYNC RNG HELPERS (PARA LEVEL UP) ---
+function stringToSeed(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash);
+}
+
+// Função de embaralhamento que aceita uma SEED opcional
+function shuffle(array, seed = null) {
+    let rng = Math.random; // Padrão
+    
+    // Se tiver seed, usa gerador determinístico (LCG simples)
+    if (seed !== null) {
+        let currentSeed = seed;
+        rng = function() {
+            currentSeed = (currentSeed * 9301 + 49297) % 233280;
+            return currentSeed / 233280;
+        }
+    }
+    
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
 }
 
 const MusicController = {
@@ -443,7 +472,7 @@ function startGameFlow() {
     }
 }
 
-// --- ATUALIZAÇÃO: LISTENER COM DESTRAVA DE TURNO ---
+// --- LISTENER COM DESTRAVA DE TURNO ---
 function startPvPListener() {
     if(!window.currentMatchId) return;
 
@@ -864,7 +893,22 @@ function resetUnit(u, predefinedDeck = null) {
     u.bonusBlock = 0; 
     u.bonusAtk = 0; 
 }
-function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
+function shuffle(array, seed = null) {
+    let rng = Math.random; 
+    
+    if (seed !== null) {
+        let currentSeed = seed;
+        rng = function() {
+            currentSeed = (currentSeed * 9301 + 49297) % 233280;
+            return currentSeed / 233280;
+        }
+    }
+    
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
 
 function dealAllInitialCards() {
     isProcessing = true; 
@@ -1187,6 +1231,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
     }, 700);
 }
+
+// ATUALIZAÇÃO: CHECK LEVEL UP COM SYNC RNG
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         let xpContainer = document.getElementById(u.id + '-xp'); 
@@ -1221,7 +1267,19 @@ function checkLevelUp(u, doneCb) {
 
                 u.xp.forEach(x => u.deck.push(x)); 
                 u.xp = []; 
-                shuffle(u.deck); 
+                
+                // MÁGICA: No PvP, usa a semente do turno para embaralhar igual
+                if (window.gameMode === 'pvp' && window.currentMatchId) {
+                    // Seed baseada no ID da partida + Turno + Unidade (para diferenciar se precisar, mas aqui queremos sync)
+                    // Na verdade queremos sync total, então a semente DEVE ser derivada de algo comum.
+                    // Se p1 embaralha o deck de p1 e p2 embaralha o deck de p1 (monster), a seed deve ser igual.
+                    // ID da Unidade garante que o deck do P1 e P2 não embaralhem igual entre si, mas igual entre clientes.
+                    let s = stringToSeed(window.currentMatchId) + turnCount + (u.id.charCodeAt(0));
+                    shuffle(u.deck, s);
+                } else {
+                    shuffle(u.deck); // PvE normal
+                }
+
                 let clones = document.getElementsByClassName('xp-anim-clone'); 
                 while(clones.length > 0) clones[0].remove();
                 updateUI(); 
