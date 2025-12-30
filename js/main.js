@@ -1273,9 +1273,6 @@ function checkEndGame() {
 
 // --- COLE ISSO NO FINAL DO SEU MAIN.JS ---
 
-// 1. Variável global de Tooltip (necessária para não dar erro na UI)
-const tt = document.getElementById('tooltip-box');
-
 // 2. Função que verifica Fim de Jogo (Obrigatória para o turno rodar)
 window.checkEndGame = function() {
     if (player.hp <= 0 || monster.hp <= 0) {
