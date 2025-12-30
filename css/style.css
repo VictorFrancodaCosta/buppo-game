@@ -627,8 +627,42 @@ body.theme-cavaleiro #game-background,
 .hc-yellow { color: #ffa502; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-purple { color: #a29bfe; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 
-.modal-overlay { position: fixed; top:0;left:0;width:100%;height:100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 3000; backdrop-filter: blur(8px); }
-.modal-box { background: var(--wood-light); padding: 40px; border-radius: 20px; border: 4px solid var(--wood-dark); text-align: center; min-width: 350px; box-shadow: 0 30px 60px rgba(0,0,0,1); }
+.modal-overlay {
+    position: fixed; 
+    top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(0, 0, 0, 0.85); /* Mais escuro (85% opacidade) */
+    display: none; 
+    justify-content: center; 
+    align-items: center; 
+    
+    /* Z-INDEX CRÍTICO: Deve ser maior que o Lobby (10000) e Deck (20000) */
+    z-index: 30000 !important; 
+    
+    /* O efeito de desfoque no fundo */
+    backdrop-filter: blur(10px); 
+    -webkit-backdrop-filter: blur(10px); /* Compatibilidade Safari/iOS */
+}
+
+/* A Caixa Central (Janela) */
+.matchmaking-box, .modal-box { 
+    background: var(--wood-light); /* Fundo de madeira */
+    padding: 40px; 
+    border-radius: 20px; 
+    border: 4px solid var(--wood-dark); /* Borda grossa */
+    text-align: center; 
+    min-width: 350px; 
+    
+    /* Sombra forte para dar destaque e profundidade */
+    box-shadow: 0 0 60px rgba(0,0,0,1); 
+    
+    position: relative;
+    z-index: 30001; /* Fica acima do próprio fundo escuro */
+}
+
+/* Ajuste específico para a logo não vazar (segurança extra) */
+.lobby-logo-right {
+    z-index: 20; /* Garante que a logo fique abaixo do overlay 30000 */
+}
 #modal-title { color: var(--gold) !important; font-weight: 900; font-size: 26px; margin-bottom: 15px; } 
 #modal-desc { color: var(--txt-secondary) !important; font-size: 16px; }
 .modal-btns { display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
