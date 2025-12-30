@@ -541,6 +541,52 @@ window.goToLobby = async function(isAutoLogin = false) {
     document.getElementById('end-screen').classList.remove('visible'); 
 };
 
+function startGameFlow() {
+    document.getElementById('end-screen').classList.remove('visible');
+    isProcessing = false; 
+    startCinematicLoop(); 
+    
+    window.isMatchStarting = true;
+    const handEl = document.getElementById('player-hand');
+    if (handEl) {
+        handEl.innerHTML = '';
+        handEl.classList.add('preparing'); 
+    }
+    
+    resetUnit(player); 
+    resetUnit(monster); 
+    turnCount = 1; 
+    playerHistory = [];
+    drawCardLogic(monster, 6); 
+    drawCardLogic(player, 6); 
+    updateUI(); 
+    dealAllInitialCards();
+}
+
+function checkEndGame(){ 
+    if(player.hp<=0 || monster.hp<=0) { 
+        isProcessing = true; 
+        isLethalHover = false; 
+        MusicController.stopCurrent();
+        setTimeout(()=>{ 
+            let title = document.getElementById('end-title'); 
+            let isWin = player.hp > 0;
+            let isTie = player.hp <= 0 && monster.hp <= 0;
+            if(isTie) { 
+                title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); 
+            } else if(isWin) { 
+                title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); 
+            } else { 
+                title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); 
+            } 
+            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(); } 
+            else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(); }
+            document.getElementById('end-screen').classList.add('visible'); 
+        }, 1000); 
+    } else { isProcessing = false; } 
+}
+
+
 // --- AUTH LISTENER ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
