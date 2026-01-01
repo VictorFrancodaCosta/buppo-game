@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (AUDIO BLINDADO - VERSÃO FINAL)
+// ARQUIVO: js/main.js
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -15,9 +15,7 @@ const firebaseConfig = {
     appId: "1:950871979140:web:f2dba12900500c52053ed1"
 };
 
-// --- INICIALIZAÇÃO SIMPLES ---
 let app, auth, db, provider;
-
 try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
@@ -28,71 +26,74 @@ try {
     console.error("Erro Firebase:", e);
 }
 
-// --- VARIÁVEIS GLOBAIS DO JOGO ---
+// --- VARIÁVEIS GLOBAIS ---
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
 window.gameAssets = []; 
 
-// --- ASSETS ---
+// --- ASSETS LOCAIS ---
 const MAGE_ASSETS = {
-    'ATAQUE': 'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png',
-    'BLOQUEIO': 'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
-    'DESCANSAR': 'https://i.ibb.co/sv98P3JK/03-DESCANSAR-MAGO.png',
-    'DESARMAR': 'https://i.ibb.co/Q7SmhYQk/04-DESARMAR-MAGO.png',
-    'TREINAR': 'https://i.ibb.co/8LGTJCn4/05-TREINAR-MAGO.png',
-    'DECK_IMG': 'https://i.ibb.co/XZ8qc166/DECK-MAGO.png',
-    'DECK_SELECT': 'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png'
+    'ATAQUE': 'assets/img/carta_ataque_mago.png',
+    'BLOQUEIO': 'assets/img/carta_bloqueio_mago.png',
+    'DESCANSAR': 'assets/img/carta_descansar_mago.png',
+    'DESARMAR': 'assets/img/carta_desarmar_mago.png',
+    'TREINAR': 'assets/img/carta_treinar_mago.png',
+    'DECK_IMG': 'assets/img/deck_verso_mago.png',
+    'DECK_SELECT': 'assets/img/card_selecao_mago.png'
 };
 
 const ASSETS_TO_LOAD = {
     images: [
-        'https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png',
-        'https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png',
-        'https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png',
-        'https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png',
-        'https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png',
-        'https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png',
-        'https://i.ibb.co/fzr36qbR/SELE-O-DE-DECK-CAVALEIRO.png',
-        'https://i.ibb.co/bjBcKN6c/SELE-O-DE-DECK-MAGO.png',
-        'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png',
-        'https://i.ibb.co/jdZmTHC/CARDBACK.png',
-        'https://i.ibb.co/jkvc8kRf/01-ATAQUE.png',
-        'https://i.ibb.co/zhFYHsxQ/02-BLOQUEIO.png',
-        'https://i.ibb.co/PzV81m5C/03-DESCANSAR.png',
-        'https://i.ibb.co/Q35jW8HZ/05-TREINAR.png',
-        'https://i.ibb.co/BVNfzPk1/04-DESARMAR.png',
-        'https://i.ibb.co/xqbKSbgx/mesa-com-deck.png',
-        'https://i.ibb.co/xKcyL7Qm/01-ATAQUE-MAGO.png',
-        'https://i.ibb.co/pv2CCXKR/02-BLOQUEIO-MAGO.png',
-        'https://i.ibb.co/sv98P3JK/03-DESCANSAR-MAGO.png',
-        'https://i.ibb.co/Q7SmhYQk/04-DESARMAR-MAGO.png',
-        'https://i.ibb.co/8LGTJCn4/05-TREINAR-MAGO.png',
-        'https://i.ibb.co/XZ8qc166/DECK-MAGO.png',
-        'https://i.ibb.co/mCFs1Ggc/SELE-O-DE-DECK-MAGO.png',
-        'https://i.ibb.co/SXPndxhb/AREA-DE-EXPERIENCIA.png'
+        'assets/img/logo_buppo.png',
+        'assets/img/mesa_cavaleiro.png',
+        'assets/img/mesa_mago.png',
+        'assets/img/bg_saguao.png',
+        'assets/img/ui_moldura_perfil.png',
+        'assets/img/ui_placa_selecao.png',
+        'assets/img/card_selecao_cavaleiro.png',
+        'assets/img/card_selecao_mago.png',
+        'assets/img/deck_verso_cavaleiro.png',
+        'assets/img/deck_verso_mago.png',
+        'assets/img/card_verso_padrao.png',
+        'assets/img/ui_mesa_deck.png',
+        'assets/img/ui_area_xp.png',
+        
+        // Cavaleiro
+        'assets/img/carta_ataque_cavaleiro.png',
+        'assets/img/carta_bloqueio_cavaleiro.png',
+        'assets/img/carta_descansar_cavaleiro.png',
+        'assets/img/carta_desarmar_cavaleiro.png',
+        'assets/img/carta_treinar_cavaleiro.png',
+
+        // Mago
+        'assets/img/carta_ataque_mago.png',
+        'assets/img/carta_bloqueio_mago.png',
+        'assets/img/carta_descansar_mago.png',
+        'assets/img/carta_desarmar_mago.png',
+        'assets/img/carta_treinar_mago.png'
     ],
     audio: [
-        { id: 'bgm-menu', src: 'https://files.catbox.moe/kuriut.wav', loop: true }, 
-        { id: 'bgm-loop', src: 'https://files.catbox.moe/57mvtt.mp3', loop: true },
-        { id: 'sfx-nav', src: 'https://files.catbox.moe/yc7yrz.mp3' }, 
-        { id: 'sfx-deal', src: 'https://files.catbox.moe/vhgxvr.mp3' }, 
-        { id: 'sfx-play', src: 'https://files.catbox.moe/jpjd8x.mp3' },
-        { id: 'sfx-hit', src: 'https://files.catbox.moe/r1ko7y.mp3' }, 
-        { id: 'sfx-hit-mage', src: 'https://files.catbox.moe/y0x72c.mp3' }, 
-        { id: 'sfx-block', src: 'https://files.catbox.moe/6zh7w0.mp3' }, 
-        { id: 'sfx-block-mage', src: 'https://files.catbox.moe/8xjjl5.mp3' }, 
-        { id: 'sfx-heal', src: 'https://files.catbox.moe/h2xo2v.mp3' }, 
-        { id: 'sfx-levelup', src: 'https://files.catbox.moe/ex4t72.mp3' }, 
-        { id: 'sfx-train', src: 'https://files.catbox.moe/rnndcv.mp3' }, 
-        { id: 'sfx-disarm', src: 'https://files.catbox.moe/udd2sz.mp3' }, 
-        { id: 'sfx-cine', src: 'https://files.catbox.moe/rysr4f.mp3', loop: true }, 
-        { id: 'sfx-hover', src: 'https://files.catbox.moe/wzurt7.mp3' }, 
-        { id: 'sfx-ui-hover', src: 'https://files.catbox.moe/gzjf9y.mp3' }, 
-        { id: 'sfx-deck-select', src: 'https://files.catbox.moe/993lma.mp3' }, 
-        { id: 'sfx-win', src: 'https://files.catbox.moe/a3ls23.mp3' }, 
-        { id: 'sfx-lose', src: 'https://files.catbox.moe/n7nyck.mp3' },
-        { id: 'sfx-tie', src: 'https://files.catbox.moe/sb18ja.mp3' }
+        { id: 'bgm-menu', src: 'assets/audio/musica_menu.wav', loop: true }, 
+        { id: 'bgm-loop', src: 'assets/audio/musica_batalha.mp3', loop: true },
+        { id: 'sfx-nav', src: 'assets/audio/sfx_click.mp3' }, 
+        { id: 'sfx-deal', src: 'assets/audio/sfx_dar_cartas.mp3' }, 
+        { id: 'sfx-play', src: 'assets/audio/sfx_jogar_carta.mp3' },
+        { id: 'sfx-hit', src: 'assets/audio/sfx_dano_fisico.mp3' }, 
+        { id: 'sfx-hit-mage', src: 'assets/audio/sfx_dano_magico.mp3' }, 
+        { id: 'sfx-block', src: 'assets/audio/sfx_bloqueio.mp3' }, 
+        { id: 'sfx-block-mage', src: 'assets/audio/sfx_bloqueio_magico.mp3' }, 
+        { id: 'sfx-heal', src: 'assets/audio/sfx_cura.mp3' }, 
+        { id: 'sfx-levelup', src: 'assets/audio/sfx_levelup.mp3' }, 
+        { id: 'sfx-train', src: 'assets/audio/sfx_treinar.mp3' }, 
+        { id: 'sfx-disarm', src: 'assets/audio/sfx_desarmar.mp3' }, 
+        { id: 'sfx-cine', src: 'assets/audio/ambience_cine.mp3', loop: true }, 
+        { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' }, 
+        { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' }, 
+        { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' }, 
+        { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' }, 
+        { id: 'sfx-lose', src: 'assets/audio/sfx_derrota.mp3' },
+        { id: 'sfx-tie', src: 'assets/audio/sfx_empate.mp3' }
     ]
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
@@ -113,7 +114,6 @@ window.pvpSelectedCardIndex = null;
 window.isResolvingTurn = false; 
 window.pvpStartData = null; 
 
-// --- HELPER: RETORNA ARTE CORRETA ---
 function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
         return MAGE_ASSETS[cardKey];
@@ -121,7 +121,7 @@ function getCardArt(cardKey, isPlayer) {
     return CARDS_DB[cardKey].img;
 }
 
-// --- SYNC RNG HELPERS (PARA EMBARALHAMENTO IGUAL) ---
+// --- SYNC RNG (EMBARALHAMENTO IGUAL) ---
 function stringToSeed(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -130,11 +130,8 @@ function stringToSeed(str) {
     return Math.abs(hash);
 }
 
-// Função de embaralhamento ÚNICA (com suporte a seed)
 function shuffle(array, seed = null) {
     let rng = Math.random; 
-    
-    // Se tiver seed, usa gerador determinístico (LCG simples)
     if (seed !== null) {
         let currentSeed = seed;
         rng = function() {
@@ -142,14 +139,12 @@ function shuffle(array, seed = null) {
             return currentSeed / 233280;
         }
     }
-    
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
     }
 }
 
-// Gera deck inicial usando shuffle local (pois é salvo no host)
 function generateShuffledDeck() {
     let deck = [];
     for(let k in DECK_TEMPLATE) {
@@ -159,21 +154,19 @@ function generateShuffledDeck() {
     return deck;
 }
 
-// CORREÇÃO: MUSIC CONTROLLER BLINDADO
+// --- MUSIC CONTROLLER (BLINDADO) ---
 const MusicController = {
     currentTrackId: null,
     fadeTimer: null,
     play(trackId) {
-        // Se o áudio não existe ou está corrompido, retorna sem erro
         if (!audios[trackId]) return;
-        
         try {
             if (this.currentTrackId === trackId) {
                 if (audios[trackId].paused && !window.isMuted) {
                     const audio = audios[trackId];
                     if (audio.readyState >= 2) audio.currentTime = 0;
                     audio.volume = 0;
-                    audio.play().catch(()=>{}); // Ignora erro de play
+                    audio.play().catch(()=>{});
                     this.fadeIn(audio, 0.5 * window.masterVol);
                 }
                 return; 
@@ -188,14 +181,12 @@ const MusicController = {
                 if (newAudio.readyState >= 2) newAudio.currentTime = 0;
                 if (!window.isMuted) {
                     newAudio.volume = 0; 
-                    newAudio.play().catch(()=>{}); // Ignora erro de play
+                    newAudio.play().catch(()=>{});
                     this.fadeIn(newAudio, maxVol);
                 }
             }
             this.currentTrackId = trackId;
-        } catch(e) {
-            console.warn("MusicController Error (Ignored):", e);
-        }
+        } catch(e) { console.warn("MusicController:", e); }
     },
     stopCurrent() {
         if (this.currentTrackId && audios[this.currentTrackId]) {
@@ -246,16 +237,14 @@ window.toggleMute = function() {
     }
 }
 
-// CORREÇÃO: PlayNavSound blindado contra erros fatais
+// CORREÇÃO CRÍTICA: PlayNavSound blindado
 window.playNavSound = function() { 
     let s = audios['sfx-nav']; 
     if(s) { 
         try {
             if (s.readyState >= 2) s.currentTime = 0; 
             s.play().catch(()=>{});
-        } catch(e) {
-            console.warn("Nav Audio Fail", e);
-        }
+        } catch(e) { console.warn("NavSound", e); }
     } 
 };
 
@@ -263,7 +252,6 @@ let lastHoverTime = 0;
 window.playUIHoverSound = function() {
     let now = Date.now();
     if (now - lastHoverTime < 50) return; 
-
     let base = audios['sfx-ui-hover'];
     if(base && !window.isMuted) { 
         try {
@@ -294,14 +282,11 @@ window.showScreen = function(screenId) {
 // --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
 window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
-    
-    // CORREÇÃO VISUAL: Força a exibição da tela de seleção
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
         ds.style.display = 'flex';
         ds.style.opacity = '1';
     }
-
     try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(() => {});
@@ -313,7 +298,6 @@ window.openDeckSelector = function() {
     window.showScreen('deck-selection-screen');
 };
 
-// --- AVISO DE ROTAÇÃO PARA CELULAR ---
 (function createRotateOverlay() {
     if (!document.getElementById('rotate-overlay')) {
         const div = document.createElement('div');
@@ -405,14 +389,13 @@ window.transitionToGame = function() {
     }, 500); 
 }
 
-// CORREÇÃO: Garante que a transição ocorra mesmo se o áudio falhar
+// CORREÇÃO: Transição Segura
 window.transitionToLobby = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
     if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
     if(transScreen) transScreen.classList.add('active');
     
-    // Tenta parar a música, se der erro, segue a vida
     try { MusicController.stopCurrent(); } catch(e){}
     
     setTimeout(() => {
@@ -660,20 +643,14 @@ window.abandonMatch = function() {
 }
 
 function preloadGame() {
-    console.log("Iniciando Preload de " + totalAssets + " recursos...");
-    
+    console.log("Iniciando Preload...");
     ASSETS_TO_LOAD.images.forEach(src => { 
         let img = new Image(); 
         img.src = src; 
         window.gameAssets.push(img);
-        
         img.onload = () => updateLoader(); 
-        img.onerror = () => {
-            console.warn("Erro ao carregar imagem: " + src);
-            updateLoader(); 
-        }; 
+        img.onerror = () => updateLoader(); // Não trava se falhar
     });
-
     ASSETS_TO_LOAD.audio.forEach(a => { 
         let s = new Audio(); 
         s.src = a.src; 
@@ -681,16 +658,9 @@ function preloadGame() {
         if(a.loop) s.loop = true; 
         audios[a.id] = s; 
         window.gameAssets.push(s);
-
         s.onloadedmetadata = () => updateLoader(); 
-        s.onerror = () => {
-            console.warn("Erro ao carregar áudio: " + a.src);
-            updateLoader();
-        }; 
-        
-        setTimeout(() => { 
-            if(s.readyState === 0) updateLoader(); 
-        }, 3000); 
+        s.onerror = () => updateLoader(); // Não trava se falhar
+        setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); 
     });
 }
 
@@ -702,9 +672,7 @@ function updateLoader() {
     
     if(assetsLoaded >= totalAssets) {
         console.log("Preload completo!");
-        
         if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
-        
         setTimeout(() => {
             const loading = document.getElementById('loading-screen');
             if(loading) {
@@ -716,7 +684,6 @@ function updateLoader() {
                 window.hoverLogicInitialized = true;
             }
         }, 800); 
-        
         document.body.addEventListener('click', () => { 
             if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) {
                 MusicController.play('bgm-menu');
