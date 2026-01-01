@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+// ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO UI PVE)
+=======
 // ARQUIVO: js/main.js (VERSÃO FINAL - POPUP RESTAURADO E ERROS CORRIGIDOS)
+>>>>>>> 511672dbebbfbeda85ce582070c007752ee83ddc
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -384,13 +388,35 @@ window.showScreen = function(screenId) {
     }
 }
 
+<<<<<<< HEAD
+// --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
+// CORREÇÃO: Força o reset visual da tela de seleção sempre que ela é aberta
+=======
+>>>>>>> 511672dbebbfbeda85ce582070c007752ee83ddc
 window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
+    
+    // Reseta visual da tela de seleção
     const ds = document.getElementById('deck-selection-screen');
+<<<<<<< HEAD
+    if(ds) {
+        ds.style.display = 'flex';
+        ds.style.opacity = '1';
+        // Reseta posição das cartas
+        const options = document.querySelectorAll('.deck-option');
+        options.forEach(opt => {
+            opt.style = "";
+            const img = opt.querySelector('img');
+            if(img) img.style = "";
+        });
+    }
+
+=======
     if(ds) { ds.style.display = 'flex'; ds.style.opacity = '1'; }
     const options = document.querySelectorAll('.deck-option');
     options.forEach(opt => { opt.style = ""; const img = opt.querySelector('img'); if(img) img.style = ""; });
     
+>>>>>>> 511672dbebbfbeda85ce582070c007752ee83ddc
     try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(() => {});
@@ -402,6 +428,22 @@ window.openDeckSelector = function() {
     window.showScreen('deck-selection-screen');
 };
 
+<<<<<<< HEAD
+(function createRotateOverlay() {
+    if (!document.getElementById('rotate-overlay')) {
+        const div = document.createElement('div');
+        div.id = 'rotate-overlay';
+        div.innerHTML = `
+            <div style="font-size: 50px; margin-bottom: 20px;">↻</div>
+            <div>GIRE O CELULAR<br>PARA JOGAR</div>
+        `;
+        document.body.appendChild(div);
+    }
+})();
+
+// --- SELEÇÃO DE DECK (CORRIGIDO UI PVE) ---
+=======
+>>>>>>> 511672dbebbfbeda85ce582070c007752ee83ddc
 window.selectDeck = function(deckType) {
     try { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); } catch(e){}
     window.currentDeck = deckType; 
@@ -428,9 +470,23 @@ window.selectDeck = function(deckType) {
         selectionScreen.style.transition = "opacity 0.5s";
         selectionScreen.style.opacity = "0";
         setTimeout(() => {
+<<<<<<< HEAD
+            // ESCONDE O CONTAINER PARA EVITAR O FANTASMA
+            selectionScreen.style.display = 'none';
+
+            if (window.gameMode === 'pvp') {
+                initiateMatchmaking(); 
+            } else {
+                window.transitionToGame();
+            }
+            
+            // NÃO resetamos a opacidade aqui. 
+            // O reset é feito em openDeckSelector na próxima vez que abrir.
+=======
             selectionScreen.style.display = 'none';
             if (window.gameMode === 'pvp') initiateMatchmaking(); 
             else window.transitionToGame();
+>>>>>>> 511672dbebbfbeda85ce582070c007752ee83ddc
         }, 500);
     }, 400);
 };
