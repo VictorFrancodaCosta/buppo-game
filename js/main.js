@@ -1,13 +1,12 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO DE ESCOPO GLOBAL)
+// ARQUIVO: js/main.js (VERSÃO FINAL - POPUP RESTAURADO E ERROS CORRIGIDOS)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+// VOLTAMOS COM O POPUP AQUI:
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ======================================================
 // 1. CONFIGURAÇÃO FIREBASE
-// ======================================================
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
     authDomain: "buppo-game.firebaseapp.com",
@@ -26,9 +25,7 @@ try {
     console.log("Firebase Web Iniciado.");
 } catch (e) { console.error("Erro Firebase:", e); }
 
-// ======================================================
 // 2. VARIÁVEIS GLOBAIS
-// ======================================================
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
@@ -50,9 +47,7 @@ let playerHistory = [];
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 
-// ======================================================
-// 3. ASSETS
-// ======================================================
+// 3. ASSETS (USANDO ARQUIVOS LOCAIS)
 const MAGE_ASSETS = {
     'ATAQUE': 'assets/img/carta_ataque_mago.png',
     'BLOQUEIO': 'assets/img/carta_bloqueio_mago.png',
@@ -101,16 +96,17 @@ const ASSETS_TO_LOAD = {
 };
 
 // ======================================================
-// 4. FUNÇÕES GLOBAIS (PARA O HTML)
+// 4. FUNÇÕES GLOBAIS (CONECTADAS AO WINDOW)
 // ======================================================
 
-// Login Google
+// Login Google (POPUP RESTAURADO)
 window.googleLogin = async function() {
     window.playNavSound(); 
     const btnText = document.getElementById('btn-text');
     if(btnText) btnText.innerText = "CONECTANDO...";
     try {
         await signInWithPopup(auth, provider);
+        // O onAuthStateChanged vai cuidar do resto
     } catch (error) {
         console.error("Erro no Login:", error);
         if(btnText) btnText.innerText = "ERRO - TENTE NOVAMENTE";
@@ -118,13 +114,11 @@ window.googleLogin = async function() {
     }
 };
 
-// Logout
 window.handleLogout = function() {
     window.playNavSound();
     signOut(auth).then(() => { location.reload(); });
 };
 
-// Start PvP
 window.startPvPSearch = function() {
     if (!currentUser) return; 
     window.gameMode = 'pvp'; 
@@ -132,14 +126,12 @@ window.startPvPSearch = function() {
     window.openDeckSelector(); 
 };
 
-// Start PvE
 window.startPvE = function() {
     window.gameMode = 'pve'; 
     window.playNavSound();
     window.openDeckSelector(); 
 };
 
-// Cancelar Busca
 window.cancelPvPSearch = async function() {
     window.playNavSound();
     document.getElementById('matchmaking-screen').style.display = 'none';
@@ -149,14 +141,93 @@ window.cancelPvPSearch = async function() {
     window.openDeckSelector(); 
 };
 
-// Cancelar Modal Genérico
 window.cancelModal = function() { 
     document.getElementById('modal-overlay').style.display='none'; 
     isProcessing = false; 
 };
 
+window.toggleFullScreen = function() {
+    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
+    else { if (document.exitFullscreen) { document.exitFullscreen(); } }
+};
+
+window.toggleConfig = function() { 
+    let p = document.getElementById('config-panel'); 
+    if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } 
+    else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } 
+};
+
+window.updateVol = function(type, val) { 
+    if(type==='master') window.masterVol = parseFloat(val); 
+};
+
 // ======================================================
-// 5. HELPERS (RNG, ARTE, UTILS)
+// 5. PRELOAD E INICIALIZAÇÃO
+// ======================================================
+window.onload = function() {
+    const btnSound = document.getElementById('btn-sound');
+    if (btnSound) btnSound.addEventListener('click', (e) => { e.stopPropagation(); window.toggleMute(); });
+    
+    // Configura o Preload
+    console.log("Iniciando Preload...");
+    assetsLoaded = 0;
+    
+    const total = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
+    
+    const checkLoad = () => {
+        assetsLoaded++;
+        let pct = Math.min(100, (assetsLoaded / total) * 100);
+        const fill = document.getElementById('loader-fill');
+        if(fill) fill.style.width = pct + '%';
+        
+        if(assetsLoaded >= total) finishLoading();
+    };
+
+    ASSETS_TO_LOAD.images.forEach(src => { 
+        let img = new Image(); img.src = src; window.gameAssets.push(img);
+        img.onload = checkLoad; img.onerror = checkLoad;
+    });
+    ASSETS_TO_LOAD.audio.forEach(a => { 
+        let s = new Audio(); s.src = a.src; s.preload = 'auto'; 
+        if(a.loop) s.loop = true; audios[a.id] = s; window.gameAssets.push(s);
+        s.onloadedmetadata = checkLoad; s.onerror = checkLoad;
+        setTimeout(() => { if(s.readyState === 0) checkLoad(); }, 3000); 
+    });
+
+    initAmbientParticles();
+    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+};
+
+function finishLoading() {
+    console.log("Preload completo!");
+    if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
+    setTimeout(() => {
+        const loading = document.getElementById('loading-screen');
+        if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
+        if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
+    }, 800); 
+    
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            window.goToLobby(true); 
+        } else {
+            currentUser = null;
+            window.showScreen('start-screen');
+            document.getElementById('game-background').classList.remove('lobby-mode');
+            const btnTxt = document.getElementById('btn-text');
+            if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
+            MusicController.play('bgm-menu'); 
+        }
+    });
+
+    document.body.addEventListener('click', () => { 
+        if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) MusicController.play('bgm-menu');
+    }, { once: true });
+}
+
+// ======================================================
+// 6. HELPERS
 // ======================================================
 function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
@@ -194,7 +265,7 @@ function generateShuffledDeck() {
 }
 
 // ======================================================
-// 6. SISTEMA DE ÁUDIO BLINDADO
+// 7. SISTEMA DE ÁUDIO BLINDADO
 // ======================================================
 const MusicController = {
     currentTrackId: null,
@@ -294,12 +365,8 @@ function playSound(key) {
     } 
 }
 
-window.updateVol = function(type, val) { 
-    if(type==='master') window.masterVol = parseFloat(val); 
-};
-
 // ======================================================
-// 7. INTERFACE E EFEITOS
+// 8. INTERFACE E NAVEGAÇÃO
 // ======================================================
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -397,24 +464,35 @@ window.transitionToLobby = function() {
     }, 500);
 }
 
-function showCenterText(txt, col) { 
-    let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; 
-    if(col) el.style.color = col; 
-    document.body.appendChild(el); 
-    setTimeout(() => el.remove(), 1000); 
-}
+window.goToLobby = async function(isAutoLogin = false) {
+    if(!currentUser) { window.showScreen('start-screen'); MusicController.play('bgm-menu'); return; }
+    isProcessing = false; 
+    document.getElementById('game-background').classList.add('lobby-mode');
+    MusicController.play('bgm-menu'); createLobbyFlares();
+    
+    const userRef = doc(db, "players", currentUser.uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
+    
+    const d = snap.exists() ? snap.data() : { name: currentUser.displayName, score:0, totalWins:0 };
+    document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
+    document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins||0} | PONTOS: ${d.score||0}`;
 
-function showFloatingText(eid, txt, col) { 
-    let el = document.createElement('div'); el.className='floating-text'; el.innerText=txt; el.style.color=col; 
-    let parent = document.getElementById(eid);
-    if(parent) {
-        let rect = parent.getBoundingClientRect();
-        el.style.left = (rect.left + rect.width/2) + 'px';
-        el.style.top = (rect.top) + 'px';
-        document.body.appendChild(el); 
-    }
-    setTimeout(()=>el.remove(), 2000); 
-}
+    onSnapshot(query(collection(db, "players"), orderBy("score", "desc"), limit(10)), (ss) => {
+        let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
+        let pos = 1;
+        ss.forEach((doc) => {
+            const p = doc.data();
+            let cls = pos===1?"rank-1":pos===2?"rank-2":pos===3?"rank-3":"";
+            html += `<tr class="${cls}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
+            pos++;
+        });
+        html += '</tbody></table>';
+        document.getElementById('ranking-content').innerHTML = html;
+    });
+    window.showScreen('lobby-screen');
+    document.getElementById('end-screen').classList.remove('visible'); 
+};
 
 window.restartMatch = function() {
     document.getElementById('end-screen').classList.remove('visible');
@@ -439,8 +517,27 @@ window.abandonMatch = function() {
     }
 }
 
+function showCenterText(txt, col) { 
+    let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; 
+    if(col) el.style.color = col; 
+    document.body.appendChild(el); 
+    setTimeout(() => el.remove(), 1000); 
+}
+
+function showFloatingText(eid, txt, col) { 
+    let el = document.createElement('div'); el.className='floating-text'; el.innerText=txt; el.style.color=col; 
+    let parent = document.getElementById(eid);
+    if(parent) {
+        let rect = parent.getBoundingClientRect();
+        el.style.left = (rect.left + rect.width/2) + 'px';
+        el.style.top = (rect.top) + 'px';
+        document.body.appendChild(el); 
+    }
+    setTimeout(()=>el.remove(), 2000); 
+}
+
 // ======================================================
-// 8. LÓGICA DO JOGO (CORE)
+// 9. LÓGICA DO JOGO (CORE)
 // ======================================================
 function resetUnit(u, predefinedDeck = null, role = null) { 
     u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; 
@@ -587,7 +684,7 @@ function getBestAIMove() {
 }
 
 // ======================================================
-// 9. LÓGICA PVP (FILA E TURNO)
+// 10. LÓGICA PVP (FILA E TURNO)
 // ======================================================
 async function initiateMatchmaking() {
     const mmScreen = document.getElementById('matchmaking-screen');
@@ -896,7 +993,7 @@ function checkLevelUp(u, doneCb) {
 }
 
 // ======================================================
-// 10. EFEITOS E UI ADICIONAIS
+// 11. EFEITOS E UI ADICIONAIS
 // ======================================================
 function triggerLevelUpVisuals(unitId) {
     let cluster = document.getElementById(unitId === 'p' ? 'p-stats-cluster' : 'm-stats-cluster');
@@ -944,45 +1041,18 @@ function updateAudioMixer() {
     } catch(e){}
 }
 
-window.toggleConfig = function() { 
-    let p = document.getElementById('config-panel'); 
-    if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } 
-    else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } 
-};
-
-// ======================================================
-// 11. BOOTSTRAP (INICIALIZAÇÃO)
-// ======================================================
-window.goToLobby = async function(isAutoLogin = false) {
-    if(!currentUser) { window.showScreen('start-screen'); MusicController.play('bgm-menu'); return; }
-    isProcessing = false; 
-    document.getElementById('game-background').classList.add('lobby-mode');
-    MusicController.play('bgm-menu'); createLobbyFlares();
-    
-    const userRef = doc(db, "players", currentUser.uid);
-    const snap = await getDoc(userRef);
-    if (!snap.exists()) await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
-    
-    const d = snap.exists() ? snap.data() : { name: currentUser.displayName, score:0, totalWins:0 };
-    document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
-    document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins||0} | PONTOS: ${d.score||0}`;
-
-    onSnapshot(query(collection(db, "players"), orderBy("score", "desc"), limit(10)), (ss) => {
-        let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
-        let pos = 1;
-        ss.forEach((doc) => {
-            const p = doc.data();
-            let cls = pos===1?"rank-1":pos===2?"rank-2":pos===3?"rank-3":"";
-            html += `<tr class="${cls}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
-            pos++;
-        });
-        html += '</tbody></table>';
-        document.getElementById('ranking-content').innerHTML = html;
+function initGlobalHoverLogic() {
+    let lastTarget = null;
+    document.body.addEventListener('mouseover', (e) => {
+        const target = e.target.closest('button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn');
+        if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } 
+        else if (!target) lastTarget = null;
     });
-    window.showScreen('lobby-screen');
-    document.getElementById('end-screen').classList.remove('visible'); 
-};
+}
 
+// ======================================================
+// 12. REGISTRO DE PONTOS
+// ======================================================
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!currentUser) return;
     try {
@@ -1012,57 +1082,3 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
         }
     } catch(e) { console.error(e); }
 };
-
-// Preload Setup
-window.onload = function() {
-    const btnSound = document.getElementById('btn-sound');
-    if (btnSound) btnSound.addEventListener('click', (e) => { e.stopPropagation(); window.toggleMute(); });
-    
-    console.log("Iniciando Preload...");
-    assetsLoaded = 0;
-    
-    const total = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
-    const checkLoad = () => {
-        assetsLoaded++;
-        let pct = Math.min(100, (assetsLoaded / total) * 100);
-        const fill = document.getElementById('loader-fill');
-        if(fill) fill.style.width = pct + '%';
-        if(assetsLoaded >= total) finishLoading();
-    };
-
-    ASSETS_TO_LOAD.images.forEach(src => { 
-        let img = new Image(); img.src = src; window.gameAssets.push(img);
-        img.onload = checkLoad; img.onerror = checkLoad;
-    });
-    ASSETS_TO_LOAD.audio.forEach(a => { 
-        let s = new Audio(); s.src = a.src; s.preload = 'auto'; 
-        if(a.loop) s.loop = true; audios[a.id] = s; window.gameAssets.push(s);
-        s.onloadedmetadata = checkLoad; s.onerror = checkLoad;
-        setTimeout(() => { if(s.readyState === 0) checkLoad(); }, 3000); 
-    });
-
-    initAmbientParticles();
-    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
-};
-
-function finishLoading() {
-    console.log("Preload completo!");
-    if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
-    setTimeout(() => {
-        const loading = document.getElementById('loading-screen');
-        if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
-        if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
-    }, 800); 
-    document.body.addEventListener('click', () => { 
-        if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) MusicController.play('bgm-menu');
-    }, { once: true });
-}
-
-function initGlobalHoverLogic() {
-    let lastTarget = null;
-    document.body.addEventListener('mouseover', (e) => {
-        const target = e.target.closest('button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn');
-        if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } 
-        else if (!target) lastTarget = null;
-    });
-}
