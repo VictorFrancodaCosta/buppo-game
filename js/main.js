@@ -1,6 +1,4 @@
-window.pvpUnsubscribe = null; // Variável para guardar o listener
-
-// ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO UI PVE)
+// ARQUIVO: js/main.js (VERSÃO FINAL REVISADA E CORRIGIDA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -33,6 +31,7 @@ let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
 window.gameAssets = []; 
+window.pvpUnsubscribe = null; // Variável para guardar o listener (BLINDAGEM)
 
 // --- ASSETS LOCAIS ---
 const MAGE_ASSETS = {
@@ -947,8 +946,6 @@ function triggerHealEffect(isPlayer) {
     } catch(e) {} 
 }
 
-// ARQUIVO: js/main.js
-
 function triggerBlockEffect(isPlayer) { 
     try { 
         // Som
@@ -974,6 +971,7 @@ function triggerBlockEffect(isPlayer) {
         console.warn("Erro no efeito de bloqueio (ignorado):", e);
     } 
 }
+
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 
@@ -1170,10 +1168,6 @@ async function playCardFlow(index, pDisarmChoice) {
 }
 
 // ATUALIZAÇÃO: Animação Simultânea e Resolução
-// ARQUIVO: js/main.js
-
-// ARQUIVO: js/main.js
-
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     if (window.isResolvingTurn) return; 
     window.isResolvingTurn = true; 
