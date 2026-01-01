@@ -947,24 +947,33 @@ function triggerHealEffect(isPlayer) {
     } catch(e) {} 
 }
 
+// ARQUIVO: js/main.js
+
 function triggerBlockEffect(isPlayer) { 
     try { 
+        // Som
         if(isPlayer && window.currentDeck === 'mage') {
              playSound('sfx-block-mage');
         } else {
              playSound('sfx-block'); 
         }
         
+        // Efeito Visual (Texto BLOQUEADO)
+        // Se for o inimigo bloqueando, mostramos o texto.
+        // Se quiser que apareça para VOCÊ também, remova o "if (!isPlayer)"
         if (!isPlayer) {
-             if(window.triggerBlockEffect) window.triggerBlockEffect();
+             if(window.triggerBlockEffect) window.triggerBlockEffect(); 
+             
+             // Efeito de Tremor e Overlay
              let ov = document.getElementById('block-overlay'); 
              if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
              document.body.classList.add('shake-screen'); 
              setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
         }
-    } catch(e) {} 
+    } catch(e) {
+        console.warn("Erro no efeito de bloqueio (ignorado):", e);
+    } 
 }
-
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 
