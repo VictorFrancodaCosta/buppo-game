@@ -1,3 +1,5 @@
+window.pvpUnsubscribe = null; // Variável para guardar o listener
+
 // ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO UI PVE)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
@@ -402,6 +404,7 @@ window.transitionToLobby = function() {
     const transText = transScreen.querySelector('.trans-text');
     if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
     if(transScreen) transScreen.classList.add('active');
+    if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     
     try { MusicController.stopCurrent(); } catch(e){}
     
@@ -456,7 +459,13 @@ window.goToLobby = async function(isAutoLogin = false) {
 
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
+    
+    // --- RESETS DE ESTADO (BLINDAGEM) ---
     isProcessing = false; 
+    window.isResolvingTurn = false; // <--- OBRIGATÓRIO: Reseta a trava de resolução
+    window.pvpSelectedCardIndex = null; // Reseta índice de carta selecionada
+    // ------------------------------------
+
     startCinematicLoop(); 
     
     window.isMatchStarting = true;
@@ -466,7 +475,6 @@ function startGameFlow() {
         handEl.classList.add('preparing'); 
     }
     
-    // Identidade Fixa (Role) para sincronia RNG
     if (window.gameMode === 'pvp' && window.pvpStartData) {
         if (window.myRole === 'player1') {
             resetUnit(player, window.pvpStartData.player1.deck, 'player1');
@@ -495,16 +503,25 @@ function startGameFlow() {
 function startPvPListener() {
     if(!window.currentMatchId) return;
 
+    // 1. Limpa listener anterior se existir (BLINDAGEM)
+    if (window.pvpUnsubscribe) {
+        window.pvpUnsubscribe();
+        window.pvpUnsubscribe = null;
+    }
+
     const matchRef = doc(db, "matches", window.currentMatchId);
     let namesUpdated = false;
 
-    onSnapshot(matchRef, (docSnap) => {
+    console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
+
+    // 2. Atribui o novo listener à variável global
+    window.pvpUnsubscribe = onSnapshot(matchRef, (docSnap) => {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
 
+        // Atualiza nomes apenas uma vez
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
-
             if (window.myRole === 'player1') {
                 myName = matchData.player1.name;
                 enemyName = matchData.player2.name;
@@ -512,19 +529,22 @@ function startPvPListener() {
                 myName = matchData.player2.name;
                 enemyName = matchData.player1.name;
             }
-
             const pNameEl = document.querySelector('#p-stats-cluster .unit-name');
             const mNameEl = document.querySelector('#m-stats-cluster .unit-name');
-
             if(pNameEl) pNameEl.innerText = myName;
             if(mNameEl) mNameEl.innerText = enemyName;
-
             namesUpdated = true; 
         }
 
+        // 3. DETECÇÃO DE TURNO PRONTO (Ambos jogaram)
         if (matchData.p1Move && matchData.p2Move) {
+            console.log("Ambos jogaram! Tentando resolver...", matchData.p1Move, matchData.p2Move);
+            
+            // Verifica se já não estamos resolvendo para evitar loop
             if (!window.isResolvingTurn) {
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
+            } else {
+                console.warn("Turno já está sendo resolvido. Ignorando atualização duplicada.");
             }
         }
     });
@@ -1719,7 +1739,9 @@ window.cancelPvPSearch = async function() {
     window.playNavSound();
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'none';
-    
+
+    if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
+    if (queueListener) { queueListener(); queueListener = null; }
     if (matchTimerInterval) clearInterval(matchTimerInterval);
     if (queueListener) { queueListener(); queueListener = null; }
     if (myQueueRef) {
