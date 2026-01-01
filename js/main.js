@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js
+// ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO UI PVE)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -280,13 +280,24 @@ window.showScreen = function(screenId) {
 }
 
 // --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
+// CORREÇÃO: Força o reset visual da tela de seleção sempre que ela é aberta
 window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
+    
+    // Reseta visual da tela de seleção
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
         ds.style.display = 'flex';
         ds.style.opacity = '1';
+        // Reseta posição das cartas
+        const options = document.querySelectorAll('.deck-option');
+        options.forEach(opt => {
+            opt.style = "";
+            const img = opt.querySelector('img');
+            if(img) img.style = "";
+        });
     }
+
     try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(() => {});
@@ -310,7 +321,7 @@ window.openDeckSelector = function() {
     }
 })();
 
-// --- SELEÇÃO DE DECK ---
+// --- SELEÇÃO DE DECK (CORRIGIDO UI PVE) ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         try {
@@ -351,21 +362,17 @@ window.selectDeck = function(deckType) {
         selectionScreen.style.opacity = "0";
 
         setTimeout(() => {
+            // ESCONDE O CONTAINER PARA EVITAR O FANTASMA
+            selectionScreen.style.display = 'none';
+
             if (window.gameMode === 'pvp') {
-                selectionScreen.style.display = 'none'; 
                 initiateMatchmaking(); 
             } else {
                 window.transitionToGame();
             }
-
-            setTimeout(() => {
-                if(window.gameMode !== 'pvp') selectionScreen.style.opacity = "1";
-                options.forEach(opt => {
-                    opt.style = "";
-                    const img = opt.querySelector('img');
-                    if(img) img.style = "";
-                });
-            }, 500);
+            
+            // NÃO resetamos a opacidade aqui. 
+            // O reset é feito em openDeckSelector na próxima vez que abrir.
         }, 500);
     }, 400);
 };
