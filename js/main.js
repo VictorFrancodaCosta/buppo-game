@@ -1172,16 +1172,18 @@ async function playCardFlow(index, pDisarmChoice) {
 // ATUALIZAÇÃO: Animação Simultânea e Resolução
 // ARQUIVO: js/main.js
 
+// ARQUIVO: js/main.js
+
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
-    if (window.isResolvingTurn) return; // Evita duplicidade
+    if (window.isResolvingTurn) return; 
     window.isResolvingTurn = true; 
-    isProcessing = true; 
+    isProcessing = true; // Trava cliques
     
-    // Limpa a mensagem "AGUARDANDO OPONENTE..."
+    // Remove texto de espera
     const centerTxt = document.querySelector('.center-text');
     if(centerTxt) centerTxt.remove();
 
-    // Define quem jogou o quê
+    // Identifica moves
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
     if (window.myRole === 'player1') {
         myMove = p1Move; enemyMove = p2Move;
@@ -1191,42 +1193,38 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         myDisarmChoice = p2Disarm; enemyDisarmChoice = p1Disarm;
     }
 
-    // --- PREPARAÇÃO DA MINHA CARTA ---
-    if (window.pvpSelectedCardIndex === null || window.pvpSelectedCardIndex === undefined) {
-        window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
-    }
-    
-    const handContainer = document.getElementById('player-hand');
-    let myCardEl = null;
-    let startRect = null;
-
-    if (handContainer) {
-        if (window.pvpSelectedCardIndex > -1 && handContainer.children[window.pvpSelectedCardIndex]) {
-            myCardEl = handContainer.children[window.pvpSelectedCardIndex];
-        } else {
-            const handCards = Array.from(handContainer.children);
-            if(handCards.length > 0) myCardEl = handCards[0]; 
-        }
-    }
-
-    if (myCardEl) {
-        startRect = myCardEl.getBoundingClientRect();
-        myCardEl.classList.remove('card-selected');
-        myCardEl.style.opacity = '0';
-    }
-
-    // Remove logicamente da mão
-    if (window.pvpSelectedCardIndex > -1) {
-        player.hand.splice(window.pvpSelectedCardIndex, 1);
-        playerHistory.push(myMove);
-    } else {
-        const idx = player.hand.indexOf(myMove);
-        if(idx > -1) player.hand.splice(idx, 1);
-        playerHistory.push(myMove);
-    }
-
-    // --- AÇÃO: LANÇAR AS CARTAS ---
+    // --- LÓGICA VISUAL DA MÃO (Sem risco de crashar o jogo) ---
     try {
+        if (window.pvpSelectedCardIndex === null || window.pvpSelectedCardIndex === undefined) {
+            window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
+        }
+        const handContainer = document.getElementById('player-hand');
+        let myCardEl = null;
+        let startRect = null;
+
+        if (handContainer) {
+            if (window.pvpSelectedCardIndex > -1 && handContainer.children[window.pvpSelectedCardIndex]) {
+                myCardEl = handContainer.children[window.pvpSelectedCardIndex];
+            } else {
+                const handCards = Array.from(handContainer.children);
+                if(handCards.length > 0) myCardEl = handCards[0]; 
+            }
+        }
+        if (myCardEl) {
+            startRect = myCardEl.getBoundingClientRect();
+            myCardEl.classList.remove('card-selected');
+            myCardEl.style.opacity = '0';
+        }
+        // Remove da mão (visual/logico)
+        if (window.pvpSelectedCardIndex > -1) {
+            player.hand.splice(window.pvpSelectedCardIndex, 1);
+        } else {
+            const idx = player.hand.indexOf(myMove);
+            if(idx > -1) player.hand.splice(idx, 1);
+        }
+        playerHistory.push(myMove);
+
+        // Animação de entrada
         animateFly(startRect || 'player-hand', 'p-slot', myMove, () => {
             renderTable(myMove, 'p-slot', true);
         }, false, true, true);
@@ -1236,43 +1234,48 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
             renderTable(enemyMove, 'm-slot', false);
         }, false, true, false);
 
-    } catch(e) {
-        console.error("Erro na animação das cartas:", e);
+    } catch (e) {
+        console.error("Erro na preparação visual (ignorado):", e);
     }
 
-    // --- RESOLUÇÃO COM SEGURANÇA (TRY/CATCH/FINALLY) ---
+    // --- RESOLUÇÃO BLINDADA ---
     setTimeout(() => {
-        try {
-            // Tenta resolver o turno (Cálculo de dano, bloqueio, efeitos)
-            resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
-
-            // Apenas o HOST (Player 1) limpa o banco
-            if (window.myRole === 'player1') {
-                setTimeout(() => {
-                    const matchRef = doc(db, "matches", window.currentMatchId);
-                    updateDoc(matchRef, {
-                        p1Move: null, p2Move: null,
-                        p1Disarm: null, p2Disarm: null,
-                        turn: increment(1) 
-                    }).catch(err => console.error("Erro ao limpar turno no DB:", err));
-                }, 3000); 
-            }
-
-        } catch (error) {
-            console.error("CRASH NO RESOLVE TURN:", error);
-            // Em caso de erro crítico, força a UI a atualizar para não ficar tela preta
-            updateUI();
-            isProcessing = false;
-        } finally {
-            // --- BLINDAGEM FINAL ---
-            // Garante que, aconteça o que acontecer (erro ou sucesso), 
-            // a trava será liberada para o próximo turno.
-            window.pvpSelectedCardIndex = null;
+        
+        // 1. GARANTIA DE LIMPEZA DO BANCO (PRIORIDADE MÁXIMA)
+        // Agendamos isso INDEPENDENTE se a função resolveTurn funcionar ou falhar.
+        if (window.myRole === 'player1') {
             setTimeout(() => {
-                console.log("Destravando turno...");
-                window.isResolvingTurn = false;
-            }, 3500);
+                const matchRef = doc(db, "matches", window.currentMatchId);
+                updateDoc(matchRef, {
+                    p1Move: null, p2Move: null,
+                    p1Disarm: null, p2Disarm: null,
+                    turn: increment(1) 
+                }).then(() => console.log("Turno limpo no DB com sucesso."))
+                  .catch(err => console.error("Erro crítico ao limpar turno:", err));
+            }, 4000); // 4s é tempo suficiente para ler as cartas
         }
+
+        // 2. TENTA RESOLVER A LÓGICA (Dano, Efeitos, etc)
+        try {
+            resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
+        } catch (error) {
+            console.error("CRASH NO RESOLVE TURN (Recuperando...):", error);
+            updateUI(); // Tenta consertar a UI se algo explodiu
+        } 
+        
+        // 3. FAILSAFE: DESTRAVA TUDO DEPOIS DE 4.5 SEGUNDOS
+        // Isso garante que o jogo NUNCA fique congelado, mesmo se der erro.
+        setTimeout(() => {
+            console.log("Executando Failsafe de Destravamento...");
+            window.pvpSelectedCardIndex = null;
+            window.isResolvingTurn = false;
+            
+            // Se por algum motivo o resolveTurn não destravou o processamento:
+            if (isProcessing) {
+                console.warn("UI estava travada. Forçando liberação.");
+                isProcessing = false;
+            }
+        }, 4500);
 
     }, 600);
 }
