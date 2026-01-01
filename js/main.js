@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO UI PVE)
+// ARQUIVO: js/main.js (CORREÇÃO FILA INFINITA + SYNC + AUDIO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -280,11 +280,8 @@ window.showScreen = function(screenId) {
 }
 
 // --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
-// CORREÇÃO: Força o reset visual da tela de seleção sempre que ela é aberta
 window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
-    
-    // Reseta visual da tela de seleção
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
         ds.style.display = 'flex';
@@ -297,7 +294,6 @@ window.openDeckSelector = function() {
             if(img) img.style = "";
         });
     }
-
     try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(() => {});
@@ -321,7 +317,7 @@ window.openDeckSelector = function() {
     }
 })();
 
-// --- SELEÇÃO DE DECK (CORRIGIDO UI PVE) ---
+// --- SELEÇÃO DE DECK ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         try {
@@ -362,7 +358,6 @@ window.selectDeck = function(deckType) {
         selectionScreen.style.opacity = "0";
 
         setTimeout(() => {
-            // ESCONDE O CONTAINER PARA EVITAR O FANTASMA
             selectionScreen.style.display = 'none';
 
             if (window.gameMode === 'pvp') {
@@ -370,9 +365,6 @@ window.selectDeck = function(deckType) {
             } else {
                 window.transitionToGame();
             }
-            
-            // NÃO resetamos a opacidade aqui. 
-            // O reset é feito em openDeckSelector na próxima vez que abrir.
         }, 500);
     }, 400);
 };
@@ -489,6 +481,112 @@ function startGameFlow() {
 
     if(window.gameMode === 'pvp') {
         startPvPListener();
+    }
+}
+
+// --- FUNÇÃO QUE INICIA A FILA APÓS ESCOLHER O DECK ---
+async function initiateMatchmaking() {
+    const mmScreen = document.getElementById('matchmaking-screen');
+    mmScreen.style.display = 'flex';
+    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
+    document.querySelector('.mm-title').style.color = "var(--gold)";
+    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
+    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
+    document.querySelector('.cancel-btn').style.display = "block";
+    
+    matchSeconds = 0;
+    const timerEl = document.getElementById('mm-timer');
+    timerEl.innerText = "00:00";
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    matchTimerInterval = setInterval(() => {
+        matchSeconds++;
+        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
+        let s = (matchSeconds % 60).toString().padStart(2, '0');
+        timerEl.innerText = `${m}:${s}`;
+    }, 1000);
+
+    try {
+        myQueueRef = doc(collection(db, "queue")); 
+        const myData = {
+            uid: currentUser.uid,
+            name: currentUser.displayName,
+            deck: window.currentDeck, 
+            score: 0, 
+            timestamp: Date.now(),
+            matchId: null
+        };
+        await setDoc(myQueueRef, myData);
+
+        queueListener = onSnapshot(myQueueRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.matchId) {
+                    enterMatch(data.matchId); 
+                }
+            }
+        });
+
+        findOpponentInQueue();
+
+    } catch (e) {
+        console.error("Erro no Matchmaking:", e);
+        cancelPvPSearch();
+    }
+}
+
+// --- CORREÇÃO DA FILA (BUSCA INTELIGENTE) ---
+async function findOpponentInQueue() {
+    try {
+        const queueRef = collection(db, "queue");
+        // Busca os 100 mais antigos (para evitar o limite curto)
+        const q = query(queueRef, orderBy("timestamp", "asc"), limit(100));
+        const querySnapshot = await getDocs(q);
+
+        let opponentDoc = null;
+        const now = Date.now();
+        const MAX_WAIT_TIME = 120000; // 2 minutos
+
+        // Usa loop for...of para poder usar BREAK
+        for (const doc of querySnapshot.docs) {
+            const data = doc.data();
+            
+            // LIMPEZA AUTOMÁTICA: Se o ticket for muito velho e não for eu, deleta
+            if ((now - data.timestamp) > MAX_WAIT_TIME && data.uid !== currentUser.uid) {
+                try { await deleteDoc(doc.ref); } catch(e){}
+                continue; // Pula este
+            }
+
+            // Se for um oponente válido e recente
+            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
+                opponentDoc = doc;
+                break; // PARE DE PROCURAR! ACHAMOS UM!
+            }
+        }
+
+        if (opponentDoc) {
+            const oppData = opponentDoc.data();
+            console.log("Oponente encontrado:", oppData.name);
+
+            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+
+            await updateDoc(opponentDoc.ref, { matchId: matchId });
+            if (myQueueRef) {
+                await updateDoc(myQueueRef, { matchId: matchId });
+            }
+
+            const p1DeckCards = generateShuffledDeck();
+            const p2DeckCards = generateShuffledDeck();
+
+            await createMatchDocument(
+                matchId, 
+                currentUser.uid, oppData.uid, 
+                currentUser.displayName, oppData.name,
+                window.currentDeck, oppData.deck,
+                p1DeckCards, p2DeckCards
+            );
+        } 
+    } catch (e) {
+        console.error("Erro ao buscar oponente:", e);
     }
 }
 
@@ -1633,21 +1731,29 @@ async function initiateMatchmaking() {
 async function findOpponentInQueue() {
     try {
         const queueRef = collection(db, "queue");
-        // Limite aumentado para 50 para evitar tickets fantasmas
-        const q = query(queueRef, orderBy("timestamp", "asc"), limit(50));
+        // Limite aumentado para 100 para evitar tickets fantasmas
+        const q = query(queueRef, orderBy("timestamp", "asc"), limit(100));
         const querySnapshot = await getDocs(q);
 
         let opponentDoc = null;
         const now = Date.now();
         const MAX_WAIT_TIME = 120000; 
 
-        querySnapshot.forEach((doc) => {
+        // Loop manual para poder usar BREAK e deletar lixo
+        for (const doc of querySnapshot.docs) {
             const data = doc.data();
-            const isRecent = (now - data.timestamp) < MAX_WAIT_TIME;
-            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled && isRecent) {
-                opponentDoc = doc;
+
+            // LIMPEZA: Se ticket > 2 min, deleta (exceto se for eu mesmo)
+            if ((now - data.timestamp) > MAX_WAIT_TIME && data.uid !== currentUser.uid) {
+               try { await deleteDoc(doc.ref); } catch(e){}
+               continue;
             }
-        });
+
+            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
+                opponentDoc = doc;
+                break; // ACHA O PRIMEIRO E PARA
+            }
+        }
 
         if (opponentDoc) {
             const oppData = opponentDoc.data();
