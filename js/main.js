@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO UI PVE)
+// ARQUIVO: js/main.js (VERSÃO FINAL - PVP SINCRONIZADO E CORRIGIDO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -113,6 +113,7 @@ window.currentMatchId = null;
 window.pvpSelectedCardIndex = null; 
 window.isResolvingTurn = false; 
 window.pvpStartData = null; 
+window.matchUnsubscribe = null; // Listener global para poder desligar
 
 function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
@@ -280,7 +281,6 @@ window.showScreen = function(screenId) {
 }
 
 // --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
-// CORREÇÃO: Força o reset visual da tela de seleção sempre que ela é aberta
 window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
     
@@ -321,7 +321,7 @@ window.openDeckSelector = function() {
     }
 })();
 
-// --- SELEÇÃO DE DECK (CORRIGIDO UI PVE) ---
+// --- SELEÇÃO DE DECK ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         try {
@@ -362,7 +362,6 @@ window.selectDeck = function(deckType) {
         selectionScreen.style.opacity = "0";
 
         setTimeout(() => {
-            // ESCONDE O CONTAINER PARA EVITAR O FANTASMA
             selectionScreen.style.display = 'none';
 
             if (window.gameMode === 'pvp') {
@@ -370,9 +369,6 @@ window.selectDeck = function(deckType) {
             } else {
                 window.transitionToGame();
             }
-            
-            // NÃO resetamos a opacidade aqui. 
-            // O reset é feito em openDeckSelector na próxima vez que abrir.
         }, 500);
     }, 400);
 };
@@ -396,7 +392,6 @@ window.transitionToGame = function() {
     }, 500); 
 }
 
-// CORREÇÃO: Transição Segura
 window.transitionToLobby = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
@@ -464,7 +459,12 @@ function startGameFlow() {
     if (handEl) {
         handEl.innerHTML = '';
         handEl.classList.add('preparing'); 
+        handEl.classList.remove('disabled-hand'); // Reset do PvP
     }
+
+    document.getElementById('p-slot').innerHTML = '';
+    document.getElementById('m-slot').innerHTML = '';
+    document.getElementById('m-slot').classList.remove('enemy-ready-pulse');
     
     // Identidade Fixa (Role) para sincronia RNG
     if (window.gameMode === 'pvp' && window.pvpStartData) {
@@ -492,19 +492,24 @@ function startGameFlow() {
     }
 }
 
+// ======================================================
+// NOVO LISTENER DA PARTIDA (CORRIGIDO E SEPARADO)
+// ======================================================
 function startPvPListener() {
     if(!window.currentMatchId) return;
+
+    if (window.matchUnsubscribe) window.matchUnsubscribe();
 
     const matchRef = doc(db, "matches", window.currentMatchId);
     let namesUpdated = false;
 
-    onSnapshot(matchRef, (docSnap) => {
+    window.matchUnsubscribe = onSnapshot(matchRef, (docSnap) => {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
 
+        // 1. Atualização dos Nomes (Rodar apenas uma vez)
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
-
             if (window.myRole === 'player1') {
                 myName = matchData.player1.name;
                 enemyName = matchData.player2.name;
@@ -512,20 +517,66 @@ function startPvPListener() {
                 myName = matchData.player2.name;
                 enemyName = matchData.player1.name;
             }
-
             const pNameEl = document.querySelector('#p-stats-cluster .unit-name');
             const mNameEl = document.querySelector('#m-stats-cluster .unit-name');
-
             if(pNameEl) pNameEl.innerText = myName;
             if(mNameEl) mNameEl.innerText = enemyName;
-
             namesUpdated = true; 
         }
 
+        // 2. Identifica movimentos
+        const amIPlayer1 = (window.myRole === 'player1');
+        const myMove = amIPlayer1 ? matchData.p1Move : matchData.p2Move;
+        const enemyMove = amIPlayer1 ? matchData.p2Move : matchData.p1Move;
+
+        // 3. Feedback Visual Parcial (EU JOGUEI)
+        if (myMove) {
+            // Se meu slot está vazio, mostre minha carta estática (confirmação)
+            const slot = document.getElementById('p-slot');
+            if(slot && slot.innerHTML.trim() === "") {
+                renderTable(myMove, 'p-slot', true);
+            }
+            // Trava a mão para não jogar de novo
+            document.getElementById('player-hand').classList.add('disabled-hand');
+        }
+
+        // 4. Feedback Visual Parcial (INIMIGO JOGOU)
+        if (enemyMove) {
+            const slot = document.getElementById('m-slot');
+            if(slot && slot.innerHTML.trim() === "") {
+                // Mostra o VERSO da carta (Enemy Ready)
+                slot.innerHTML = `<div class="card-back-slot" style="background-image: var(--cardback-url); width:100%; height:100%; background-size:cover; border-radius:10px;"></div>`;
+                slot.classList.add('enemy-ready-pulse');
+            }
+        }
+
+        // 5. RESOLUÇÃO (AMBOS JOGARAM)
         if (matchData.p1Move && matchData.p2Move) {
             if (!window.isResolvingTurn) {
-                resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
+                window.isResolvingTurn = true; // Trava para não rodar 2x
+                
+                // Remove mensagem de "Aguardando" se houver
+                const centerTxt = document.querySelector('.center-text');
+                if(centerTxt) centerTxt.remove();
+
+                // Pequeno delay para sincronia visual
+                setTimeout(() => {
+                    resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
+                }, 500);
             }
+        }
+
+        // 6. LIMPEZA (Próximo Turno Iniciado pelo Banco)
+        if (!matchData.p1Move && !matchData.p2Move && window.isResolvingTurn) {
+            window.isResolvingTurn = false; // Libera a flag local
+            
+            // Destrava a mão
+            document.getElementById('player-hand').classList.remove('disabled-hand');
+            
+            // Limpa slots visuais
+            document.getElementById('p-slot').innerHTML = '';
+            document.getElementById('m-slot').innerHTML = '';
+            document.getElementById('m-slot').classList.remove('enemy-ready-pulse');
         }
     });
 }
@@ -656,7 +707,7 @@ function preloadGame() {
         img.src = src; 
         window.gameAssets.push(img);
         img.onload = () => updateLoader(); 
-        img.onerror = () => updateLoader(); // Não trava se falhar
+        img.onerror = () => updateLoader(); 
     });
     ASSETS_TO_LOAD.audio.forEach(a => { 
         let s = new Audio(); 
@@ -666,7 +717,7 @@ function preloadGame() {
         audios[a.id] = s; 
         window.gameAssets.push(s);
         s.onloadedmetadata = () => updateLoader(); 
-        s.onerror = () => updateLoader(); // Não trava se falhar
+        s.onerror = () => updateLoader(); 
         setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); 
     });
 }
@@ -1069,15 +1120,12 @@ async function playCardFlow(index, pDisarmChoice) {
     }, false, true, false);
 }
 
-// ATUALIZAÇÃO: Animação Simultânea e Resolução
+// ======================================================
+// RESOLUÇÃO PVP (SINCRONIA FINAL)
+// ======================================================
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
-    window.isResolvingTurn = true; // Trava para não rodar duas vezes
     isProcessing = true; // Garante que ninguém clica em nada
     
-    // Limpa a mensagem "AGUARDANDO OPONENTE..."
-    const centerTxt = document.querySelector('.center-text');
-    if(centerTxt) centerTxt.remove();
-
     // Define quem jogou o quê
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
     if (window.myRole === 'player1') {
@@ -1088,35 +1136,12 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         myDisarmChoice = p2Disarm; enemyDisarmChoice = p1Disarm;
     }
 
-    // --- PREPARAÇÃO DA MINHA CARTA ---
-    // Se por acaso perdeu o índice (refresh), tenta achar na mão
+    // Lógica para remover a carta da mão localmente
+    // (O listener já travou visualmente, mas precisamos remover do array de dados)
     if (window.pvpSelectedCardIndex === null || window.pvpSelectedCardIndex === undefined) {
         window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
     }
     
-    // Identifica o elemento HTML da carta selecionada
-    const handContainer = document.getElementById('player-hand');
-    let myCardEl = null;
-    let startRect = null;
-
-    if (handContainer) {
-        // Tenta pegar pelo índice salvo
-        if (window.pvpSelectedCardIndex > -1 && handContainer.children[window.pvpSelectedCardIndex]) {
-            myCardEl = handContainer.children[window.pvpSelectedCardIndex];
-        } else {
-            // Failsafe: Procura qualquer carta na mão que corresponda à jogada
-            const handCards = Array.from(handContainer.children);
-            if(handCards.length > 0) myCardEl = handCards[0]; 
-        }
-    }
-
-    if (myCardEl) {
-        startRect = myCardEl.getBoundingClientRect();
-        myCardEl.classList.remove('card-selected');
-        myCardEl.style.opacity = '0';
-    }
-
-    // Remove logicamente da mão
     if (window.pvpSelectedCardIndex > -1) {
         player.hand.splice(window.pvpSelectedCardIndex, 1);
         playerHistory.push(myMove);
@@ -1126,21 +1151,27 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         playerHistory.push(myMove);
     }
 
-    // --- AÇÃO: LANÇAR AS CARTAS AO MESMO TEMPO ---
+    // Limpa Slots para Preparar a Animação de Confronto
+    document.getElementById('p-slot').innerHTML = '';
+    document.getElementById('m-slot').innerHTML = '';
+    document.getElementById('m-slot').classList.remove('enemy-ready-pulse');
+
+    // --- ANIMAÇÃO DE CONFRONTO ---
+    // Fazemos as cartas "voarem" de novo para dar impacto
     
-    // 1. Minha carta voa da posição "selecionada" para a mesa
-    animateFly(startRect || 'player-hand', 'p-slot', myMove, () => {
+    // 1. Minha carta
+    animateFly('player-hand', 'p-slot', myMove, () => {
         renderTable(myMove, 'p-slot', true);
     }, false, true, true);
 
-    // 2. Carta do inimigo voa do topo para a mesa
+    // 2. Carta do Inimigo (AGORA REVELADA!)
     const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 };
     animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => {
         renderTable(enemyMove, 'm-slot', false);
     }, false, true, false);
 
     // --- RESOLUÇÃO MATEMÁTICA ---
-    // Espera as cartas chegarem na mesa (aprox 600ms) para calcular dano
+    // Espera a animação de voo terminar (aprox 600ms)
     setTimeout(() => {
         resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
 
@@ -1150,23 +1181,15 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         // Apenas o HOST (Player 1) limpa o banco para o próximo turno
         if (window.myRole === 'player1') {
             const matchRef = doc(db, "matches", window.currentMatchId);
-            // Dá um tempo para lerem o resultado (dano/textos) antes de limpar
+            // Dá um tempo maior (3s) para lerem o resultado (dano/textos) antes de limpar
             setTimeout(() => {
                 updateDoc(matchRef, {
                     p1Move: null, p2Move: null,
                     p1Disarm: null, p2Disarm: null,
                     turn: increment(1) 
-                }).then(() => {
-                    // Destrava para o próximo turno
-                });
+                }).catch(e => console.error("Erro limpando turno:", e));
             }, 3000); 
         }
-        
-        // Destrava a flag local depois de tudo
-        setTimeout(() => {
-            window.isResolvingTurn = false;
-        }, 3500);
-
     }, 600);
 }
 
