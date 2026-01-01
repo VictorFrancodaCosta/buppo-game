@@ -1313,3 +1313,4 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 @keyframes badgePop { from { opacity:0; transform: translateX(-50%) scale(0); } to { opacity:1; transform: translateX(-50%) scale(1); } }
 @keyframes badgePulse { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.1); } }
+
