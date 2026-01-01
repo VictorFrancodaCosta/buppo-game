@@ -1,13 +1,11 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL REORGANIZADA E LIMPA)
+// ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO CARREGAMENTO ASSETS)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ======================================================
-// 1. CONFIGURAÇÃO E VARIÁVEIS
-// ======================================================
+// --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
     authDomain: "buppo-game.firebaseapp.com",
@@ -24,30 +22,11 @@ try {
     db = getFirestore(app);
     provider = new GoogleAuthProvider();
     console.log("Firebase Web Iniciado.");
-} catch (e) { console.error("Erro Firebase:", e); }
+} catch (e) {
+    console.error("Erro Firebase:", e);
+}
 
-let currentUser = null;
-const audios = {}; 
-let assetsLoaded = 0; 
-window.gameAssets = []; 
-window.isMatchStarting = false;
-window.currentDeck = 'knight';
-window.myRole = null; 
-window.currentMatchId = null;
-window.pvpSelectedCardIndex = null; 
-window.isResolvingTurn = false; 
-window.pvpStartData = null;
-window.masterVol = 1.0; 
-let isLethalHover = false; 
-let mixerInterval = null;
-let isProcessing = false; 
-let turnCount = 1; 
-let playerHistory = []; 
-
-let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
-let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
-
-// --- ASSETS ---
+// --- ASSETS DO JOGO (DEFINIÇÃO) ---
 const MAGE_ASSETS = {
     'ATAQUE': 'assets/img/carta_ataque_mago.png',
     'BLOQUEIO': 'assets/img/carta_bloqueio_mago.png',
@@ -95,8 +74,98 @@ const ASSETS_TO_LOAD = {
     ]
 };
 
+// --- VARIÁVEIS GLOBAIS ---
+let currentUser = null;
+const audios = {}; 
+let assetsLoaded = 0; 
+window.gameAssets = []; 
+window.isMatchStarting = false;
+window.currentDeck = 'knight';
+window.myRole = null; 
+window.currentMatchId = null;
+window.pvpSelectedCardIndex = null; 
+window.isResolvingTurn = false; 
+window.pvpStartData = null;
+window.masterVol = 1.0; 
+let isLethalHover = false; 
+let mixerInterval = null;
+let isProcessing = false; 
+let turnCount = 1; 
+let playerHistory = []; 
+
+let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
+let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
+
 // ======================================================
-// 2. HELPERS (RNG, ARTE, UTILS)
+// SISTEMA DE PRELOAD (CORRIGIDO)
+// ======================================================
+function preloadGame() {
+    console.log("Iniciando Preload...");
+    assetsLoaded = 0; // Reset
+    
+    // Calcula total dinamicamente
+    const total = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
+
+    function checkLoad() {
+        assetsLoaded++;
+        let pct = Math.min(100, (assetsLoaded / total) * 100);
+        const fill = document.getElementById('loader-fill');
+        if(fill) fill.style.width = pct + '%';
+
+        if(assetsLoaded >= total) {
+            console.log("Preload completo!");
+            finishLoading();
+        }
+    }
+
+    ASSETS_TO_LOAD.images.forEach(src => { 
+        let img = new Image(); 
+        img.src = src; 
+        window.gameAssets.push(img);
+        img.onload = checkLoad; 
+        img.onerror = checkLoad; // Segue mesmo com erro
+    });
+
+    ASSETS_TO_LOAD.audio.forEach(a => { 
+        let s = new Audio(); 
+        s.src = a.src; 
+        s.preload = 'auto'; 
+        if(a.loop) s.loop = true; 
+        audios[a.id] = s; 
+        window.gameAssets.push(s);
+        s.onloadedmetadata = checkLoad; 
+        s.onerror = checkLoad; // Segue mesmo com erro
+        
+        // Timeout de segurança se o audio demorar demais
+        setTimeout(() => { 
+            if(s.readyState === 0) checkLoad(); 
+        }, 3000); 
+    });
+}
+
+function finishLoading() {
+    if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
+    setTimeout(() => {
+        const loading = document.getElementById('loading-screen');
+        if(loading) { 
+            loading.style.opacity = '0'; 
+            setTimeout(() => loading.style.display = 'none', 500); 
+        }
+        if(!window.hoverLogicInitialized) { 
+            initGlobalHoverLogic(); 
+            window.hoverLogicInitialized = true; 
+        }
+    }, 800); 
+    
+    document.body.addEventListener('click', () => { 
+        if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) {
+            MusicController.play('bgm-menu');
+        }
+    }, { once: true });
+}
+
+// ======================================================
+// HELPERS E UTILITÁRIOS
 // ======================================================
 function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
@@ -134,7 +203,7 @@ function generateShuffledDeck() {
 }
 
 // ======================================================
-// 3. SISTEMA DE ÁUDIO
+// SISTEMA DE ÁUDIO BLINDADO
 // ======================================================
 const MusicController = {
     currentTrackId: null,
@@ -234,7 +303,6 @@ function playSound(key) {
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
-    // Atualiza volumes individuais se necessário
 };
 
 // ======================================================
@@ -260,6 +328,9 @@ window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
     const ds = document.getElementById('deck-selection-screen');
     if(ds) { ds.style.display = 'flex'; ds.style.opacity = '1'; }
+    const options = document.querySelectorAll('.deck-option');
+    options.forEach(opt => { opt.style = ""; const img = opt.querySelector('img'); if(img) img.style = ""; });
+    
     try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(() => {});
@@ -277,7 +348,21 @@ window.selectDeck = function(deckType) {
     document.body.classList.remove('theme-cavaleiro', 'theme-mago'); 
     document.body.classList.add(deckType === 'mage' ? 'theme-mago' : 'theme-cavaleiro');
     
-    // Animação simples
+    const options = document.querySelectorAll('.deck-option');
+    options.forEach(opt => {
+        if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
+            opt.style.transition = "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+            opt.style.transform = "scale(1.15) translateY(-20px)";
+            opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))";
+            opt.style.zIndex = "100";
+        } else {
+            opt.style.transition = "all 0.3s ease";
+            opt.style.transform = "scale(0.8) translateY(10px)";
+            opt.style.opacity = "0.2";
+            opt.style.filter = "grayscale(100%)";
+        }
+    });
+
     setTimeout(() => {
         const selectionScreen = document.getElementById('deck-selection-screen');
         selectionScreen.style.transition = "opacity 0.5s";
@@ -464,13 +549,11 @@ async function playCardFlow(index, pDisarmChoice) {
 function animateMyCard(index, cardKey, cb) {
     let handContainer = document.getElementById('player-hand'); 
     let startRect = null;
-    // Tenta achar elemento original se existir (PvE)
     if(handContainer && handContainer.children[index]) { 
         let realCardEl = handContainer.children[index];
         startRect = realCardEl.getBoundingClientRect(); 
         realCardEl.style.opacity = '0';
     }
-    // Anima
     animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
         renderTable(cardKey, 'p-slot', true); 
         updateUI(); 
@@ -482,7 +565,6 @@ function getBestAIMove() {
     let moves = []; 
     monster.hand.forEach((card, index) => { if(card !== monster.disabled) moves.push({ card: card, index: index, score: 0 }); });
     if(moves.length === 0) return null;
-    // Logica simples de AI
     moves.forEach(m => m.score = Math.random() * 100);
     moves.sort((a, b) => b.score - a.score);
     return moves[0];
@@ -511,12 +593,11 @@ async function initiateMatchmaking() {
             uid: currentUser.uid, name: currentUser.displayName,
             deck: window.currentDeck, score: 0, timestamp: Date.now(), matchId: null
         });
-        window.myQueueRef = myQueueRef; // Salva ref global para cancelar
+        window.myQueueRef = myQueueRef; 
 
-        let queueListener = onSnapshot(myQueueRef, (docSnap) => {
+        window.queueListener = onSnapshot(myQueueRef, (docSnap) => {
             if (docSnap.exists() && docSnap.data().matchId) enterMatch(docSnap.data().matchId); 
         });
-        window.queueListener = queueListener;
 
         findOpponentInQueue();
     } catch (e) {
@@ -536,7 +617,7 @@ async function findOpponentInQueue() {
         for (const doc of snapshot.docs) {
             const data = doc.data();
             if ((now - data.timestamp) > 120000 && data.uid !== currentUser.uid) {
-               try { await deleteDoc(doc.ref); } catch(e){} // Limpa lixo
+               try { await deleteDoc(doc.ref); } catch(e){} 
                continue;
             }
             if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
@@ -568,7 +649,7 @@ window.cancelPvPSearch = async function() {
     if (matchTimerInterval) clearInterval(matchTimerInterval);
     if (window.queueListener) { window.queueListener(); window.queueListener = null; }
     if (window.myQueueRef) { await updateDoc(window.myQueueRef, { cancelled: true }); window.myQueueRef = null; }
-    window.openDeckSelector(); // Volta para seleção
+    window.openDeckSelector(); 
 };
 
 async function enterMatch(matchId) {
@@ -608,7 +689,6 @@ function startPvPListener() {
             namesUpdated = true; 
         }
 
-        // Indicador Visual "Inimigo Pronto"
         let enemyHasPlayed = (window.myRole === 'player1' && matchData.p2Move) || (window.myRole === 'player2' && matchData.p1Move);
         updateEnemyReadyState(enemyHasPlayed);
 
@@ -661,7 +741,6 @@ async function resolvePvPTurn(p1, p2, d1, d2) {
     if (window.myRole === 'player1') { myMove=p1; enemyMove=p2; myDisarm=d1; enemyDisarm=d2; }
     else { myMove=p2; enemyMove=p1; myDisarm=d2; enemyDisarm=d1; }
 
-    // Prepara minha carta visualmente
     if (window.pvpSelectedCardIndex === null) window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
     const handEl = document.getElementById('player-hand');
     let startRect = null;
@@ -671,12 +750,10 @@ async function resolvePvPTurn(p1, p2, d1, d2) {
         el.classList.remove('card-selected'); el.style.opacity = '0';
     }
 
-    // Remove da mão lógica
     const idx = (window.pvpSelectedCardIndex > -1) ? window.pvpSelectedCardIndex : player.hand.indexOf(myMove);
     if(idx > -1) player.hand.splice(idx, 1);
     playerHistory.push(myMove);
 
-    // Anima as duas
     animateFly(startRect || 'player-hand', 'p-slot', myMove, () => { renderTable(myMove, 'p-slot', true); }, false, true, true);
     const oppOrigin = { top: -160, left: window.innerWidth/2 };
     animateFly(oppOrigin, 'm-slot', enemyMove, () => { renderTable(enemyMove, 'm-slot', false); }, false, true, false);
@@ -740,11 +817,9 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         triggerHealEffect(false); playSound('sfx-heal'); 
     }
 
-    // EXTRA XP (Sync check included)
     const handleExtraXP = (u) => {
         if(u.deck.length > 0) { 
             let card = u.deck.pop(); 
-            console.log(`[SYNC] XP for ${u.originalRole}: ${card}`);
             animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
                 u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
             }, false, false, (u.id === 'p')); 
@@ -779,7 +854,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
 
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
-        // Animação de Level Up
         let xpContainer = document.getElementById(u.id + '-xp'); 
         Array.from(xpContainer.children).forEach(real => {
             let rect = real.getBoundingClientRect(); 
@@ -801,7 +875,6 @@ function checkLevelUp(u, doneCb) {
                 triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); 
                 u.xp.forEach(x => u.deck.push(x)); u.xp = []; 
                 
-                // --- SYNC SHUFFLE ---
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
                     shuffle(u.deck, s);
@@ -906,44 +979,45 @@ window.goToLobby = async function(isAutoLogin = false) {
 window.onload = function() {
     const btnSound = document.getElementById('btn-sound');
     if (btnSound) btnSound.addEventListener('click', (e) => { e.stopPropagation(); window.toggleMute(); });
-    preloadGame();
-    initAmbientParticles();
-    // Previne zoom
-    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
-};
-
-function preloadGame() {
+    
+    // Inicia o carregamento
     console.log("Iniciando Preload...");
+    assetsLoaded = 0; 
+    const total = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
+    
+    const checkLoad = () => {
+        assetsLoaded++;
+        let pct = Math.min(100, (assetsLoaded / total) * 100);
+        const fill = document.getElementById('loader-fill');
+        if(fill) fill.style.width = pct + '%';
+        if(assetsLoaded >= total) finishLoading();
+    };
+
     ASSETS_TO_LOAD.images.forEach(src => { 
         let img = new Image(); img.src = src; window.gameAssets.push(img);
-        img.onload = updateLoader; img.onerror = updateLoader;
+        img.onload = checkLoad; img.onerror = checkLoad;
     });
     ASSETS_TO_LOAD.audio.forEach(a => { 
         let s = new Audio(); s.src = a.src; s.preload = 'auto'; 
         if(a.loop) s.loop = true; audios[a.id] = s; window.gameAssets.push(s);
-        s.onloadedmetadata = updateLoader; s.onerror = updateLoader;
-        setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); 
+        s.onloadedmetadata = checkLoad; s.onerror = checkLoad;
+        setTimeout(() => { if(s.readyState === 0) checkLoad(); }, 3000); 
     });
-}
 
-function updateLoader() {
-    assetsLoaded++; 
-    let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
-    const fill = document.getElementById('loader-fill');
-    if(fill) fill.style.width = pct + '%';
-    
-    if(assetsLoaded >= totalAssets) {
-        console.log("Preload completo!");
-        if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
-        setTimeout(() => {
-            const loading = document.getElementById('loading-screen');
-            if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
-            if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
-        }, 800); 
-        document.body.addEventListener('click', () => { 
-            if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) MusicController.play('bgm-menu');
-        }, { once: true });
-    }
+    initAmbientParticles();
+    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+};
+
+function finishLoading() {
+    if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
+    setTimeout(() => {
+        const loading = document.getElementById('loading-screen');
+        if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
+        if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
+    }, 800); 
+    document.body.addEventListener('click', () => { 
+        if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) MusicController.play('bgm-menu');
+    }, { once: true });
 }
 
 function initGlobalHoverLogic() {
