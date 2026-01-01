@@ -503,7 +503,6 @@ function startGameFlow() {
 function startPvPListener() {
     if(!window.currentMatchId) return;
 
-    // 1. Limpa listener anterior se existir (BLINDAGEM)
     if (window.pvpUnsubscribe) {
         window.pvpUnsubscribe();
         window.pvpUnsubscribe = null;
@@ -514,12 +513,33 @@ function startPvPListener() {
 
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
 
-    // 2. Atribui o novo listener à variável global
     window.pvpUnsubscribe = onSnapshot(matchRef, (docSnap) => {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
 
-        // Atualiza nomes apenas uma vez
+        // --- NOVO: DETECÇÃO DE ABANDONO ---
+        if (matchData.status === 'abandoned') {
+            console.log("Oponente abandonou a partida!");
+            
+            // Verifica se EU não sou quem abandonou (para evitar loop se eu fechar a aba)
+            if (matchData.winner === currentUser.uid) {
+                // Se eu sou declarado vencedor, mato o inimigo instantaneamente
+                monster.hp = 0; 
+                updateUI(); // Atualiza barra de vida para 0
+                
+                // Força o fim de jogo como Vitória
+                checkEndGame(); 
+                
+                // Remove o listener para parar de escutar
+                if (window.pvpUnsubscribe) {
+                    window.pvpUnsubscribe();
+                    window.pvpUnsubscribe = null;
+                }
+            }
+            return; // Para a execução aqui
+        }
+        // ----------------------------------
+
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
             if (window.myRole === 'player1') {
@@ -536,19 +556,14 @@ function startPvPListener() {
             namesUpdated = true; 
         }
 
-        // 3. DETECÇÃO DE TURNO PRONTO (Ambos jogaram)
         if (matchData.p1Move && matchData.p2Move) {
-            console.log("Ambos jogaram! Tentando resolver...", matchData.p1Move, matchData.p2Move);
-            
-            // Verifica se já não estamos resolvendo para evitar loop
             if (!window.isResolvingTurn) {
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
-            } else {
-                console.warn("Turno já está sendo resolvido. Ignorando atualização duplicada.");
             }
         }
     });
 }
+
 
 function checkEndGame(){ 
     if(player.hp<=0 || monster.hp<=0) { 
@@ -652,6 +667,30 @@ window.restartMatch = function() {
     MusicController.play('bgm-loop'); 
 }
 
+async function notifyAbandonment() {
+    if (!window.currentMatchId || !window.myRole) return;
+    
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    
+    // Se eu sou player1, o vencedor é o player2 (uid), e vice-versa
+    let winnerUid = null;
+    if (window.pvpStartData) {
+        winnerUid = (window.myRole === 'player1') 
+            ? window.pvpStartData.player2.uid 
+            : window.pvpStartData.player1.uid;
+    }
+
+    try {
+        // Define status como abandonado e define o vencedor
+        await updateDoc(matchRef, {
+            status: 'abandoned',
+            winner: winnerUid
+        });
+    } catch (e) {
+        console.error("Erro ao notificar abandono:", e);
+    }
+}
+
 window.abandonMatch = function() {
     if(document.getElementById('game-screen').classList.contains('active')) {
         window.toggleConfig(); 
@@ -659,8 +698,13 @@ window.abandonMatch = function() {
             "ABANDONAR?", 
             "Sair da partida contará como DERROTA. Tem certeza?", 
             ["CANCELAR", "SAIR"], 
-            (choice) => {
+            async (choice) => { // Note o async aqui
                 if (choice === "SAIR") {
+                    // SE FOR PVP, AVISA O OPONENTE QUE ELE GANHOU
+                    if (window.gameMode === 'pvp') {
+                        await notifyAbandonment();
+                    }
+                    
                     window.registrarDerrotaOnline(window.gameMode);
                     window.transitionToLobby();
                 }
@@ -743,6 +787,15 @@ window.onload = function() {
         });
     }
 };
+
+// Adicione isso no escopo global ou dentro de window.onload
+window.addEventListener('beforeunload', () => {
+    // Se estiver em uma partida PvP ativa
+    if (window.gameMode === 'pvp' && window.currentMatchId && !document.getElementById('end-screen').classList.contains('visible')) {
+        // Tenta notificar o banco rapidamente
+        notifyAbandonment();
+    }
+});
 
 window.toggleFullScreen = function() {
     if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
