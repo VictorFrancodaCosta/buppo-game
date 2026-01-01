@@ -492,12 +492,8 @@ function startGameFlow() {
     }
 }
 
-// ======================================================
-// NOVO LISTENER DA PARTIDA (CORRIGIDO E SEPARADO)
-// ======================================================
 function startPvPListener() {
     if(!window.currentMatchId) return;
-
     if (window.matchUnsubscribe) window.matchUnsubscribe();
 
     const matchRef = doc(db, "matches", window.currentMatchId);
@@ -507,21 +503,19 @@ function startPvPListener() {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
 
-        // 1. Atualização dos Nomes (Rodar apenas uma vez)
+        // 1. Atualização dos Nomes (Uma vez)
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
             if (window.myRole === 'player1') {
-                myName = matchData.player1.name;
-                enemyName = matchData.player2.name;
+                myName = matchData.player1.name; enemyName = matchData.player2.name;
             } else {
-                myName = matchData.player2.name;
-                enemyName = matchData.player1.name;
+                myName = matchData.player2.name; enemyName = matchData.player1.name;
             }
             const pNameEl = document.querySelector('#p-stats-cluster .unit-name');
             const mNameEl = document.querySelector('#m-stats-cluster .unit-name');
             if(pNameEl) pNameEl.innerText = myName;
             if(mNameEl) mNameEl.innerText = enemyName;
-            namesUpdated = true; 
+            namesUpdated = true;
         }
 
         // 2. Identifica movimentos
@@ -529,58 +523,54 @@ function startPvPListener() {
         const myMove = amIPlayer1 ? matchData.p1Move : matchData.p2Move;
         const enemyMove = amIPlayer1 ? matchData.p2Move : matchData.p1Move;
 
-        // 3. Feedback Visual Parcial (EU JOGUEI)
+        // 3. Feedback Visual: MEU STATUS
         if (myMove) {
-            // Se meu slot está vazio, mostre minha carta estática (confirmação)
-            const slot = document.getElementById('p-slot');
-            if(slot && slot.innerHTML.trim() === "") {
-                renderTable(myMove, 'p-slot', true);
-            }
-            // Trava a mão para não jogar de novo
+            toggleReadyVisuals('p', true); // Liga o brilho e texto no meu avatar
             document.getElementById('player-hand').classList.add('disabled-hand');
+            
+            // Opcional: Ainda mostra a carta no slot pra eu lembrar o que joguei?
+            // Se preferir mesa LIMPA, remova a linha abaixo. 
+            // Se quiser ver sua carta, mantenha. Eu recomendo manter pra feedback pessoal.
+            const slot = document.getElementById('p-slot');
+            if(slot && slot.innerHTML.trim() === "") renderTable(myMove, 'p-slot', true);
+        } else {
+            toggleReadyVisuals('p', false); // Limpa se for null
         }
 
-        // 4. Feedback Visual Parcial (INIMIGO JOGOU)
+        // 4. Feedback Visual: STATUS DO INIMIGO
         if (enemyMove) {
-            const slot = document.getElementById('m-slot');
-            if(slot && slot.innerHTML.trim() === "") {
-                // Mostra o VERSO da carta (Enemy Ready)
-                slot.innerHTML = `<div class="card-back-slot" style="background-image: var(--cardback-url); width:100%; height:100%; background-size:cover; border-radius:10px;"></div>`;
-                slot.classList.add('enemy-ready-pulse');
-            }
+            toggleReadyVisuals('m', true); // Liga o brilho e texto no avatar inimigo
+            // NÃO colocamos mais carta no slot dele, o brilho no avatar já indica
+        } else {
+            toggleReadyVisuals('m', false);
         }
 
-        // 5. RESOLUÇÃO (AMBOS JOGARAM)
+        // 5. RESOLUÇÃO
         if (matchData.p1Move && matchData.p2Move) {
             if (!window.isResolvingTurn) {
-                window.isResolvingTurn = true; // Trava para não rodar 2x
-                
-                // Remove mensagem de "Aguardando" se houver
+                window.isResolvingTurn = true;
                 const centerTxt = document.querySelector('.center-text');
                 if(centerTxt) centerTxt.remove();
-
-                // Pequeno delay para sincronia visual
+                
                 setTimeout(() => {
                     resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
                 }, 500);
             }
         }
 
-        // 6. LIMPEZA (Próximo Turno Iniciado pelo Banco)
+        // 6. LIMPEZA (Próximo Turno)
         if (!matchData.p1Move && !matchData.p2Move && window.isResolvingTurn) {
-            window.isResolvingTurn = false; // Libera a flag local
-            
-            // Destrava a mão
+            window.isResolvingTurn = false;
             document.getElementById('player-hand').classList.remove('disabled-hand');
-            
-            // Limpa slots visuais
             document.getElementById('p-slot').innerHTML = '';
             document.getElementById('m-slot').innerHTML = '';
-            document.getElementById('m-slot').classList.remove('enemy-ready-pulse');
+            
+            // Garante que os visuais sumam
+            toggleReadyVisuals('p', false);
+            toggleReadyVisuals('m', false);
         }
     });
 }
-
 function checkEndGame(){ 
     if(player.hp<=0 || monster.hp<=0) { 
         isProcessing = true; 
@@ -1120,11 +1110,48 @@ async function playCardFlow(index, pDisarmChoice) {
     }, false, true, false);
 }
 
+// --- NOVA FUNÇÃO VISUAL ---
+function toggleReadyVisuals(unitId, isReady) {
+    const clusterId = (unitId === 'p') ? 'p-stats-cluster' : 'm-stats-cluster';
+    const cluster = document.getElementById(clusterId);
+    if (!cluster) return;
+
+    const readyClass = (unitId === 'p') ? 'cluster-ready-player' : 'cluster-ready-enemy';
+    const badgeId = `badge-${unitId}`;
+    
+    if (isReady) {
+        // Adiciona brilho
+        cluster.classList.add(readyClass);
+
+        // Adiciona Texto se não existir
+        if (!document.getElementById(badgeId)) {
+            const badge = document.createElement('div');
+            badge.id = badgeId;
+            badge.className = `status-badge ${unitId === 'p' ? 'status-p' : 'status-m'}`;
+            // Texto diferente para jogador e inimigo
+            badge.innerText = (unitId === 'p') ? "AÇÃO SELECIONADA" : "INIMIGO PRONTO";
+            cluster.appendChild(badge);
+        }
+    } else {
+        // Remove brilho
+        cluster.classList.remove(readyClass);
+        
+        // Remove Texto
+        const badge = document.getElementById(badgeId);
+        if (badge) badge.remove();
+    }
+}
 // ======================================================
 // RESOLUÇÃO PVP (SINCRONIA FINAL)
 // ======================================================
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     isProcessing = true; // Garante que ninguém clica em nada
+
+// --- NOVO: LIMPEZA DOS BRILHOS ---
+    // Remove o brilho e o texto "AÇÃO SELECIONADA" assim que o combate inicia
+    toggleReadyVisuals('p', false);
+    toggleReadyVisuals('m', false);
+    // ---------------------------------
     
     // Define quem jogou o quê
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
