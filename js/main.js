@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // ARQUIVO: js/main.js (VERSÃO FINAL - POPUP RESTAURADO E ERROS CORRIGIDOS)
 >>>>>>> 511672dbebbfbeda85ce582070c007752ee83ddc
 
