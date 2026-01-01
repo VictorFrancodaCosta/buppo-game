@@ -1,11 +1,13 @@
-// ARQUIVO: js/main.js (VERSÃO LIMPA E CORRIGIDA)
+// ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO DE ESCOPO GLOBAL)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// ======================================================
 // 1. CONFIGURAÇÃO FIREBASE
+// ======================================================
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
     authDomain: "buppo-game.firebaseapp.com",
@@ -24,7 +26,9 @@ try {
     console.log("Firebase Web Iniciado.");
 } catch (e) { console.error("Erro Firebase:", e); }
 
+// ======================================================
 // 2. VARIÁVEIS GLOBAIS
+// ======================================================
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
@@ -43,11 +47,12 @@ let isProcessing = false;
 let turnCount = 1; 
 let playerHistory = []; 
 
-// Objetos dos jogadores
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 
+// ======================================================
 // 3. ASSETS
+// ======================================================
 const MAGE_ASSETS = {
     'ATAQUE': 'assets/img/carta_ataque_mago.png',
     'BLOQUEIO': 'assets/img/carta_bloqueio_mago.png',
@@ -96,7 +101,62 @@ const ASSETS_TO_LOAD = {
 };
 
 // ======================================================
-// 4. HELPERS (RNG, ARTE, UTILS)
+// 4. FUNÇÕES GLOBAIS (PARA O HTML)
+// ======================================================
+
+// Login Google
+window.googleLogin = async function() {
+    window.playNavSound(); 
+    const btnText = document.getElementById('btn-text');
+    if(btnText) btnText.innerText = "CONECTANDO...";
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.error("Erro no Login:", error);
+        if(btnText) btnText.innerText = "ERRO - TENTE NOVAMENTE";
+        setTimeout(() => { if(btnText) btnText.innerText = "LOGIN COM GOOGLE"; }, 3000);
+    }
+};
+
+// Logout
+window.handleLogout = function() {
+    window.playNavSound();
+    signOut(auth).then(() => { location.reload(); });
+};
+
+// Start PvP
+window.startPvPSearch = function() {
+    if (!currentUser) return; 
+    window.gameMode = 'pvp'; 
+    window.playNavSound();
+    window.openDeckSelector(); 
+};
+
+// Start PvE
+window.startPvE = function() {
+    window.gameMode = 'pve'; 
+    window.playNavSound();
+    window.openDeckSelector(); 
+};
+
+// Cancelar Busca
+window.cancelPvPSearch = async function() {
+    window.playNavSound();
+    document.getElementById('matchmaking-screen').style.display = 'none';
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    if (window.queueListener) { window.queueListener(); window.queueListener = null; }
+    if (window.myQueueRef) { await updateDoc(window.myQueueRef, { cancelled: true }); window.myQueueRef = null; }
+    window.openDeckSelector(); 
+};
+
+// Cancelar Modal Genérico
+window.cancelModal = function() { 
+    document.getElementById('modal-overlay').style.display='none'; 
+    isProcessing = false; 
+};
+
+// ======================================================
+// 5. HELPERS (RNG, ARTE, UTILS)
 // ======================================================
 function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
@@ -134,7 +194,7 @@ function generateShuffledDeck() {
 }
 
 // ======================================================
-// 5. SISTEMA DE ÁUDIO BLINDADO
+// 6. SISTEMA DE ÁUDIO BLINDADO
 // ======================================================
 const MusicController = {
     currentTrackId: null,
@@ -192,9 +252,11 @@ window.isMuted = false;
 window.toggleMute = function() {
     window.isMuted = !window.isMuted;
     const btn = document.getElementById('btn-sound');
-    btn.innerHTML = window.isMuted ? 
-        `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M16.5,12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45,2.45C16.42,12.5,16.5,12.26,16.5,12z M19,12c0,0.94-0.2,1.82-0.54,2.64l1.51,1.51C20.63,14.91,21,13.5,21,12c0-4.28-2.99-7.86-7-8.77v2.06C16.89,6.15,19,8.83,19,12z M4.27,3L3,4.27l4.56,4.56C7.39,8.91,7.2,8.96,7,9H3v6h4l5,5v-6.73l4.25,4.25c-0.67,0.52-1.42,0.93-2.25,1.18v2.06c1.38-0.31,2.63-0.95,3.69-1.81L19.73,21L21,19.73L9,7.73V4L4.27,3z M12,4L9.91,6.09L12,8.18V4z"/></svg>` : 
-        `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M3,9v6h4l5,5V4L7,9H3z M16.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C15.48,15.29,16.5,13.77,16.5,12z M14,3.23v2.06 c2.89,0.86,5,3.54,5,6.71s-2.11,5.85-5,6.71v2.06c4.01-0.91,7-4.49,7-8.77S18.01,4.14,14,3.23z"/></svg>`;
+    if(btn) {
+        btn.innerHTML = window.isMuted ? 
+            `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M16.5,12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45,2.45C16.42,12.5,16.5,12.26,16.5,12z M19,12c0,0.94-0.2,1.82-0.54,2.64l1.51,1.51C20.63,14.91,21,13.5,21,12c0-4.28-2.99-7.86-7-8.77v2.06C16.89,6.15,19,8.83,19,12z M4.27,3L3,4.27l4.56,4.56C7.39,8.91,7.2,8.96,7,9H3v6h4l5,5v-6.73l4.25,4.25c-0.67,0.52-1.42,0.93-2.25,1.18v2.06c1.38-0.31,2.63-0.95,3.69-1.81L19.73,21L21,19.73L9,7.73V4L4.27,3z M12,4L9.91,6.09L12,8.18V4z"/></svg>` : 
+            `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M3,9v6h4l5,5V4L7,9H3z M16.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C15.48,15.29,16.5,13.77,16.5,12z M14,3.23v2.06 c2.89,0.86,5,3.54,5,6.71s-2.11,5.85-5,6.71v2.06c4.01-0.91,7-4.49,7-8.77S18.01,4.14,14,3.23z"/></svg>`;
+    }
     Object.values(audios).forEach(audio => { if(audio) audio.muted = window.isMuted; });
     if(!window.isMuted && MusicController.currentTrackId) {
         const audio = audios[MusicController.currentTrackId];
@@ -237,7 +299,7 @@ window.updateVol = function(type, val) {
 };
 
 // ======================================================
-// 6. INTERFACE E EFEITOS
+// 7. INTERFACE E EFEITOS
 // ======================================================
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -354,8 +416,31 @@ function showFloatingText(eid, txt, col) {
     setTimeout(()=>el.remove(), 2000); 
 }
 
+window.restartMatch = function() {
+    document.getElementById('end-screen').classList.remove('visible');
+    setTimeout(startGameFlow, 50);
+    MusicController.play('bgm-loop'); 
+}
+
+window.abandonMatch = function() {
+    if(document.getElementById('game-screen').classList.contains('active')) {
+        window.toggleConfig(); 
+        window.openModal(
+            "ABANDONAR?", 
+            "Sair da partida contará como DERROTA. Tem certeza?", 
+            ["CANCELAR", "SAIR"], 
+            (choice) => {
+                if (choice === "SAIR") {
+                    window.registrarDerrotaOnline(window.gameMode);
+                    window.transitionToLobby();
+                }
+            }
+        );
+    }
+}
+
 // ======================================================
-// 7. LÓGICA DO JOGO (CORE)
+// 8. LÓGICA DO JOGO (CORE)
 // ======================================================
 function resetUnit(u, predefinedDeck = null, role = null) { 
     u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; 
@@ -502,7 +587,7 @@ function getBestAIMove() {
 }
 
 // ======================================================
-// 8. LÓGICA PVP (FILA E TURNO)
+// 9. LÓGICA PVP (FILA E TURNO)
 // ======================================================
 async function initiateMatchmaking() {
     const mmScreen = document.getElementById('matchmaking-screen');
@@ -573,15 +658,6 @@ async function findOpponentInQueue() {
         } 
     } catch (e) { console.error(e); }
 }
-
-window.cancelPvPSearch = async function() {
-    window.playNavSound();
-    document.getElementById('matchmaking-screen').style.display = 'none';
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    if (window.queueListener) { window.queueListener(); window.queueListener = null; }
-    if (window.myQueueRef) { await updateDoc(window.myQueueRef, { cancelled: true }); window.myQueueRef = null; }
-    window.openDeckSelector(); 
-};
 
 async function enterMatch(matchId) {
     if (window.queueListener) window.queueListener();
@@ -820,7 +896,7 @@ function checkLevelUp(u, doneCb) {
 }
 
 // ======================================================
-// 9. EFEITOS E UI ADICIONAIS
+// 10. EFEITOS E UI ADICIONAIS
 // ======================================================
 function triggerLevelUpVisuals(unitId) {
     let cluster = document.getElementById(unitId === 'p' ? 'p-stats-cluster' : 'm-stats-cluster');
@@ -875,7 +951,7 @@ window.toggleConfig = function() {
 };
 
 // ======================================================
-// 10. BOOTSTRAP (INICIALIZAÇÃO)
+// 11. BOOTSTRAP (INICIALIZAÇÃO)
 // ======================================================
 window.goToLobby = async function(isAutoLogin = false) {
     if(!currentUser) { window.showScreen('start-screen'); MusicController.play('bgm-menu'); return; }
@@ -907,16 +983,44 @@ window.goToLobby = async function(isAutoLogin = false) {
     document.getElementById('end-screen').classList.remove('visible'); 
 };
 
+window.registrarVitoriaOnline = async function(modo = 'pve') {
+    if(!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if(userSnap.exists()) {
+            const data = userSnap.data();
+            let pontosGanhos = (modo === 'pvp') ? 8 : 1; 
+            await updateDoc(userRef, {
+                totalWins: (data.totalWins || 0) + 1,
+                score: (data.score || 0) + pontosGanhos
+            });
+        }
+    } catch(e) { console.error(e); }
+};
+
+window.registrarDerrotaOnline = async function(modo = 'pve') {
+    if(!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if(userSnap.exists()) {
+            const data = userSnap.data();
+            let pontosPerdidos = (modo === 'pvp') ? 8 : 3;
+            let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
+            await updateDoc(userRef, { score: novoScore });
+        }
+    } catch(e) { console.error(e); }
+};
+
 // Preload Setup
 window.onload = function() {
     const btnSound = document.getElementById('btn-sound');
     if (btnSound) btnSound.addEventListener('click', (e) => { e.stopPropagation(); window.toggleMute(); });
     
-    // Configura o Preload
     console.log("Iniciando Preload...");
     assetsLoaded = 0;
     
-    // Função local para checar progresso
     const total = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
     const checkLoad = () => {
         assetsLoaded++;
@@ -926,7 +1030,6 @@ window.onload = function() {
         if(assetsLoaded >= total) finishLoading();
     };
 
-    // Dispara carregamento
     ASSETS_TO_LOAD.images.forEach(src => { 
         let img = new Image(); img.src = src; window.gameAssets.push(img);
         img.onload = checkLoad; img.onerror = checkLoad;
