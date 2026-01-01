@@ -517,28 +517,49 @@ function startPvPListener() {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
 
-        // --- NOVO: DETECÇÃO DE ABANDONO ---
+        // --- CORREÇÃO: DETECÇÃO ROBUSTA DE ABANDONO ---
         if (matchData.status === 'abandoned') {
-            console.log("Oponente abandonou a partida!");
-            
-            // Verifica se EU não sou quem abandonou (para evitar loop se eu fechar a aba)
-            if (matchData.winner === currentUser.uid) {
-                // Se eu sou declarado vencedor, mato o inimigo instantaneamente
-                monster.hp = 0; 
-                updateUI(); // Atualiza barra de vida para 0
+            // Se existe um ID de quem abandonou e NÃO É O MEU ID, então eu ganhei.
+            if (matchData.abandonedBy && matchData.abandonedBy !== currentUser.uid) {
+                console.log("Oponente desconectou. Decretando vitória.");
                 
-                // Força o fim de jogo como Vitória
-                checkEndGame(); 
+                // 1. Mata visualmente o monstro
+                monster.hp = 0;
+                updateUI();
                 
-                // Remove o listener para parar de escutar
-                if (window.pvpUnsubscribe) {
-                    window.pvpUnsubscribe();
-                    window.pvpUnsubscribe = null;
-                }
+                // 2. Para qualquer som ou processamento
+                isProcessing = true;
+                MusicController.stopCurrent();
+
+                // 3. Força a exibição da tela de vitória IMEDIATAMENTE
+                setTimeout(() => {
+                    const title = document.getElementById('end-title');
+                    // Adiciona um subtítulo se quiser (opcional)
+                    // const subtitle = document.getElementById('end-subtitle'); 
+                    
+                    title.innerText = "VITÓRIA";
+                    title.className = "win-theme";
+                    
+                    // Mostra mensagem de que o oponente saiu
+                    showCenterText("OPONENTE DESISTIU!", "#ffd700");
+                    
+                    playSound('sfx-win');
+                    
+                    // Registra vitória no banco
+                    if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
+                    
+                    document.getElementById('end-screen').classList.add('visible');
+                    
+                    // Limpa o listener para não rodar mais nada
+                    if (window.pvpUnsubscribe) {
+                        window.pvpUnsubscribe();
+                        window.pvpUnsubscribe = null;
+                    }
+                }, 500);
             }
-            return; // Para a execução aqui
+            return; // Encerra execução do listener aqui
         }
-        // ----------------------------------
+        // ------------------------------------------------
 
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
@@ -668,24 +689,18 @@ window.restartMatch = function() {
 }
 
 async function notifyAbandonment() {
-    if (!window.currentMatchId || !window.myRole) return;
+    if (!window.currentMatchId || !currentUser) return;
     
+    console.log("Tentando notificar abandono ao servidor...");
     const matchRef = doc(db, "matches", window.currentMatchId);
     
-    // Se eu sou player1, o vencedor é o player2 (uid), e vice-versa
-    let winnerUid = null;
-    if (window.pvpStartData) {
-        winnerUid = (window.myRole === 'player1') 
-            ? window.pvpStartData.player2.uid 
-            : window.pvpStartData.player1.uid;
-    }
-
     try {
-        // Define status como abandonado e define o vencedor
+        // Apenas marca QUEM abandonou e muda o status
         await updateDoc(matchRef, {
             status: 'abandoned',
-            winner: winnerUid
+            abandonedBy: currentUser.uid
         });
+        console.log("Abandono notificado com sucesso.");
     } catch (e) {
         console.error("Erro ao notificar abandono:", e);
     }
@@ -698,13 +713,16 @@ window.abandonMatch = function() {
             "ABANDONAR?", 
             "Sair da partida contará como DERROTA. Tem certeza?", 
             ["CANCELAR", "SAIR"], 
-            async (choice) => { // Note o async aqui
+            async (choice) => { // <--- OBRIGATÓRIO SER ASYNC
                 if (choice === "SAIR") {
-                    // SE FOR PVP, AVISA O OPONENTE QUE ELE GANHOU
+                    
+                    // 1. Tenta avisar o banco ANTES de sair
                     if (window.gameMode === 'pvp') {
-                        await notifyAbandonment();
+                        // Mostra um feedback visual rápido se quiser, ou apenas espera
+                        await notifyAbandonment(); 
                     }
                     
+                    // 2. Agora sim, processa a saída local
                     window.registrarDerrotaOnline(window.gameMode);
                     window.transitionToLobby();
                 }
