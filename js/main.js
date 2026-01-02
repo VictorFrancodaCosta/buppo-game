@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO VOLTAR AO SAGUÃO)
+// ARQUIVO: js/main.js (VERSÃO FINAL - NAVEGAÇÃO ÁGIL + BLINDAGEM)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -381,45 +381,42 @@ window.transitionToGame = function() {
     }, 500); 
 }
 
-// CORREÇÃO CRÍTICA: Transição para o Saguão com Limpeza de Estilo
-window.transitionToLobby = function() {
-    console.log("EXECUTANDO: Voltar ao Saguão...");
+// CORREÇÃO CRÍTICA: Transição para o Saguão (Com ou Sem Animação)
+window.transitionToLobby = function(skipAnim = false) {
+    console.log("EXECUTANDO: Voltar ao Saguão... Pular Animação?", skipAnim);
     
-    // 1. Mostrar Overlay de Transição
-    const transScreen = document.getElementById('transition-overlay');
-    const transText = transScreen.querySelector('.trans-text');
-    if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
-    if(transScreen) transScreen.classList.add('active');
-    
-    // 2. Limpar Listeners PvP
+    // 1. Limpeza Geral
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
-    
-    // 3. Remove rotação forçada
     document.body.classList.remove('force-landscape');
+    try { MusicController.stopCurrent(); } catch(e){}
 
-    // === CORREÇÃO: FORÇAR OCULTAÇÃO DA TELA DE DECK ===
+    // 2. Esconder a tela de Deck imediatamente
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
         ds.style.opacity = '0';
         ds.style.pointerEvents = 'none';
+        ds.style.display = 'none'; // Importante: Remove do fluxo
+        ds.classList.remove('active');
+    }
+
+    // 3. Lógica de Navegação
+    if (skipAnim) {
+        // Se for pular animação (botão voltar ou cancelar busca), vai direto
+        window.goToLobby(false);
+    } else {
+        // Fluxo normal (fim de jogo) com overlay
+        const transScreen = document.getElementById('transition-overlay');
+        const transText = transScreen.querySelector('.trans-text');
+        if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
+        if(transScreen) transScreen.classList.add('active');
         
-        // Remove o display flex inline após a animação
         setTimeout(() => {
-            ds.style.display = 'none'; 
-            ds.classList.remove('active'); 
+            window.goToLobby(false); 
+            setTimeout(() => {
+                if(transScreen) transScreen.classList.remove('active');
+            }, 1000); 
         }, 500);
     }
-    // ====================================================
-    
-    try { MusicController.stopCurrent(); } catch(e){}
-    
-    // 4. Executa a troca de tela real
-    setTimeout(() => {
-        window.goToLobby(false); 
-        setTimeout(() => {
-            if(transScreen) transScreen.classList.remove('active');
-        }, 1000); 
-    }, 500);
 }
 
 window.goToLobby = async function(isAutoLogin = false) {
@@ -774,7 +771,7 @@ window.onload = function() {
                 e.stopPropagation();
                 console.log("CLIQUE DETECTADO NO BOTÃO VOLTAR");
                 window.playNavSound();
-                window.transitionToLobby();
+                window.transitionToLobby(true); // <--- TRUE para pular animação
             };
         } else {
             console.warn("AVISO: Botão de voltar não encontrado no HTML da tela de deck.");
@@ -790,7 +787,7 @@ document.addEventListener('click', function(e) {
         console.log("Botão de voltar detectado via Delegação.");
         e.stopPropagation();
         window.playNavSound();
-        window.transitionToLobby();
+        window.transitionToLobby(true); // <--- TRUE para pular animação
     }
 });
 
@@ -1812,11 +1809,8 @@ window.cancelPvPSearch = async function() {
         myQueueRef = null;
     }
     
-    const selectionScreen = document.getElementById('deck-selection-screen');
-    selectionScreen.style.display = 'flex';
-    selectionScreen.style.opacity = '1';
-
-    console.log("Busca cancelada.");
+    console.log("Busca cancelada. Retornando ao saguão sem animação.");
+    window.transitionToLobby(true); // <--- TRUE: VOLTA DIRETO SEM MOSTRAR DECK SCREEN
 };
 
 // --- ENTRAR NA PARTIDA (Sucesso) ---
