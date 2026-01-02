@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL REVISADA E CORRIGIDA)
+// ARQUIVO: js/main.js (VERSÃO CORRIGIDA - BOTÃO VOLTAR DECK + CRASH PVP)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -238,7 +238,6 @@ window.toggleMute = function() {
     }
 }
 
-// CORREÇÃO CRÍTICA: PlayNavSound blindado
 window.playNavSound = function() { 
     let s = audios['sfx-nav']; 
     if(s) { 
@@ -281,7 +280,6 @@ window.showScreen = function(screenId) {
 }
 
 // --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
-// CORREÇÃO: Força o reset visual da tela de seleção sempre que ela é aberta
 window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
     
@@ -322,7 +320,7 @@ window.openDeckSelector = function() {
     }
 })();
 
-// --- SELEÇÃO DE DECK (CORRIGIDO UI PVE) ---
+// --- SELEÇÃO DE DECK ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         try {
@@ -363,7 +361,6 @@ window.selectDeck = function(deckType) {
         selectionScreen.style.opacity = "0";
 
         setTimeout(() => {
-            // ESCONDE O CONTAINER PARA EVITAR O FANTASMA
             selectionScreen.style.display = 'none';
 
             if (window.gameMode === 'pvp') {
@@ -371,9 +368,6 @@ window.selectDeck = function(deckType) {
             } else {
                 window.transitionToGame();
             }
-            
-            // NÃO resetamos a opacidade aqui. 
-            // O reset é feito em openDeckSelector na próxima vez que abrir.
         }, 500);
     }, 400);
 };
@@ -397,13 +391,16 @@ window.transitionToGame = function() {
     }, 500); 
 }
 
-// CORREÇÃO: Transição Segura
+// CORREÇÃO: Transição Segura e Limpeza de Estado
 window.transitionToLobby = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
     if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
     if(transScreen) transScreen.classList.add('active');
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
+    
+    // CORREÇÃO CRÍTICA: Remove a rotação forçada ao voltar
+    document.body.classList.remove('force-landscape');
     
     try { MusicController.stopCurrent(); } catch(e){}
     
@@ -459,11 +456,9 @@ window.goToLobby = async function(isAutoLogin = false) {
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     
-    // --- RESETS DE ESTADO (BLINDAGEM) ---
     isProcessing = false; 
-    window.isResolvingTurn = false; // <--- OBRIGATÓRIO: Reseta a trava de resolução
-    window.pvpSelectedCardIndex = null; // Reseta índice de carta selecionada
-    // ------------------------------------
+    window.isResolvingTurn = false; 
+    window.pvpSelectedCardIndex = null; 
 
     startCinematicLoop(); 
     
@@ -516,49 +511,30 @@ function startPvPListener() {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
 
-        // --- CORREÇÃO: DETECÇÃO ROBUSTA DE ABANDONO ---
         if (matchData.status === 'abandoned') {
-            // Se existe um ID de quem abandonou e NÃO É O MEU ID, então eu ganhei.
             if (matchData.abandonedBy && matchData.abandonedBy !== currentUser.uid) {
                 console.log("Oponente desconectou. Decretando vitória.");
-                
-                // 1. Mata visualmente o monstro
                 monster.hp = 0;
                 updateUI();
-                
-                // 2. Para qualquer som ou processamento
                 isProcessing = true;
                 MusicController.stopCurrent();
 
-                // 3. Força a exibição da tela de vitória IMEDIATAMENTE
                 setTimeout(() => {
                     const title = document.getElementById('end-title');
-                    // Adiciona um subtítulo se quiser (opcional)
-                    // const subtitle = document.getElementById('end-subtitle'); 
-                    
                     title.innerText = "VITÓRIA";
                     title.className = "win-theme";
-                    
-                    // Mostra mensagem de que o oponente saiu
                     showCenterText("OPONENTE DESISTIU!", "#ffd700");
-                    
                     playSound('sfx-win');
-                    
-                    // Registra vitória no banco
                     if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
-                    
                     document.getElementById('end-screen').classList.add('visible');
-                    
-                    // Limpa o listener para não rodar mais nada
                     if (window.pvpUnsubscribe) {
                         window.pvpUnsubscribe();
                         window.pvpUnsubscribe = null;
                     }
                 }, 500);
             }
-            return; // Encerra execução do listener aqui
+            return; 
         }
-        // ------------------------------------------------
 
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
@@ -646,12 +622,10 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
-        
         if(userSnap.exists()) {
             const data = userSnap.data();
             let modoAtual = window.gameMode || 'pve';
             let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
-
             await updateDoc(userRef, {
                 totalWins: (data.totalWins || 0) + 1,
                 score: (data.score || 0) + pontosGanhos
@@ -666,13 +640,11 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
-        
         if(userSnap.exists()) {
             const data = userSnap.data();
             let modoAtual = window.gameMode || 'pve';
             let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3;
             let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
-
             await updateDoc(userRef, {
                 score: novoScore
             });
@@ -689,12 +661,9 @@ window.restartMatch = function() {
 
 async function notifyAbandonment() {
     if (!window.currentMatchId || !currentUser) return;
-    
     console.log("Tentando notificar abandono ao servidor...");
     const matchRef = doc(db, "matches", window.currentMatchId);
-    
     try {
-        // Apenas marca QUEM abandonou e muda o status
         await updateDoc(matchRef, {
             status: 'abandoned',
             abandonedBy: currentUser.uid
@@ -712,16 +681,11 @@ window.abandonMatch = function() {
             "ABANDONAR?", 
             "Sair da partida contará como DERROTA. Tem certeza?", 
             ["CANCELAR", "SAIR"], 
-            async (choice) => { // <--- OBRIGATÓRIO SER ASYNC
+            async (choice) => { 
                 if (choice === "SAIR") {
-                    
-                    // 1. Tenta avisar o banco ANTES de sair
                     if (window.gameMode === 'pvp') {
-                        // Mostra um feedback visual rápido se quiser, ou apenas espera
                         await notifyAbandonment(); 
                     }
-                    
-                    // 2. Agora sim, processa a saída local
                     window.registrarDerrotaOnline(window.gameMode);
                     window.transitionToLobby();
                 }
@@ -737,7 +701,7 @@ function preloadGame() {
         img.src = src; 
         window.gameAssets.push(img);
         img.onload = () => updateLoader(); 
-        img.onerror = () => updateLoader(); // Não trava se falhar
+        img.onerror = () => updateLoader(); 
     });
     ASSETS_TO_LOAD.audio.forEach(a => { 
         let s = new Audio(); 
@@ -747,7 +711,7 @@ function preloadGame() {
         audios[a.id] = s; 
         window.gameAssets.push(s);
         s.onloadedmetadata = () => updateLoader(); 
-        s.onerror = () => updateLoader(); // Não trava se falhar
+        s.onerror = () => updateLoader(); 
         setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); 
     });
 }
@@ -794,6 +758,7 @@ function initGlobalHoverLogic() {
     });
 }
 
+// CORREÇÃO: Forçar funcionamento do botão de voltar
 window.onload = function() {
     const btnSound = document.getElementById('btn-sound');
     if (btnSound) {
@@ -803,13 +768,25 @@ window.onload = function() {
             window.toggleMute();
         });
     }
+
+    // Procura o botão de voltar na tela de seleção de decks
+    const deckScreen = document.getElementById('deck-selection-screen');
+    if (deckScreen) {
+        // Tenta achar qualquer elemento que pareça um botão de voltar
+        const backBtn = deckScreen.querySelector('.btn-back') || deckScreen.querySelector('.circle-btn');
+        if (backBtn) {
+            console.log("Botão de voltar do deck encontrado e vinculado.");
+            backBtn.onclick = function(e) {
+                e.stopPropagation();
+                window.playNavSound();
+                window.transitionToLobby();
+            };
+        }
+    }
 };
 
-// Adicione isso no escopo global ou dentro de window.onload
 window.addEventListener('beforeunload', () => {
-    // Se estiver em uma partida PvP ativa
     if (window.gameMode === 'pvp' && window.currentMatchId && !document.getElementById('end-screen').classList.contains('visible')) {
-        // Tenta notificar o banco rapidamente
         notifyAbandonment();
     }
 });
@@ -948,20 +925,15 @@ function triggerHealEffect(isPlayer) {
 
 function triggerBlockEffect(isPlayer) { 
     try { 
-        // Som
         if(isPlayer && window.currentDeck === 'mage') {
              playSound('sfx-block-mage');
         } else {
              playSound('sfx-block'); 
         }
         
-        // Efeito Visual (Texto BLOQUEADO)
-        // Se for o inimigo bloqueando, mostramos o texto.
-        // Se quiser que apareça para VOCÊ também, remova o "if (!isPlayer)"
         if (!isPlayer) {
              if(window.triggerBlockEffect) window.triggerBlockEffect(); 
              
-             // Efeito de Tremor e Overlay
              let ov = document.getElementById('block-overlay'); 
              if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
              document.body.classList.add('shake-screen'); 
@@ -975,16 +947,14 @@ function triggerBlockEffect(isPlayer) {
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 
-// ATUALIZAÇÃO: Aceita um deck opcional e faz cópia segura
 function resetUnit(u, predefinedDeck = null, role = null) { 
     u.hp = 6; 
     u.maxHp = 6; 
     u.lvl = 1; 
     u.xp = []; 
     u.hand = []; 
-    u.originalRole = role || 'pve'; // IDENTIDADE FIXA (player1/player2)
+    u.originalRole = role || 'pve'; 
     
-    // Importante: Cria cópia ([...]) para não mexer no array original do banco
     if (predefinedDeck) {
         u.deck = [...predefinedDeck]; 
     } else {
@@ -1031,7 +1001,6 @@ function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = p
 function onCardClick(index) {
     if(isProcessing) return; if (!player.hand[index]) return;
     
-    // Se já escolheu uma carta no PvP, não deixa clicar em outra
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
 
     playSound('sfx-play'); document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active');
@@ -1056,7 +1025,6 @@ function onCardClick(index) {
     }
 }
 
-// ATUALIZAÇÃO: TRAVAR CARTA NO PVP
 async function lockInPvPMove(index, disarmChoice) {
     const handContainer = document.getElementById('player-hand');
     const cardEl = handContainer.children[index];
@@ -1121,7 +1089,6 @@ async function playCardFlow(index, pDisarmChoice) {
     let cardKey = player.hand.splice(index, 1)[0]; 
     playerHistory.push(cardKey);
 
-    // --- MODO PvE (IA) ---
     let aiMove = getBestAIMove(); 
     let mCardKey = 'ATAQUE'; 
     let mDisarmTarget = null; 
@@ -1167,17 +1134,14 @@ async function playCardFlow(index, pDisarmChoice) {
     }, false, true, false);
 }
 
-// ATUALIZAÇÃO: Animação Simultânea e Resolução
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     if (window.isResolvingTurn) return; 
     window.isResolvingTurn = true; 
-    isProcessing = true; // Trava cliques
+    isProcessing = true; 
     
-    // Remove texto de espera
     const centerTxt = document.querySelector('.center-text');
     if(centerTxt) centerTxt.remove();
 
-    // Identifica moves
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
     if (window.myRole === 'player1') {
         myMove = p1Move; enemyMove = p2Move;
@@ -1187,7 +1151,6 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         myDisarmChoice = p2Disarm; enemyDisarmChoice = p1Disarm;
     }
 
-    // --- LÓGICA VISUAL DA MÃO (Sem risco de crashar o jogo) ---
     try {
         if (window.pvpSelectedCardIndex === null || window.pvpSelectedCardIndex === undefined) {
             window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
@@ -1209,7 +1172,6 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
             myCardEl.classList.remove('card-selected');
             myCardEl.style.opacity = '0';
         }
-        // Remove da mão (visual/logico)
         if (window.pvpSelectedCardIndex > -1) {
             player.hand.splice(window.pvpSelectedCardIndex, 1);
         } else {
@@ -1218,7 +1180,6 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         }
         playerHistory.push(myMove);
 
-        // Animação de entrada
         animateFly(startRect || 'player-hand', 'p-slot', myMove, () => {
             renderTable(myMove, 'p-slot', true);
         }, false, true, true);
@@ -1232,11 +1193,7 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         console.error("Erro na preparação visual (ignorado):", e);
     }
 
-    // --- RESOLUÇÃO BLINDADA ---
     setTimeout(() => {
-        
-        // 1. GARANTIA DE LIMPEZA DO BANCO (PRIORIDADE MÁXIMA)
-        // Agendamos isso INDEPENDENTE se a função resolveTurn funcionar ou falhar.
         if (window.myRole === 'player1') {
             setTimeout(() => {
                 const matchRef = doc(db, "matches", window.currentMatchId);
@@ -1246,25 +1203,21 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
                     turn: increment(1) 
                 }).then(() => console.log("Turno limpo no DB com sucesso."))
                   .catch(err => console.error("Erro crítico ao limpar turno:", err));
-            }, 4000); // 4s é tempo suficiente para ler as cartas
+            }, 4000); 
         }
 
-        // 2. TENTA RESOLVER A LÓGICA (Dano, Efeitos, etc)
         try {
             resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
         } catch (error) {
             console.error("CRASH NO RESOLVE TURN (Recuperando...):", error);
-            updateUI(); // Tenta consertar a UI se algo explodiu
+            updateUI(); 
         } 
         
-        // 3. FAILSAFE: DESTRAVA TUDO DEPOIS DE 4.5 SEGUNDOS
-        // Isso garante que o jogo NUNCA fique congelado, mesmo se der erro.
         setTimeout(() => {
             console.log("Executando Failsafe de Destravamento...");
             window.pvpSelectedCardIndex = null;
             window.isResolvingTurn = false;
             
-            // Se por algum motivo o resolveTurn não destravou o processamento:
             if (isProcessing) {
                 console.warn("UI estava travada. Forçando liberação.");
                 isProcessing = false;
@@ -1323,7 +1276,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     function handleExtraXP(u) { 
         if(u.deck.length > 0) { 
             let card = u.deck.pop(); 
-            // Debug para confirmar que a carta é igual para todos
             console.log(`[SYNC CHECK] Extra XP for ${u.originalRole}: ${card}`);
             
             animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
@@ -1341,7 +1293,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
-// ATUALIZAÇÃO: CHECK LEVEL UP COM SYNC RNG (CORRIGIDO)
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         let xpContainer = document.getElementById(u.id + '-xp'); 
@@ -1377,15 +1328,11 @@ function checkLevelUp(u, doneCb) {
                 u.xp.forEach(x => u.deck.push(x)); 
                 u.xp = []; 
                 
-                // MÁGICA 2.0: No PvP, usa a role ORIGINAL para a semente
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
-                    // Agora usamos u.originalRole ('player1' ou 'player2')
-                    // Isso garante que P1 e P2 usem a mesma semente para o mesmo personagem
-                    // Adicionei u.lvl para garantir que cada nível embaralhe diferente
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
                     shuffle(u.deck, s);
                 } else {
-                    shuffle(u.deck); // PvE normal
+                    shuffle(u.deck); 
                 }
 
                 let clones = document.getElementsByClassName('xp-anim-clone'); 
