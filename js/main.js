@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - MÚSICA CONTÍNUA + CORREÇÕES ANTERIORES)
+// ARQUIVO: js/main.js (VERSÃO CORRIGIDA - MATCHMAKING BLINDADO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -164,17 +164,13 @@ const MusicController = {
                     audio.play().catch(()=>{});
                     this.fadeIn(audio, 0.5 * window.masterVol);
                 }
-                return; // Já está tocando a música certa, não faz nada (SEM CORTES)
+                return; 
             } 
-            
-            // Troca de música (Fade Out da antiga)
             const maxVol = 0.5 * window.masterVol;
             if (this.currentTrackId && audios[this.currentTrackId]) {
                 const oldAudio = audios[this.currentTrackId];
                 this.fadeOut(oldAudio);
             }
-            
-            // Fade In da nova
             if (trackId && audios[trackId]) {
                 const newAudio = audios[trackId];
                 if (newAudio.readyState >= 2) newAudio.currentTime = 0;
@@ -372,7 +368,7 @@ window.transitionToGame = function() {
     if(transText) transText.innerText = "PREPARANDO BATALHA...";
     if(transScreen) transScreen.classList.add('active');
     setTimeout(() => {
-        MusicController.play('bgm-loop'); // TROCA DE MÚSICA AQUI
+        MusicController.play('bgm-loop'); 
         let bg = document.getElementById('game-background');
         if(bg) bg.classList.remove('lobby-mode');
         window.showScreen('game-screen');
@@ -393,8 +389,6 @@ window.transitionToLobby = function(skipAnim = false) {
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     document.body.classList.remove('force-landscape');
     
-    // REMOVIDO: try { MusicController.stopCurrent(); } catch(e){} <--- ISSO CORTAVA A MÚSICA
-
     // 2. Esconder a tela de Deck imediatamente
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
@@ -432,7 +426,6 @@ window.goToLobby = async function(isAutoLogin = false) {
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
     
-    // O MusicController vai checar: se 'bgm-menu' já toca, ele mantém. Se não (veio do jogo), ele troca.
     MusicController.play('bgm-menu'); 
     createLobbyFlares();
     
@@ -1738,11 +1731,7 @@ async function findOpponentInQueue() {
 
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
 
-            await updateDoc(opponentDoc.ref, { matchId: matchId });
-            if (myQueueRef) {
-                await updateDoc(myQueueRef, { matchId: matchId });
-            }
-
+            // CORREÇÃO: CRIA O DOCUMENTO DE PARTIDA *ANTES* DE ATUALIZAR A FILA
             // ATUALIZAÇÃO: Gera os decks embaralhados no HOST
             const p1DeckCards = generateShuffledDeck();
             const p2DeckCards = generateShuffledDeck();
@@ -1755,6 +1744,12 @@ async function findOpponentInQueue() {
                 window.currentDeck, oppData.deck,
                 p1DeckCards, p2DeckCards
             );
+
+            // SÓ AGORA ATUALIZA OS DOCUMENTOS DA FILA (EVITA RACE CONDITION)
+            await updateDoc(opponentDoc.ref, { matchId: matchId });
+            if (myQueueRef) {
+                await updateDoc(myQueueRef, { matchId: matchId });
+            }
         } 
     } catch (e) {
         console.error("Erro ao buscar oponente:", e);
@@ -1823,7 +1818,15 @@ async function enterMatch(matchId) {
     if (matchTimerInterval) clearInterval(matchTimerInterval);
 
     const matchRef = doc(db, "matches", matchId);
-    const matchSnap = await getDoc(matchRef);
+    let matchSnap = await getDoc(matchRef);
+
+    // CORREÇÃO: RETRY SIMPLES SE A PARTIDA NÃO FOR ENCONTRADA IMEDIATAMENTE
+    if(!matchSnap.exists()) {
+        console.warn("Documento da partida não encontrado. Tentando novamente em 1s...");
+        await new Promise(r => setTimeout(r, 1000));
+        matchSnap = await getDoc(matchRef);
+    }
+
     if(matchSnap.exists()) {
         const data = matchSnap.data();
         
@@ -1832,20 +1835,24 @@ async function enterMatch(matchId) {
 
         if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
         else window.myRole = 'player2';
+
+        document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
+        document.querySelector('.mm-title').style.color = "#2ecc71";
+        document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
+        document.querySelector('.radar-spinner').style.animation = "none";
+        document.querySelector('.cancel-btn').style.display = "none";
+
+        setTimeout(() => {
+            const mmScreen = document.getElementById('matchmaking-screen');
+            mmScreen.style.display = 'none';
+            window.currentMatchId = matchId;
+            window.transitionToGame(); 
+        }, 1500);
+    } else {
+        console.error("ERRO CRÍTICO: Partida não encontrada após retry.");
+        // Em caso de erro extremo, volta ao lobby
+        window.cancelPvPSearch();
     }
-
-    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
-    document.querySelector('.mm-title').style.color = "#2ecc71";
-    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
-    document.querySelector('.radar-spinner').style.animation = "none";
-    document.querySelector('.cancel-btn').style.display = "none";
-
-    setTimeout(() => {
-        const mmScreen = document.getElementById('matchmaking-screen');
-        mmScreen.style.display = 'none';
-        window.currentMatchId = matchId;
-        window.transitionToGame(); 
-    }, 1500);
 }
 
 preloadGame();
