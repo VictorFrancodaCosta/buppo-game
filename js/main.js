@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO CORRIGIDA - MATCHMAKING BLINDADO)
+// ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO FILA ETERNA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -381,15 +381,12 @@ window.transitionToGame = function() {
     }, 500); 
 }
 
-// CORREÇÃO CRÍTICA: Transição para o Saguão (SEM PARAR MÚSICA)
 window.transitionToLobby = function(skipAnim = false) {
     console.log("EXECUTANDO: Voltar ao Saguão... Pular Animação?", skipAnim);
     
-    // 1. Limpeza Geral
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     document.body.classList.remove('force-landscape');
     
-    // 2. Esconder a tela de Deck imediatamente
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
         ds.style.opacity = '0';
@@ -398,7 +395,6 @@ window.transitionToLobby = function(skipAnim = false) {
         ds.classList.remove('active');
     }
 
-    // 3. Lógica de Navegação
     if (skipAnim) {
         window.goToLobby(false);
     } else {
@@ -1698,7 +1694,8 @@ async function initiateMatchmaking() {
             }
         });
 
-        findOpponentInQueue();
+        // Adiciona um pequeno delay aleatório para evitar colisão inicial
+        setTimeout(() => findOpponentInQueue(), 500 + Math.random() * 1000);
 
     } catch (e) {
         console.error("Erro no Matchmaking:", e);
@@ -1707,9 +1704,17 @@ async function initiateMatchmaking() {
 }
 
 async function findOpponentInQueue() {
+    if (!myQueueRef) return;
+
     try {
+        // Verifica primeiro se já não fui pareado enquanto esperava
+        const myDocCheck = await getDoc(myQueueRef);
+        if (!myDocCheck.exists() || myDocCheck.data().matchId) return;
+
+        const myTimestamp = myDocCheck.data().timestamp;
         const queueRef = collection(db, "queue");
-        // Limite aumentado para 50 para evitar tickets fantasmas
+        
+        // Busca todos na fila (limite 50) ordenados por chegada
         const q = query(queueRef, orderBy("timestamp", "asc"), limit(50));
         const querySnapshot = await getDocs(q);
 
@@ -1720,23 +1725,27 @@ async function findOpponentInQueue() {
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             const isRecent = (now - data.timestamp) < MAX_WAIT_TIME;
+            
+            // LÓGICA CRUCIAL: Só escolho se o oponente chegou ANTES de mim
+            // Isso evita que dois jogadores tentem se escolher ao mesmo tempo.
+            // O "novato" (eu) escolhe o "veterano" (oponente).
             if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled && isRecent) {
-                opponentDoc = doc;
+                if (data.timestamp < myTimestamp) {
+                    opponentDoc = doc;
+                }
             }
         });
 
         if (opponentDoc) {
             const oppData = opponentDoc.data();
-            console.log("Oponente encontrado:", oppData.name);
+            console.log("Oponente VÁLIDO encontrado (mais antigo na fila):", oppData.name);
 
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
 
-            // CORREÇÃO: CRIA O DOCUMENTO DE PARTIDA *ANTES* DE ATUALIZAR A FILA
-            // ATUALIZAÇÃO: Gera os decks embaralhados no HOST
+            // 1. CRIA O DOCUMENTO DA PARTIDA
             const p1DeckCards = generateShuffledDeck();
             const p2DeckCards = generateShuffledDeck();
 
-            // Cria a partida passando nomes e decks
             await createMatchDocument(
                 matchId, 
                 currentUser.uid, oppData.uid, 
@@ -1745,12 +1754,17 @@ async function findOpponentInQueue() {
                 p1DeckCards, p2DeckCards
             );
 
-            // SÓ AGORA ATUALIZA OS DOCUMENTOS DA FILA (EVITA RACE CONDITION)
+            // 2. ATUALIZA OS DOCUMENTOS DA FILA (Oponente e Eu)
+            // Como eu sou o "novato" ativo, eu atualizo ambos.
             await updateDoc(opponentDoc.ref, { matchId: matchId });
+            
+            // Verifica novamente se meu ref ainda existe antes de atualizar
             if (myQueueRef) {
                 await updateDoc(myQueueRef, { matchId: matchId });
             }
-        } 
+        } else {
+            console.log("Nenhum veterano livre. Aguardando ser escolhido...");
+        }
     } catch (e) {
         console.error("Erro ao buscar oponente:", e);
     }
