@@ -1,9 +1,9 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - CORREÇÃO FILA ETERNA)
+// ARQUIVO: js/main.js (VERSÃO FINAL - MATCHMAKING TRANSACIONAL)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
@@ -1694,8 +1694,15 @@ async function initiateMatchmaking() {
             }
         });
 
-        // Adiciona um pequeno delay aleatório para evitar colisão inicial
-        setTimeout(() => findOpponentInQueue(), 500 + Math.random() * 1000);
+        // Tenta encontrar alguém a cada 3 segundos
+        findOpponentInQueue();
+        const searchInterval = setInterval(() => {
+            if (!document.getElementById('matchmaking-screen').style.display === 'none' || window.currentMatchId) {
+                 clearInterval(searchInterval);
+            } else {
+                 findOpponentInQueue();
+            }
+        }, 3000);
 
     } catch (e) {
         console.error("Erro no Matchmaking:", e);
@@ -1705,105 +1712,90 @@ async function initiateMatchmaking() {
 
 async function findOpponentInQueue() {
     if (!myQueueRef) return;
-
+    
+    // 1. Busca possíveis oponentes
+    const queueRef = collection(db, "queue");
+    const q = query(queueRef, orderBy("timestamp", "asc"), limit(20));
+    
     try {
-        // Verifica primeiro se já não fui pareado enquanto esperava
-        const myDocCheck = await getDoc(myQueueRef);
-        if (!myDocCheck.exists() || myDocCheck.data().matchId) return;
-
-        const myTimestamp = myDocCheck.data().timestamp;
-        const queueRef = collection(db, "queue");
-        
-        // Busca todos na fila (limite 50) ordenados por chegada
-        const q = query(queueRef, orderBy("timestamp", "asc"), limit(50));
         const querySnapshot = await getDocs(q);
+        const myDoc = await getDoc(myQueueRef);
+        if (!myDoc.exists() || myDoc.data().matchId) return; // Já fui pareado ou saí
 
-        let opponentDoc = null;
-        const now = Date.now();
-        const MAX_WAIT_TIME = 120000; 
-
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const isRecent = (now - data.timestamp) < MAX_WAIT_TIME;
-            
-            // LÓGICA CRUCIAL: Só escolho se o oponente chegou ANTES de mim
-            // Isso evita que dois jogadores tentem se escolher ao mesmo tempo.
-            // O "novato" (eu) escolhe o "veterano" (oponente).
-            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled && isRecent) {
-                if (data.timestamp < myTimestamp) {
-                    opponentDoc = doc;
-                }
-            }
+        let targetDoc = null;
+        querySnapshot.forEach(docSnap => {
+             const data = docSnap.data();
+             // Regra básica: não sou eu, não tem matchId, não cancelou
+             if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
+                 targetDoc = docSnap;
+             }
         });
 
-        if (opponentDoc) {
-            const oppData = opponentDoc.data();
-            console.log("Oponente VÁLIDO encontrado (mais antigo na fila):", oppData.name);
+        if (targetDoc) {
+             console.log("Tentando parear com:", targetDoc.data().name);
+             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+             
+             // --- TRANSAÇÃO ATÔMICA (O CORAÇÃO DO FIX) ---
+             await runTransaction(db, async (transaction) => {
+                 const freshTarget = await transaction.get(targetDoc.ref);
+                 const freshMe = await transaction.get(myQueueRef);
+                 
+                 if (!freshTarget.exists() || !freshMe.exists()) throw "Docs sumiram!";
+                 
+                 const tData = freshTarget.data();
+                 const mData = freshMe.data();
+                 
+                 if (tData.matchId || mData.matchId) throw "Alguém já foi pareado!";
+                 if (tData.cancelled || mData.cancelled) throw "Alguém cancelou!";
+                 
+                 // Se chegou aqui, ambos estão livres. BORA!
+                 
+                 // 1. Cria a partida
+                 const p1DeckCards = generateShuffledDeck();
+                 const p2DeckCards = generateShuffledDeck();
+                 
+                 // Quem criou a transação vira Player 1 (Host) por convenção
+                 const matchRef = doc(db, "matches", matchId);
+                 
+                 // Prepare Match Data
+                 const cleanName1 = currentUser.displayName.split(' ')[0].toUpperCase();
+                 const cleanName2 = tData.name.split(' ')[0].toUpperCase();
+                 
+                 transaction.set(matchRef, {
+                    player1: { 
+                        uid: currentUser.uid, 
+                        name: cleanName1, 
+                        deckType: window.currentDeck, 
+                        hp: 6, status: 'selecting', hand: [], deck: p1DeckCards, xp: [] 
+                    },
+                    player2: { 
+                        uid: tData.uid, 
+                        name: cleanName2, 
+                        deckType: tData.deck, 
+                        hp: 6, status: 'selecting', hand: [], deck: p2DeckCards, xp: [] 
+                    },
+                    turn: 1,
+                    status: 'playing', 
+                    createdAt: Date.now()
+                 });
 
-            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-
-            // 1. CRIA O DOCUMENTO DA PARTIDA
-            const p1DeckCards = generateShuffledDeck();
-            const p2DeckCards = generateShuffledDeck();
-
-            await createMatchDocument(
-                matchId, 
-                currentUser.uid, oppData.uid, 
-                currentUser.displayName, oppData.name,
-                window.currentDeck, oppData.deck,
-                p1DeckCards, p2DeckCards
-            );
-
-            // 2. ATUALIZA OS DOCUMENTOS DA FILA (Oponente e Eu)
-            // Como eu sou o "novato" ativo, eu atualizo ambos.
-            await updateDoc(opponentDoc.ref, { matchId: matchId });
-            
-            // Verifica novamente se meu ref ainda existe antes de atualizar
-            if (myQueueRef) {
-                await updateDoc(myQueueRef, { matchId: matchId });
-            }
-        } else {
-            console.log("Nenhum veterano livre. Aguardando ser escolhido...");
+                 // 2. Atualiza filas
+                 transaction.update(targetDoc.ref, { matchId: matchId });
+                 transaction.update(myQueueRef, { matchId: matchId });
+             });
+             
+             console.log("Transação de Matchmaking SUCESSO!");
         }
+        
     } catch (e) {
-        console.error("Erro ao buscar oponente:", e);
+        console.log("Tentativa de pareamento falhou (normal se houver concorrência):", e);
     }
 }
 
 // ATUALIZAÇÃO: Agora salvamos os DECKS COMPLETOS no banco
 async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckType, p2DeckType, p1DeckCards, p2DeckCards) {
-    const matchRef = doc(db, "matches", matchId);
-    
-    const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1";
-    const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
-    const d1Type = p1DeckType || 'knight';
-    const d2Type = p2DeckType || 'knight';
-
-    await setDoc(matchRef, {
-        player1: { 
-            uid: p1Id, 
-            name: cleanName1, 
-            deckType: d1Type, 
-            hp: 6, 
-            status: 'selecting', 
-            hand: [], 
-            deck: p1DeckCards, // Salva o array embaralhado
-            xp: [] 
-        },
-        player2: { 
-            uid: p2Id, 
-            name: cleanName2, 
-            deckType: d2Type, 
-            hp: 6, 
-            status: 'selecting', 
-            hand: [], 
-            deck: p2DeckCards, // Salva o array embaralhado
-            xp: [] 
-        },
-        turn: 1,
-        status: 'playing', 
-        createdAt: Date.now()
-    });
+    // ESTA FUNÇÃO FOI SUBSTITUÍDA PELA TRANSAÇÃO ACIMA
+    // Mantida vazia ou removível para não quebrar referências antigas se houver
 }
 
 // --- CANCELAR BUSCA ---
