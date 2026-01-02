@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - NAVEGAÇÃO ÁGIL + BLINDAGEM)
+// ARQUIVO: js/main.js (VERSÃO FINAL - MÚSICA CONTÍNUA + CORREÇÕES ANTERIORES)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -164,13 +164,17 @@ const MusicController = {
                     audio.play().catch(()=>{});
                     this.fadeIn(audio, 0.5 * window.masterVol);
                 }
-                return; 
+                return; // Já está tocando a música certa, não faz nada (SEM CORTES)
             } 
+            
+            // Troca de música (Fade Out da antiga)
             const maxVol = 0.5 * window.masterVol;
             if (this.currentTrackId && audios[this.currentTrackId]) {
                 const oldAudio = audios[this.currentTrackId];
                 this.fadeOut(oldAudio);
             }
+            
+            // Fade In da nova
             if (trackId && audios[trackId]) {
                 const newAudio = audios[trackId];
                 if (newAudio.readyState >= 2) newAudio.currentTime = 0;
@@ -368,7 +372,7 @@ window.transitionToGame = function() {
     if(transText) transText.innerText = "PREPARANDO BATALHA...";
     if(transScreen) transScreen.classList.add('active');
     setTimeout(() => {
-        MusicController.play('bgm-loop'); 
+        MusicController.play('bgm-loop'); // TROCA DE MÚSICA AQUI
         let bg = document.getElementById('game-background');
         if(bg) bg.classList.remove('lobby-mode');
         window.showScreen('game-screen');
@@ -381,30 +385,29 @@ window.transitionToGame = function() {
     }, 500); 
 }
 
-// CORREÇÃO CRÍTICA: Transição para o Saguão (Com ou Sem Animação)
+// CORREÇÃO CRÍTICA: Transição para o Saguão (SEM PARAR MÚSICA)
 window.transitionToLobby = function(skipAnim = false) {
     console.log("EXECUTANDO: Voltar ao Saguão... Pular Animação?", skipAnim);
     
     // 1. Limpeza Geral
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     document.body.classList.remove('force-landscape');
-    try { MusicController.stopCurrent(); } catch(e){}
+    
+    // REMOVIDO: try { MusicController.stopCurrent(); } catch(e){} <--- ISSO CORTAVA A MÚSICA
 
     // 2. Esconder a tela de Deck imediatamente
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
         ds.style.opacity = '0';
         ds.style.pointerEvents = 'none';
-        ds.style.display = 'none'; // Importante: Remove do fluxo
+        ds.style.display = 'none'; 
         ds.classList.remove('active');
     }
 
     // 3. Lógica de Navegação
     if (skipAnim) {
-        // Se for pular animação (botão voltar ou cancelar busca), vai direto
         window.goToLobby(false);
     } else {
-        // Fluxo normal (fim de jogo) com overlay
         const transScreen = document.getElementById('transition-overlay');
         const transText = transScreen.querySelector('.trans-text');
         if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
@@ -429,6 +432,7 @@ window.goToLobby = async function(isAutoLogin = false) {
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
     
+    // O MusicController vai checar: se 'bgm-menu' já toca, ele mantém. Se não (veio do jogo), ele troca.
     MusicController.play('bgm-menu'); 
     createLobbyFlares();
     
@@ -743,7 +747,6 @@ function initGlobalHoverLogic() {
     });
 }
 
-// CORREÇÃO: Forçar funcionamento do botão de voltar
 window.onload = function() {
     const btnSound = document.getElementById('btn-sound');
     if (btnSound) {
@@ -754,7 +757,6 @@ window.onload = function() {
         });
     }
 
-    // --- CORREÇÃO AGRESSIVA PARA O BOTÃO DE VOLTAR ---
     const deckScreen = document.getElementById('deck-selection-screen');
     if (deckScreen) {
         let backBtn = deckScreen.querySelector('.btn-back');
@@ -771,7 +773,7 @@ window.onload = function() {
                 e.stopPropagation();
                 console.log("CLIQUE DETECTADO NO BOTÃO VOLTAR");
                 window.playNavSound();
-                window.transitionToLobby(true); // <--- TRUE para pular animação
+                window.transitionToLobby(true); 
             };
         } else {
             console.warn("AVISO: Botão de voltar não encontrado no HTML da tela de deck.");
@@ -779,7 +781,6 @@ window.onload = function() {
     }
 };
 
-// --- CORREÇÃO DELEGAÇÃO DE EVENTO (BOTÃO VOLTAR) ---
 document.addEventListener('click', function(e) {
     const target = e.target.closest('#deck-selection-screen .circle-btn, #deck-selection-screen .btn-back, #deck-selection-screen button, .return-btn');
     
@@ -787,7 +788,7 @@ document.addEventListener('click', function(e) {
         console.log("Botão de voltar detectado via Delegação.");
         e.stopPropagation();
         window.playNavSound();
-        window.transitionToLobby(true); // <--- TRUE para pular animação
+        window.transitionToLobby(true); 
     }
 });
 
@@ -1803,6 +1804,7 @@ window.cancelPvPSearch = async function() {
     mmScreen.style.display = 'none';
 
     if (matchTimerInterval) clearInterval(matchTimerInterval);
+    if (queueListener) { queueListener(); queueListener = null; }
     if (queueListener) { queueListener(); queueListener = null; }
     if (myQueueRef) {
         await updateDoc(myQueueRef, { cancelled: true }); 
