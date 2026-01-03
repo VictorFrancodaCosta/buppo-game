@@ -1,9 +1,9 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - MATCHMAKING CLÁSSICO E FUNCIONAL)
+// ARQUIVO: js/main.js (VERSÃO FINAL - MATCHMAKING SIMPLIFICADO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, limit, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
@@ -548,15 +548,15 @@ function checkEndGame(){
         setTimeout(()=>{ 
             let title = document.getElementById('end-title'); 
             let isWin = player.hp > 0;
-            let isTie = player.hp <= 0 && monster.hp <= 0;
-            if(isTie) { 
+            let isWinTie = player.hp <= 0 && monster.hp <= 0;
+            if(isWinTie) { 
                 title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); 
             } else if(isWin) { 
                 title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); 
             } else { 
                 title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); 
             } 
-            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(window.gameMode); } 
+            if(isWin && !isWinTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(window.gameMode); } 
             else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(window.gameMode); }
             document.getElementById('end-screen').classList.add('visible'); 
         }, 1000); 
@@ -1632,11 +1632,11 @@ function apply3DTilt(element, isHand = false) {
 // LÓGICA DE MATCHMAKING E DECK (SISTEMA CLÁSSICO)
 // ======================================================
 
-let matchmakingInterval = null;
 let matchTimerInterval = null;
 let matchSeconds = 0;
 let myQueueRef = null; 
 let queueListener = null;
+let matchmakingInterval = null; // Faltava definir globalmente
 
 // Botão PvE (Treino) - Vai direto para seleção de deck
 window.startPvE = function() {
@@ -1664,6 +1664,7 @@ async function initiateMatchmaking() {
     document.querySelector('.cancel-btn').style.display = "block";
     
     // --- TIMER VISUAL (Correção do 00:00) ---
+    // Inicia imediatamente para evitar sensação de travamento
     matchSeconds = 0;
     const timerEl = document.getElementById('mm-timer');
     timerEl.innerText = "00:00";
@@ -1717,8 +1718,12 @@ async function initiateMatchmaking() {
 async function checkForOpponents() {
     try {
         // Busca jogadores antigos na fila
+        // REMOVIDO "ORDERBY" para evitar erro de índice
+        // REMOVIDO "WHERE" complexo para evitar erro de índice
+        // Buscamos os 20 primeiros e filtramos no JavaScript (CLIENT-SIDE FILTERING)
+        
         const queueRef = collection(db, "queue");
-        const q = query(queueRef, orderBy("timestamp", "asc"), limit(10));
+        const q = query(queueRef, limit(20)); // Pega qualquer um
         const querySnapshot = await getDocs(q);
 
         let targetDoc = null;
@@ -1727,6 +1732,7 @@ async function checkForOpponents() {
             const data = docSnap.data();
             // Regras: Não sou eu, não tem partida, não cancelou
             if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
+                // Achou alguém livre!
                 if (!targetDoc) targetDoc = docSnap;
             }
         });
@@ -1739,9 +1745,12 @@ async function checkForOpponents() {
 
             // 1. GERA ID E CRIA PARTIDA
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+            
+            // ATUALIZAÇÃO: Gera os decks embaralhados no HOST
             const p1DeckCards = generateShuffledDeck();
             const p2DeckCards = generateShuffledDeck();
 
+            // Cria a partida passando nomes e decks
             await createMatchDocument(
                 matchId, 
                 currentUser.uid, targetDoc.data().uid, 
