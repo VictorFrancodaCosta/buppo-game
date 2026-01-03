@@ -1667,15 +1667,25 @@ window.startPvPSearch = function() {
 // ... (startPvPSearch mantém igual) ...
 
 // --- FUNÇÃO QUE INICIA A FILA APÓS ESCOLHER O DECK ---
+// Variável global para controlar a repetição da busca
+let searchInterval = null;
+
+// --- INICIAR JOGO (Botão PvP) ---
+// (Mantenha o startPvPSearch igual, só vamos mudar o initiateMatchmaking)
+
 async function initiateMatchmaking() {
+    console.log("--- INICIANDO MATCHMAKING ---");
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'flex';
+    
+    // Reset visual
     document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
     document.querySelector('.mm-title').style.color = "var(--gold)";
     document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
     document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
     document.querySelector('.cancel-btn').style.display = "block";
     
+    // Timer visual
     matchSeconds = 0;
     const timerEl = document.getElementById('mm-timer');
     timerEl.innerText = "00:00";
@@ -1688,103 +1698,139 @@ async function initiateMatchmaking() {
     }, 1000);
 
     try {
+        // 1. Criar meu Ticket na Fila
         myQueueRef = doc(collection(db, "queue")); 
         const myData = {
             uid: currentUser.uid,
             name: currentUser.displayName,
             deck: window.currentDeck,
-            score: 0, 
             timestamp: Date.now(),
             matchId: null,
-            cancelled: false // <--- IMPORTANTE: Adicionado para o filtro funcionar
+            cancelled: false, // Importante
+            status: 'waiting'
         };
+        
+        console.log("Criando ticket na fila...", myData);
         await setDoc(myQueueRef, myData);
+        console.log("Ticket criado com ID:", myQueueRef.id);
 
+        // 2. Ouvir meu próprio ticket (para saber se alguém me achou)
         queueListener = onSnapshot(myQueueRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 if (data.matchId) {
+                    console.log("ALGUÉM ME ACHOU! MatchID:", data.matchId);
                     enterMatch(data.matchId); 
                 }
             }
         });
 
-        // Tenta buscar oponente imediatamente
+        // 3. Buscar oponentes ativamente (Repetir a cada 4 segundos)
+        // Isso resolve o problema de "ficar esperando eternamente"
+        if (searchInterval) clearInterval(searchInterval);
+        
+        // Tenta agora
         findOpponentInQueue();
+        
+        // E continua tentando
+        searchInterval = setInterval(() => {
+            // Só busca se ainda estiver esperando
+            if (document.getElementById('matchmaking-screen').style.display === 'flex' 
+                && document.querySelector('.mm-title').innerText !== "PARTIDA ENCONTRADA!") {
+                console.log("Tentando buscar novamente...");
+                findOpponentInQueue();
+            } else {
+                clearInterval(searchInterval);
+            }
+        }, 4000);
 
     } catch (e) {
-        console.error("Erro no Matchmaking:", e);
+        console.error("ERRO GRAVE no Matchmaking:", e);
         cancelPvPSearch();
     }
 }
 
 async function findOpponentInQueue() {
     try {
+        console.log("Executando findOpponentInQueue...");
         const queueRef = collection(db, "queue");
         
-        // Definição de tempo para evitar zumbis (tickets travados com mais de 2 min)
-        const now = Date.now();
-        const MAX_WAIT_TIME = 120000; 
-        const cutoffTime = now - MAX_WAIT_TIME;
-
-        // QUERY OTIMIZADA:
-        // 1. matchId == null (Só quem não tem partida)
-        // 2. cancelled == false (Só quem não cancelou)
-        // 3. timestamp > cutoffTime (Só tickets recentes)
-        // 4. orderBy timestamp (Os mais antigos da fila têm prioridade)
+        // QUERY SIMPLIFICADA:
+        // Traz os últimos 20 tickets. Removemos os 'where' complexos 
+        // para evitar problemas de índice. Filtraremos no Javascript (Client-side).
         const q = query(
             queueRef, 
-            where("matchId", "==", null),
-            where("cancelled", "==", false),
-            where("timestamp", ">", cutoffTime),
-            orderBy("timestamp", "asc"), 
+            orderBy("timestamp", "desc"), 
             limit(20)
         );
 
         const querySnapshot = await getDocs(q);
+        console.log(`Encontrados ${querySnapshot.size} tickets no total (incluindo velhos/eu).`);
 
         let opponentDoc = null;
+        const now = Date.now();
 
-        // Loop otimizado: Pega o PRIMEIRO oponente válido e para (break)
-        for (const doc of querySnapshot.docs) {
-            const data = doc.data();
-            
-            // A query já filtrou matchId, cancelled e tempo. 
-            // Só precisamos garantir que não somos nós mesmos.
-            if (data.uid !== currentUser.uid) {
-                opponentDoc = doc;
-                break; // Encontrou? Para de procurar e inicia a partida!
+        // FILTRAGEM MANUAL (Mais seguro para esse estágio)
+        for (const docSnap of querySnapshot.docs) {
+            const data = docSnap.data();
+            const docId = docSnap.id;
+
+            // 1. Não posso ser eu mesmo
+            if (data.uid === currentUser.uid) continue;
+
+            // 2. Tem que estar esperando (sem matchId)
+            if (data.matchId !== null) continue;
+
+            // 3. Não pode ter cancelado
+            if (data.cancelled === true) continue;
+
+            // 4. VERIFICAÇÃO DE "ZUMBI"
+            // Se o ticket tem mais de 2 minutos, ignoramos (jogador fechou o app)
+            if (now - data.timestamp > 120000) {
+                console.log(`Ticket ${docId} ignorado (Muito antigo/Zumbi)`);
+                continue;
             }
+
+            // ACHAMOS UM VÁLIDO!
+            console.log("Oponente VÁLIDO encontrado:", data.name);
+            opponentDoc = docSnap;
+            break; // Para o loop
         }
 
         if (opponentDoc) {
-            const oppData = opponentDoc.data();
-            console.log("Oponente encontrado:", oppData.name);
+            console.log("Iniciando processo de match com:", opponentDoc.data().name);
+            
+            // Para o intervalo de busca para não tentar parear duas vezes
+            if (searchInterval) clearInterval(searchInterval);
 
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+            const oppRef = opponentDoc.ref;
 
-            // Atualiza o ticket do oponente PRIMEIRO (para travar ele)
-            await updateDoc(opponentDoc.ref, { matchId: matchId });
+            // TENTA TRAVAR O OPONENTE (Atualização Atômica seria ideal, mas vamos simples)
+            await updateDoc(oppRef, { matchId: matchId });
             
-            // Atualiza o meu ticket
+            // Atualiza meu ticket
             if (myQueueRef) {
                 await updateDoc(myQueueRef, { matchId: matchId });
             }
 
+            // Gera decks e cria a sala
             const p1DeckCards = generateShuffledDeck();
             const p2DeckCards = generateShuffledDeck();
 
             await createMatchDocument(
                 matchId, 
-                currentUser.uid, oppData.uid, 
-                currentUser.displayName, oppData.name,
-                window.currentDeck, oppData.deck,
+                currentUser.uid, opponentDoc.data().uid, 
+                currentUser.displayName, opponentDoc.data().name,
+                window.currentDeck, opponentDoc.data().deck,
                 p1DeckCards, p2DeckCards
             );
-        } 
+        } else {
+            console.log("Nenhum oponente compatível encontrado nesta rodada.");
+        }
+
     } catch (e) {
-        console.error("Erro ao buscar oponente:", e);
-        // IMPORTANTE: Se der erro de índice, isso vai aparecer no console.
+        console.error("Erro ao buscar oponente na lista:", e);
     }
 }
 // ATUALIZAÇÃO: Agora salvamos os DECKS COMPLETOS no banco
