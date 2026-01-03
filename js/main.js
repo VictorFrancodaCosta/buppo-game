@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL: CORREÇÃO DE SYNC DECK + POP/SHIFT FIX)
+// ARQUIVO: js/main.js (VERSÃO FINAL - SYNC CORRIGIDO + PROTEÇÃO CONTRA TRAVAMENTO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -562,6 +562,7 @@ function startPvPListener() {
         }
 
         if (matchData.p1Move && matchData.p2Move) {
+            // Check adicional para garantir que não execute se já estiver resolvendo
             if (!window.isResolvingTurn) {
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
             }
@@ -1233,37 +1234,35 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
 
     // --- RESOLUÇÃO BLINDADA ---
     setTimeout(() => {
-        
-        // 1. GARANTIA DE LIMPEZA DO BANCO (PRIORIDADE MÁXIMA)
-        // Agendamos isso INDEPENDENTE se a função resolveTurn funcionar ou falhar.
-        if (window.myRole === 'player1') {
-            setTimeout(() => {
-                const matchRef = doc(db, "matches", window.currentMatchId);
-                updateDoc(matchRef, {
-                    p1Move: null, p2Move: null,
-                    p1Disarm: null, p2Disarm: null,
-                    turn: increment(1) 
-                }).then(() => console.log("Turno limpo no DB com sucesso."))
-                  .catch(err => console.error("Erro crítico ao limpar turno:", err));
-            }, 4000); // 4s é tempo suficiente para ler as cartas
-        }
-
-        // 2. TENTA RESOLVER A LÓGICA (Dano, Efeitos, etc)
         try {
+            // 1. GARANTIA DE LIMPEZA DO BANCO
+            if (window.myRole === 'player1') {
+                setTimeout(() => {
+                    const matchRef = doc(db, "matches", window.currentMatchId);
+                    updateDoc(matchRef, {
+                        p1Move: null, p2Move: null,
+                        p1Disarm: null, p2Disarm: null,
+                        turn: increment(1) 
+                    }).then(() => console.log("Turno limpo no DB com sucesso."))
+                      .catch(err => console.error("Erro crítico ao limpar turno:", err));
+                }, 4000); 
+            }
+
+            // 2. TENTA RESOLVER A LÓGICA
             resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
         } catch (error) {
             console.error("CRASH NO RESOLVE TURN (Recuperando...):", error);
-            updateUI(); // Tenta consertar a UI se algo explodiu
+            // Em caso de erro grave, forçamos o destravamento
+            updateUI();
+            window.isResolvingTurn = false;
+            isProcessing = false;
         } 
         
-        // 3. FAILSAFE: DESTRAVA TUDO DEPOIS DE 4.5 SEGUNDOS
-        // Isso garante que o jogo NUNCA fique congelado, mesmo se der erro.
+        // 3. FAILSAFE: Destrava tudo depois de 4.5 segundos
         setTimeout(() => {
             console.log("Executando Failsafe de Destravamento...");
             window.pvpSelectedCardIndex = null;
             window.isResolvingTurn = false;
-            
-            // Se por algum motivo o resolveTurn não destravou o processamento:
             if (isProcessing) {
                 console.warn("UI estava travada. Forçando liberação.");
                 isProcessing = false;
@@ -1285,7 +1284,7 @@ async function applyTrainEffectPvP(matchId, myRole) {
         let deckArray, xpArray, deckField, xpField;
 
         if (myRole === 'player1') {
-            deckArray = data.player1.deck || []; // Usa os arrays internos
+            deckArray = data.player1.deck || []; 
             xpArray = data.player1.xp || [];
             deckField = 'player1.deck';
             xpField = 'player1.xp'; 
