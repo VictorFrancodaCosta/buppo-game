@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - MÚSICA CONTÍNUA + MATCHMAKING CORRIGIDO + SYNC DECK)
+// ARQUIVO: js/main.js (VERSÃO CORRIGIDA - SYNC DECK FIX + POP vs SHIFT)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -983,8 +983,10 @@ function resetUnit(u, predefinedDeck = null, role = null) {
     
     // Importante: Cria cópia ([...]) para não mexer no array original do banco
     if (predefinedDeck) {
+        console.log(`[SYNC] Carregando deck sincronizado para ${u.id}: ${predefinedDeck.length} cartas.`);
         u.deck = [...predefinedDeck]; 
     } else {
+        console.log(`[SYNC] Gerando deck local para ${u.id}.`);
         u.deck = []; 
         for(let k in DECK_TEMPLATE) {
             for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k);
@@ -1272,6 +1274,7 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
 }
 
 // --- NOVA FUNÇÃO: Sincroniza efeito TREINAR via Banco de Dados ---
+// CORREÇÃO CRÍTICA: AGORA USA POP() PARA COINCIDIR COM A LÓGICA LOCAL
 async function applyTrainEffectPvP(matchId, myRole) {
     const matchRef = doc(db, "matches", matchId);
     try {
@@ -1294,9 +1297,13 @@ async function applyTrainEffectPvP(matchId, myRole) {
         }
 
         if (deckArray.length > 0) {
-            const cardMoved = deckArray.shift(); 
+            // ANTES USAVA SHIFT() -> AGORA USA POP()
+            // Isso garante que o DB pegue a mesma carta que a animação local (Topo do Baralho)
+            const cardMoved = deckArray.pop(); 
+            
             console.log(`Efeito TREINAR (DB): Movendo ${cardMoved} para XP.`);
             xpArray.push(cardMoved);
+            
             await updateDoc(matchRef, {
                 [deckField]: deckArray,
                 [xpField]: xpArray
