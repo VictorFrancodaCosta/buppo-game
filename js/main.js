@@ -1,9 +1,10 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - MÚSICA CONTÍNUA + CORREÇÕES ANTERIORES)
+// ARQUIVO: js/main.js (VERSÃO FINAL - MÚSICA CONTÍNUA + MATCHMAKING CORRIGIDO + SYNC DECK)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
@@ -31,6 +32,9 @@ const audios = {};
 let assetsLoaded = 0; 
 window.gameAssets = []; 
 window.pvpUnsubscribe = null; 
+
+// Variável para controlar o loop de busca de partida
+let searchInterval = null;
 
 // --- ASSETS LOCAIS ---
 const MAGE_ASSETS = {
@@ -392,8 +396,6 @@ window.transitionToLobby = function(skipAnim = false) {
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     document.body.classList.remove('force-landscape');
     
-    // REMOVIDO: try { MusicController.stopCurrent(); } catch(e){} <--- ISSO CORTAVA A MÚSICA
-
     // 2. Esconder a tela de Deck imediatamente
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
@@ -542,6 +544,23 @@ function startPvPListener() {
             if(mNameEl) mNameEl.innerText = enemyName;
             namesUpdated = true; 
         }
+        
+        // --- SYNC EXTRA: Atualiza contagem de deck e XP Visual do inimigo ---
+        if (window.gameMode === 'pvp') {
+            const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
+            const enemyData = matchData[enemyRole];
+            // Se o inimigo ganhou XP (ex: usou TREINAR), atualiza a visualização local
+            if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
+                // Sincroniza o array local com o do banco
+                monster.xp = enemyData.xp;
+                updateUI();
+            }
+            // Atualiza contagem de deck (se disponível)
+             if (enemyData && enemyData.deck) {
+                document.getElementById('m-deck-count').innerText = enemyData.deck.length;
+            }
+        }
+
         if (matchData.p1Move && matchData.p2Move) {
             if (!window.isResolvingTurn) {
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
@@ -1252,6 +1271,42 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     }, 600);
 }
 
+// --- NOVA FUNÇÃO: Sincroniza efeito TREINAR via Banco de Dados ---
+async function applyTrainEffectPvP(matchId, myRole) {
+    const matchRef = doc(db, "matches", matchId);
+    try {
+        const matchSnap = await getDoc(matchRef);
+        if (!matchSnap.exists()) return;
+        const data = matchSnap.data();
+
+        let deckArray, xpArray, deckField, xpField;
+
+        if (myRole === 'player1') {
+            deckArray = data.player1.deck || []; // Usa os arrays internos
+            xpArray = data.player1.xp || [];
+            deckField = 'player1.deck';
+            xpField = 'player1.xp'; 
+        } else {
+            deckArray = data.player2.deck || [];
+            xpArray = data.player2.xp || [];
+            deckField = 'player2.deck';
+            xpField = 'player2.xp';
+        }
+
+        if (deckArray.length > 0) {
+            const cardMoved = deckArray.shift(); 
+            console.log(`Efeito TREINAR (DB): Movendo ${cardMoved} para XP.`);
+            xpArray.push(cardMoved);
+            await updateDoc(matchRef, {
+                [deckField]: deckArray,
+                [xpField]: xpArray
+            });
+        }
+    } catch (e) {
+        console.error("Erro ao aplicar efeito TREINAR no DB:", e);
+    }
+}
+
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
     
@@ -1299,6 +1354,16 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
     function handleExtraXP(u) { 
+        // Em PvP, se for TREINAR, atualizamos o Banco de Dados.
+        if (window.gameMode === 'pvp' && window.currentMatchId) {
+             // Só quem jogou a carta atualiza o banco para evitar duplicidade
+             // E usamos o DB como fonte da verdade, mas animamos localmente para fluidez
+             if (u === player) {
+                 // Eu joguei treinar, mando atualizar o DB
+                 applyTrainEffectPvP(window.currentMatchId, window.myRole);
+             }
+        }
+        
         if(u.deck.length > 0) { 
             let card = u.deck.pop(); 
             // Debug para confirmar que a carta é igual para todos
@@ -1663,16 +1728,6 @@ window.startPvPSearch = function() {
 };
 
 // --- FUNÇÃO QUE INICIA A FILA APÓS ESCOLHER O DECK ---
-// --- INICIAR JOGO (Botão PvP) ---
-// ... (startPvPSearch mantém igual) ...
-
-// --- FUNÇÃO QUE INICIA A FILA APÓS ESCOLHER O DECK ---
-// Variável global para controlar a repetição da busca
-let searchInterval = null;
-
-// --- INICIAR JOGO (Botão PvP) ---
-// (Mantenha o startPvPSearch igual, só vamos mudar o initiateMatchmaking)
-
 async function initiateMatchmaking() {
     console.log("--- INICIANDO MATCHMAKING ---");
     const mmScreen = document.getElementById('matchmaking-screen');
@@ -1923,4 +1978,3 @@ async function enterMatch(matchId) {
 }
 
 preloadGame();
- 
