@@ -1849,3 +1849,4 @@ async function enterMatch(matchId) {
 }
 
 preloadGame();
+ 
