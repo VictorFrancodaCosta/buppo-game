@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - SYNC CORRIGIDO + PROTEÇÃO CONTRA TRAVAMENTO)
+// ARQUIVO: js/main.js (VERSÃO DEFINITIVA - SYNC VISUAL TOTAL + FIX TREINAR)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -500,6 +500,7 @@ function startGameFlow() {
     }
 }
 
+// CORREÇÃO CRÍTICA: LISTENER AGORA CONTROLA A ANIMAÇÃO DO INIMIGO
 function startPvPListener() {
     if(!window.currentMatchId) return;
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
@@ -545,19 +546,34 @@ function startPvPListener() {
             namesUpdated = true; 
         }
         
-        // --- SYNC EXTRA: Atualiza contagem de deck e XP Visual do inimigo ---
+        // --- SYNC EXTRA: Atualiza visualmente XP do INIMIGO baseado no DB ---
         if (window.gameMode === 'pvp') {
             const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
             const enemyData = matchData[enemyRole];
-            // Se o inimigo ganhou XP (ex: usou TREINAR), atualiza a visualização local
+            
+            // 1. ANIMAÇÃO DE XP (Se o banco tiver mais cartas que o local)
             if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
-                // Sincroniza o array local com o do banco
+                // Descobre quais cartas são novas
+                const newCardsStartIndex = monster.xp.length;
+                for (let i = newCardsStartIndex; i < enemyData.xp.length; i++) {
+                    const newCard = enemyData.xp[i];
+                    console.log(`[LISTENER] Inimigo ganhou XP: ${newCard}. Animando...`);
+                    // Dispara a animação visual "oficial" baseada no DB
+                    animateFly('m-deck-container', 'm-xp', newCard, () => {
+                         // O array local será atualizado abaixo
+                    }, false, false, false);
+                }
+                // Atualiza o array local para bater com o DB
                 monster.xp = enemyData.xp;
                 updateUI();
             }
-            // Atualiza contagem de deck (se disponível)
+
+            // 2. SINCRONIZAÇÃO FORÇADA DE DECK (Previne desync de contagem/ordem)
              if (enemyData && enemyData.deck) {
-                document.getElementById('m-deck-count').innerText = enemyData.deck.length;
+                // Atualiza o deck local do inimigo para ser idêntico ao do servidor
+                // Isso garante que se o cliente tentar simular algo futuro, estará correto
+                monster.deck = [...enemyData.deck];
+                document.getElementById('m-deck-count').innerText = monster.deck.length;
             }
         }
 
@@ -1359,27 +1375,41 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
+    // CORREÇÃO: LÓGICA DE XP EXTRA NO PVP
     function handleExtraXP(u) { 
-        // Em PvP, se for TREINAR, atualizamos o Banco de Dados.
+        // LÓGICA PVP:
         if (window.gameMode === 'pvp' && window.currentMatchId) {
-             // Só quem jogou a carta atualiza o banco para evitar duplicidade
-             // E usamos o DB como fonte da verdade, mas animamos localmente para fluidez
+             // Se SOU EU (JOGADOR): Executo a lógica, atualizo o DB e animo localmente.
              if (u === player) {
-                 // Eu joguei treinar, mando atualizar o DB
-                 applyTrainEffectPvP(window.currentMatchId, window.myRole);
+                 if(u.deck.length > 0) {
+                     let card = u.deck.pop(); 
+                     // Manda atualizar o DB
+                     applyTrainEffectPvP(window.currentMatchId, window.myRole);
+                     // Animação Local
+                     animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
+                        u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
+                     }, false, false, true);
+                 }
              }
-        }
-        
-        if(u.deck.length > 0) { 
-            let card = u.deck.pop(); 
-            // Debug para confirmar que a carta é igual para todos
-            console.log(`[SYNC CHECK] Extra XP for ${u.originalRole}: ${card}`);
-            
-            animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
-                u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
-            }, false, false, (u.id === 'p')); 
+             // Se É O INIMIGO (MONSTRO):
+             // NÃO FAZ NADA AQUI!
+             // Deixamos o listener (onSnapshot) detectar a mudança no DB e animar a carta correta.
+             // Isso evita que puxemos uma carta localmente que seja diferente da do DB.
+             else {
+                 return;
+             }
         } 
+        // LÓGICA PVE (Normal):
+        else {
+            if(u.deck.length > 0) { 
+                let card = u.deck.pop(); 
+                animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
+                    u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
+                }, false, false, (u.id === 'p')); 
+            } 
+        }
     }
+
     if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
     if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
 
