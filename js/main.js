@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO CORRIGIDA - SYNC DECK FIX + POP vs SHIFT)
+// ARQUIVO: js/main.js (VERSÃO FINAL: CORREÇÃO DE SYNC DECK + POP/SHIFT FIX)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
