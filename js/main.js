@@ -1871,20 +1871,22 @@ async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckTy
 
 // --- CANCELAR BUSCA ---
 window.cancelPvPSearch = async function() {
-    window.playNavSound();
+    // 1. Limpa os intervalos de busca
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    if (searchInterval) clearInterval(searchInterval); // <--- ADICIONE ISSO
+    
+    // ... (o resto do código continua igual: deletar ticket, esconder tela, etc)
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'none';
 
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    if (queueListener) { queueListener(); queueListener = null; }
-    if (queueListener) { queueListener(); queueListener = null; }
     if (myQueueRef) {
-        await updateDoc(myQueueRef, { cancelled: true }); 
+        // Marca como cancelado para não aparecer nas buscas dos outros
+        await updateDoc(myQueueRef, { cancelled: true });
         myQueueRef = null;
     }
     
-    console.log("Busca cancelada. Retornando ao saguão sem animação.");
-    window.transitionToLobby(true); // <--- TRUE: VOLTA DIRETO SEM MOSTRAR DECK SCREEN
+    // Volta ao lobby
+    window.transitionToLobby(true);
 };
 
 // --- ENTRAR NA PARTIDA (Sucesso) ---
