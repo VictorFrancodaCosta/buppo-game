@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - MATCHMAKING CLÁSSICO FUNCIONAL)
+// ARQUIVO: js/main.js (VERSÃO FINAL - MATCHMAKING CLÁSSICO E FUNCIONAL)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -1633,6 +1633,8 @@ function apply3DTilt(element, isHand = false) {
 // ======================================================
 
 let matchmakingInterval = null;
+let matchTimerInterval = null;
+let matchSeconds = 0;
 let myQueueRef = null; 
 let queueListener = null;
 
@@ -1661,10 +1663,22 @@ async function initiateMatchmaking() {
     document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
     document.querySelector('.cancel-btn').style.display = "block";
     
+    // --- TIMER VISUAL (Correção do 00:00) ---
+    matchSeconds = 0;
+    const timerEl = document.getElementById('mm-timer');
+    timerEl.innerText = "00:00";
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    matchTimerInterval = setInterval(() => {
+        matchSeconds++;
+        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
+        let s = (matchSeconds % 60).toString().padStart(2, '0');
+        timerEl.innerText = `${m}:${s}`;
+    }, 1000);
+    // ----------------------------------------
+
     // 1. Cria a entrada na fila (MEU DOC)
     try {
-        myQueueRef = doc(collection(db, "queue")); // Cria um doc novo aleatório para garantir unicidade
-        // OU use o proprio UID se preferir um por player:
+        // Cria doc com UID para evitar duplicação
         myQueueRef = doc(db, "queue", currentUser.uid);
 
         await setDoc(myQueueRef, {
@@ -1686,9 +1700,12 @@ async function initiateMatchmaking() {
             }
         });
 
-        // 3. Começa a procurar ativamente outros jogadores
+        // 3. Começa a procurar ativamente outros jogadores (POLLING)
         if (matchmakingInterval) clearInterval(matchmakingInterval);
         matchmakingInterval = setInterval(checkForOpponents, 2000); 
+        
+        // Executa uma vez imediatamente
+        checkForOpponents();
 
     } catch (e) {
         console.error("Erro no Matchmaking:", e);
@@ -1706,12 +1723,10 @@ async function checkForOpponents() {
 
         let targetDoc = null;
         
-        // Filtra localmente para evitar problemas de índice
         querySnapshot.forEach((docSnap) => {
             const data = docSnap.data();
             // Regras: Não sou eu, não tem partida, não cancelou
             if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled) {
-                // Pega o primeiro que encontrar (o mais antigo, pois está ordenado)
                 if (!targetDoc) targetDoc = docSnap;
             }
         });
@@ -1790,11 +1805,16 @@ window.cancelPvPSearch = async function() {
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'none';
 
+    // LIMPEZA CRÍTICA DE TIMERS
     if (matchTimerInterval) clearInterval(matchTimerInterval);
+    if (matchmakingInterval) clearInterval(matchmakingInterval);
     if (queueListener) { queueListener(); queueListener = null; }
     
+    // Tenta limpar o doc do banco (mas não bloqueia a UI se falhar)
     if (myQueueRef) {
-        await updateDoc(myQueueRef, { cancelled: true }); 
+        try {
+            await deleteDoc(myQueueRef); // Melhor deletar do que marcar cancelado
+        } catch(e) { console.log("Erro ao limpar fila:", e); }
         myQueueRef = null;
     }
     
@@ -1806,13 +1826,18 @@ window.cancelPvPSearch = async function() {
 async function enterMatch(matchId) {
     console.log("PARTIDA ENCONTRADA! ID:", matchId);
     
+    // Para todos os loops de busca
     if (queueListener) queueListener();
     if (matchTimerInterval) clearInterval(matchTimerInterval);
+    if (matchmakingInterval) clearInterval(matchmakingInterval);
+
+    // Pequeno delay para garantir que o documento da partida foi propagado pelo Host
+    await new Promise(r => setTimeout(r, 500));
 
     const matchRef = doc(db, "matches", matchId);
     let matchSnap = await getDoc(matchRef);
 
-    // CORREÇÃO: RETRY SIMPLES SE A PARTIDA NÃO FOR ENCONTRADA IMEDIATAMENTE
+    // CORREÇÃO: RETRY SIMPLES
     if(!matchSnap.exists()) {
         console.warn("Documento da partida não encontrado. Tentando novamente em 1s...");
         await new Promise(r => setTimeout(r, 1000));
