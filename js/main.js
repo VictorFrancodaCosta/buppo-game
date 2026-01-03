@@ -3,8 +3,7 @@
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
@@ -1664,6 +1663,10 @@ window.startPvPSearch = function() {
 };
 
 // --- FUNÇÃO QUE INICIA A FILA APÓS ESCOLHER O DECK ---
+// --- INICIAR JOGO (Botão PvP) ---
+// ... (startPvPSearch mantém igual) ...
+
+// --- FUNÇÃO QUE INICIA A FILA APÓS ESCOLHER O DECK ---
 async function initiateMatchmaking() {
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'flex';
@@ -1689,10 +1692,11 @@ async function initiateMatchmaking() {
         const myData = {
             uid: currentUser.uid,
             name: currentUser.displayName,
-            deck: window.currentDeck, // <--- SALVA O DECK
+            deck: window.currentDeck,
             score: 0, 
             timestamp: Date.now(),
-            matchId: null
+            matchId: null,
+            cancelled: false // <--- IMPORTANTE: Adicionado para o filtro funcionar
         };
         await setDoc(myQueueRef, myData);
 
@@ -1705,6 +1709,7 @@ async function initiateMatchmaking() {
             }
         });
 
+        // Tenta buscar oponente imediatamente
         findOpponentInQueue();
 
     } catch (e) {
@@ -1716,21 +1721,41 @@ async function initiateMatchmaking() {
 async function findOpponentInQueue() {
     try {
         const queueRef = collection(db, "queue");
-        // Limite aumentado para 50 para evitar tickets fantasmas
-        const q = query(queueRef, orderBy("timestamp", "asc"), limit(50));
+        
+        // Definição de tempo para evitar zumbis (tickets travados com mais de 2 min)
+        const now = Date.now();
+        const MAX_WAIT_TIME = 120000; 
+        const cutoffTime = now - MAX_WAIT_TIME;
+
+        // QUERY OTIMIZADA:
+        // 1. matchId == null (Só quem não tem partida)
+        // 2. cancelled == false (Só quem não cancelou)
+        // 3. timestamp > cutoffTime (Só tickets recentes)
+        // 4. orderBy timestamp (Os mais antigos da fila têm prioridade)
+        const q = query(
+            queueRef, 
+            where("matchId", "==", null),
+            where("cancelled", "==", false),
+            where("timestamp", ">", cutoffTime),
+            orderBy("timestamp", "asc"), 
+            limit(20)
+        );
+
         const querySnapshot = await getDocs(q);
 
         let opponentDoc = null;
-        const now = Date.now();
-        const MAX_WAIT_TIME = 120000; 
 
-        querySnapshot.forEach((doc) => {
+        // Loop otimizado: Pega o PRIMEIRO oponente válido e para (break)
+        for (const doc of querySnapshot.docs) {
             const data = doc.data();
-            const isRecent = (now - data.timestamp) < MAX_WAIT_TIME;
-            if (data.uid !== currentUser.uid && !data.matchId && !data.cancelled && isRecent) {
+            
+            // A query já filtrou matchId, cancelled e tempo. 
+            // Só precisamos garantir que não somos nós mesmos.
+            if (data.uid !== currentUser.uid) {
                 opponentDoc = doc;
+                break; // Encontrou? Para de procurar e inicia a partida!
             }
-        });
+        }
 
         if (opponentDoc) {
             const oppData = opponentDoc.data();
@@ -1738,16 +1763,17 @@ async function findOpponentInQueue() {
 
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
 
+            // Atualiza o ticket do oponente PRIMEIRO (para travar ele)
             await updateDoc(opponentDoc.ref, { matchId: matchId });
+            
+            // Atualiza o meu ticket
             if (myQueueRef) {
                 await updateDoc(myQueueRef, { matchId: matchId });
             }
 
-            // ATUALIZAÇÃO: Gera os decks embaralhados no HOST
             const p1DeckCards = generateShuffledDeck();
             const p2DeckCards = generateShuffledDeck();
 
-            // Cria a partida passando nomes e decks
             await createMatchDocument(
                 matchId, 
                 currentUser.uid, oppData.uid, 
@@ -1758,9 +1784,9 @@ async function findOpponentInQueue() {
         } 
     } catch (e) {
         console.error("Erro ao buscar oponente:", e);
+        // IMPORTANTE: Se der erro de índice, isso vai aparecer no console.
     }
 }
-
 // ATUALIZAÇÃO: Agora salvamos os DECKS COMPLETOS no banco
 async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckType, p2DeckType, p1DeckCards, p2DeckCards) {
     const matchRef = doc(db, "matches", matchId);
