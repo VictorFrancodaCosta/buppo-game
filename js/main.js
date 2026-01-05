@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL: FIX TURNOS TRAVADOS + SYNC XP ROBUSTO)
+// ARQUIVO: js/main.js (VERSÃO FINAL: SYNC XP ABSOLUTO - LISTENER DRIVEN)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -591,6 +591,10 @@ function startPvPListener() {
                     monster.xp = enemyData.xp;
                     if(enemyData.deck) monster.deck = [...enemyData.deck];
                     updateUI();
+                    
+                    // IMPORTANTE: VERIFICA SE O INIMIGO UPOU DE NÍVEL PELO LISTENER
+                    // Pois ignoramos a carta extra na resolução do turno para evitar duplicidade.
+                    checkLevelUp(monster, () => {}); 
                 }
             }
         } catch (syncError) {
