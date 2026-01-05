@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL - SYNC XP FIXED - SINGLE SOURCE OF TRUTH)
+// ARQUIVO: js/main.js (VERSÃO FINAL: FIX LEVEL UP SYNC + TREINAR LOOP)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -1353,6 +1353,36 @@ async function applyTrainEffectPvP(matchId, myRole) {
     }
 }
 
+// === NOVO: ATUALIZA O DB APÓS LEVEL UP (PARA LIMPAR XP NO BANCO) ===
+async function syncLevelUpToDB(u) {
+    if (!window.currentMatchId) return;
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    
+    // Determina quais campos atualizar
+    let updates = {};
+    
+    // Se "u" for player (eu), uso minha role. Se "u" for monster (inimigo), uso a role dele.
+    // Mas esta função só é chamada se EU for o dono da unidade.
+    let targetRole = window.myRole; 
+    
+    if (targetRole === 'player1') {
+        updates['player1.xp'] = []; // Limpa XP
+        updates['player1.deck'] = u.deck; // Salva baralho embaralhado
+        updates['player1.lvl'] = u.lvl; // Salva nível
+    } else {
+        updates['player2.xp'] = [];
+        updates['player2.deck'] = u.deck;
+        updates['player2.lvl'] = u.lvl;
+    }
+    
+    try {
+        console.log("Sincronizando Level Up ao DB...", updates);
+        await updateDoc(matchRef, updates);
+    } catch(e) {
+        console.error("Erro ao sincronizar Level Up:", e);
+    }
+}
+
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
     
@@ -1407,10 +1437,9 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
              // MAS NÃO ANIMO AQUI. DEIXO O LISTENER FAZER ISSO.
              if (u === player) {
                  if(u.deck.length > 0) {
-                     let card = u.deck.pop(); 
+                     // NÃO FAZ POP LOCAL! Deixa o DB fazer.
                      // Manda atualizar o DB
                      applyTrainEffectPvP(window.currentMatchId, window.myRole);
-                     // NÃO ANIMA LOCALMENTE! (Evita duplicidade)
                  }
              }
              // Se É O INIMIGO:
@@ -1483,6 +1512,12 @@ function checkLevelUp(u, doneCb) {
                     // Adicionei u.lvl para garantir que cada nível embaralhe diferente
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
                     shuffle(u.deck, s);
+                    
+                    // === SYNC IMPORTANTE: SÓ O DONO DO DECK ATUALIZA O BANCO ===
+                    if (u === player) {
+                        syncLevelUpToDB(u);
+                    }
+
                 } else {
                     shuffle(u.deck); // PvE normal
                 }
