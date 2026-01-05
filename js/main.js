@@ -2706,7 +2706,31 @@ async function applyTrainEffectPvP(matchId, myRole) {
 
 }
 
+// Função nova para salvar o estado limpo pós-Level Up no banco
+async function syncLevelUpToDB(u) {
+    if (!window.currentMatchId) return;
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    
+    let updates = {};
+    // Verifica se sou Player 1 ou 2 para saber onde salvar
+    let targetKey = (window.myRole === 'player1') ? 'player1' : 'player2';
+    
+    // Se estou atualizando o inimigo (raro, mas possível), inverto a chave
+    if (u !== player) {
+        targetKey = (window.myRole === 'player1') ? 'player2' : 'player1';
+    }
 
+    updates[`${targetKey}.xp`] = [];        // Limpa XP no banco
+    updates[`${targetKey}.deck`] = u.deck;  // Salva o novo deck embaralhado
+    updates[`${targetKey}.lvl`] = u.lvl;    // Salva o novo nível
+    
+    try {
+        await updateDoc(matchRef, updates);
+        console.log("Level Up sincronizado com o Firebase!");
+    } catch(e) {
+        console.error("Erro ao sincronizar Level Up:", e);
+    }
+}
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
 
@@ -2804,35 +2828,19 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
 
     function handleExtraXP(u) { 
 
-        // LÓGICA PVP:
-
-        if (window.gameMode === 'pvp' && window.currentMatchId) {
-
-             // Se SOU EU (JOGADOR): Executo a lógica e atualizo o DB
-
-             // MAS NÃO ANIMO AQUI. DEIXO O LISTENER FAZER ISSO.
-
-             if (u === player) {
-
-                 if(u.deck.length > 0) {
-
-                     let card = u.deck.pop(); 
-
-                     // Manda atualizar o DB
-
-                     applyTrainEffectPvP(window.currentMatchId, window.myRole);
-
-                     // NÃO ANIMA LOCALMENTE! (Evita duplicidade)
-
-                 }
-
-             }
-
-             // Se É O INIMIGO:
-
-             // NÃO FAZ NADA AQUI!
-
-             else {
+// ... dentro de checkLevelUp ...
+if (window.gameMode === 'pvp' && window.currentMatchId) {
+    let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
+    shuffle(u.deck, s);
+    
+    // ADICIONE ISTO AQUI:
+    // Se a unidade que upou é o JOGADOR LOCAL, ele manda atualizar o banco.
+    // (O inimigo fará o mesmo no computador dele quando o monstro dele upar)
+    if (u === player) {
+        syncLevelUpToDB(u);
+    }
+} else {
+// ...
 
                  return;
 
