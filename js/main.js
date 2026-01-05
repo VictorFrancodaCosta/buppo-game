@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL: FIX LEVEL UP SYNC + TREINAR LOOP)
+// ARQUIVO: js/main.js (VERSÃO FINAL: FIX CRÍTICO - PRIORIDADE DE TURNO E VITÓRIA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -508,20 +508,14 @@ function startPvPListener() {
     let namesUpdated = false;
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
     
-    // Helper para garantir role
-    const ensureMyRole = (data) => {
-        if (window.myRole) return;
-        if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
-        else window.myRole = 'player2';
-    };
-
     window.pvpUnsubscribe = onSnapshot(matchRef, (docSnap) => {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
-        ensureMyRole(matchData);
-
+        
+        // 1. CHECAGEM DE ABANDONO (PRIORIDADE MÁXIMA)
         if (matchData.status === 'abandoned') {
-            if (matchData.abandonedBy && matchData.abandonedBy !== currentUser.uid) {
+            // Se eu não sou quem abandonou, eu ganhei
+            if (matchData.abandonedBy && currentUser && matchData.abandonedBy !== currentUser.uid) {
                 console.log("Oponente desconectou. Decretando vitória.");
                 monster.hp = 0;
                 updateUI();
@@ -535,11 +529,20 @@ function startPvPListener() {
                     playSound('sfx-win');
                     if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
                     document.getElementById('end-screen').classList.add('visible');
+                    // Desliga listener para evitar conflitos
                     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
                 }, 500);
             }
-            return; 
+            return; // Sai da função, nada mais importa
         }
+
+        // Configura Role se necessário
+        if (!window.myRole && currentUser) {
+            if(matchData.player1.uid === currentUser.uid) window.myRole = 'player1';
+            else window.myRole = 'player2';
+        }
+
+        // Atualiza Nomes (apenas uma vez)
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
             if (window.myRole === 'player1') {
@@ -555,8 +558,17 @@ function startPvPListener() {
             if(mNameEl) mNameEl.innerText = enemyName;
             namesUpdated = true; 
         }
+
+        // 2. CHECAGEM DE TURNO COMPLETO (PRIORIDADE ALTA)
+        if (matchData.p1Move && matchData.p2Move) {
+            if (!window.isResolvingTurn) {
+                console.log("Turno pronto! Resolvendo...");
+                resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
+            }
+            return; // Se estiver resolvendo turno, não tenta animar XP agora para não bugar
+        }
         
-        // --- SYNC EXTRA: ATUALIZA VISUALMENTE XP (TRY/CATCH PARA NÃO TRAVAR O TURNO) ---
+        // 3. SYNC EXTRA: ATUALIZA VISUALMENTE XP
         try {
             if (window.gameMode === 'pvp' && window.myRole) {
                 const myData = matchData[window.myRole];
@@ -598,14 +610,6 @@ function startPvPListener() {
             }
         } catch (syncError) {
             console.error("Erro na sincronização visual (ignorado para não travar jogo):", syncError);
-        }
-
-        // --- VERIFICAÇÃO DE TURNO ---
-        if (matchData.p1Move && matchData.p2Move) {
-            if (!window.isResolvingTurn) {
-                console.log("Turno pronto! Resolvendo...");
-                resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
-            }
         }
     });
 }
