@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL: SYNC XP ABSOLUTO - LISTENER DRIVEN)
+// ARQUIVO: js/main.js (VERSÃO FINAL - SYNC XP FIXED - SINGLE SOURCE OF TRUTH)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -593,7 +593,6 @@ function startPvPListener() {
                     updateUI();
                     
                     // IMPORTANTE: VERIFICA SE O INIMIGO UPOU DE NÍVEL PELO LISTENER
-                    // Pois ignoramos a carta extra na resolução do turno para evitar duplicidade.
                     checkLevelUp(monster, () => {}); 
                 }
             }
@@ -1404,22 +1403,18 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     function handleExtraXP(u) { 
         // LÓGICA PVP:
         if (window.gameMode === 'pvp' && window.currentMatchId) {
-             // Se SOU EU (JOGADOR): Executo a lógica, atualizo o DB e animo localmente.
+             // Se SOU EU (JOGADOR): Executo a lógica e atualizo o DB
+             // MAS NÃO ANIMO AQUI. DEIXO O LISTENER FAZER ISSO.
              if (u === player) {
                  if(u.deck.length > 0) {
                      let card = u.deck.pop(); 
                      // Manda atualizar o DB
                      applyTrainEffectPvP(window.currentMatchId, window.myRole);
-                     // Animação Local
-                     animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
-                        u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
-                     }, false, false, true);
+                     // NÃO ANIMA LOCALMENTE! (Evita duplicidade)
                  }
              }
-             // Se É O INIMIGO (MONSTRO):
+             // Se É O INIMIGO:
              // NÃO FAZ NADA AQUI!
-             // Deixamos o listener (onSnapshot) detectar a mudança no DB e animar a carta correta.
-             // Isso evita que puxemos uma carta localmente que seja diferente da do DB.
              else {
                  return;
              }
