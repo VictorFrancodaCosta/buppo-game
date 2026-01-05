@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO CORRIGIDA - SYNC XP PERFEITO)
+// ARQUIVO: js/main.js (VERSÃO FINAL: FIX TURNOS TRAVADOS + SYNC XP ROBUSTO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -500,16 +500,26 @@ function startGameFlow() {
     }
 }
 
-// CORREÇÃO CRÍTICA: AGORA O LISTENER SINCRONIZA VOCÊ E O INIMIGO
+// CORREÇÃO CRÍTICA: LISTENER AGORA CONTROLA A ANIMAÇÃO DO INIMIGO
 function startPvPListener() {
     if(!window.currentMatchId) return;
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     const matchRef = doc(db, "matches", window.currentMatchId);
     let namesUpdated = false;
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
+    
+    // Helper para garantir role
+    const ensureMyRole = (data) => {
+        if (window.myRole) return;
+        if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
+        else window.myRole = 'player2';
+    };
+
     window.pvpUnsubscribe = onSnapshot(matchRef, (docSnap) => {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
+        ensureMyRole(matchData);
+
         if (matchData.status === 'abandoned') {
             if (matchData.abandonedBy && matchData.abandonedBy !== currentUser.uid) {
                 console.log("Oponente desconectou. Decretando vitória.");
@@ -546,50 +556,51 @@ function startPvPListener() {
             namesUpdated = true; 
         }
         
-        if (window.gameMode === 'pvp') {
-            const myData = matchData[window.myRole];
-            const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
-            const enemyData = matchData[enemyRole];
-            
-            // --- SYNC MEU XP (VOCÊ) ---
-            // Se o DB tem mais cartas de XP que eu localmente, significa que o TREINAR foi processado no servidor.
-            if (myData && myData.xp && myData.xp.length > player.xp.length) {
-                const newCardsStartIndex = player.xp.length;
-                for (let i = newCardsStartIndex; i < myData.xp.length; i++) {
-                    const newCard = myData.xp[i];
-                    console.log(`[LISTENER-SELF] Ganhei XP do DB: ${newCard}. Animando...`);
-                    
-                    // Animação visual local
-                    animateFly('p-deck-container', 'p-xp', newCard, () => {
-                         triggerXPGlow('p');
-                    }, false, false, true);
+        // --- SYNC EXTRA: ATUALIZA VISUALMENTE XP (TRY/CATCH PARA NÃO TRAVAR O TURNO) ---
+        try {
+            if (window.gameMode === 'pvp' && window.myRole) {
+                const myData = matchData[window.myRole];
+                const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
+                const enemyData = matchData[enemyRole];
+                
+                // --- SYNC MEU XP (VOCÊ) ---
+                if (myData && myData.xp && myData.xp.length > player.xp.length) {
+                    const newCardsStartIndex = player.xp.length;
+                    for (let i = newCardsStartIndex; i < myData.xp.length; i++) {
+                        const newCard = myData.xp[i];
+                        console.log(`[LISTENER-SELF] Ganhei XP do DB: ${newCard}`);
+                        animateFly('p-deck-container', 'p-xp', newCard, () => {
+                             triggerXPGlow('p');
+                        }, false, false, true);
+                    }
+                    player.xp = myData.xp;
+                    if(myData.deck) player.deck = [...myData.deck]; 
+                    updateUI();
                 }
-                // Sincroniza arrays locais com o DB
-                player.xp = myData.xp;
-                if(myData.deck) player.deck = [...myData.deck]; // Sincroniza deck restante também
-                updateUI();
-            }
 
-            // --- SYNC XP INIMIGO ---
-            if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
-                const newCardsStartIndex = monster.xp.length;
-                for (let i = newCardsStartIndex; i < enemyData.xp.length; i++) {
-                    const newCard = enemyData.xp[i];
-                    console.log(`[LISTENER-ENEMY] Inimigo ganhou XP: ${newCard}. Animando...`);
-                    
-                    animateFly('m-deck-container', 'm-xp', newCard, () => {
-                         triggerXPGlow('m');
-                    }, false, false, false);
+                // --- SYNC XP INIMIGO ---
+                if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
+                    const newCardsStartIndex = monster.xp.length;
+                    for (let i = newCardsStartIndex; i < enemyData.xp.length; i++) {
+                        const newCard = enemyData.xp[i];
+                        console.log(`[LISTENER-ENEMY] Inimigo ganhou XP: ${newCard}`);
+                        animateFly('m-deck-container', 'm-xp', newCard, () => {
+                             triggerXPGlow('m');
+                        }, false, false, false);
+                    }
+                    monster.xp = enemyData.xp;
+                    if(enemyData.deck) monster.deck = [...enemyData.deck];
+                    updateUI();
                 }
-                monster.xp = enemyData.xp;
-                if(enemyData.deck) monster.deck = [...enemyData.deck];
-                updateUI();
             }
+        } catch (syncError) {
+            console.error("Erro na sincronização visual (ignorado para não travar jogo):", syncError);
         }
 
+        // --- VERIFICAÇÃO DE TURNO ---
         if (matchData.p1Move && matchData.p2Move) {
-            // Check adicional para garantir que não execute se já estiver resolvendo
             if (!window.isResolvingTurn) {
+                console.log("Turno pronto! Resolvendo...");
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
             }
         }
