@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO DEFINITIVA - SYNC VISUAL TOTAL + FIX TREINAR)
+// ARQUIVO: js/main.js (VERSÃO CORRIGIDA - SYNC XP PERFEITO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -500,7 +500,7 @@ function startGameFlow() {
     }
 }
 
-// CORREÇÃO CRÍTICA: LISTENER AGORA CONTROLA A ANIMAÇÃO DO INIMIGO
+// CORREÇÃO CRÍTICA: AGORA O LISTENER SINCRONIZA VOCÊ E O INIMIGO
 function startPvPListener() {
     if(!window.currentMatchId) return;
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
@@ -546,34 +546,44 @@ function startPvPListener() {
             namesUpdated = true; 
         }
         
-        // --- SYNC EXTRA: Atualiza visualmente XP do INIMIGO baseado no DB ---
         if (window.gameMode === 'pvp') {
+            const myData = matchData[window.myRole];
             const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
             const enemyData = matchData[enemyRole];
             
-            // 1. ANIMAÇÃO DE XP (Se o banco tiver mais cartas que o local)
-            if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
-                // Descobre quais cartas são novas
-                const newCardsStartIndex = monster.xp.length;
-                for (let i = newCardsStartIndex; i < enemyData.xp.length; i++) {
-                    const newCard = enemyData.xp[i];
-                    console.log(`[LISTENER] Inimigo ganhou XP: ${newCard}. Animando...`);
-                    // Dispara a animação visual "oficial" baseada no DB
-                    animateFly('m-deck-container', 'm-xp', newCard, () => {
-                         // O array local será atualizado abaixo
-                    }, false, false, false);
+            // --- SYNC MEU XP (VOCÊ) ---
+            // Se o DB tem mais cartas de XP que eu localmente, significa que o TREINAR foi processado no servidor.
+            if (myData && myData.xp && myData.xp.length > player.xp.length) {
+                const newCardsStartIndex = player.xp.length;
+                for (let i = newCardsStartIndex; i < myData.xp.length; i++) {
+                    const newCard = myData.xp[i];
+                    console.log(`[LISTENER-SELF] Ganhei XP do DB: ${newCard}. Animando...`);
+                    
+                    // Animação visual local
+                    animateFly('p-deck-container', 'p-xp', newCard, () => {
+                         triggerXPGlow('p');
+                    }, false, false, true);
                 }
-                // Atualiza o array local para bater com o DB
-                monster.xp = enemyData.xp;
+                // Sincroniza arrays locais com o DB
+                player.xp = myData.xp;
+                if(myData.deck) player.deck = [...myData.deck]; // Sincroniza deck restante também
                 updateUI();
             }
 
-            // 2. SINCRONIZAÇÃO FORÇADA DE DECK (Previne desync de contagem/ordem)
-             if (enemyData && enemyData.deck) {
-                // Atualiza o deck local do inimigo para ser idêntico ao do servidor
-                // Isso garante que se o cliente tentar simular algo futuro, estará correto
-                monster.deck = [...enemyData.deck];
-                document.getElementById('m-deck-count').innerText = monster.deck.length;
+            // --- SYNC XP INIMIGO ---
+            if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
+                const newCardsStartIndex = monster.xp.length;
+                for (let i = newCardsStartIndex; i < enemyData.xp.length; i++) {
+                    const newCard = enemyData.xp[i];
+                    console.log(`[LISTENER-ENEMY] Inimigo ganhou XP: ${newCard}. Animando...`);
+                    
+                    animateFly('m-deck-container', 'm-xp', newCard, () => {
+                         triggerXPGlow('m');
+                    }, false, false, false);
+                }
+                monster.xp = enemyData.xp;
+                if(enemyData.deck) monster.deck = [...enemyData.deck];
+                updateUI();
             }
         }
 
