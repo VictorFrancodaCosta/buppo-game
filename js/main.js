@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO ESTÁVEL DO BACKUP + FIX TREINAR E LEVEL UP)
+// ARQUIVO: js/main.js (VERSÃO BACKUP ESTÁVEL + FIX TREINAR/VISUAL)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -167,7 +167,7 @@ const MusicController = {
                     audio.play().catch(()=>{});
                     this.fadeIn(audio, 0.5 * window.masterVol);
                 }
-                return; 
+                return;
             } 
             const maxVol = 0.5 * window.masterVol;
             if (this.currentTrackId && audios[this.currentTrackId]) {
@@ -385,6 +385,8 @@ window.transitionToGame = function() {
 }
 
 window.transitionToLobby = function(skipAnim = false) {
+    console.log("EXECUTANDO: Voltar ao Saguão... Pular Animação?", skipAnim);
+    
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     document.body.classList.remove('force-landscape');
     
@@ -489,7 +491,7 @@ function startGameFlow() {
     }
 }
 
-// === NOVO: FUNÇÃO PARA SINCRONIZAR A CARTA EXTRA DO TREINAR COM O DB ===
+// === FUNÇÃO NOVA: Sincroniza efeito TREINAR via Banco de Dados ===
 async function applyTrainEffectPvP(matchId, myRole) {
     const matchRef = doc(db, "matches", matchId);
     try {
@@ -512,36 +514,27 @@ async function applyTrainEffectPvP(matchId, myRole) {
         }
 
         if (deckArray.length > 0) {
-            // Remove a carta do topo do DECK (DB)
             const cardMoved = deckArray.pop(); 
             console.log(`Efeito TREINAR (DB): Movendo ${cardMoved} para XP.`);
             xpArray.push(cardMoved);
-            
-            // Atualiza DB
-            await updateDoc(matchRef, {
-                [deckField]: deckArray,
-                [xpField]: xpArray
-            });
+            await updateDoc(matchRef, { [deckField]: deckArray, [xpField]: xpArray });
         }
     } catch (e) {
         console.error("Erro ao aplicar efeito TREINAR no DB:", e);
     }
 }
 
-// === NOVO: FUNÇÃO PARA SINCRONIZAR O LEVEL UP COM O DB ===
+// === FUNÇÃO NOVA: Sincroniza Level Up via Banco de Dados ===
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;
     const matchRef = doc(db, "matches", window.currentMatchId);
-    
-    // Determina quais campos atualizar com base na role
     let updates = {};
-    let targetRoleKey = (u === player) ? window.myRole : (window.myRole === 'player1' ? 'player2' : 'player1');
+    let targetKey = (u === player) ? (window.myRole) : (window.myRole === 'player1' ? 'player2' : 'player1');
     
-    // ATENÇÃO: As chaves do objeto updates devem ser strings como 'player1.xp'
-    updates[`${targetRoleKey}.xp`] = [];        // Limpa XP
-    updates[`${targetRoleKey}.deck`] = u.deck;  // Salva deck embaralhado
-    updates[`${targetRoleKey}.lvl`] = u.lvl;    // Salva novo nível
-    
+    updates[`${targetKey}.xp`] = []; 
+    updates[`${targetKey}.deck`] = u.deck; 
+    updates[`${targetKey}.lvl`] = u.lvl; 
+
     try {
         console.log("Sincronizando Level Up ao DB...", updates);
         await updateDoc(matchRef, updates);
@@ -549,6 +542,7 @@ async function syncLevelUpToDB(u) {
         console.error("Erro ao sincronizar Level Up:", e);
     }
 }
+
 
 function startPvPListener() {
     if(!window.currentMatchId) return;
@@ -589,7 +583,6 @@ function startPvPListener() {
             }
             return; 
         }
-
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
             if (window.myRole === 'player1') {
@@ -606,47 +599,30 @@ function startPvPListener() {
             namesUpdated = true; 
         }
 
-        // --- SYNC VISUAL DO INIMIGO ---
+        // --- CORREÇÃO DO PROBLEMA VISUAL: ANIMAR XP DO INIMIGO ---
         if (window.gameMode === 'pvp') {
             const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
             const enemyData = matchData[enemyRole];
             
-            // 1. ANIMAÇÃO DE XP EXTRA DO INIMIGO (TREINAR)
-            // Se o array do DB for maior que o local, significa que carta extra entrou
+            // Se o inimigo tem mais cartas de XP no banco do que eu vejo na tela...
             if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
-                // Descobre quais cartas são novas
+                // Descobre quais são as novas cartas
                 const startIdx = monster.xp.length;
                 for (let i = startIdx; i < enemyData.xp.length; i++) {
                     const newCard = enemyData.xp[i];
                     console.log(`[LISTENER] Inimigo ganhou XP extra: ${newCard}`);
-                    
-                    // IMPORTANTE: Só animamos se NÃO for a carta que acabou de ser jogada no turno
-                    // A carta jogada já é animada pelo resolveTurn.
-                    // Mas como diferenciar? 
-                    // Simples: resolveTurn adiciona a carta principal. 
-                    // O efeito Treinar adiciona uma EXTRA. 
-                    // Se a diferença de tamanho for > 1, ou se ocorrer fora do resolveTurn, animamos.
-                    
+                    // Anima a carta voando do baralho do inimigo para a XP dele
                     animateFly('m-deck-container', 'm-xp', newCard, () => {
                          triggerXPGlow('m');
                     }, false, false, false);
                 }
-                // Atualiza o estado local para bater com o DB
+                // Atualiza o estado local do monstro
                 monster.xp = enemyData.xp;
-                if (enemyData.deck) monster.deck = enemyData.deck; 
+                if(enemyData.deck) monster.deck = enemyData.deck;
                 updateUI();
-            }
-            
-            // 2. DETECÇÃO DE LEVEL UP DO INIMIGO (RESET DE XP)
-            // Se a XP do inimigo no DB ficou vazia, mas localmente está cheia -> Level Up ocorreu
-            if (enemyData && enemyData.xp && enemyData.xp.length === 0 && monster.xp.length >= 5) {
-                 console.log("[LISTENER] Inimigo subiu de nível (detectado pelo reset de XP).");
-                 checkLevelUp(monster, () => {}); // Roda a animação de level up local
-                 // Atualiza dados
-                 monster.xp = [];
-                 if (enemyData.deck) monster.deck = enemyData.deck;
-                 if (enemyData.lvl) monster.lvl = enemyData.lvl;
-                 updateUI();
+                
+                // Verifica se o inimigo upou de nível (visualmente)
+                checkLevelUp(monster, () => {}); 
             }
         }
 
@@ -1408,9 +1384,6 @@ async function syncLevelUpToDB(u) {
     
     // Determina quais campos atualizar
     let updates = {};
-    
-    // Se "u" for player (eu), uso minha role. Se "u" for monster (inimigo), uso a role dele.
-    // Mas esta função só é chamada se EU for o dono da unidade.
     let targetRole = window.myRole; 
     
     if (targetRole === 'player1') {
