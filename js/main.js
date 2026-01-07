@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO CORRIGIDA: SINTAXE SEGURA + FIX TREINAR)
+// ARQUIVO: js/main.js (VERSÃO RESTAURADA E CORRIGIDA)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -274,6 +274,7 @@ window.showScreen = function(screenId) {
     }
 }
 
+// --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
 window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
     const ds = document.getElementById('deck-selection-screen');
@@ -311,6 +312,7 @@ window.openDeckSelector = function() {
     }
 })();
 
+// --- SELEÇÃO DE DECK ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         try {
@@ -367,7 +369,7 @@ window.transitionToGame = function() {
     if(transText) transText.innerText = "PREPARANDO BATALHA...";
     if(transScreen) transScreen.classList.add('active');
     setTimeout(() => {
-        MusicController.play('bgm-loop'); 
+        MusicController.play('bgm-loop'); // TROCA DE MÚSICA AQUI
         let bg = document.getElementById('game-background');
         if(bg) bg.classList.remove('lobby-mode');
         window.showScreen('game-screen');
@@ -380,12 +382,15 @@ window.transitionToGame = function() {
     }, 500); 
 }
 
+// CORREÇÃO CRÍTICA: Transição para o Saguão (SEM PARAR MÚSICA)
 window.transitionToLobby = function(skipAnim = false) {
     console.log("EXECUTANDO: Voltar ao Saguão... Pular Animação?", skipAnim);
     
+    // 1. Limpeza Geral
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     document.body.classList.remove('force-landscape');
     
+    // 2. Esconder a tela de Deck imediatamente
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
         ds.style.opacity = '0';
@@ -394,6 +399,7 @@ window.transitionToLobby = function(skipAnim = false) {
         ds.classList.remove('active');
     }
 
+    // 3. Lógica de Navegação
     if (skipAnim) {
         window.goToLobby(false);
     } else {
@@ -421,6 +427,7 @@ window.goToLobby = async function(isAutoLogin = false) {
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
     
+    // O MusicController vai checar: se 'bgm-menu' já toca, ele mantém. Se não (veio do jogo), ele troca.
     MusicController.play('bgm-menu'); 
     createLobbyFlares();
     
@@ -487,33 +494,7 @@ function startGameFlow() {
     }
 }
 
-// === FUNÇÃO NOVA: SALVAR O ESTADO DO JOGADOR NO FIREBASE (XP/DECK/LEVEL) ===
-async function savePvPState() {
-    if (!window.currentMatchId) return;
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    
-    let updates = {};
-    const role = window.myRole; 
-    // Atualiza os dados de quem está jogando (eu)
-    if (role === 'player1') {
-        updates['player1.deck'] = player.deck;
-        updates['player1.xp'] = player.xp;
-        updates['player1.lvl'] = player.lvl;
-    } else {
-        updates['player2.deck'] = player.deck;
-        updates['player2.xp'] = player.xp;
-        updates['player2.lvl'] = player.lvl;
-    }
-    
-    try {
-        // Envia para o banco o estado ATUAL (incluindo carta removida do deck e adicionada na XP)
-        await updateDoc(matchRef, updates);
-        console.log("Estado PvP salvo no banco.");
-    } catch(e) {
-        console.error("Erro ao salvar estado PvP:", e);
-    }
-}
-
+// CORREÇÃO CRÍTICA: LISTENER AGORA CONTROLA A ANIMAÇÃO DO INIMIGO
 function startPvPListener() {
     if(!window.currentMatchId) return;
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
@@ -521,9 +502,9 @@ function startPvPListener() {
     let namesUpdated = false;
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
     
-    // Função auxiliar para definir role
+    // Helper para garantir role
     const ensureMyRole = (data) => {
-        if(window.myRole) return;
+        if (window.myRole) return;
         if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
         else window.myRole = 'player2';
     };
@@ -569,47 +550,31 @@ function startPvPListener() {
             namesUpdated = true; 
         }
 
-        // --- SYNC INIMIGO: DETECTA ALTERAÇÕES NO XP DO INIMIGO ---
-        if (window.gameMode === 'pvp') {
+        if (matchData.p1Move && matchData.p2Move) {
+            if (!window.isResolvingTurn) {
+                console.log("Turno pronto! Resolvendo...");
+                resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
+            }
+            return; 
+        }
+        
+        // SYNC VISUAL
+        if (window.gameMode === 'pvp' && window.myRole) {
             const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
             const enemyData = matchData[enemyRole];
             
-            // Se o inimigo tem mais cartas na XP no banco do que eu vejo na tela...
             if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
-                // Descobre quais cartas são novas
-                const startIdx = monster.xp.length;
-                for (let i = startIdx; i < enemyData.xp.length; i++) {
+                const newCardsStartIndex = monster.xp.length;
+                for (let i = newCardsStartIndex; i < enemyData.xp.length; i++) {
                     const newCard = enemyData.xp[i];
-                    console.log(`[LISTENER] Inimigo ganhou XP: ${newCard}`);
-                    // Anima a carta voando do baralho do inimigo para a XP dele
                     animateFly('m-deck-container', 'm-xp', newCard, () => {
-                         // Callback opcional
+                         triggerXPGlow('m');
                     }, false, false, false);
                 }
-                // Atualiza o estado local do monstro para bater com o banco
                 monster.xp = enemyData.xp;
-                if(enemyData.deck) monster.deck = enemyData.deck; 
-                if(enemyData.lvl) monster.lvl = enemyData.lvl;
-                
-                // Atualiza contadores visuais
+                if(enemyData.deck) monster.deck = [...enemyData.deck];
                 updateUI();
-                
-                // Verifica se houve level up visual do inimigo
                 checkLevelUp(monster, () => {}); 
-            }
-             // Sync de deck caso tenha diminuído (ex: usou treinar)
-             if (enemyData && enemyData.deck) {
-                if (monster.deck.length !== enemyData.deck.length) {
-                    monster.deck = enemyData.deck;
-                    const dCount = document.getElementById('m-deck-count');
-                    if(dCount) dCount.innerText = monster.deck.length;
-                }
-            }
-        }
-
-        if (matchData.p1Move && matchData.p2Move) {
-            if (!window.isResolvingTurn) {
-                resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
             }
         }
     });
@@ -1365,6 +1330,9 @@ async function syncLevelUpToDB(u) {
     
     // Determina quais campos atualizar
     let updates = {};
+    
+    // Se "u" for player (eu), uso minha role. Se "u" for monster (inimigo), uso a role dele.
+    // Mas esta função só é chamada se EU for o dono da unidade.
     let targetRole = window.myRole; 
     
     if (targetRole === 'player1') {
@@ -1435,17 +1403,22 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     function handleExtraXP(u) { 
         // LÓGICA PVP:
         if (window.gameMode === 'pvp' && window.currentMatchId) {
-             // Se SOU EU (JOGADOR): Executo a lógica e atualizo o DB
-             // MAS NÃO ANIMO AQUI. DEIXO O LISTENER FAZER ISSO.
+             // Se SOU EU (JOGADOR): Executo a lógica, atualizo o DB e animo localmente.
              if (u === player) {
                  if(u.deck.length > 0) {
-                     // NÃO FAZ POP LOCAL! Deixa o DB fazer.
+                     let card = u.deck.pop(); 
                      // Manda atualizar o DB
                      applyTrainEffectPvP(window.currentMatchId, window.myRole);
+                     // Animação Local
+                     animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
+                        u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
+                     }, false, false, true);
                  }
              }
-             // Se É O INIMIGO:
+             // Se É O INIMIGO (MONSTRO):
              // NÃO FAZ NADA AQUI!
+             // Deixamos o listener (onSnapshot) detectar a mudança no DB e animar a carta correta.
+             // Isso evita que puxemos uma carta localmente que seja diferente da do DB.
              else {
                  return;
              }
@@ -1465,32 +1438,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
 
     setTimeout(() => {
-        animateFly('p-slot', 'p-xp', pAct, () => { 
-            if (window.gameMode === 'pvp' && !pDead) {
-                commitTurnToDB(pAct); 
-            } else if(!pDead) { 
-                player.xp.push(pAct); 
-                triggerXPGlow('p'); 
-                updateUI(); 
-            } 
-            
-            checkLevelUp(player, () => { 
-                if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); 
-            }); 
-        }, false, false, true);
-
-        animateFly('m-slot', 'm-xp', mAct, () => { 
-            if (window.gameMode !== 'pvp' && !mDead) { 
-                monster.xp.push(mAct); 
-                triggerXPGlow('m'); 
-                updateUI(); 
-            } 
-            checkLevelUp(monster, () => { 
-                if(!mDead) drawCardLogic(monster, 1); 
-                checkEndGame(); 
-            }); 
-        }, false, false, false);
-        
+        animateFly('p-slot', 'p-xp', pAct, () => { if(!pDead) { player.xp.push(pAct); triggerXPGlow('p'); updateUI(); } checkLevelUp(player, () => { if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); }); }, false, false, true);
+        animateFly('m-slot', 'm-xp', mAct, () => { if(!mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); } checkLevelUp(monster, () => { if(!mDead) drawCardLogic(monster, 1); checkEndGame(); }); }, false, false, false);
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
     }, 700);
 }
@@ -1531,7 +1480,11 @@ function checkLevelUp(u, doneCb) {
                 u.xp.forEach(x => u.deck.push(x)); 
                 u.xp = []; 
                 
+                // MÁGICA 2.0: No PvP, usa a role ORIGINAL para a semente
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
+                    // Agora usamos u.originalRole ('player1' ou 'player2')
+                    // Isso garante que P1 e P2 usem a mesma semente para o mesmo personagem
+                    // Adicionei u.lvl para garantir que cada nível embaralhe diferente
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
                     shuffle(u.deck, s);
                     
@@ -1541,7 +1494,7 @@ function checkLevelUp(u, doneCb) {
                     }
 
                 } else {
-                    shuffle(u.deck);
+                    shuffle(u.deck); // PvE normal
                 }
 
                 let clones = document.getElementsByClassName('xp-anim-clone'); 
