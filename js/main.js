@@ -1,9 +1,9 @@
-// ARQUIVO: js/main.js (VERSÃO BACKUP + FIX TREINAR/LEVELUP)
+// ARQUIVO: js/main.js (VERSÃO FINAL 6.0: SINTAXE BLINDADA + SYNC VISUAL CORRIGIDO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, where, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
@@ -167,15 +167,11 @@ const MusicController = {
                 }
                 return; 
             } 
-            
-            // Troca de música (Fade Out da antiga)
             const maxVol = 0.5 * window.masterVol;
             if (this.currentTrackId && audios[this.currentTrackId]) {
                 const oldAudio = audios[this.currentTrackId];
                 this.fadeOut(oldAudio);
             }
-            
-            // Fade In da nova
             if (trackId && audios[trackId]) {
                 const newAudio = audios[trackId];
                 if (newAudio.readyState >= 2) newAudio.currentTime = 0;
@@ -278,7 +274,6 @@ window.showScreen = function(screenId) {
     }
 }
 
-// --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
 window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
     const ds = document.getElementById('deck-selection-screen');
@@ -316,7 +311,6 @@ window.openDeckSelector = function() {
     }
 })();
 
-// --- SELEÇÃO DE DECK ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
         try {
@@ -373,7 +367,7 @@ window.transitionToGame = function() {
     if(transText) transText.innerText = "PREPARANDO BATALHA...";
     if(transScreen) transScreen.classList.add('active');
     setTimeout(() => {
-        MusicController.play('bgm-loop'); // TROCA DE MÚSICA AQUI
+        MusicController.play('bgm-loop'); 
         let bg = document.getElementById('game-background');
         if(bg) bg.classList.remove('lobby-mode');
         window.showScreen('game-screen');
@@ -386,15 +380,10 @@ window.transitionToGame = function() {
     }, 500); 
 }
 
-// CORREÇÃO CRÍTICA: Transição para o Saguão (SEM PARAR MÚSICA)
 window.transitionToLobby = function(skipAnim = false) {
-    console.log("EXECUTANDO: Voltar ao Saguão... Pular Animação?", skipAnim);
-    
-    // 1. Limpeza Geral
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     document.body.classList.remove('force-landscape');
     
-    // 2. Esconder a tela de Deck imediatamente
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
         ds.style.opacity = '0';
@@ -403,7 +392,6 @@ window.transitionToLobby = function(skipAnim = false) {
         ds.classList.remove('active');
     }
 
-    // 3. Lógica de Navegação
     if (skipAnim) {
         window.goToLobby(false);
     } else {
@@ -431,7 +419,6 @@ window.goToLobby = async function(isAutoLogin = false) {
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
     
-    // O MusicController vai checar: se 'bgm-menu' já toca, ele mantém. Se não (veio do jogo), ele troca.
     MusicController.play('bgm-menu'); 
     createLobbyFlares();
     
@@ -498,12 +485,39 @@ function startGameFlow() {
     }
 }
 
-// === NOVA FUNÇÃO CRÍTICA: ATUALIZA O DB APÓS LEVEL UP (PARA LIMPAR XP NO BANCO) ===
+// === NOVO: COMMITAR O TURNO AO DB ===
+async function commitTurnToDB(pAct) {
+    if (!window.currentMatchId) return;
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    
+    try {
+        const matchSnap = await getDoc(matchRef);
+        if (!matchSnap.exists()) return;
+        const data = matchSnap.data();
+        
+        let xpArray, xpField;
+        if (window.myRole === 'player1') {
+            xpArray = data.player1.xp || [];
+            xpField = 'player1.xp';
+        } else {
+            xpArray = data.player2.xp || [];
+            xpField = 'player2.xp';
+        }
+        xpArray.push(pAct);
+        
+        await updateDoc(matchRef, { [xpField]: xpArray });
+        console.log(`Turno commitado: ${pAct} adicionada ao XP no DB.`);
+        
+    } catch (e) {
+        console.error("Erro ao commitar turno ao DB:", e);
+    }
+}
+
+// === NOVO: ATUALIZA O DB APÓS LEVEL UP (PARA LIMPAR XP NO BANCO) ===
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;
     const matchRef = doc(db, "matches", window.currentMatchId);
     
-    // Determina quais campos atualizar
     let updates = {};
     let targetKey = (u === player) ? (window.myRole) : (window.myRole === 'player1' ? 'player2' : 'player1');
     
@@ -552,34 +566,6 @@ async function applyTrainEffectPvP(matchId, myRole) {
     }
 }
 
-// === NOVO: COMMITAR O TURNO AO DB ===
-async function commitTurnToDB(pAct) {
-    if (!window.currentMatchId) return;
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    
-    try {
-        const matchSnap = await getDoc(matchRef);
-        if (!matchSnap.exists()) return;
-        const data = matchSnap.data();
-        
-        let xpArray, xpField;
-        if (window.myRole === 'player1') {
-            xpArray = data.player1.xp || [];
-            xpField = 'player1.xp';
-        } else {
-            xpArray = data.player2.xp || [];
-            xpField = 'player2.xp';
-        }
-        xpArray.push(pAct);
-        
-        await updateDoc(matchRef, { [xpField]: xpArray });
-        console.log(`Turno commitado: ${pAct} adicionada ao XP no DB.`);
-        
-    } catch (e) {
-        console.error("Erro ao commitar turno ao DB:", e);
-    }
-}
-
 function startPvPListener() {
     if(!window.currentMatchId) return;
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
@@ -587,7 +573,6 @@ function startPvPListener() {
     let namesUpdated = false;
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
     
-    // Helper para garantir role
     const ensureMyRole = (data) => {
         if (window.myRole) return;
         if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
@@ -600,7 +585,7 @@ function startPvPListener() {
         ensureMyRole(matchData);
 
         if (matchData.status === 'abandoned') {
-            if (matchData.abandonedBy && matchData.abandonedBy !== currentUser.uid) {
+            if (matchData.abandonedBy && currentUser && matchData.abandonedBy !== currentUser.uid) {
                 console.log("Oponente desconectou. Decretando vitória.");
                 monster.hp = 0;
                 updateUI();
@@ -619,7 +604,6 @@ function startPvPListener() {
             }
             return; 
         }
-
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
             if (window.myRole === 'player1') {
@@ -641,7 +625,7 @@ function startPvPListener() {
             const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
             const enemyData = matchData[enemyRole];
             
-            // 1. Se o inimigo tem mais cartas de XP no banco do que eu vejo na tela...
+            // Se o inimigo tem mais cartas de XP no banco do que eu vejo na tela...
             if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
                 // Descobre quais são as novas cartas
                 const startIdx = monster.xp.length;
@@ -655,20 +639,18 @@ function startPvPListener() {
                 }
                 // Atualiza o estado local do monstro
                 monster.xp = enemyData.xp;
-                if(enemyData.deck) monster.deck = [...enemyData.deck]; // Sincroniza deck também (importante pro TREINAR funcionar)
+                if(enemyData.deck) monster.deck = enemyData.deck;
                 updateUI();
                 
-                // 2. Verifica se o inimigo upou de nível (visualmente)
-                // Se a XP dele esvaziou no banco, mas localmente ainda temos cartas -> Level Up
+                // Verifica se o inimigo upou de nível (visualmente)
                 if (enemyData.xp.length === 0 && monster.xp.length >= 5) {
-                     monster.xp = []; // Limpa visualmente
+                     monster.xp = []; 
                      if(enemyData.deck) monster.deck = enemyData.deck;
                      if(enemyData.lvl) monster.lvl = enemyData.lvl;
                      checkLevelUp(monster, () => {}); 
                      updateUI();
                 }
             } else if (enemyData && enemyData.xp && enemyData.xp.length === 0 && monster.xp.length >= 5) {
-                // Caso especial: Reset de nível detectado diretamente
                 monster.xp = [];
                 if(enemyData.deck) monster.deck = enemyData.deck;
                 if(enemyData.lvl) monster.lvl = enemyData.lvl;
@@ -679,7 +661,6 @@ function startPvPListener() {
 
         if (matchData.p1Move && matchData.p2Move) {
             if (!window.isResolvingTurn) {
-                console.log("Turno pronto! Resolvendo...");
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
             }
         }
@@ -822,31 +803,16 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
-    // CORREÇÃO: LÓGICA DE XP EXTRA NO PVP
     function handleExtraXP(u) { 
-        // LÓGICA PVP:
         if (window.gameMode === 'pvp' && window.currentMatchId) {
-             // Se SOU EU (JOGADOR): Executo a lógica, atualizo o DB e animo localmente.
              if (u === player) {
                  if(u.deck.length > 0) {
-                     let card = u.deck.pop(); 
-                     // Manda atualizar o DB
+                     // Manda atualizar o DB (TRAIN EFFECT)
                      applyTrainEffectPvP(window.currentMatchId, window.myRole);
-                     // Animação Local
-                     animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
-                        u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
-                     }, false, false, (u.id === 'p')); // Força isPlayer=true para pegar a arte correta
+                     // NÃO ANIMA LOCALMENTE. O Listener vai animar.
                  }
              }
-             // Se É O INIMIGO (MONSTRO):
-             // NÃO FAZ NADA AQUI!
-             // Deixamos o listener (onSnapshot) detectar a mudança no DB e animar a carta correta.
-             // Isso evita que puxemos uma carta localmente que seja diferente da do DB.
-             else {
-                 return;
-             }
         } 
-        // LÓGICA PVE (Normal):
         else {
             if(u.deck.length > 0) { 
                 let card = u.deck.pop(); 
@@ -891,7 +857,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
-// ATUALIZAÇÃO: CHECK LEVEL UP COM SYNC RNG (CORRIGIDO)
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         let xpContainer = document.getElementById(u.id + '-xp'); 
@@ -927,18 +892,14 @@ function checkLevelUp(u, doneCb) {
                 u.xp.forEach(x => u.deck.push(x)); 
                 u.xp = []; 
                 
-                // MÁGICA 2.0: No PvP, usa a role ORIGINAL para a semente
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
                     shuffle(u.deck, s);
-                    
-                    // === SYNC IMPORTANTE: SÓ O DONO DO DECK ATUALIZA O BANCO ===
                     if (u === player) {
                         syncLevelUpToDB(u);
                     }
-
                 } else {
-                    shuffle(u.deck); // PvE normal
+                    shuffle(u.deck);
                 }
 
                 let clones = document.getElementsByClassName('xp-anim-clone'); 
