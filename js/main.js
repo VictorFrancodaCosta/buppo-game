@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO BACKUP + FIX TREINAR/LEVELUP)
+// ARQUIVO: js/main.js (BACKUP RESTAURADO + CORREÇÃO SEGURA DE LEVEL UP)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -497,27 +497,6 @@ function startGameFlow() {
     dealAllInitialCards();
     if(window.gameMode === 'pvp') {
         startPvPListener();
-    }
-}
-
-// === NOVA FUNÇÃO: ATUALIZAR O DB AO SUBIR DE NÍVEL (PARA LIMPAR XP) ===
-async function syncLevelUpToDB(u) {
-    if (!window.currentMatchId) return;
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    
-    // Determina quais campos atualizar
-    let updates = {};
-    let targetKey = (u === player) ? (window.myRole) : (window.myRole === 'player1' ? 'player2' : 'player1');
-    
-    updates[`${targetKey}.xp`] = [];        // Zera a XP no banco
-    updates[`${targetKey}.deck`] = u.deck;  // Salva o novo deck embaralhado
-    updates[`${targetKey}.lvl`] = u.lvl;    // Salva o novo nível
-    
-    try {
-        console.log(`[SYNC] Level Up sincronizado para ${targetKey}.`);
-        await updateDoc(matchRef, updates);
-    } catch(e) {
-        console.error("Erro ao sincronizar Level Up:", e);
     }
 }
 
