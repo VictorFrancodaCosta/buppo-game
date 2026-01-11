@@ -1,9 +1,9 @@
-// ARQUIVO: js/main.js (VERSÃO DE RECUPERAÇÃO DO BACKUP + CORREÇÃO TREINAR)
+// ARQUIVO: js/main.js (VERSÃO ESTÁVEL: CORREÇÃO VISUAL PVP + LEVEL UP)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, where, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
@@ -23,7 +23,7 @@ try {
     provider = new GoogleAuthProvider();
     console.log("Firebase Web Iniciado.");
 } catch (e) {
-    console.error("Erro Firebase:", e);
+    console.error("Erro Firebase (Modo Offline):", e);
 }
 
 // --- VARIÁVEIS GLOBAIS ---
@@ -495,7 +495,6 @@ function startPvPListener() {
     let namesUpdated = false;
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
     
-    // Helper para garantir role
     const ensureMyRole = (data) => {
         if (window.myRole) return;
         if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
@@ -527,6 +526,7 @@ function startPvPListener() {
             }
             return; 
         }
+
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
             if (window.myRole === 'player1') {
@@ -548,18 +548,17 @@ function startPvPListener() {
                 console.log("Turno pronto! Resolvendo...");
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
             }
-            return; 
         }
         
-        // --- SYNC VISUAL: Detecta cartas novas na XP do inimigo ---
+        // --- SYNC VISUAL: Detecta se o inimigo ganhou cartas extras (XP) ---
         if (window.gameMode === 'pvp' && window.myRole) {
             const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
             const enemyData = matchData[enemyRole];
             
-            // Se o inimigo tem mais cartas de XP no banco do que eu vejo na tela...
+            // Se a XP do inimigo no banco for maior que a local, ele usou TREINAR
             if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
-                const newCardsStartIndex = monster.xp.length;
-                for (let i = newCardsStartIndex; i < enemyData.xp.length; i++) {
+                const startIdx = monster.xp.length;
+                for (let i = startIdx; i < enemyData.xp.length; i++) {
                     const newCard = enemyData.xp[i];
                     // Anima a carta voando do baralho do inimigo para a XP dele
                     animateFly('m-deck-container', 'm-xp', newCard, () => {
@@ -570,8 +569,8 @@ function startPvPListener() {
                 if(enemyData.deck) monster.deck = [...enemyData.deck];
                 updateUI();
                 
-                // Se a XP esvaziou no banco, significa que ele upou
-                if (enemyData.xp.length === 0 && monster.xp.length > 0) {
+                // Se a XP zerou no banco, significa que ele upou
+                if (enemyData.xp.length === 0 && monster.xp.length >= 5) {
                      monster.xp = [];
                      if(enemyData.deck) monster.deck = enemyData.deck;
                      if(enemyData.lvl) monster.lvl = enemyData.lvl;
@@ -579,7 +578,7 @@ function startPvPListener() {
                      updateUI();
                 }
             } else if (enemyData && enemyData.xp && enemyData.xp.length === 0 && monster.xp.length >= 5) {
-                // Caso especial: Reset de nível detectado
+                // Caso especial: Reset de nível detectado diretamente
                 monster.xp = [];
                 if(enemyData.deck) monster.deck = enemyData.deck;
                 if(enemyData.lvl) monster.lvl = enemyData.lvl;
@@ -1333,162 +1332,6 @@ async function applyTrainEffectPvP(matchId, myRole) {
     }
 }
 
-// === NOVO: ATUALIZA O DB APÓS LEVEL UP (PARA LIMPAR XP NO BANCO) ===
-async function syncLevelUpToDB(u) {
-    if (!window.currentMatchId) return;
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    
-    // Determina quais campos atualizar
-    let updates = {};
-    let targetKey = "";
-    if (u === player) {
-        targetKey = (window.myRole === 'player1') ? 'player1' : 'player2';
-    } else {
-        targetKey = (window.myRole === 'player1') ? 'player2' : 'player1';
-    }
-    
-    updates[`${targetKey}.xp`] = [];        // Zera a XP no banco
-    updates[`${targetKey}.deck`] = u.deck;  // Salva o novo deck embaralhado
-    updates[`${targetKey}.lvl`] = u.lvl;    // Salva o novo nível
-    
-    try {
-        console.log(`[SYNC] Level Up sincronizado para ${targetKey}.`);
-        await updateDoc(matchRef, updates);
-    } catch(e) {
-        console.error("Erro ao sincronizar Level Up:", e);
-    }
-}
-
-// === NOVA FUNÇÃO: COMMITAR O TURNO AO DB ===
-async function commitTurnToDB(pAct) {
-    if (!window.currentMatchId) return;
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    
-    try {
-        const matchSnap = await getDoc(matchRef);
-        if (!matchSnap.exists()) return;
-        const data = matchSnap.data();
-        
-        let xpArray, xpField;
-        if (window.myRole === 'player1') {
-            xpArray = data.player1.xp || [];
-            xpField = 'player1.xp';
-        } else {
-            xpArray = data.player2.xp || [];
-            xpField = 'player2.xp';
-        }
-        xpArray.push(pAct);
-        
-        await updateDoc(matchRef, { [xpField]: xpArray });
-        
-    } catch (e) {
-        console.error("Erro ao commitar turno ao DB:", e);
-    }
-}
-
-function startPvPListener() {
-    if(!window.currentMatchId) return;
-    if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    let namesUpdated = false;
-    console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
-    
-    // Helper para garantir role
-    const ensureMyRole = (data) => {
-        if (window.myRole) return;
-        if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
-        else window.myRole = 'player2';
-    };
-
-    window.pvpUnsubscribe = onSnapshot(matchRef, (docSnap) => {
-        if (!docSnap.exists()) return;
-        const matchData = docSnap.data();
-        ensureMyRole(matchData);
-
-        if (matchData.status === 'abandoned') {
-            if (matchData.abandonedBy && currentUser && matchData.abandonedBy !== currentUser.uid) {
-                console.log("Oponente desconectou. Decretando vitória.");
-                monster.hp = 0;
-                updateUI();
-                isProcessing = true;
-                MusicController.stopCurrent();
-                setTimeout(() => {
-                    const title = document.getElementById('end-title');
-                    title.innerText = "VITÓRIA";
-                    title.className = "win-theme";
-                    showCenterText("OPONENTE DESISTIU!", "#ffd700");
-                    playSound('sfx-win');
-                    if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
-                    document.getElementById('end-screen').classList.add('visible');
-                    if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
-                }, 500);
-            }
-            return; 
-        }
-
-        if (!namesUpdated && matchData.player1 && matchData.player2) {
-            let myName, enemyName;
-            if (window.myRole === 'player1') {
-                myName = matchData.player1.name;
-                enemyName = matchData.player2.name;
-            } else {
-                myName = matchData.player2.name;
-                enemyName = matchData.player1.name;
-            }
-            const pNameEl = document.querySelector('#p-stats-cluster .unit-name');
-            const mNameEl = document.querySelector('#m-stats-cluster .unit-name');
-            if(pNameEl) pNameEl.innerText = myName;
-            if(mNameEl) mNameEl.innerText = enemyName;
-            namesUpdated = true; 
-        }
-
-        // --- CORREÇÃO DO VISUAL DO INIMIGO ---
-        if (window.gameMode === 'pvp' && window.myRole) {
-            const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
-            const enemyData = matchData[enemyRole];
-            
-            // Se o inimigo tem mais cartas de XP no banco do que eu vejo na tela...
-            if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
-                const startIdx = monster.xp.length;
-                for (let i = startIdx; i < enemyData.xp.length; i++) {
-                    const newCard = enemyData.xp[i];
-                    // Anima a carta voando do baralho do inimigo para a XP dele
-                    animateFly('m-deck-container', 'm-xp', newCard, () => {
-                         triggerXPGlow('m');
-                    }, false, false, false);
-                }
-                monster.xp = enemyData.xp;
-                if(enemyData.deck) monster.deck = [...enemyData.deck];
-                updateUI();
-                
-                // Verifica se houve level up visual do inimigo (se a XP dele esvaziou no banco)
-                if (enemyData.xp.length === 0 && monster.xp.length >= 5) {
-                     monster.xp = []; 
-                     if(enemyData.deck) monster.deck = enemyData.deck;
-                     if(enemyData.lvl) monster.lvl = enemyData.lvl;
-                     checkLevelUp(monster, () => {}); 
-                     updateUI();
-                }
-            } else if (enemyData && enemyData.xp && enemyData.xp.length === 0 && monster.xp.length >= 5) {
-                // Caso especial: Reset de nível detectado diretamente
-                monster.xp = [];
-                if(enemyData.deck) monster.deck = enemyData.deck;
-                if(enemyData.lvl) monster.lvl = enemyData.lvl;
-                checkLevelUp(monster, () => {});
-                updateUI();
-            }
-        }
-
-        if (matchData.p1Move && matchData.p2Move) {
-            if (!window.isResolvingTurn) {
-                console.log("Turno pronto! Resolvendo...");
-                resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
-            }
-            return; 
-        }
-    });
-}
-
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
     
@@ -2198,6 +2041,58 @@ async function enterMatch(matchId) {
         window.currentMatchId = matchId;
         window.transitionToGame(); 
     }, 1500);
+}
+
+// === FUNÇÃO NOVA: Sincroniza Level Up via Banco de Dados ===
+async function syncLevelUpToDB(u) {
+    if (!window.currentMatchId) return;
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    
+    let updates = {};
+    let targetKey = "";
+    if (u === player) {
+        targetKey = (window.myRole === 'player1') ? 'player1' : 'player2';
+    } else {
+        targetKey = (window.myRole === 'player1') ? 'player2' : 'player1';
+    }
+    
+    updates[`${targetKey}.xp`] = [];        // Zera a XP no banco
+    updates[`${targetKey}.deck`] = u.deck;  // Salva o novo deck embaralhado
+    updates[`${targetKey}.lvl`] = u.lvl;    // Salva o novo nível
+    
+    try {
+        console.log(`[SYNC] Level Up sincronizado para ${targetKey}.`);
+        await updateDoc(matchRef, updates);
+    } catch(e) {
+        console.error("Erro ao sincronizar Level Up:", e);
+    }
+}
+
+// === NOVO: COMMITAR O TURNO AO DB ===
+async function commitTurnToDB(pAct) {
+    if (!window.currentMatchId) return;
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    
+    try {
+        const matchSnap = await getDoc(matchRef);
+        if (!matchSnap.exists()) return;
+        const data = matchSnap.data();
+        
+        let xpArray, xpField;
+        if (window.myRole === 'player1') {
+            xpArray = data.player1.xp || [];
+            xpField = 'player1.xp';
+        } else {
+            xpArray = data.player2.xp || [];
+            xpField = 'player2.xp';
+        }
+        xpArray.push(pAct);
+        
+        await updateDoc(matchRef, { [xpField]: xpArray });
+        
+    } catch (e) {
+        console.error("Erro ao commitar turno ao DB:", e);
+    }
 }
 
 // Safety Loader: Start the game even if assets fail
