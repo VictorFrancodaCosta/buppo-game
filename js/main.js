@@ -1,9 +1,9 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL: BACKUP + STATE SYNC CORRIGIDO)
+// ARQUIVO: js/main.js (VERSÃO FINAL: BACKUP FUNCIONAL + CORREÇÃO TREINAR/PVP)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, where, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
@@ -485,34 +485,50 @@ function startGameFlow() {
     }
 }
 
-// === NOVA FUNÇÃO: Sincroniza o estado completo do jogador (XP/Deck/Level) ===
+// === NOVA FUNÇÃO: SALVA ESTADO DO JOGADOR (PARA CARTA TREINAR) ===
 async function savePvPState() {
     if (!window.currentMatchId) return;
     const matchRef = doc(db, "matches", window.currentMatchId);
     
     let updates = {};
-    const role = window.myRole;
+    const role = window.myRole; 
     
-    // Salva o estado atual do jogador no banco
     if (role === 'player1') {
-        updates['player1.xp'] = player.xp;
-        updates['player1.deck'] = player.deck;
+        updates['player1.deck'] = player.deck; // Salva deck atual (com carta a menos)
+        updates['player1.xp'] = player.xp;     // Salva XP atual (com carta a mais)
         updates['player1.lvl'] = player.lvl;
     } else {
-        updates['player2.xp'] = player.xp;
         updates['player2.deck'] = player.deck;
+        updates['player2.xp'] = player.xp;
         updates['player2.lvl'] = player.lvl;
     }
     
     try {
         await updateDoc(matchRef, updates);
-        console.log("Estado sincronizado com sucesso.");
     } catch(e) {
-        console.error("Erro ao sincronizar estado:", e);
+        console.error("Erro ao salvar estado PvP:", e);
     }
 }
 
-// CORREÇÃO CRÍTICA: LISTENER AGORA CONTROLA A ANIMAÇÃO DO INIMIGO
+// === NOVA FUNÇÃO: SINCRONIZA LEVEL UP ===
+async function syncLevelUpToDB(u) {
+    if (!window.currentMatchId) return;
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    
+    let updates = {};
+    let targetKey = (u === player) ? window.myRole : (window.myRole === 'player1' ? 'player2' : 'player1');
+    
+    updates[`${targetKey}.xp`] = [];        
+    updates[`${targetKey}.deck`] = u.deck;  
+    updates[`${targetKey}.lvl`] = u.lvl;    
+    
+    try {
+        await updateDoc(matchRef, updates);
+    } catch(e) {
+        console.error("Erro ao sincronizar Level Up:", e);
+    }
+}
+
 function startPvPListener() {
     if(!window.currentMatchId) return;
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
@@ -568,29 +584,27 @@ function startPvPListener() {
             namesUpdated = true; 
         }
 
-        // --- SYNC VISUAL: DETECTA ALTERAÇÕES NO XP DO INIMIGO ---
-        if (window.gameMode === 'pvp') {
+        // --- CORREÇÃO DO VISUAL DO INIMIGO ---
+        if (window.gameMode === 'pvp' && window.myRole) {
             const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
             const enemyData = matchData[enemyRole];
             
-            // Se o inimigo tem mais cartas na XP no banco do que eu vejo na tela...
+            // Se a XP do inimigo no DB for maior que a local, é uma nova carta (ex: Treinar)
             if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
-                // Descobre quais cartas são novas
                 const startIdx = monster.xp.length;
                 for (let i = startIdx; i < enemyData.xp.length; i++) {
                     const newCard = enemyData.xp[i];
-                    console.log(`[LISTENER] Inimigo ganhou XP extra: ${newCard}`);
                     // Anima a carta voando do baralho do inimigo para a XP dele
                     animateFly('m-deck-container', 'm-xp', newCard, () => {
                          triggerXPGlow('m');
                     }, false, false, false);
                 }
-                // Atualiza o estado local do monstro para bater com o banco
+                // Atualiza o estado local
                 monster.xp = enemyData.xp;
                 if(enemyData.deck) monster.deck = enemyData.deck; 
                 updateUI();
                 
-                // Verifica se houve level up visual do inimigo (se a XP dele esvaziou no banco)
+                // Se a XP resetou no banco, roda animação de level up do inimigo
                 if (enemyData.xp.length === 0 && monster.xp.length > 0) {
                      monster.xp = [];
                      if(enemyData.deck) monster.deck = enemyData.deck;
@@ -599,7 +613,7 @@ function startPvPListener() {
                      updateUI();
                 }
             } else if (enemyData && enemyData.xp && enemyData.xp.length === 0 && monster.xp.length >= 5) {
-                // Caso especial: Reset de nível detectado
+                // Caso fallback para level up
                 monster.xp = [];
                 if(enemyData.deck) monster.deck = enemyData.deck;
                 if(enemyData.lvl) monster.lvl = enemyData.lvl;
@@ -610,7 +624,6 @@ function startPvPListener() {
 
         if (matchData.p1Move && matchData.p2Move) {
             if (!window.isResolvingTurn) {
-                console.log("Turno pronto! Resolvendo...");
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
             }
         }
@@ -707,37 +720,6 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     }, 600);
 }
 
-// --- FUNÇÃO NOVA: TRAVAR JOGADA PVP NO BANCO ---
-async function lockInPvPMove(index, disarmChoice) {
-    const handContainer = document.getElementById('player-hand');
-    const cardEl = handContainer.children[index];
-    if(cardEl) {
-        cardEl.classList.add('card-selected');
-    }
-
-    window.pvpSelectedCardIndex = index;
-    isProcessing = true; 
-    showCenterText("AGUARDANDO OPONENTE...", "#ffd700");
-
-    const cardKey = player.hand[index];
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    
-    const updateField = (window.myRole === 'player1') ? 'p1Move' : 'p2Move';
-    const disarmField = (window.myRole === 'player1') ? 'p1Disarm' : 'p2Disarm';
-    
-    try {
-        await updateDoc(matchRef, {
-            [updateField]: cardKey,
-            [disarmField]: disarmChoice || null
-        });
-    } catch (e) {
-        console.error("Erro ao enviar jogada:", e);
-        isProcessing = false;
-        window.pvpSelectedCardIndex = null;
-        if(cardEl) cardEl.classList.remove('card-selected');
-    }
-}
-
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
     
@@ -784,17 +766,19 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
-    // --- CORREÇÃO DA LÓGICA DE XP EXTRA NO PVP ---
     function handleExtraXP(u) { 
-        // 1. Executa a lógica LOCALMENTE para ambos (garante fluidez imediata)
-        // No PvP, o listener vai sobrescrever isso se houver divergência, mas isso evita lag visual
         if(u.deck.length > 0) { 
             let card = u.deck.pop(); 
-            // Anima LOCALMENTE
+            // Animação LOCAL (para quem jogou ver imediatamente)
             animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
                 u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
             }, false, false, (u.id === 'p')); 
-        }
+            
+            // Se for PvP e eu sou o dono da carta, salvo o estado no banco
+            if (window.gameMode === 'pvp' && window.currentMatchId && u === player) {
+                savePvPState();
+            }
+        } 
     }
 
     if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
@@ -802,25 +786,16 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
 
     setTimeout(() => {
         animateFly('p-slot', 'p-xp', pAct, () => { 
-            if(!pDead) { 
-                player.xp.push(pAct); triggerXPGlow('p'); updateUI(); 
-            } 
-            
-            // --- SYNC NO FINAL DA ANIMAÇÃO ---
-            // Se for PvP e eu (player) estou vivo, salvo meu estado completo no banco
-            if (window.gameMode === 'pvp' && !pDead) {
-                savePvPState();
-            }
-
+            if(!pDead) { player.xp.push(pAct); triggerXPGlow('p'); updateUI(); }
+            // Salva estado após jogar carta no PvP
+            if (window.gameMode === 'pvp' && !pDead) { savePvPState(); }
             checkLevelUp(player, () => { 
                 if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); 
             }); 
         }, false, false, true);
 
         animateFly('m-slot', 'm-xp', mAct, () => { 
-            if(!mDead) { 
-                monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); 
-            } 
+            if(!mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); } 
             checkLevelUp(monster, () => { 
                 if(!mDead) drawCardLogic(monster, 1); 
                 checkEndGame(); 
@@ -868,15 +843,13 @@ function checkLevelUp(u, doneCb) {
                 u.xp = []; 
                 
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
-                    // Seed fixa para garantir que ambos embaralhem igual
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
                     shuffle(u.deck, s);
                     
-                    // Se fui EU que subi de nível, salvo o novo estado no banco
+                    // Sincroniza o reset de XP com o banco se for o player local
                     if (u === player) {
-                        savePvPState();
+                        syncLevelUpToDB(u);
                     }
-
                 } else {
                     shuffle(u.deck); // PvE normal
                 }
