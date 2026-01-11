@@ -1,10 +1,9 @@
-// ARQUIVO: js/main.js (VERSÃO BACKUP RESTAURADA + FIXES VISUAIS E DE LOOP)
-
+```javascript:disable-run
+// ARQUIVO: js/main.js (BACKUP RESTAURADO + CORREÇÃO SEGURA DE LEVEL UP)
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
@@ -14,7 +13,6 @@ const firebaseConfig = {
     messagingSenderId: "950871979140",
     appId: "1:950871979140:web:f2dba12900500c52053ed1"
 };
-
 let app, auth, db, provider;
 try {
     app = initializeApp(firebaseConfig);
@@ -25,15 +23,14 @@ try {
 } catch (e) {
     console.error("Erro Firebase:", e);
 }
-
 // --- VARIÁVEIS GLOBAIS ---
 let currentUser = null;
-const audios = {}; 
-let assetsLoaded = 0; 
-window.gameAssets = []; 
-window.pvpUnsubscribe = null; 
+const audios = {};
+let assetsLoaded = 0;
+window.gameAssets = [];
+window.pvpUnsubscribe = null;
+// Variável para controlar o loop de busca de partida
 let searchInterval = null;
-
 // --- ASSETS LOCAIS ---
 const MAGE_ASSETS = {
     'ATAQUE': 'assets/img/carta_ataque_mago.png',
@@ -44,7 +41,6 @@ const MAGE_ASSETS = {
     'DECK_IMG': 'assets/img/deck_verso_mago.png',
     'DECK_SELECT': 'assets/img/card_selecao_mago.png'
 };
-
 const ASSETS_TO_LOAD = {
     images: [
         'assets/img/logo_buppo.png',
@@ -72,53 +68,50 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_treinar_mago.png'
     ],
     audio: [
-        { id: 'bgm-menu', src: 'assets/audio/musica_menu.wav', loop: true }, 
+        { id: 'bgm-menu', src: 'assets/audio/musica_menu.wav', loop: true },
         { id: 'bgm-loop', src: 'assets/audio/musica_batalha.mp3', loop: true },
-        { id: 'sfx-nav', src: 'assets/audio/sfx_click.mp3' }, 
-        { id: 'sfx-deal', src: 'assets/audio/sfx_dar_cartas.mp3' }, 
+        { id: 'sfx-nav', src: 'assets/audio/sfx_click.mp3' },
+        { id: 'sfx-deal', src: 'assets/audio/sfx_dar_cartas.mp3' },
         { id: 'sfx-play', src: 'assets/audio/sfx_jogar_carta.mp3' },
-        { id: 'sfx-hit', src: 'assets/audio/sfx_dano_fisico.mp3' }, 
-        { id: 'sfx-hit-mage', src: 'assets/audio/sfx_dano_magico.mp3' }, 
-        { id: 'sfx-block', src: 'assets/audio/sfx_bloqueio.mp3' }, 
-        { id: 'sfx-block-mage', src: 'assets/audio/sfx_bloqueio_magico.mp3' }, 
-        { id: 'sfx-heal', src: 'assets/audio/sfx_cura.mp3' }, 
-        { id: 'sfx-levelup', src: 'assets/audio/sfx_levelup.mp3' }, 
-        { id: 'sfx-train', src: 'assets/audio/sfx_treinar.mp3' }, 
-        { id: 'sfx-disarm', src: 'assets/audio/sfx_desarmar.mp3' }, 
-        { id: 'sfx-cine', src: 'assets/audio/ambience_cine.mp3', loop: true }, 
-        { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' }, 
-        { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' }, 
-        { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' }, 
-        { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' }, 
+        { id: 'sfx-hit', src: 'assets/audio/sfx_dano_fisico.mp3' },
+        { id: 'sfx-hit-mage', src: 'assets/audio/sfx_dano_magico.mp3' },
+        { id: 'sfx-block', src: 'assets/audio/sfx_bloqueio.mp3' },
+        { id: 'sfx-block-mage', src: 'assets/audio/sfx_bloqueio_magico.mp3' },
+        { id: 'sfx-heal', src: 'assets/audio/sfx_cura.mp3' },
+        { id: 'sfx-levelup', src: 'assets/audio/sfx_levelup.mp3' },
+        { id: 'sfx-train', src: 'assets/audio/sfx_treinar.mp3' },
+        { id: 'sfx-disarm', src: 'assets/audio/sfx_desarmar.mp3' },
+        { id: 'sfx-cine', src: 'assets/audio/ambience_cine.mp3', loop: true },
+        { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' },
+        { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' },
+        { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' },
+        { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' },
         { id: 'sfx-lose', src: 'assets/audio/sfx_derrota.mp3' },
         { id: 'sfx-tie', src: 'assets/audio/sfx_empate.mp3' }
     ]
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
-
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
-let isProcessing = false; let turnCount = 1; let playerHistory = []; 
-window.masterVol = 1.0; 
-let isLethalHover = false; 
+let isProcessing = false; let turnCount = 1; let playerHistory = [];
+window.masterVol = 1.0;
+let isLethalHover = false;
 let mixerInterval = null;
-
 // --- ESTADOS GLOBAIS ---
 window.isMatchStarting = false;
 window.currentDeck = 'knight';
-window.myRole = null; 
+window.myRole = null;
 window.currentMatchId = null;
-window.pvpSelectedCardIndex = null; 
-window.isResolvingTurn = false; 
-window.pvpStartData = null; 
-
+window.pvpSelectedCardIndex = null;
+window.isResolvingTurn = false;
+window.pvpStartData = null;
+window.pendingEnemyPlayed = null;
 function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
         return MAGE_ASSETS[cardKey];
     }
     return CARDS_DB[cardKey].img;
 }
-
 function stringToSeed(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -126,9 +119,8 @@ function stringToSeed(str) {
     }
     return Math.abs(hash);
 }
-
 function shuffle(array, seed = null) {
-    let rng = Math.random; 
+    let rng = Math.random;
     if (seed !== null) {
         let currentSeed = seed;
         rng = function() {
@@ -141,7 +133,6 @@ function shuffle(array, seed = null) {
         [array[i], array[j]] = [array[j], array[i]];
     }
 }
-
 function generateShuffledDeck() {
     let deck = [];
     for(let k in DECK_TEMPLATE) {
@@ -150,7 +141,6 @@ function generateShuffledDeck() {
     shuffle(deck);
     return deck;
 }
-
 const MusicController = {
     currentTrackId: null,
     fadeTimer: null,
@@ -165,18 +155,22 @@ const MusicController = {
                     audio.play().catch(()=>{});
                     this.fadeIn(audio, 0.5 * window.masterVol);
                 }
-                return; 
-            } 
+                return; // Já está tocando a música certa, não faz nada (SEM CORTES)
+            }
+           
+            // Troca de música (Fade Out da antiga)
             const maxVol = 0.5 * window.masterVol;
             if (this.currentTrackId && audios[this.currentTrackId]) {
                 const oldAudio = audios[this.currentTrackId];
                 this.fadeOut(oldAudio);
             }
+           
+            // Fade In da nova
             if (trackId && audios[trackId]) {
                 const newAudio = audios[trackId];
                 if (newAudio.readyState >= 2) newAudio.currentTime = 0;
                 if (!window.isMuted) {
-                    newAudio.volume = 0; 
+                    newAudio.volume = 0;
                     newAudio.play().catch(()=>{});
                     this.fadeIn(newAudio, maxVol);
                 }
@@ -218,7 +212,6 @@ const MusicController = {
         }, 50);
     }
 };
-
 window.isMuted = false;
 window.toggleMute = function() {
     window.isMuted = !window.isMuted;
@@ -232,32 +225,29 @@ window.toggleMute = function() {
         if(audio && audio.paused) audio.play().catch(()=>{});
     }
 }
-
-window.playNavSound = function() { 
-    let s = audios['sfx-nav']; 
-    if(s) { 
+window.playNavSound = function() {
+    let s = audios['sfx-nav'];
+    if(s) {
         try {
-            if (s.readyState >= 2) s.currentTime = 0; 
+            if (s.readyState >= 2) s.currentTime = 0;
             s.play().catch(()=>{});
         } catch(e) { console.warn("NavSound", e); }
-    } 
+    }
 };
-
 let lastHoverTime = 0;
 window.playUIHoverSound = function() {
     let now = Date.now();
-    if (now - lastHoverTime < 50) return; 
+    if (now - lastHoverTime < 50) return;
     let base = audios['sfx-ui-hover'];
-    if(base && !window.isMuted) { 
+    if(base && !window.isMuted) {
         try {
-            let s = base.cloneNode(); 
+            let s = base.cloneNode();
             s.volume = 0.3 * (window.masterVol || 1.0);
-            s.play().catch(()=>{}); 
+            s.play().catch(()=>{});
             lastHoverTime = now;
         } catch(e){}
     }
 };
-
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
@@ -265,7 +255,7 @@ window.showScreen = function(screenId) {
     const surrenderBtn = document.getElementById('btn-surrender');
     if(screenId === 'game-screen') {
         if(surrenderBtn) surrenderBtn.style.display = 'block';
-        if(configBtn) configBtn.style.display = 'flex'; 
+        if(configBtn) configBtn.style.display = 'flex';
     } else {
         if(surrenderBtn) surrenderBtn.style.display = 'none';
         if(configBtn) configBtn.style.display = 'none';
@@ -273,7 +263,6 @@ window.showScreen = function(screenId) {
         if(panel) { panel.style.display = 'none'; panel.classList.remove('active'); }
     }
 }
-
 // --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
 window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
@@ -281,7 +270,7 @@ window.openDeckSelector = function() {
     if(ds) {
         ds.style.display = 'flex';
         ds.style.opacity = '1';
-        ds.style.pointerEvents = 'auto'; 
+        ds.style.pointerEvents = 'auto';
         const options = document.querySelectorAll('.deck-option');
         options.forEach(opt => {
             opt.style = "";
@@ -299,7 +288,6 @@ window.openDeckSelector = function() {
     } catch (e) { console.log(e); }
     window.showScreen('deck-selection-screen');
 };
-
 (function createRotateOverlay() {
     if (!document.getElementById('rotate-overlay')) {
         const div = document.createElement('div');
@@ -311,7 +299,6 @@ window.openDeckSelector = function() {
         document.body.appendChild(div);
     }
 })();
-
 // --- SELEÇÃO DE DECK ---
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select']) {
@@ -320,16 +307,14 @@ window.selectDeck = function(deckType) {
             audios['sfx-deck-select'].play().catch(()=>{});
         } catch(e){}
     }
-
-    window.currentDeck = deckType; 
-    
-    document.body.classList.remove('theme-cavaleiro', 'theme-mago'); 
+    window.currentDeck = deckType;
+   
+    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
     if (deckType === 'mage') {
         document.body.classList.add('theme-mago');
     } else {
         document.body.classList.add('theme-cavaleiro');
     }
-
     const options = document.querySelectorAll('.deck-option');
     options.forEach(opt => {
         if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
@@ -346,23 +331,20 @@ window.selectDeck = function(deckType) {
             opt.style.filter = "grayscale(100%)";
         }
     });
-
     setTimeout(() => {
         const selectionScreen = document.getElementById('deck-selection-screen');
         selectionScreen.style.transition = "opacity 0.5s";
         selectionScreen.style.opacity = "0";
-
         setTimeout(() => {
             selectionScreen.style.display = 'none';
             if (window.gameMode === 'pvp') {
-                initiateMatchmaking(); 
+                initiateMatchmaking();
             } else {
                 window.transitionToGame();
             }
         }, 500);
     }, 400);
 };
-
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
@@ -373,32 +355,30 @@ window.transitionToGame = function() {
         let bg = document.getElementById('game-background');
         if(bg) bg.classList.remove('lobby-mode');
         window.showScreen('game-screen');
-        const handEl = document.getElementById('player-hand'); 
+        const handEl = document.getElementById('player-hand');
         if(handEl) handEl.innerHTML = '';
         setTimeout(() => {
             if(transScreen) transScreen.classList.remove('active');
-            setTimeout(() => { startGameFlow(); }, 200); 
+            setTimeout(() => { startGameFlow(); }, 200);
         }, 1500);
-    }, 500); 
+    }, 500);
 }
-
 // CORREÇÃO CRÍTICA: Transição para o Saguão (SEM PARAR MÚSICA)
 window.transitionToLobby = function(skipAnim = false) {
     console.log("EXECUTANDO: Voltar ao Saguão... Pular Animação?", skipAnim);
-    
+   
     // 1. Limpeza Geral
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     document.body.classList.remove('force-landscape');
-    
+   
     // 2. Esconder a tela de Deck imediatamente
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
         ds.style.opacity = '0';
         ds.style.pointerEvents = 'none';
-        ds.style.display = 'none'; 
+        ds.style.display = 'none';
         ds.classList.remove('active');
     }
-
     // 3. Lógica de Navegação
     if (skipAnim) {
         window.goToLobby(false);
@@ -407,30 +387,29 @@ window.transitionToLobby = function(skipAnim = false) {
         const transText = transScreen.querySelector('.trans-text');
         if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
         if(transScreen) transScreen.classList.add('active');
-        
+       
         setTimeout(() => {
-            window.goToLobby(false); 
+            window.goToLobby(false);
             setTimeout(() => {
                 if(transScreen) transScreen.classList.remove('active');
-            }, 1000); 
+            }, 1000);
         }, 500);
     }
 }
-
 window.goToLobby = async function(isAutoLogin = false) {
     if(!currentUser) {
         window.showScreen('start-screen');
-        MusicController.play('bgm-menu'); 
+        MusicController.play('bgm-menu');
         return;
     }
-    isProcessing = false; 
+    isProcessing = false;
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
-    
+   
     // O MusicController vai checar: se 'bgm-menu' já toca, ele mantém. Se não (veio do jogo), ele troca.
-    MusicController.play('bgm-menu'); 
+    MusicController.play('bgm-menu');
     createLobbyFlares();
-    
+   
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
@@ -456,20 +435,19 @@ window.goToLobby = async function(isAutoLogin = false) {
         document.getElementById('ranking-content').innerHTML = html;
     });
     window.showScreen('lobby-screen');
-    document.getElementById('end-screen').classList.remove('visible'); 
+    document.getElementById('end-screen').classList.remove('visible');
 };
-
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
-    isProcessing = false; 
-    window.isResolvingTurn = false; 
-    window.pvpSelectedCardIndex = null; 
-    startCinematicLoop(); 
+    isProcessing = false;
+    window.isResolvingTurn = false;
+    window.pvpSelectedCardIndex = null;
+    startCinematicLoop();
     window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand');
     if (handEl) {
         handEl.innerHTML = '';
-        handEl.classList.add('preparing'); 
+        handEl.classList.add('preparing');
     }
     if (window.gameMode === 'pvp' && window.pvpStartData) {
         if (window.myRole === 'player1') {
@@ -480,20 +458,19 @@ function startGameFlow() {
             resetUnit(monster, window.pvpStartData.player1.deck, 'player1');
         }
     } else {
-        resetUnit(player, null, 'pve'); 
-        resetUnit(monster, null, 'pve'); 
+        resetUnit(player, null, 'pve');
+        resetUnit(monster, null, 'pve');
     }
-    turnCount = 1; 
+    turnCount = 1;
     playerHistory = [];
-    drawCardLogic(monster, 6); 
-    drawCardLogic(player, 6); 
-    updateUI(); 
+    drawCardLogic(monster, 6);
+    drawCardLogic(player, 6);
+    updateUI();
     dealAllInitialCards();
     if(window.gameMode === 'pvp') {
         startPvPListener();
     }
 }
-
 // CORREÇÃO CRÍTICA: LISTENER AGORA CONTROLA A ANIMAÇÃO DO INIMIGO
 function startPvPListener() {
     if(!window.currentMatchId) return;
@@ -501,19 +478,17 @@ function startPvPListener() {
     const matchRef = doc(db, "matches", window.currentMatchId);
     let namesUpdated = false;
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
-    
+   
     // Helper para garantir role
     const ensureMyRole = (data) => {
         if (window.myRole) return;
         if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
         else window.myRole = 'player2';
     };
-
     window.pvpUnsubscribe = onSnapshot(matchRef, (docSnap) => {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
         ensureMyRole(matchData);
-
         if (matchData.status === 'abandoned') {
             if (matchData.abandonedBy && matchData.abandonedBy !== currentUser.uid) {
                 console.log("Oponente desconectou. Decretando vitória.");
@@ -532,7 +507,7 @@ function startPvPListener() {
                     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
                 }, 500);
             }
-            return; 
+            return;
         }
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
@@ -547,75 +522,85 @@ function startPvPListener() {
             const mNameEl = document.querySelector('#m-stats-cluster .unit-name');
             if(pNameEl) pNameEl.innerText = myName;
             if(mNameEl) mNameEl.innerText = enemyName;
-            namesUpdated = true; 
+            namesUpdated = true;
         }
-
+       
+        // --- SYNC EXTRA: ATUALIZA VISUALMENTE XP (TRY/CATCH PARA NÃO TRAVAR O TURNO) ---
+        try {
+            if (window.gameMode === 'pvp' && window.myRole) {
+                const myData = matchData[window.myRole];
+                const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
+                const enemyData = matchData[enemyRole];
+               
+                // --- SYNC MEU XP (VOCÊ) ---
+                if (myData && myData.xp) {
+                    if (myData.xp.length > player.xp.length) {
+                        // No animation for self
+                    }
+                    player.xp = myData.xp;
+                    if(myData.deck) player.deck = [...myData.deck];
+                    updateUI();
+                }
+                // --- SYNC XP INIMIGO ---
+                if (enemyData && enemyData.xp) {
+                    if (enemyData.xp.length > monster.xp.length) {
+                        const newCardsStartIndex = monster.xp.length;
+                        for (let i = newCardsStartIndex; i < enemyData.xp.length; i++) {
+                            const newCard = enemyData.xp[i];
+                            console.log(`[LISTENER-ENEMY] Inimigo ganhou XP: ${newCard}`);
+                            const from = (window.pendingEnemyPlayed && newCard === window.pendingEnemyPlayed) ? 'm-slot' : 'm-deck-container';
+                            animateFly(from, 'm-xp', newCard, () => {
+                                 triggerXPGlow('m');
+                            }, false, false, false);
+                            if (window.pendingEnemyPlayed && newCard === window.pendingEnemyPlayed) window.pendingEnemyPlayed = null;
+                        }
+                    }
+                    monster.xp = enemyData.xp;
+                    if(enemyData.deck) monster.deck = [...enemyData.deck];
+                    updateUI();
+                   
+                    // IMPORTANTE: VERIFICA SE O INIMIGO UPOU DE NÍVEL PELO LISTENER
+                    checkLevelUp(monster, () => {});
+                }
+            }
+        } catch (syncError) {
+            console.error("Erro na sincronização visual (ignorado para não travar jogo):", syncError);
+        }
+        // --- VERIFICAÇÃO DE TURNO ---
         if (matchData.p1Move && matchData.p2Move) {
             if (!window.isResolvingTurn) {
                 console.log("Turno pronto! Resolvendo...");
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
             }
-            return; 
-        }
-        
-        // --- SYNC VISUAL DO INIMIGO (CORRIGIDO) ---
-        if (window.gameMode === 'pvp' && window.myRole) {
-            const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
-            const enemyData = matchData[enemyRole];
-            
-            // Se o inimigo tem mais cartas de XP no banco do que eu vejo na tela...
-            if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
-                const startIdx = monster.xp.length;
-                for (let i = startIdx; i < enemyData.xp.length; i++) {
-                    const newCard = enemyData.xp[i];
-                    // Anima a carta voando do baralho do inimigo para a XP dele
-                    animateFly('m-deck-container', 'm-xp', newCard, () => {
-                         triggerXPGlow('m');
-                    }, false, false, false);
-                }
-                monster.xp = enemyData.xp;
-                if(enemyData.deck) monster.deck = [...enemyData.deck];
-                updateUI();
-                checkLevelUp(monster, () => {}); 
-            } else if (enemyData && enemyData.xp && enemyData.xp.length === 0 && monster.xp.length >= 5) {
-                // Caso especial: Reset de nível (XP zerou no banco)
-                monster.xp = [];
-                if(enemyData.deck) monster.deck = enemyData.deck;
-                if(enemyData.lvl) monster.lvl = enemyData.lvl;
-                checkLevelUp(monster, () => {});
-                updateUI();
-            }
         }
     });
 }
-
-function checkEndGame(){ 
-    if(player.hp<=0 || monster.hp<=0) { 
-        isProcessing = true; 
-        isLethalHover = false; 
+function checkEndGame(){
+    if(player.hp<=0 || monster.hp<=0) {
+        isProcessing = true;
+        isLethalHover = false;
         MusicController.stopCurrent();
-        setTimeout(()=>{ 
-            let title = document.getElementById('end-title'); 
+        setTimeout(()=>{
+            let title = document.getElementById('end-title');
             let isWin = player.hp > 0;
             let isTie = player.hp <= 0 && monster.hp <= 0;
-            if(isTie) { 
-                title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); 
-            } else if(isWin) { 
-                title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); 
-            } else { 
-                title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); 
-            } 
-            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(window.gameMode); } 
+            if(isTie) {
+                title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie');
+            } else if(isWin) {
+                title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win');
+            } else {
+                title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose');
+            }
+            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(window.gameMode); }
             else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(window.gameMode); }
-            document.getElementById('end-screen').classList.add('visible'); 
-        }, 1000); 
-    } else { isProcessing = false; } 
+            document.getElementById('end-screen').classList.add('visible');
+        }, 1000);
+    } else { isProcessing = false; }
 }
-
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
-        window.goToLobby(true); 
+        window.goToLobby(true);
     } else {
         currentUser = null;
         window.showScreen('start-screen');
@@ -623,12 +608,11 @@ onAuthStateChanged(auth, (user) => {
         if(bg) bg.classList.remove('lobby-mode');
         const btnTxt = document.getElementById('btn-text');
         if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
-        MusicController.play('bgm-menu'); 
+        MusicController.play('bgm-menu');
     }
 });
-
 window.googleLogin = async function() {
-    window.playNavSound(); 
+    window.playNavSound();
     const btnText = document.getElementById('btn-text');
     btnText.innerText = "CONECTANDO...";
     try {
@@ -639,12 +623,10 @@ window.googleLogin = async function() {
         setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000);
     }
 };
-
 window.handleLogout = function() {
     window.playNavSound();
     signOut(auth).then(() => { location.reload(); });
 };
-
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!currentUser) return;
     try {
@@ -653,7 +635,7 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
         if(userSnap.exists()) {
             const data = userSnap.data();
             let modoAtual = window.gameMode || 'pve';
-            let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
+            let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1;
             await updateDoc(userRef, {
                 totalWins: (data.totalWins || 0) + 1,
                 score: (data.score || 0) + pontosGanhos
@@ -662,7 +644,6 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
         }
     } catch(e) { console.error("Erro ao salvar vitória:", e); }
 };
-
 window.registrarDerrotaOnline = async function(modo = 'pve') {
     if(!currentUser) return;
     try {
@@ -680,13 +661,11 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
         }
     } catch(e) { console.error("Erro ao salvar derrota:", e); }
 };
-
 window.restartMatch = function() {
     document.getElementById('end-screen').classList.remove('visible');
     setTimeout(startGameFlow, 50);
-    MusicController.play('bgm-loop'); 
+    MusicController.play('bgm-loop');
 }
-
 async function notifyAbandonment() {
     if (!window.currentMatchId || !currentUser) return;
     console.log("Tentando notificar abandono ao servidor...");
@@ -701,18 +680,17 @@ async function notifyAbandonment() {
         console.error("Erro ao notificar abandono:", e);
     }
 }
-
 window.abandonMatch = function() {
     if(document.getElementById('game-screen').classList.contains('active')) {
-        window.toggleConfig(); 
+        window.toggleConfig();
         window.openModal(
-            "ABANDONAR?", 
-            "Sair da partida contará como DERROTA. Tem certeza?", 
-            ["CANCELAR", "SAIR"], 
-            async (choice) => { 
+            "ABANDONAR?",
+            "Sair da partida contará como DERROTA. Tem certeza?",
+            ["CANCELAR", "SAIR"],
+            async (choice) => {
                 if (choice === "SAIR") {
                     if (window.gameMode === 'pvp') {
-                        await notifyAbandonment(); 
+                        await notifyAbandonment();
                     }
                     window.registrarDerrotaOnline(window.gameMode);
                     window.transitionToLobby();
@@ -721,32 +699,30 @@ window.abandonMatch = function() {
         );
     }
 }
-
 function preloadGame() {
     console.log("Iniciando Preload...");
-    ASSETS_TO_LOAD.images.forEach(src => { 
-        let img = new Image(); 
-        img.src = src; 
+    ASSETS_TO_LOAD.images.forEach(src => {
+        let img = new Image();
+        img.src = src;
         window.gameAssets.push(img);
-        img.onload = () => updateLoader(); 
-        img.onerror = () => updateLoader(); 
+        img.onload = () => updateLoader();
+        img.onerror = () => updateLoader();
     });
-    ASSETS_TO_LOAD.audio.forEach(a => { 
-        let s = new Audio(); 
-        s.src = a.src; 
-        s.preload = 'auto'; 
-        if(a.loop) s.loop = true; 
-        audios[a.id] = s; 
+    ASSETS_TO_LOAD.audio.forEach(a => {
+        let s = new Audio();
+        s.src = a.src;
+        s.preload = 'auto';
+        if(a.loop) s.loop = true;
+        audios[a.id] = s;
         window.gameAssets.push(s);
-        s.onloadedmetadata = () => updateLoader(); 
-        s.onerror = () => updateLoader(); 
-        setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); 
+        s.onloadedmetadata = () => updateLoader();
+        s.onerror = () => updateLoader();
+        setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000);
     });
 }
-
 function updateLoader() {
-    assetsLoaded++; 
-    let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
+    assetsLoaded++;
+    let pct = Math.min(100, (assetsLoaded / totalAssets) * 100);
     const fill = document.getElementById('loader-fill');
     if(fill) fill.style.width = pct + '%';
     if(assetsLoaded >= totalAssets) {
@@ -762,15 +738,14 @@ function updateLoader() {
                 initGlobalHoverLogic();
                 window.hoverLogicInitialized = true;
             }
-        }, 800); 
-        document.body.addEventListener('click', () => { 
+        }, 800);
+        document.body.addEventListener('click', () => {
             if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) {
                 MusicController.play('bgm-menu');
             }
         }, { once: true });
     }
 }
-
 function initGlobalHoverLogic() {
     let lastTarget = null;
     document.body.addEventListener('mouseover', (e) => {
@@ -784,104 +759,93 @@ function initGlobalHoverLogic() {
         }
     });
 }
-
 window.onload = function() {
     const btnSound = document.getElementById('btn-sound');
     if (btnSound) {
-        btnSound.onclick = null; 
+        btnSound.onclick = null;
         btnSound.addEventListener('click', (e) => {
-            e.stopPropagation(); 
+            e.stopPropagation();
             window.toggleMute();
         });
     }
-
     const deckScreen = document.getElementById('deck-selection-screen');
     if (deckScreen) {
         let backBtn = deckScreen.querySelector('.btn-back');
         if (!backBtn) backBtn = deckScreen.querySelector('.circle-btn');
-        if (!backBtn) backBtn = deckScreen.querySelector('button'); 
-
+        if (!backBtn) backBtn = deckScreen.querySelector('button');
         if (backBtn) {
             console.log("Botão de voltar do deck encontrado e vinculado via JS.");
-            backBtn.style.zIndex = "9999"; 
-            backBtn.style.pointerEvents = "all"; 
-            
+            backBtn.style.zIndex = "9999";
+            backBtn.style.pointerEvents = "all";
+           
             backBtn.onclick = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log("CLIQUE DETECTADO NO BOTÃO VOLTAR");
                 window.playNavSound();
-                window.transitionToLobby(true); 
+                window.transitionToLobby(true);
             };
         } else {
             console.warn("AVISO: Botão de voltar não encontrado no HTML da tela de deck.");
         }
     }
 };
-
 document.addEventListener('click', function(e) {
     const target = e.target.closest('#deck-selection-screen .circle-btn, #deck-selection-screen .btn-back, #deck-selection-screen button, .return-btn');
-    
+   
     if (target) {
         console.log("Botão de voltar detectado via Delegação.");
         e.stopPropagation();
         window.playNavSound();
-        window.transitionToLobby(true); 
+        window.transitionToLobby(true);
     }
 });
-
 window.addEventListener('beforeunload', () => {
     if (window.gameMode === 'pvp' && window.currentMatchId && !document.getElementById('end-screen').classList.contains('visible')) {
         notifyAbandonment();
     }
 });
-
 window.toggleFullScreen = function() {
-    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
+    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); }
     else { if (document.exitFullscreen) { document.exitFullscreen(); } }
 }
-
 function createLobbyFlares() {
     const container = document.getElementById('lobby-particles');
     if(!container) return;
-    container.innerHTML = ''; 
+    container.innerHTML = '';
     for(let i=0; i < 70; i++) {
         let flare = document.createElement('div');
         flare.className = 'lobby-flare';
         flare.style.left = Math.random() * 100 + '%';
         flare.style.top = Math.random() * 100 + '%';
-        let size = 4 + Math.random() * 18; 
+        let size = 4 + Math.random() * 18;
         flare.style.width = size + 'px';
         flare.style.height = size + 'px';
-        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
+        flare.style.animationDuration = (3 + Math.random() * 5) + 's';
         flare.style.animationDelay = (Math.random() * 4) + 's';
         container.appendChild(flare);
     }
 }
-
 function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {try { c.volume = 0; c.play().catch(()=>{}); } catch(e){} if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
-
-function updateAudioMixer() { 
-    const cineAudio = audios['sfx-cine']; 
-    if(!cineAudio) return; 
+function updateAudioMixer() {
+    const cineAudio = audios['sfx-cine'];
+    if(!cineAudio) return;
     const mVol = window.masterVol || 1.0;
-    const maxCine = 0.6 * mVol; 
-    let targetCine = isLethalHover ? maxCine : 0; 
+    const maxCine = 0.6 * mVol;
+    let targetCine = isLethalHover ? maxCine : 0;
     if(window.isMuted) { try { cineAudio.volume = 0; } catch(e){} return; }
     try {
-        if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
-        else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
+        if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05);
+        else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05);
     } catch(e){}
 }
-
 window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
 document.addEventListener('click', function(e) { const panel = document.getElementById('config-panel'); const btn = document.getElementById('btn-config-toggle'); if (panel && panel.classList.contains('active') && !panel.contains(e.target) && (btn && !btn.contains(e.target))) window.toggleConfig(); });
-
-window.updateVol = function(type, val) { 
-    if(type==='master') window.masterVol = parseFloat(val); 
-    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 
-     'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 
-     'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
+window.updateVol = function(type, val) {
+    if(type==='master') window.masterVol = parseFloat(val);
+    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage',
+     'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select',
+     'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => {
         if(audios[k]) {
             let vol = window.masterVol || 1.0;
             try {
@@ -896,185 +860,168 @@ window.updateVol = function(type, val) {
                 }
             } catch(e){}
         }
-    }); 
+    });
 }
-function playSound(key) { 
-    if(audios[key]) { 
+function playSound(key) {
+    if(audios[key]) {
         try {
             if (key === 'sfx-levelup') {
                 audios[key].volume = 1.0 * (window.masterVol || 1.0);
-                if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
+                if (audios[key].readyState >= 2) audios[key].currentTime = 0;
                 audios[key].play().catch(e => console.log("Audio prevented:", e));
                 let clone = audios[key].cloneNode();
                 clone.volume = audios[key].volume;
                 clone.play().catch(()=>{});
             } else {
-                if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
-                audios[key].play().catch(e => console.log("Audio prevented:", e)); 
+                if (audios[key].readyState >= 2) audios[key].currentTime = 0;
+                audios[key].play().catch(e => console.log("Audio prevented:", e));
             }
         } catch(e){}
-    } 
+    }
 }
-
 function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
 initAmbientParticles();
-
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
-
-function triggerDamageEffect(isPlayer, playAudio = true) { 
-    try { 
+function triggerDamageEffect(isPlayer, playAudio = true) {
+    try {
         if(playAudio) {
             if(!isPlayer && window.currentDeck === 'mage') {
                 playSound('sfx-hit-mage');
             } else {
-                playSound('sfx-hit'); 
+                playSound('sfx-hit');
             }
-        } 
-        
-        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
-        let slot = document.getElementById(elId); 
-        if(slot) { 
-            let r = slot.getBoundingClientRect(); 
-            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); 
-        } 
-
-        if (isPlayer) {
-            document.body.classList.add('shake-screen'); 
-            setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
-            if(window.triggerDamageEffect) window.triggerDamageEffect(); 
-            let ov = document.getElementById('dmg-overlay'); 
-            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
         }
-
-    } catch(e) {} 
+       
+        let elId = isPlayer ? 'p-slot' : 'm-slot';
+        let slot = document.getElementById(elId);
+        if(slot) {
+            let r = slot.getBoundingClientRect();
+            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757');
+        }
+        if (isPlayer) {
+            document.body.classList.add('shake-screen');
+            setTimeout(() => document.body.classList.remove('shake-screen'), 400);
+            if(window.triggerDamageEffect) window.triggerDamageEffect();
+            let ov = document.getElementById('dmg-overlay');
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); }
+        }
+    } catch(e) {}
 }
-
 function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
-
-function triggerHealEffect(isPlayer) { 
-    try { 
-        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
-        let slot = document.getElementById(elId); 
-        if(slot) { 
-            let r = slot.getBoundingClientRect(); 
-            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); 
-        } 
-        
+function triggerHealEffect(isPlayer) {
+    try {
+        let elId = isPlayer ? 'p-slot' : 'm-slot';
+        let slot = document.getElementById(elId);
+        if(slot) {
+            let r = slot.getBoundingClientRect();
+            if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71');
+        }
+       
         if (isPlayer) {
             if(window.triggerHealEffect) window.triggerHealEffect();
-            let ov = document.getElementById('heal-overlay'); 
-            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
+            let ov = document.getElementById('heal-overlay');
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); }
         }
-    } catch(e) {} 
+    } catch(e) {}
 }
-
-function triggerBlockEffect(isPlayer) { 
-    try { 
+function triggerBlockEffect(isPlayer) {
+    try {
         if(isPlayer && window.currentDeck === 'mage') {
              playSound('sfx-block-mage');
         } else {
-             playSound('sfx-block'); 
+             playSound('sfx-block');
         }
-        
+       
         if (!isPlayer) {
-             if(window.triggerBlockEffect) window.triggerBlockEffect(); 
-             
-             let ov = document.getElementById('block-overlay'); 
-             if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
-             document.body.classList.add('shake-screen'); 
-             setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+             if(window.triggerBlockEffect) window.triggerBlockEffect();
+            
+             let ov = document.getElementById('block-overlay');
+             if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); }
+             document.body.classList.add('shake-screen');
+             setTimeout(() => document.body.classList.remove('shake-screen'), 200);
         }
     } catch(e) {
         console.warn("Erro no efeito de bloqueio (ignorado):", e);
-    } 
+    }
 }
-
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
-
 // ATUALIZAÇÃO: Aceita um deck opcional e faz cópia segura
-function resetUnit(u, predefinedDeck = null, role = null) { 
-    u.hp = 6; 
-    u.maxHp = 6; 
-    u.lvl = 1; 
-    u.xp = []; 
-    u.hand = []; 
+function resetUnit(u, predefinedDeck = null, role = null) {
+    u.hp = 6;
+    u.maxHp = 6;
+    u.lvl = 1;
+    u.xp = [];
+    u.hand = [];
     u.originalRole = role || 'pve'; // IDENTIDADE FIXA (player1/player2)
-    
+   
     // Importante: Cria cópia ([...]) para não mexer no array original do banco
     if (predefinedDeck) {
         console.log(`[SYNC] Carregando deck sincronizado para ${u.id}: ${predefinedDeck.length} cartas.`);
-        u.deck = [...predefinedDeck]; 
+        u.deck = [...predefinedDeck];
     } else {
         console.log(`[SYNC] Gerando deck local para ${u.id}.`);
-        u.deck = []; 
+        u.deck = [];
         for(let k in DECK_TEMPLATE) {
             for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k);
-        } 
-        shuffle(u.deck); 
+        }
+        shuffle(u.deck);
     }
-    
-    u.disabled = null; 
-    u.bonusBlock = 0; 
-    u.bonusAtk = 0; 
+   
+    u.disabled = null;
+    u.bonusBlock = 0;
+    u.bonusAtk = 0;
 }
-
 function dealAllInitialCards() {
-    isProcessing = true; 
-    playSound('sfx-deal'); 
-    
-    const handEl = document.getElementById('player-hand'); 
+    isProcessing = true;
+    playSound('sfx-deal');
+   
+    const handEl = document.getElementById('player-hand');
     const cards = Array.from(handEl.children);
-    
+   
     cards.forEach((cardEl, i) => {
         cardEl.classList.add('intro-anim');
         cardEl.style.animationDelay = (i * 0.1) + 's';
-        cardEl.style.opacity = ''; 
+        cardEl.style.opacity = '';
     });
-
     window.isMatchStarting = false;
-    
+   
     if(handEl) handEl.classList.remove('preparing');
-
     setTimeout(() => {
         cards.forEach(c => {
             c.classList.remove('intro-anim');
             c.style.animationDelay = '';
         });
         isProcessing = false;
-    }, 2000); 
+    }, 2000);
 }
-
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
-
 function onCardClick(index) {
     if(isProcessing) return; if (!player.hand[index]) return;
-    
+   
     // Se já escolheu uma carta no PvP, não deixa clicar em outra
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
-
     playSound('sfx-play'); document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active');
-    document.getElementById('tooltip-box').style.display = 'none'; isLethalHover = false; 
+    document.getElementById('tooltip-box').style.display = 'none'; isLethalHover = false;
     let cardKey = player.hand[index];
     if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
-    
-    if(cardKey === 'DESARMAR') { 
+   
+    if(cardKey === 'DESARMAR') {
         window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => {
             if(window.gameMode === 'pvp') {
-                lockInPvPMove(index, choice); 
+                lockInPvPMove(index, choice);
             } else {
-                playCardFlow(index, choice); 
+                playCardFlow(index, choice);
             }
-        }); 
-    } else { 
+        });
+    } else {
         if(window.gameMode === 'pvp') {
-            lockInPvPMove(index, null); 
+            lockInPvPMove(index, null);
         } else {
-            playCardFlow(index, null); 
+            playCardFlow(index, null);
         }
     }
 }
-
 // ATUALIZAÇÃO: TRAVAR CARTA NO PVP
 async function lockInPvPMove(index, disarmChoice) {
     const handContainer = document.getElementById('player-hand');
@@ -1082,18 +1029,16 @@ async function lockInPvPMove(index, disarmChoice) {
     if(cardEl) {
         cardEl.classList.add('card-selected');
     }
-
     window.pvpSelectedCardIndex = index;
-    
-    isProcessing = true; 
+   
+    isProcessing = true;
     showCenterText("AGUARDANDO OPONENTE...", "#ffd700");
-
     const cardKey = player.hand[index];
     const matchRef = doc(db, "matches", window.currentMatchId);
-    
+   
     const updateField = (window.myRole === 'player1') ? 'p1Move' : 'p2Move';
     const disarmField = (window.myRole === 'player1') ? 'p1Disarm' : 'p2Disarm';
-    
+   
     try {
         await updateDoc(matchRef, {
             [updateField]: cardKey,
@@ -1106,12 +1051,11 @@ async function lockInPvPMove(index, disarmChoice) {
         if(cardEl) cardEl.classList.remove('card-selected');
     }
 }
-
 function getBestAIMove() {
-    let moves = []; 
-    monster.hand.forEach((card, index) => { 
+    let moves = [];
+    monster.hand.forEach((card, index) => {
         if(card !== monster.disabled) {
-            moves.push({ card: card, index: index, score: 0 }); 
+            moves.push({ card: card, index: index, score: 0 });
         }
     });
     if(moves.length === 0) return null;
@@ -1123,48 +1067,45 @@ function getBestAIMove() {
     let myDmg = monster.lvl + monster.bonusAtk;
     let canKill = player.hp <= myDmg;
     moves.forEach(m => {
-        let score = 50; 
+        let score = 50;
         if (m.card === 'ATAQUE') { if (canKill) score += 500; if (playerAggro < 0.4) score += 40; if (amIDying) score -= 30; }
         else if (m.card === 'BLOQUEIO') { if (amIDying) score += 100; if (playerAggro > 0.6) score += 60; if (threatLvl >= 3) score += 40; }
         else if (m.card === 'DESCANSAR') { if (monster.hp === monster.maxHp) score -= 100; else if (monster.hp <= 3) score += 50; if (playerAggro > 0.7) score -= 40; }
         else if (m.card === 'DESARMAR') { if (amIDying) score += 120; if (playerAggro > 0.8) score += 50; }
         else if (m.card === 'TREINAR') { if (turnCount < 5) score += 30; if (amIDying || monster.hp <= 3) score -= 200; }
-        m.score = score + Math.random() * 15; 
+        m.score = score + Math.random() * 15;
     });
     moves.sort((a, b) => b.score - a.score);
     return moves[0];
 }
-
 async function playCardFlow(index, pDisarmChoice) {
-    isProcessing = true; 
-    let cardKey = player.hand.splice(index, 1)[0]; 
+    isProcessing = true;
+    let cardKey = player.hand.splice(index, 1)[0];
     playerHistory.push(cardKey);
-
     // --- MODO PvE (IA) ---
-    let aiMove = getBestAIMove(); 
-    let mCardKey = 'ATAQUE'; 
-    let mDisarmTarget = null; 
-    if(aiMove) { 
-        mCardKey = aiMove.card; 
-        monster.hand.splice(aiMove.index, 1); 
-        if(mCardKey === 'DESARMAR') { 
-            if(player.hp <= (monster.lvl + monster.bonusAtk + 2)) { mDisarmTarget = 'BLOQUEIO'; } 
-            else { 
-                let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1); 
-                let bestTarget = null; for(let k in pCounts) if(pCounts[k] >= 3) bestTarget = k; 
-                if(bestTarget) mDisarmTarget = bestTarget; else mDisarmTarget = 'ATAQUE'; 
-            } 
-        } 
-    } else { 
-        if(monster.hand.length > 0) mCardKey = monster.hand.pop(); 
-        else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } 
+    let aiMove = getBestAIMove();
+    let mCardKey = 'ATAQUE';
+    let mDisarmTarget = null;
+    if(aiMove) {
+        mCardKey = aiMove.card;
+        monster.hand.splice(aiMove.index, 1);
+        if(mCardKey === 'DESARMAR') {
+            if(player.hp <= (monster.lvl + monster.bonusAtk + 2)) { mDisarmTarget = 'BLOQUEIO'; }
+            else {
+                let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1);
+                let bestTarget = null; for(let k in pCounts) if(pCounts[k] >= 3) bestTarget = k;
+                if(bestTarget) mDisarmTarget = bestTarget; else mDisarmTarget = 'ATAQUE';
+            }
+        }
+    } else {
+        if(monster.hand.length > 0) mCardKey = monster.hand.pop();
+        else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); }
     }
-
-    let handContainer = document.getElementById('player-hand'); 
-    let realCardEl = handContainer.children[index]; 
+    let handContainer = document.getElementById('player-hand');
+    let realCardEl = handContainer.children[index];
     let startRect = null;
-    if(realCardEl) { 
-        startRect = realCardEl.getBoundingClientRect(); 
+    if(realCardEl) {
+        startRect = realCardEl.getBoundingClientRect();
         realCardEl.style.transition = 'none';
         realCardEl.style.setProperty('opacity', '0', 'important');
         realCardEl.style.setProperty('visibility', 'hidden', 'important');
@@ -1173,29 +1114,26 @@ async function playCardFlow(index, pDisarmChoice) {
         realCardEl.style.background = 'none';
         realCardEl.style.boxShadow = 'none';
     }
-    
-    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
-        renderTable(cardKey, 'p-slot', true); 
-        updateUI(); 
-    }, false, true, true); 
-
+   
+    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => {
+        renderTable(cardKey, 'p-slot', true);
+        updateUI();
+    }, false, true, true);
     const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
-    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { 
-        renderTable(mCardKey, 'm-slot', false); 
-        setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); 
+    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => {
+        renderTable(mCardKey, 'm-slot', false);
+        setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500);
     }, false, true, false);
 }
-
 // ATUALIZAÇÃO: Animação Simultânea e Resolução
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
-    if (window.isResolvingTurn) return; 
-    window.isResolvingTurn = true; 
+    if (window.isResolvingTurn) return;
+    window.isResolvingTurn = true;
     isProcessing = true; // Trava cliques
-    
+   
     // Remove texto de espera
     const centerTxt = document.querySelector('.center-text');
     if(centerTxt) centerTxt.remove();
-
     // Identifica moves
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
     if (window.myRole === 'player1') {
@@ -1205,7 +1143,6 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         myMove = p2Move; enemyMove = p1Move;
         myDisarmChoice = p2Disarm; enemyDisarmChoice = p1Disarm;
     }
-
     // --- LÓGICA VISUAL DA MÃO (Sem risco de crashar o jogo) ---
     try {
         if (window.pvpSelectedCardIndex === null || window.pvpSelectedCardIndex === undefined) {
@@ -1214,13 +1151,12 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         const handContainer = document.getElementById('player-hand');
         let myCardEl = null;
         let startRect = null;
-
         if (handContainer) {
             if (window.pvpSelectedCardIndex > -1 && handContainer.children[window.pvpSelectedCardIndex]) {
                 myCardEl = handContainer.children[window.pvpSelectedCardIndex];
             } else {
                 const handCards = Array.from(handContainer.children);
-                if(handCards.length > 0) myCardEl = handCards[0]; 
+                if(handCards.length > 0) myCardEl = handCards[0];
             }
         }
         if (myCardEl) {
@@ -1236,21 +1172,17 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
             if(idx > -1) player.hand.splice(idx, 1);
         }
         playerHistory.push(myMove);
-
         // Animação de entrada
         animateFly(startRect || 'player-hand', 'p-slot', myMove, () => {
             renderTable(myMove, 'p-slot', true);
         }, false, true, true);
-
         const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 };
         animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => {
             renderTable(enemyMove, 'm-slot', false);
         }, false, true, false);
-
     } catch (e) {
         console.error("Erro na preparação visual (ignorado):", e);
     }
-
     // --- RESOLUÇÃO BLINDADA ---
     setTimeout(() => {
         try {
@@ -1261,12 +1193,11 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
                     updateDoc(matchRef, {
                         p1Move: null, p2Move: null,
                         p1Disarm: null, p2Disarm: null,
-                        turn: increment(1) 
+                        turn: increment(1)
                     }).then(() => console.log("Turno limpo no DB com sucesso."))
                       .catch(err => console.error("Erro crítico ao limpar turno:", err));
-                }, 4000); 
+                }, 4000);
             }
-
             // 2. TENTA RESOLVER A LÓGICA
             resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
         } catch (error) {
@@ -1275,8 +1206,8 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
             updateUI();
             window.isResolvingTurn = false;
             isProcessing = false;
-        } 
-        
+        }
+       
         // 3. FAILSAFE: Destrava tudo depois de 4.5 segundos
         setTimeout(() => {
             console.log("Executando Failsafe de Destravamento...");
@@ -1287,10 +1218,8 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
                 isProcessing = false;
             }
         }, 4500);
-
     }, 600);
 }
-
 // --- NOVA FUNÇÃO: Sincroniza efeito TREINAR via Banco de Dados ---
 // CORREÇÃO CRÍTICA: AGORA USA POP() PARA COINCIDIR COM A LÓGICA LOCAL
 async function applyTrainEffectPvP(matchId, myRole) {
@@ -1299,29 +1228,24 @@ async function applyTrainEffectPvP(matchId, myRole) {
         const matchSnap = await getDoc(matchRef);
         if (!matchSnap.exists()) return;
         const data = matchSnap.data();
-
         let deckArray, xpArray, deckField, xpField;
-
         if (myRole === 'player1') {
-            deckArray = data.player1.deck || []; 
+            deckArray = data.player1.deck || [];
             xpArray = data.player1.xp || [];
             deckField = 'player1.deck';
-            xpField = 'player1.xp'; 
+            xpField = 'player1.xp';
         } else {
             deckArray = data.player2.deck || [];
             xpArray = data.player2.xp || [];
             deckField = 'player2.deck';
             xpField = 'player2.xp';
         }
-
         if (deckArray.length > 0) {
-            // ANTES USAVA SHIFT() -> AGORA USA POP()
-            // Isso garante que o DB pegue a mesma carta que a animação local (Topo do Baralho)
-            const cardMoved = deckArray.pop(); 
-            
+            const cardMoved = deckArray.pop();
+           
             console.log(`Efeito TREINAR (DB): Movendo ${cardMoved} para XP.`);
             xpArray.push(cardMoved);
-            
+           
             await updateDoc(matchRef, {
                 [deckField]: deckArray,
                 [xpField]: xpArray
@@ -1331,96 +1255,78 @@ async function applyTrainEffectPvP(matchId, myRole) {
         console.error("Erro ao aplicar efeito TREINAR no DB:", e);
     }
 }
-
 // === NOVO: ATUALIZA O DB APÓS LEVEL UP (PARA LIMPAR XP NO BANCO) ===
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;
     const matchRef = doc(db, "matches", window.currentMatchId);
-    
+   
     // Determina quais campos atualizar
     let updates = {};
-    let targetRole = window.myRole; 
-    
-    // Se quem upou é o 'u' (local player), uso 'window.myRole'.
-    // Se fosse o monstro upando, eu usaria a role oposta. Mas essa função é chamada localmente pelo dono do deck.
-    
-    if (targetRole === 'player1') {
-        updates['player1.xp'] = []; // Limpa XP
-        updates['player1.deck'] = u.deck; // Salva baralho embaralhado
-        updates['player1.lvl'] = u.lvl; // Salva nível
-    } else {
-        updates['player2.xp'] = [];
-        updates['player2.deck'] = u.deck;
-        updates['player2.lvl'] = u.lvl;
-    }
-    
+    let targetKey = (u === player) ? (window.myRole) : (window.myRole === 'player1' ? 'player2' : 'player1');
+   
+    updates[`${targetKey}.xp`] = []; // Zera a XP no banco
+    updates[`${targetKey}.deck`] = u.deck; // Salva o novo deck embaralhado
+    updates[`${targetKey}.lvl`] = u.lvl; // Salva o novo nível
+   
     try {
-        console.log("Sincronizando Level Up ao DB...", updates);
+        console.log(`[SYNC] Level Up sincronizado para ${targetKey}.`);
         await updateDoc(matchRef, updates);
     } catch(e) {
         console.error("Erro ao sincronizar Level Up:", e);
     }
 }
-
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
-    
+   
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
-
     if(mAct === 'ATAQUE') { pDmg += monster.lvl; }
     if(pAct === 'ATAQUE') { mDmg += player.lvl; }
     if(pAct === 'BLOQUEIO') { pDmg = 0; if(mAct === 'ATAQUE') { mDmg += (1 + player.bonusBlock); } }
     if(mAct === 'BLOQUEIO') { mDmg = 0; if(pAct === 'ATAQUE') { pDmg += (1 + monster.bonusBlock); } }
-
     let clash = false;
-    let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); 
-    let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE'); 
-    
+    let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE');
+    let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
+   
     if(pBlocks) { clash = true; triggerBlockEffect(true); }
     else if(mBlocks) { clash = true; triggerBlockEffect(false); }
-
     let nextPlayerDisabled = null; let nextMonsterDisabled = null;
     if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
     if(pAct === 'DESARMAR') { nextMonsterDisabled = pDisarmChoice; }
     if(pAct === 'DESARMAR' && mAct === 'DESARMAR') { nextPlayerDisabled = null; nextMonsterDisabled = null; showCenterText("ANULADO", "#aaa"); }
-
     player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
     if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
-
-    if(pDmg > 0) { 
-        player.hp -= pDmg; 
-        showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); 
-        let soundOn = !(clash && mAct === 'BLOQUEIO'); 
+    if(pDmg > 0) {
+        player.hp -= pDmg;
+        showFloatingText('p-lvl', `-${pDmg}`, "#ff7675");
+        let soundOn = !(clash && mAct === 'BLOQUEIO');
         if (!mBlocks) { triggerDamageEffect(true, soundOn); }
     }
-
-    if(mDmg > 0) { 
-        monster.hp -= mDmg; 
-        showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); 
-        let soundOn = !(clash && pAct === 'BLOQUEIO'); 
-        triggerDamageEffect(false, soundOn); 
+    if(mDmg > 0) {
+        monster.hp -= mDmg;
+        showFloatingText('m-lvl', `-${mDmg}`, "#ff7675");
+        let soundOn = !(clash && pAct === 'BLOQUEIO');
+        triggerDamageEffect(false, soundOn);
     }
-    
+   
     updateUI();
     let pDead = player.hp <= 0, mDead = monster.hp <= 0;
-    
+   
     if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
-
-    // CORREÇÃO: LÓGICA DE XP EXTRA NO PVP
-    function handleExtraXP(u) { 
+    if (window.gameMode === 'pvp') window.pendingEnemyPlayed = mAct;
+    function handleExtraXP(u) {
         // LÓGICA PVP:
         if (window.gameMode === 'pvp' && window.currentMatchId) {
              // Se SOU EU (JOGADOR): Executo a lógica, atualizo o DB e animo localmente.
              if (u === player) {
                  if(u.deck.length > 0) {
-                     let card = u.deck.pop(); 
+                     let card = u.deck.pop();
                      // Manda atualizar o DB
                      applyTrainEffectPvP(window.currentMatchId, window.myRole);
                      // Animação Local
-                     animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
-                        u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
+                     animateFly(u.id+'-deck-container', u.id+'-xp', card, () => {
+                        u.xp.push(card); triggerXPGlow(u.id); updateUI();
                      }, false, false, true);
                  }
              }
@@ -1431,64 +1337,97 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
              else {
                  return;
              }
-        } 
+        }
         // LÓGICA PVE (Normal):
         else {
-            if(u.deck.length > 0) { 
-                let card = u.deck.pop(); 
-                animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
-                    u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
-                }, false, false, (u.id === 'p')); 
-            } 
+            if(u.deck.length > 0) {
+                let card = u.deck.pop();
+                animateFly(u.id+'-deck-container', u.id+'-xp', card, () => {
+                    u.xp.push(card); triggerXPGlow(u.id); updateUI();
+                }, false, false, (u.id === 'p'));
+            }
         }
     }
-
     if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
     if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
-
     setTimeout(() => {
-        animateFly('p-slot', 'p-xp', pAct, () => { if(!pDead) { player.xp.push(pAct); triggerXPGlow('p'); updateUI(); } checkLevelUp(player, () => { if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); }); }, false, false, true);
-        animateFly('m-slot', 'm-xp', mAct, () => { if(!mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); } checkLevelUp(monster, () => { if(!mDead) drawCardLogic(monster, 1); checkEndGame(); }); }, false, false, false);
+        animateFly('p-slot', 'p-xp', pAct, () => {
+            if(!pDead) {
+                player.xp.push(pAct);
+                triggerXPGlow('p');
+                updateUI();
+            }
+            if (window.gameMode === 'pvp') {
+                commitTurnToDB();
+            }
+            checkLevelUp(player, () => {
+                if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; });
+            });
+        }, false, false, true);
+        if (window.gameMode !== 'pvp') {
+            animateFly('m-slot', 'm-xp', mAct, () => {
+                if (!mDead) {
+                    monster.xp.push(mAct);
+                    triggerXPGlow('m');
+                    updateUI();
+                }
+                checkLevelUp(monster, () => {
+                    if(!mDead) drawCardLogic(monster, 1);
+                    checkEndGame();
+                });
+            }, false, false, false);
+        }
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
     }, 700);
 }
-
+// ATUALIZAÇÃO: COMMIT XP TO DB
+async function commitTurnToDB() {
+    if (!window.currentMatchId) return;
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    const myField = window.myRole;
+    let updates = {};
+    updates[`${myField}.xp`] = player.xp;
+    try {
+        await updateDoc(matchRef, updates);
+        console.log("Turno (XP) committed to DB.");
+    } catch (e) {
+        console.error("Erro ao commit XP:", e);
+    }
+}
 // ATUALIZAÇÃO: CHECK LEVEL UP COM SYNC RNG (CORRIGIDO)
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
-        let xpContainer = document.getElementById(u.id + '-xp'); 
+        let xpContainer = document.getElementById(u.id + '-xp');
         let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
         minis.forEach(realCard => {
-            let rect = realCard.getBoundingClientRect(); 
-            let clone = document.createElement('div'); 
+            let rect = realCard.getBoundingClientRect();
+            let clone = document.createElement('div');
             clone.className = 'xp-anim-clone';
-            clone.style.left = rect.left + 'px'; 
-            clone.style.top = rect.top + 'px'; 
-            clone.style.width = rect.width + 'px'; 
-            clone.style.height = rect.height + 'px'; 
+            clone.style.left = rect.left + 'px';
+            clone.style.top = rect.top + 'px';
+            clone.style.width = rect.width + 'px';
+            clone.style.height = rect.height + 'px';
             clone.style.backgroundImage = realCard.style.backgroundImage;
             if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down');
             document.body.appendChild(clone);
         });
         minis.forEach(m => m.style.opacity = '0');
-
         setTimeout(() => {
-            let counts = {}; 
-            u.xp.forEach(x => counts[x] = (counts[x]||0)+1); 
-            let triggers = []; 
+            let counts = {};
+            u.xp.forEach(x => counts[x] = (counts[x]||0)+1);
+            let triggers = [];
             for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
-            
+           
             processMasteries(u, triggers, () => {
-                let lvlEl = document.getElementById(u.id+'-lvl'); 
-                u.lvl++; 
-                lvlEl.classList.add('level-up-anim'); 
-                triggerLevelUpVisuals(u.id); 
-                playSound('sfx-levelup'); 
+                let lvlEl = document.getElementById(u.id+'-lvl');
+                u.lvl++;
+                lvlEl.classList.add('level-up-anim');
+                triggerLevelUpVisuals(u.id);
+                playSound('sfx-levelup');
                 setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
-
-                u.xp.forEach(x => u.deck.push(x)); 
-                u.xp = []; 
-                
+                u.xp.forEach(x => u.deck.push(x));
+                u.xp = [];
+               
                 // MÁGICA 2.0: No PvP, usa a role ORIGINAL para a semente
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
                     // Agora usamos u.originalRole ('player1' ou 'player2')
@@ -1496,43 +1435,39 @@ function checkLevelUp(u, doneCb) {
                     // Adicionei u.lvl para garantir que cada nível embaralhe diferente
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
                     shuffle(u.deck, s);
-                    
+                   
                     // === SYNC IMPORTANTE: SÓ O DONO DO DECK ATUALIZA O BANCO ===
                     if (u === player) {
                         syncLevelUpToDB(u);
                     }
-
                 } else {
                     shuffle(u.deck); // PvE normal
                 }
-
-                let clones = document.getElementsByClassName('xp-anim-clone'); 
+                let clones = document.getElementsByClassName('xp-anim-clone');
                 while(clones.length > 0) clones[0].remove();
-                updateUI(); 
+                updateUI();
                 doneCb();
             });
-        }, 1000); 
+        }, 1000);
     } else { doneCb(); }
 }
-
 function triggerLevelUpVisuals(unitId) {
     let clusterId = (unitId === 'p') ? 'p-stats-cluster' : 'm-stats-cluster';
     let cluster = document.getElementById(clusterId);
     if(!cluster) return;
     const text = document.createElement('div');
     text.innerText = "LEVEL UP!";
-    text.className = 'levelup-text'; 
+    text.className = 'levelup-text';
     if (unitId === 'p') { text.classList.add('lvl-anim-up'); } else { text.classList.add('lvl-anim-down'); }
     cluster.appendChild(text);
     setTimeout(() => { text.remove(); }, 2000);
 }
-
 function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
-    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); } 
-    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } 
+    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
+    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
     else if(type === 'TREINAR' && u.id === 'm') {
-        let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR' && x !== 'DESCANSAR'))]; 
+        let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR' && x !== 'DESCANSAR'))];
         if(opts.length > 0) {
             let choice = opts[0];
             if(u.hp <= 4 && opts.includes('DESCANSAR')) choice = 'DESCANSAR';
@@ -1547,631 +1482,38 @@ function processMasteries(u, triggers, cb) {
 }
 function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
-
 function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false, isPlayer = false) {
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
     let e = { top: 0, left: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
-
     const fly = document.createElement('div');
     fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
-    
+   
     let imgUrl = getCardArt(cardKey, isPlayer);
     fly.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
     if (isToTable) fly.classList.add('card-bounce');
-
-    if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; } 
+    if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; }
     else { let w = window.innerWidth < 768 ? '84px' : '105px'; let h = window.innerWidth < 768 ? '120px' : '150px'; fly.style.width=w; fly.style.height=h; }
-
     let tableW = window.innerWidth < 768 ? '110px' : '180px';
     let tableH = window.innerWidth < 768 ? '170px' : '260px';
-
     fly.style.top=s.top+'px'; fly.style.left=s.left+'px';
     if(endId.includes('xp')) fly.style.transform='scale(0.3)';
     document.body.appendChild(fly); fly.offsetHeight;
-    
+   
     if(isToTable) { fly.style.width=tableW; fly.style.height=tableH; }
     fly.style.top=e.top+'px'; fly.style.left=e.left+'px';
     setTimeout(() => { fly.remove(); if(cb) cb(); }, 250);
 }
-
-function drawCardAnimated(unit, deckId, handId, cb) { 
-    if(cb) cb(); 
+function drawCardAnimated(unit, deckId, handId, cb) {
+    if(cb) cb();
 }
-
-function renderTable(key, slotId, isPlayer = false) { 
-    let el = document.getElementById(slotId); 
-    el.innerHTML = ''; 
-    let card = document.createElement('div'); 
-    card.className = `card ${CARDS_DB[key].color} card-on-table`; 
+function renderTable(key, slotId, isPlayer = false) {
+    let el = document.getElementById(slotId);
+    el.innerHTML = '';
+    let card = document.createElement('div');
+    card.className = `card ${CARDS_DB[key].color} card-on-table`;
     let imgUrl = getCardArt(key, isPlayer);
-    card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`; 
-    el.appendChild(card); 
+    card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
+    el.appendChild(card);
 }
-
-function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
-
-function updateUnit(u) {
-    document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
-    document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
-    let hpPct = (Math.max(0,u.hp)/u.maxHp)*100;
-    let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
-    if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
-    document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
-    
-    if(u === player) {
-        let deckImgEl = document.getElementById('p-deck-img');
-        if(window.currentDeck === 'mage') {
-            deckImgEl.src = MAGE_ASSETS.DECK_IMG;
-        } else {
-            deckImgEl.src = 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png';
-        }
-    }
-
-    if(u===player) {
-        let hc=document.getElementById('player-hand'); hc.innerHTML='';
-        u.hand.forEach((k,i)=>{
-            let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
-            c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
-            if(u.disabled===k) c.classList.add('disabled-card');
-            
-            if(window.isMatchStarting) {
-                c.style.opacity = '0';
-            } else {
-                c.style.opacity = '1';
-            }
-
-            let lethalType = checkCardLethality(k); 
-            let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
-            
-            let imgUrl = getCardArt(k, true);
-            c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
-            
-            c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
-            c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
-            c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
-            hc.appendChild(c); apply3DTilt(c, true);
-        });
-    }
-    
-    let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
-    u.xp.forEach(k=>{ 
-        let d=document.createElement('div'); 
-        d.className='xp-mini'; 
-        let imgUrl = getCardArt(k, (u === player));
-        d.style.backgroundImage = `url('${imgUrl}')`; 
-        d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; 
-        d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; 
-        xc.appendChild(d); 
-    });
-    
-    let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
-    if(u.bonusAtk>0) addMI(mc, 'ATAQUE', u.bonusAtk, '#e74c3c', u.id); 
-    if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
-}
-
-function bindMasteryTooltip(el, key, value, ownerId) {
-    return {
-        onmouseenter: (e) => {
-            let db=CARDS_DB[key];
-            document.getElementById('tt-title').innerHTML = key; 
-            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
-            tt.style.display = 'block';
-            tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); 
-            void tt.offsetWidth; 
-            let rect = el.getBoundingClientRect();
-            if(ownerId === 'p') {
-                tt.classList.add('tooltip-anim-up');
-                tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
-                tt.style.top = 'auto';
-            } else {
-                tt.classList.add('tooltip-anim-down');
-                tt.style.top = (rect.bottom + 10) + 'px';
-                tt.style.bottom = 'auto';
-            }
-            tt.style.left = (rect.left + rect.width/2) + 'px';
-            tt.style.transform = "translateX(-50%)"; 
-        }
-    };
-}
-
-function addMI(parent, key, value, col, ownerId){ 
-    let d = document.createElement('div'); d.className = 'mastery-icon'; 
-    d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`;
-    d.style.borderColor = col; 
-    let handlers = bindMasteryTooltip(d, key, value, ownerId);
-    d.onmouseenter = handlers.onmouseenter;
-    d.onmouseleave = () => { tt.style.display = 'none'; }; 
-    parent.appendChild(d); 
-}
-
-function showFloatingText(eid, txt, col) { 
-    let el = document.createElement('div'); 
-    el.className='floating-text'; 
-    el.innerText=txt; 
-    el.style.color=col; 
-    let parent = document.getElementById(eid);
-    if(parent) {
-        let rect = parent.getBoundingClientRect();
-        el.style.left = (rect.left + rect.width/2) + 'px';
-        el.style.top = (rect.top) + 'px';
-        document.body.appendChild(el); 
-    } else {
-         document.body.appendChild(el);
-    }
-    setTimeout(()=>el.remove(), 2000); 
-}
-
-window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
-window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
-const tt=document.getElementById('tooltip-box');
-
-function bindFixedTooltip(el,k) { 
-    const updatePos = () => { 
-        let rect = el.getBoundingClientRect(); 
-        tt.style.left = (rect.left + rect.width / 2) + 'px'; 
-    }; 
-    return { 
-        onmouseenter: (e) => { 
-            showTT(k); 
-            tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
-            tt.style.top = 'auto'; 
-            
-            tt.classList.remove('tooltip-anim-up'); 
-            tt.classList.remove('tooltip-anim-down'); 
-            tt.classList.add('tooltip-anim-up'); 
-            updatePos(); 
-            el.addEventListener('mousemove', updatePos); 
-        } 
-    }; 
-}
-
-function showTT(k) {
-    let db = CARDS_DB[k];
-    document.getElementById('tt-title').innerHTML = k; 
-    if (db.customTooltip) {
-        let content = db.customTooltip;
-        let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
-        content = content.replace('{PLAYER_LVL}', currentLvl);
-        let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
-        let reflectDmg = 1 + bonusBlock;
-        content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
-        document.getElementById('tt-content').innerHTML = content;
-    } else {
-        document.getElementById('tt-content').innerHTML = `
-            <span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span>
-            <span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>
-            <span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>
-        `;
-    }
-    tt.style.display = 'block';
-}
-
-function apply3DTilt(element, isHand = false) { 
-    if(window.innerWidth < 768) return; 
-    
-    element.addEventListener('mousemove', (e) => { 
-        const rect = element.getBoundingClientRect(); 
-        const x = e.clientX - rect.left; 
-        const y = e.clientY - rect.top; 
-        const xPct = (x / rect.width) - 0.5; 
-        const yPct = (y / rect.height) - 0.5; 
-        
-        element.style.setProperty('--rx', xPct);
-        element.style.setProperty('--ry', yPct);
-
-        let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
-        let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
-        if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
-        
-        element.style.transform = `${lift} ${rotate}`; 
-        
-        let art = element.querySelector('.card-art'); 
-        if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
-    }); 
-    
-    element.addEventListener('mouseleave', () => { 
-        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
-        let art = element.querySelector('.card-art'); 
-        if(art) art.style.backgroundPosition = 'center'; 
-        element.style.setProperty('--rx', 0);
-        element.style.setProperty('--ry', 0);
-    }); 
-}
-
-// ======================================================
-// LÓGICA DE MATCHMAKING E DECK
-// ======================================================
-
-let matchTimerInterval = null;
-let matchSeconds = 0;
-let myQueueRef = null; 
-let queueListener = null;
-
-// Botão PvE (Treino) - Vai direto para seleção de deck
-window.startPvE = function() {
-    window.gameMode = 'pve'; 
-    window.playNavSound();
-    window.openDeckSelector(); 
-};
-
-// --- INICIAR JOGO (Botão PvP) ---
-window.startPvPSearch = function() {
-    if (!currentUser) return; 
-    window.gameMode = 'pvp'; // Define que é PvP
-    window.playNavSound();
-    window.openDeckSelector(); // Vai para a escolha de cartas PRIMEIRO
-};
-
-// --- FUNÇÃO QUE INICIA A FILA APÓS ESCOLHER O DECK ---
-async function initiateMatchmaking() {
-    console.log("--- INICIANDO MATCHMAKING ---");
-    const mmScreen = document.getElementById('matchmaking-screen');
-    mmScreen.style.display = 'flex';
-    
-    // Reset visual
-    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
-    document.querySelector('.mm-title').style.color = "var(--gold)";
-    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
-    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
-    document.querySelector('.cancel-btn').style.display = "block";
-    
-    // Timer visual
-    matchSeconds = 0;
-    const timerEl = document.getElementById('mm-timer');
-    timerEl.innerText = "00:00";
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    matchTimerInterval = setInterval(() => {
-        matchSeconds++;
-        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
-        let s = (matchSeconds % 60).toString().padStart(2, '0');
-        timerEl.innerText = `${m}:${s}`;
-    }, 1000);
-
-    try {
-        // 1. Criar meu Ticket na Fila
-        myQueueRef = doc(collection(db, "queue")); 
-        const myData = {
-            uid: currentUser.uid,
-            name: currentUser.displayName,
-            deck: window.currentDeck,
-            timestamp: Date.now(),
-            matchId: null,
-            cancelled: false, // Importante
-            status: 'waiting'
-        };
-        
-        console.log("Criando ticket na fila...", myData);
-        await setDoc(myQueueRef, myData);
-        console.log("Ticket criado com ID:", myQueueRef.id);
-
-        // 2. Ouvir meu próprio ticket (para saber se alguém me achou)
-        queueListener = onSnapshot(myQueueRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.matchId) {
-                    console.log("ALGUÉM ME ACHOU! MatchID:", data.matchId);
-                    enterMatch(data.matchId); 
-                }
-            }
-        });
-
-        // 3. Buscar oponentes ativamente (Repetir a cada 4 segundos)
-        // Isso resolve o problema de "ficar esperando eternamente"
-        if (searchInterval) clearInterval(searchInterval);
-        
-        // Tenta agora
-        findOpponentInQueue();
-        
-        // E continua tentando
-        searchInterval = setInterval(() => {
-            // Só busca se ainda estiver esperando
-            if (document.getElementById('matchmaking-screen').style.display === 'flex' 
-                && document.querySelector('.mm-title').innerText !== "PARTIDA ENCONTRADA!") {
-                console.log("Tentando buscar novamente...");
-                findOpponentInQueue();
-            } else {
-                clearInterval(searchInterval);
-            }
-        }, 4000);
-
-    } catch (e) {
-        console.error("ERRO GRAVE no Matchmaking:", e);
-        cancelPvPSearch();
-    }
-}
-
-async function findOpponentInQueue() {
-    try {
-        console.log("Executando findOpponentInQueue...");
-        const queueRef = collection(db, "queue");
-        
-        // QUERY SIMPLIFICADA:
-        // Traz os últimos 20 tickets. Removemos os 'where' complexos 
-        // para evitar problemas de índice. Filtraremos no Javascript (Client-side).
-        const q = query(
-            queueRef, 
-            orderBy("timestamp", "desc"), 
-            limit(20)
-        );
-
-        const querySnapshot = await getDocs(q);
-        console.log(`Encontrados ${querySnapshot.size} tickets no total (incluindo velhos/eu).`);
-
-        let opponentDoc = null;
-        const now = Date.now();
-
-        // FILTRAGEM MANUAL (Mais seguro para esse estágio)
-        for (const docSnap of querySnapshot.docs) {
-            const data = docSnap.data();
-            const docId = docSnap.id;
-
-            // 1. Não posso ser eu mesmo
-            if (data.uid === currentUser.uid) continue;
-
-            // 2. Tem que estar esperando (sem matchId)
-            if (data.matchId !== null) continue;
-
-            // 3. Não pode ter cancelado
-            if (data.cancelled === true) continue;
-
-            // 4. VERIFICAÇÃO DE "ZUMBI"
-            // Se o ticket tem mais de 2 minutos, ignoramos (jogador fechou o app)
-            if (now - data.timestamp > 120000) {
-                console.log(`Ticket ${docId} ignorado (Muito antigo/Zumbi)`);
-                continue;
-            }
-
-            // ACHAMOS UM VÁLIDO!
-            console.log("Oponente VÁLIDO encontrado:", data.name);
-            opponentDoc = docSnap;
-            break; // Para o loop
-        }
-
-        if (opponentDoc) {
-            console.log("Iniciando processo de match com:", opponentDoc.data().name);
-            
-            // Para o intervalo de busca para não tentar parear duas vezes
-            if (searchInterval) clearInterval(searchInterval);
-
-            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-            const oppRef = opponentDoc.ref;
-
-            // TENTA TRAVAR O OPONENTE (Atualização Atômica seria ideal, mas vamos simples)
-            await updateDoc(oppRef, { matchId: matchId });
-            
-            // Atualiza meu ticket
-            if (myQueueRef) {
-                await updateDoc(myQueueRef, { matchId: matchId });
-            }
-
-            // Gera decks e cria a sala
-            const p1DeckCards = generateShuffledDeck();
-            const p2DeckCards = generateShuffledDeck();
-
-            await createMatchDocument(
-                matchId, 
-                currentUser.uid, opponentDoc.data().uid, 
-                currentUser.displayName, opponentDoc.data().name,
-                window.currentDeck, opponentDoc.data().deck,
-                p1DeckCards, p2DeckCards
-            );
-        } else {
-            console.log("Nenhum oponente compatível encontrado nesta rodada.");
-        }
-
-    } catch (e) {
-        console.error("Erro ao buscar oponente na lista:", e);
-    }
-}
-// ATUALIZAÇÃO: Agora salvamos os DECKS COMPLETOS no banco
-async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckType, p2DeckType, p1DeckCards, p2DeckCards) {
-    const matchRef = doc(db, "matches", matchId);
-    
-    const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1";
-    const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
-    const d1Type = p1DeckType || 'knight';
-    const d2Type = p2DeckType || 'knight';
-
-    await setDoc(matchRef, {
-        player1: { 
-            uid: p1Id, 
-            name: cleanName1, 
-            deckType: d1Type, 
-            hp: 6, 
-            status: 'selecting', 
-            hand: [], 
-            deck: p1DeckCards, // Salva o array embaralhado
-            xp: [] 
-        },
-        player2: { 
-            uid: p2Id, 
-            name: cleanName2, 
-            deckType: d2Type, 
-            hp: 6, 
-            status: 'selecting', 
-            hand: [], 
-            deck: p2DeckCards, // Salva o array embaralhado
-            xp: [] 
-        },
-        turn: 1,
-        status: 'playing', 
-        createdAt: Date.now()
-    });
-}
-
-// --- CANCELAR BUSCA ---
-window.cancelPvPSearch = async function() {
-    // 1. Limpa os intervalos de busca
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    if (searchInterval) clearInterval(searchInterval); // <--- ADICIONE ISSO
-    
-    // ... (o resto do código continua igual: deletar ticket, esconder tela, etc)
-    const mmScreen = document.getElementById('matchmaking-screen');
-    mmScreen.style.display = 'none';
-
-    if (myQueueRef) {
-        // Marca como cancelado para não aparecer nas buscas dos outros
-        await updateDoc(myQueueRef, { cancelled: true });
-        myQueueRef = null;
-    }
-    
-    // Volta ao lobby
-    window.transitionToLobby(true);
-};
-
-// --- ENTRAR NA PARTIDA (Sucesso) ---
-async function enterMatch(matchId) {
-    console.log("PARTIDA ENCONTRADA! ID:", matchId);
-    
-    if (queueListener) queueListener();
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-
-    const matchRef = doc(db, "matches", matchId);
-    const matchSnap = await getDoc(matchRef);
-    if(matchSnap.exists()) {
-        const data = matchSnap.data();
-        
-        // SALVAR DADOS INICIAIS (incluindo decks) GLOBALMENTE
-        window.pvpStartData = data; 
-
-        if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
-        else window.myRole = 'player2';
-    }
-
-    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
-    document.querySelector('.mm-title').style.color = "#2ecc71";
-    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
-    document.querySelector('.radar-spinner').style.animation = "none";
-    document.querySelector('.cancel-btn').style.display = "none";
-
-    setTimeout(() => {
-        const mmScreen = document.getElementById('matchmaking-screen');
-        mmScreen.style.display = 'none';
-        window.currentMatchId = matchId;
-        window.transitionToGame(); 
-    }, 1500);
-}
-
-// CORREÇÃO CRÍTICA: LISTENER AGORA CONTROLA A ANIMAÇÃO DO INIMIGO
-function startPvPListener() {
-    if(!window.currentMatchId) return;
-    if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    let namesUpdated = false;
-    console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
-    
-    // Helper para garantir role
-    const ensureMyRole = (data) => {
-        if (window.myRole) return;
-        if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
-        else window.myRole = 'player2';
-    };
-
-    window.pvpUnsubscribe = onSnapshot(matchRef, (docSnap) => {
-        if (!docSnap.exists()) return;
-        const matchData = docSnap.data();
-        ensureMyRole(matchData);
-
-        if (matchData.status === 'abandoned') {
-            if (matchData.abandonedBy && currentUser && matchData.abandonedBy !== currentUser.uid) {
-                console.log("Oponente desconectou. Decretando vitória.");
-                monster.hp = 0;
-                updateUI();
-                isProcessing = true;
-                MusicController.stopCurrent();
-                setTimeout(() => {
-                    const title = document.getElementById('end-title');
-                    title.innerText = "VITÓRIA";
-                    title.className = "win-theme";
-                    showCenterText("OPONENTE DESISTIU!", "#ffd700");
-                    playSound('sfx-win');
-                    if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
-                    document.getElementById('end-screen').classList.add('visible');
-                    if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
-                }, 500);
-            }
-            return; 
-        }
-        if (!namesUpdated && matchData.player1 && matchData.player2) {
-            let myName, enemyName;
-            if (window.myRole === 'player1') {
-                myName = matchData.player1.name;
-                enemyName = matchData.player2.name;
-            } else {
-                myName = matchData.player2.name;
-                enemyName = matchData.player1.name;
-            }
-            const pNameEl = document.querySelector('#p-stats-cluster .unit-name');
-            const mNameEl = document.querySelector('#m-stats-cluster .unit-name');
-            if(pNameEl) pNameEl.innerText = myName;
-            if(mNameEl) mNameEl.innerText = enemyName;
-            namesUpdated = true; 
-        }
-
-        // --- CORREÇÃO: VISUAL DA XP DO INIMIGO ---
-        if (window.gameMode === 'pvp' && window.myRole) {
-            const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
-            const enemyData = matchData[enemyRole];
-            
-            // Se o inimigo tem mais cartas de XP no banco do que eu vejo na tela...
-            if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
-                // Descobre quais cartas são novas
-                const startIdx = monster.xp.length;
-                for (let i = startIdx; i < enemyData.xp.length; i++) {
-                    const newCard = enemyData.xp[i];
-                    console.log(`[LISTENER] Inimigo ganhou XP extra: ${newCard}`);
-                    // Anima a carta voando do baralho do inimigo para a XP dele
-                    animateFly('m-deck-container', 'm-xp', newCard, () => {
-                         triggerXPGlow('m');
-                    }, false, false, false);
-                }
-                // Atualiza o estado local do monstro
-                monster.xp = enemyData.xp;
-                if(enemyData.deck) monster.deck = [...enemyData.deck];
-                updateUI();
-                
-                // Verifica se houve level up visual do inimigo (se a XP dele esvaziou no banco)
-                if (enemyData.xp.length === 0 && monster.xp.length > 0) {
-                     monster.xp = [];
-                     if(enemyData.deck) monster.deck = enemyData.deck;
-                     if(enemyData.lvl) monster.lvl = enemyData.lvl;
-                     checkLevelUp(monster, () => {}); 
-                     updateUI();
-                }
-            } else if (enemyData && enemyData.xp && enemyData.xp.length === 0 && monster.xp.length >= 5) {
-                // Caso especial: Reset de nível detectado
-                monster.xp = [];
-                if(enemyData.deck) monster.deck = enemyData.deck;
-                if(enemyData.lvl) monster.lvl = enemyData.lvl;
-                checkLevelUp(monster, () => {});
-                updateUI();
-            }
-        }
-
-        if (matchData.p1Move && matchData.p2Move) {
-            if (!window.isResolvingTurn) {
-                console.log("Turno pronto! Resolvendo...");
-                resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
-            }
-            return; 
-        }
-    });
-}
-
-// Safety Loader: Start the game even if assets fail
-setTimeout(() => {
-    if (assetsLoaded < totalAssets) {
-        console.warn("Forcing game start (assets timeout)");
-        updateLoader(); // Try one last update
-        const loading = document.getElementById('loading-screen');
-        if(loading) loading.style.display = 'none';
-        
-        // Force init logic just in case
-        if(!window.hoverLogicInitialized) {
-            initGlobalHoverLogic();
-            window.hoverLogicInitialized = true;
-        }
-    }
-}, 3000); // 3 seconds timeout
-
-preloadGame();
+function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "
+```
