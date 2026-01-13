@@ -1,9 +1,11 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL: XP FUNCIONANDO + MAESTRIAS CORRIGIDAS)
+// ARQUIVO: js/main.js (VERSÃO FINAL CORRIGIDA: LOADER SEGURO + MAESTRIAS)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+console.log("Main.js carregado. Iniciando sistema...");
 
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
@@ -30,6 +32,7 @@ try {
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
+let gameStarted = false; // Prevines double start
 window.gameAssets = []; 
 window.pvpUnsubscribe = null; 
 let searchInterval = null;
@@ -116,7 +119,10 @@ function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
         return MAGE_ASSETS[cardKey];
     }
-    return CARDS_DB[cardKey].img;
+    if (CARDS_DB[cardKey]) {
+        return CARDS_DB[cardKey].img;
+    }
+    return '';
 }
 
 function stringToSeed(str) {
@@ -746,11 +752,17 @@ function preloadGame() {
         s.src = a.src; 
         s.preload = 'auto'; 
         if(a.loop) s.loop = true; 
+        
+        // Prevent duplicate counting
+        let counted = false;
+        const countOnce = () => { if(!counted) { updateLoader(); counted = true; } };
+
         audios[a.id] = s; 
         window.gameAssets.push(s);
-        s.onloadedmetadata = () => updateLoader(); 
-        s.onerror = () => updateLoader(); 
-        setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); 
+        s.onloadedmetadata = countOnce; 
+        s.onerror = countOnce; 
+        // Fallback for audio loading issues
+        setTimeout(() => { if(s.readyState === 0) countOnce(); }, 2000); 
     });
 }
 
@@ -759,26 +771,39 @@ function updateLoader() {
     let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
     const fill = document.getElementById('loader-fill');
     if(fill) fill.style.width = pct + '%';
+    
+    // Check if loading is complete
     if(assetsLoaded >= totalAssets) {
-        console.log("Preload completo!");
-        if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
-        setTimeout(() => {
-            const loading = document.getElementById('loading-screen');
-            if(loading) {
-                loading.style.opacity = '0';
-                setTimeout(() => loading.style.display = 'none', 500);
-            }
-            if(!window.hoverLogicInitialized) {
-                initGlobalHoverLogic();
-                window.hoverLogicInitialized = true;
-            }
-        }, 800); 
-        document.body.addEventListener('click', () => { 
-            if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) {
-                MusicController.play('bgm-menu');
-            }
-        }, { once: true });
+        finishLoading();
     }
+}
+
+// Separate function to ensure game starts only once
+function finishLoading() {
+    if(gameStarted) return;
+    gameStarted = true;
+
+    console.log("Preload completo!");
+    if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
+    
+    setTimeout(() => {
+        const loading = document.getElementById('loading-screen');
+        if(loading) {
+            loading.style.opacity = '0';
+            setTimeout(() => loading.style.display = 'none', 500);
+        }
+        if(!window.hoverLogicInitialized) {
+            initGlobalHoverLogic();
+            window.hoverLogicInitialized = true;
+        }
+    }, 800); 
+    
+    // Unlock Audio Context on first click
+    document.body.addEventListener('click', () => { 
+        if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) {
+            MusicController.play('bgm-menu');
+        }
+    }, { once: true });
 }
 
 function initGlobalHoverLogic() {
@@ -796,6 +821,9 @@ function initGlobalHoverLogic() {
 }
 
 window.onload = function() {
+    // START PRELOAD HERE TO ENSURE DOM IS READY
+    preloadGame();
+
     const btnSound = document.getElementById('btn-sound');
     if (btnSound) {
         btnSound.onclick = null; 
@@ -812,19 +840,15 @@ window.onload = function() {
         if (!backBtn) backBtn = deckScreen.querySelector('button'); 
 
         if (backBtn) {
-            console.log("Botão de voltar do deck encontrado e vinculado via JS.");
             backBtn.style.zIndex = "9999"; 
             backBtn.style.pointerEvents = "all"; 
             
             backBtn.onclick = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log("CLIQUE DETECTADO NO BOTÃO VOLTAR");
                 window.playNavSound();
                 window.transitionToLobby(true); 
             };
-        } else {
-            console.warn("AVISO: Botão de voltar não encontrado no HTML da tela de deck.");
         }
     }
 };
@@ -833,7 +857,6 @@ document.addEventListener('click', function(e) {
     const target = e.target.closest('#deck-selection-screen .circle-btn, #deck-selection-screen .btn-back, #deck-selection-screen button, .return-btn');
     
     if (target) {
-        console.log("Botão de voltar detectado via Delegação.");
         e.stopPropagation();
         window.playNavSound();
         window.transitionToLobby(true); 
@@ -1603,7 +1626,10 @@ function renderTable(key, slotId, isPlayer = false) {
 function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
 
 function updateUnit(u) {
-    document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
+    // PROTEÇÃO CRÍTICA: Use innerText em vez de nodeValue para evitar crash em elemento vazio
+    let lvlEl = document.getElementById(u.id+'-lvl');
+    if(lvlEl) lvlEl.innerText = u.lvl;
+
     document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
     let hpPct = (Math.max(0,u.hp)/u.maxHp)*100;
     let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
@@ -2116,20 +2142,10 @@ async function commitTurnToDB(pAct) {
     }
 }
 
-// Safety Loader: Start the game even if assets fail
+// Safety Loader: Force game start if stuck
 setTimeout(() => {
     if (assetsLoaded < totalAssets) {
         console.warn("Forcing game start (assets timeout)");
-        updateLoader(); // Try one last update
-        const loading = document.getElementById('loading-screen');
-        if(loading) loading.style.display = 'none';
-        
-        // Force init logic just in case
-        if(!window.hoverLogicInitialized) {
-            initGlobalHoverLogic();
-            window.hoverLogicInitialized = true;
-        }
+        finishLoading();
     }
 }, 3000); // 3 seconds timeout
-
-preloadGame();
