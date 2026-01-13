@@ -22,6 +22,76 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BUPPO">
+
+    <style>
+        /* Estilo do Botão de Histórico no Lobby */
+        #btn-history {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 12px 20px;
+            font-family: 'Russo One', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            width: 90%;
+            max-width: 300px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            text-shadow: 0 2px 2px black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        #btn-history:active { transform: scale(0.96); background: rgba(255, 215, 0, 0.2); }
+        #btn-history:hover { background: rgba(255, 215, 0, 0.1); box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+
+        /* Estilo do Painel de Histórico */
+        .history-panel {
+            background: rgba(10, 10, 15, 0.95);
+            border: 2px solid var(--gold);
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+            height: 70%;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        #history-list-container {
+            width: 100%;
+            flex: 1;
+            overflow-y: auto;
+            margin: 10px 0;
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
+            padding-right: 5px;
+        }
+        .history-item {
+            background: #1a1a1a;
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #555;
+            font-size: 14px;
+            color: #eee;
+        }
+        .history-item.win { border-left-color: #2ecc71; background: linear-gradient(90deg, rgba(46, 204, 113, 0.1), transparent); }
+        .history-item.loss { border-left-color: #e74c3c; background: linear-gradient(90deg, rgba(231, 76, 60, 0.1), transparent); }
+        .h-vs { font-weight: bold; font-size: 1.1em; }
+        .h-date { font-size: 0.8em; color: #aaa; margin-top: 2px; }
+        .h-score { font-weight: bold; font-family: monospace; font-size: 1.2em; }
+        .win .h-score { color: #2ecc71; }
+        .loss .h-score { color: #e74c3c; }
+    </style>
     
 </head>
 <body>
@@ -107,13 +177,13 @@
                         </button>
                     </div>
 
+                    <button id="btn-history" onclick="window.openHistory()">
+                        📜 HISTÓRICO DE PARTIDAS
+                    </button>
+
                     <button id="btn-logout" onclick="handleLogout()">TROCAR DE CONTA</button>
                 </div>
             </div>
-
-            <button class="circle-btn" style="position: absolute; bottom: 20px; right: 20px;" onclick="window.openHistory()">
-                📜
-            </button>
         </div>
 
         <div id="matchmaking-screen" class="modal-overlay">
