@@ -52,6 +52,7 @@
     
     <div class="overlay-fx dmg-fx" id="dmg-overlay-old"></div>
     <div class="overlay-fx crit-flash" id="crit-overlay"></div>
+    
     <div id="game-container">
         
         <div id="top-left-controls">
@@ -79,48 +80,53 @@
             <p id="login-status" style="color: #888; font-family: 'Montserrat'; font-size: 12px; margin-top:-20px;"></p>
         </div>
 
-       <div id="lobby-screen" class="screen">
-    <div class="lobby-logo-right">
-        <img src="https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png" style="width:100%; height:auto;">
-    </div>
-    
-    <div class="lobby-frame-container">
-        <img src="https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png" class="lobby-frame-img">
-        
-        <div class="lobby-ui-overlay">
-            <div class="user-welcome" id="lobby-username">OLÁ, JOGADOR</div>
-            <div class="user-stats" id="lobby-stats">VITÓRIAS: 0 | PONTOS: 0</div>
+        <div id="lobby-screen" class="screen">
+            <div class="lobby-logo-right">
+                <img src="https://i.ibb.co/60tCyntQ/BUPPO-LOGO-Copiar.png" style="width:100%; height:auto;">
+            </div>
             
-            <div class="ranking-scroll" id="ranking-content">
-                </div>
-
-            <div class="lobby-btn-row">
-                <button id="btn-play-pvp" onclick="startPvPSearch()">
-                    <span class="btn-title">JOGAR PvP</span>
-                    <span class="btn-sub">RANKEADO (+8 PTS)</span>
-                </button>
+            <div class="lobby-frame-container">
+                <img src="https://i.ibb.co/zHZsCnyB/QUADRO-DO-SAGU-O.png" class="lobby-frame-img">
                 
-                <button id="btn-play-pve" onclick="startPvE()">
-                    <span class="btn-title">JOGAR PvE</span>
-                    <span class="btn-sub">TREINO (+1 PT)</span>
-                </button>
+                <div class="lobby-ui-overlay">
+                    <div class="user-welcome" id="lobby-username">OLÁ, JOGADOR</div>
+                    <div class="user-stats" id="lobby-stats">VITÓRIAS: 0 | PONTOS: 0</div>
+                    
+                    <div class="ranking-scroll" id="ranking-content">
+                    </div>
+
+                    <div class="lobby-btn-row">
+                        <button id="btn-play-pvp" onclick="startPvPSearch()">
+                            <span class="btn-title">JOGAR PvP</span>
+                            <span class="btn-sub">RANKEADO (+8 PTS)</span>
+                        </button>
+                        
+                        <button id="btn-play-pve" onclick="startPvE()">
+                            <span class="btn-title">JOGAR PvE</span>
+                            <span class="btn-sub">TREINO (+1 PT)</span>
+                        </button>
+                    </div>
+
+                    <button id="btn-logout" onclick="handleLogout()">TROCAR DE CONTA</button>
+                </div>
             </div>
 
-            <button id="btn-logout" onclick="handleLogout()">TROCAR DE CONTA</button>
+            <button class="circle-btn" style="position: absolute; bottom: 20px; right: 20px;" onclick="window.openHistory()">
+                📜
+            </button>
         </div>
-    </div>
-</div>
 
-<div id="matchmaking-screen" class="modal-overlay">
-    <div class="modal-box matchmaking-box">
-        <div class="radar-spinner"></div>
-        <div class="mm-title">PROCURANDO OPONENTE...</div>
-        <div class="mm-desc">Buscando jogadores com nível próximo ao seu</div>
-        <div class="mm-timer" id="mm-timer">00:00</div>
-        
-        <button class="mini-btn cancel-btn" onclick="cancelPvPSearch()">CANCELAR BUSCA</button>
-    </div>
-</div>
+        <div id="matchmaking-screen" class="modal-overlay">
+            <div class="modal-box matchmaking-box">
+                <div class="radar-spinner"></div>
+                <div class="mm-title">PROCURANDO OPONENTE...</div>
+                <div class="mm-desc">Buscando jogadores com nível próximo ao seu</div>
+                <div class="mm-timer" id="mm-timer">00:00</div>
+                
+                <button class="mini-btn cancel-btn" onclick="cancelPvPSearch()">CANCELAR BUSCA</button>
+            </div>
+        </div>
+
         <div id="deck-selection-screen" class="screen">
            <img src="https://i.ibb.co/GSWpX5C/PLACA-SELE-O.png" alt="Selecione seu Deck" class="img-titulo-placa">
             
@@ -180,23 +186,21 @@
     </div>
 
     <div id="history-screen" class="screen modal-overlay" style="display: none; z-index: 2000;">
-    <div class="history-panel">
-        <h2 style="color: var(--gold); text-shadow: 0 0 10px var(--gold);">DIÁRIO DE BATALHA</h2>
-        
-        <div id="history-list-container">
-            <div class="loading-text">Carregando pergaminhos...</div>
-        </div>
+        <div class="history-panel">
+            <h2 style="color: var(--gold); text-shadow: 0 0 10px var(--gold);">DIÁRIO DE BATALHA</h2>
+            
+            <div id="history-list-container">
+                <div class="loading-text">Carregando pergaminhos...</div>
+            </div>
 
-        <button class="mini-btn" onclick="closeHistory()">FECHAR</button>
+            <button class="mini-btn" onclick="closeHistory()">FECHAR</button>
+        </div>
     </div>
-</div>
 
     <div id="tooltip-box"><h3 id="tt-title"></h3><div id="tt-content"></div></div>
     <div id="modal-overlay" class="modal-overlay" onclick="cancelModal()"><div class="modal-box" onclick="event.stopPropagation()"><h2 id="modal-title"></h2><p id="modal-desc"></p><div class="modal-btns" id="modal-btns"></div></div></div>
 
-    <script src="js/effects.js"></script> <script type="module" src="js/main.js"></script> </body>
+    <script src="js/effects.js"></script> 
+    <script type="module" src="js/main.js"></script> 
+</body>
 </html>
-
-
-
-
