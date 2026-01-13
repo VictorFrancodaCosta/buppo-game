@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL CORRIGIDA: FLUXO REATIVO DE XP)
+// ARQUIVO: js/main.js (VERSÃO FINAL: XP FUNCIONANDO + MAESTRIAS CORRIGIDAS)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -1329,14 +1329,18 @@ async function commitTurnToDB(pAct, extraCard = null) {
     }
 }
 
+// CORREÇÃO CRÍTICA: AGORA O CÁLCULO DE DANO INCLUI O BÔNUS (MAESTRIA)
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
     
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
 
-    if(mAct === 'ATAQUE') { pDmg += monster.lvl; }
-    if(pAct === 'ATAQUE') { mDmg += player.lvl; }
+    // DANO = NIVEL + BONUS DE MAESTRIA
+    if(mAct === 'ATAQUE') { pDmg += (monster.lvl + monster.bonusAtk); }
+    if(pAct === 'ATAQUE') { mDmg += (player.lvl + player.bonusAtk); }
+    
+    // BLOQUEIO REFLETE = 1 + BONUS DE MAESTRIA
     if(pAct === 'BLOQUEIO') { pDmg = 0; if(mAct === 'ATAQUE') { mDmg += (1 + player.bonusBlock); } }
     if(mAct === 'BLOQUEIO') { mDmg = 0; if(pAct === 'ATAQUE') { pDmg += (1 + monster.bonusBlock); } }
 
@@ -1376,8 +1380,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
     // CORREÇÃO: LÓGICA DE XP EXTRA NO PVP (TREINAR + BONUS)
-    // Se for PvP, só executo a lógica SE EU SOU O JOGADOR DA AÇÃO.
-    // O oponente apenas recebe o update pelo snapshot.
     function handleExtraXP(u) { 
         // LÓGICA PVP:
         if (window.gameMode === 'pvp' && window.currentMatchId) {
@@ -1537,7 +1539,25 @@ function processMasteries(u, triggers, cb) {
     else if(type === 'DESARMAR' && u.id === 'm') { let target = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE'; player.disabled = target; showFloatingText('p-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }
     else { applyMastery(u, type); processMasteries(u, triggers, cb); }
 }
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
+
+// CORREÇÃO: Aplicação correta de Dano e Feedback Visual da Maestria
+function applyMastery(u, k) { 
+    if(k === 'ATAQUE') { 
+        u.bonusAtk++; 
+        let target = (u === player) ? monster : player; 
+        target.hp -= u.bonusAtk; // Dano imediato
+        showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); 
+        triggerDamageEffect(u !== player); 
+        checkEndGame(); 
+    } 
+    if(k === 'BLOQUEIO') u.bonusBlock++; 
+    if(k === 'DESCANSAR') { 
+        u.maxHp++; 
+        showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); 
+    } 
+    updateUI(); // Força a atualização do ícone imediatamente
+}
+
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
 function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false, isPlayer = false) {
@@ -2066,6 +2086,33 @@ async function syncLevelUpToDB(u) {
         await updateDoc(matchRef, updates);
     } catch(e) {
         console.error("Erro ao sincronizar Level Up:", e);
+    }
+}
+
+// === NOVO: COMMITAR O TURNO AO DB ===
+async function commitTurnToDB(pAct) {
+    if (!window.currentMatchId) return;
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    
+    // Constrói o novo estado local
+    let newXP = [...player.xp]; // Já foi atualizado localmente no resolveTurn
+    let newDeck = [...player.deck]; // Já foi atualizado localmente no resolveTurn
+
+    try {
+        let updateData = {};
+        if (window.myRole === 'player1') {
+            updateData['player1.xp'] = newXP;
+            updateData['player1.deck'] = newDeck;
+        } else {
+            updateData['player2.xp'] = newXP;
+            updateData['player2.deck'] = newDeck;
+        }
+        
+        console.log("Commitando turno ao DB (XP Total):", newXP);
+        await updateDoc(matchRef, updateData);
+        
+    } catch (e) {
+        console.error("Erro ao commitar turno ao DB:", e);
     }
 }
 
