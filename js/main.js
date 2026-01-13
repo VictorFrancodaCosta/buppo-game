@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL: SYNC PVP + HISTÓRICO)
+// ARQUIVO: js/main.js (VERSÃO AJUSTADA: LEVEL UP VISUAL E HISTÓRICO LIMPO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -488,7 +488,7 @@ function startGameFlow() {
 }
 
 // ======================================================
-// LISTENER PVP CORRIGIDO (LÓGICA REATIVA)
+// LISTENER PVP CORRIGIDO (LÓGICA REATIVA + VISUAL LEVEL UP)
 // ======================================================
 function startPvPListener() {
     if(!window.currentMatchId) return;
@@ -588,8 +588,14 @@ function startPvPListener() {
                 else if (serverXP.length < localXP.length) {
                     monster.xp = [...serverXP];
                     
+                    // --- CORREÇÃO: VISUAL DO LEVEL UP DO INIMIGO ---
+                    // Se o nível novo for maior que o atual, força a animação
+                    if (enemyData.lvl && enemyData.lvl > monster.lvl) {
+                        triggerLevelUpVisuals('m');
+                        playSound('sfx-levelup');
+                    }
+
                     // --- CORREÇÃO: Sincronia Total de Status do Inimigo ---
-                    // Isso garante que o ícone de maestria apareça e o HP atualize corretamente
                     if(enemyData.lvl) monster.lvl = enemyData.lvl;
                     if(enemyData.maxHp) monster.maxHp = enemyData.maxHp;
                     
@@ -602,12 +608,8 @@ function startPvPListener() {
                         monster.hp = enemyData.hp; 
                     }
 
-                    // Roda a animação de Level Up, mas EVITA rodar a lógica de escolha da IA
-                    // pois já puxamos os dados corretos do banco acima
-                    checkLevelUp(monster, () => {
-                        updateUI(); // Garante que os ícones de maestria apareçam
-                    }); 
-                    
+                    // Não precisamos mais do checkLevelUp aqui pois já forçamos a animação acima
+                    // e os dados já foram sincronizados.
                     updateUI();
                 }
             }
@@ -671,17 +673,19 @@ window.handleLogout = function() {
     signOut(auth).then(() => { location.reload(); });
 };
 
-// --- NOVO: Função Auxiliar para Salvar Histórico ---
+// --- FUNÇÃO CORRIGIDA: SALVAR NOME CORRETO NO HISTÓRICO ---
 async function saveMatchHistory(result, pointsChange) {
     if (!currentUser) return;
     try {
-        // Pega o nome do oponente da tela (truque rápido) ou do pvpStartData
-        let enemyName = "Monstro";
+        let enemyName = "PVE"; // Padrão para PvE
+        
+        // Se for PvP, tenta pegar o nome real
         if (window.gameMode === 'pvp' && window.pvpStartData) {
             enemyName = (window.myRole === 'player1') ? window.pvpStartData.player2.name : window.pvpStartData.player1.name;
+            // Limpa o nome (pega só o primeiro nome)
+            if(enemyName) enemyName = enemyName.split(' ')[0].toUpperCase();
         }
 
-        // Salva na sub-coleção 'history' do jogador
         const historyRef = collection(db, "players", currentUser.uid, "history");
         await addDoc(historyRef, {
             result: result, // 'WIN' ou 'LOSS'
@@ -714,7 +718,7 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
                 score: (data.score || 0) + pontosGanhos
             });
             
-            // >>> NOVA LINHA AQUI <<<
+            // >>> SALVA HISTÓRICO <<<
             await saveMatchHistory('WIN', pontosGanhos);
             
             console.log(`Vitória registrada (${modoAtual}): +${pontosGanhos} pontos.`);
@@ -737,7 +741,7 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
                 score: novoScore
             });
 
-            // >>> NOVA LINHA AQUI <<<
+            // >>> SALVA HISTÓRICO <<<
             await saveMatchHistory('LOSS', -pontosPerdidos);
             
             console.log(`Derrota registrada (${modoAtual}): -${pontosPerdidos} pontos.`);
@@ -2174,10 +2178,18 @@ window.openHistory = async function() {
             const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : 'DERROTA';
             const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
 
+            // --- LÓGICA DE EXIBIÇÃO: PVE vs PVP ---
+            let vsText = "";
+            if (h.opponent === 'PVE' || h.mode === 'pve') {
+                 vsText = `${resultTxt} PVE`;
+            } else {
+                 vsText = `${resultTxt} vs ${h.opponent}`;
+            }
+
             html += `
                 <div class="history-item ${resultClass}">
                     <div>
-                        <div class="h-vs">${resultTxt} vs ${h.opponent}</div>
+                        <div class="h-vs">${vsText}</div>
                         <div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div>
                     </div>
                     <div class="h-score">${scoreTxt} PTS</div>
