@@ -1,9 +1,9 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL CORRIGIDA: MAESTRIA SYNC)
+// ARQUIVO: js/main.js (VERSÃO FINAL: SYNC PVP + HISTÓRICO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
@@ -671,6 +671,34 @@ window.handleLogout = function() {
     signOut(auth).then(() => { location.reload(); });
 };
 
+// --- NOVO: Função Auxiliar para Salvar Histórico ---
+async function saveMatchHistory(result, pointsChange) {
+    if (!currentUser) return;
+    try {
+        // Pega o nome do oponente da tela (truque rápido) ou do pvpStartData
+        let enemyName = "Monstro";
+        if (window.gameMode === 'pvp' && window.pvpStartData) {
+            enemyName = (window.myRole === 'player1') ? window.pvpStartData.player2.name : window.pvpStartData.player1.name;
+        }
+
+        // Salva na sub-coleção 'history' do jogador
+        const historyRef = collection(db, "players", currentUser.uid, "history");
+        await addDoc(historyRef, {
+            result: result, // 'WIN' ou 'LOSS'
+            opponent: enemyName,
+            mode: window.gameMode || 'pve',
+            deck: window.currentDeck,
+            points: pointsChange,
+            timestamp: Date.now()
+        });
+        console.log("Histórico salvo!");
+    } catch (e) {
+        console.error("Erro ao salvar histórico:", e);
+    }
+}
+
+// --- ATUALIZAÇÃO NAS FUNÇÕES DE VITÓRIA/DERROTA ---
+
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!currentUser) return;
     try {
@@ -680,10 +708,15 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
             const data = userSnap.data();
             let modoAtual = window.gameMode || 'pve';
             let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
+            
             await updateDoc(userRef, {
                 totalWins: (data.totalWins || 0) + 1,
                 score: (data.score || 0) + pontosGanhos
             });
+            
+            // >>> NOVA LINHA AQUI <<<
+            await saveMatchHistory('WIN', pontosGanhos);
+            
             console.log(`Vitória registrada (${modoAtual}): +${pontosGanhos} pontos.`);
         }
     } catch(e) { console.error("Erro ao salvar vitória:", e); }
@@ -699,9 +732,14 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
             let modoAtual = window.gameMode || 'pve';
             let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3;
             let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
+            
             await updateDoc(userRef, {
                 score: novoScore
             });
+
+            // >>> NOVA LINHA AQUI <<<
+            await saveMatchHistory('LOSS', -pontosPerdidos);
+            
             console.log(`Derrota registrada (${modoAtual}): -${pontosPerdidos} pontos.`);
         }
     } catch(e) { console.error("Erro ao salvar derrota:", e); }
@@ -2100,6 +2138,66 @@ async function syncLevelUpToDB(u) {
         console.error("Erro ao sincronizar Level Up:", e);
     }
 }
+
+// === NOVO: Funções de Interface do Histórico ===
+
+window.openHistory = async function() {
+    if(!currentUser) return;
+    window.playNavSound();
+    
+    const screen = document.getElementById('history-screen');
+    const container = document.getElementById('history-list-container');
+    screen.style.display = 'flex';
+    container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Consultando arquivos...</div>';
+
+    try {
+        // Busca os últimos 20 jogos da sub-coleção history
+        const historyRef = collection(db, "players", currentUser.uid, "history");
+        const q = query(historyRef, orderBy("timestamp", "desc"), limit(20));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Nenhuma batalha registrada ainda.</div>';
+            return;
+        }
+
+        let html = '';
+        querySnapshot.forEach((doc) => {
+            const h = doc.data();
+            
+            // Formata data
+            const date = new Date(h.timestamp);
+            const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+            
+            // Define classes visual
+            const resultClass = h.result === 'WIN' ? 'win' : 'loss';
+            const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : 'DERROTA';
+            const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
+
+            html += `
+                <div class="history-item ${resultClass}">
+                    <div>
+                        <div class="h-vs">${resultTxt} vs ${h.opponent}</div>
+                        <div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div>
+                    </div>
+                    <div class="h-score">${scoreTxt} PTS</div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+
+    } catch(e) {
+        console.error("Erro ao carregar histórico:", e);
+        container.innerHTML = '<div style="color:red; text-align:center;">Erro ao carregar.</div>';
+    }
+};
+
+window.closeHistory = function() {
+    window.playNavSound();
+    document.getElementById('history-screen').style.display = 'none';
+};
+
 
 // Safety Loader: Start the game even if assets fail
 setTimeout(() => {
