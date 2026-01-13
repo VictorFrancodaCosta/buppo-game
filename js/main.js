@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO ESTÁVEL: CORREÇÃO VISUAL PVP + LEVEL UP)
+// ARQUIVO: js/main.js (VERSÃO FINAL: TREINO + ATAQUE vs DESCANSAR SYNC)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -322,7 +322,7 @@ window.selectDeck = function(deckType) {
     }
 
     window.currentDeck = deckType; 
-    
+     
     document.body.classList.remove('theme-cavaleiro', 'theme-mago'); 
     if (deckType === 'mage') {
         document.body.classList.add('theme-mago');
@@ -385,7 +385,7 @@ window.transitionToGame = function() {
 window.transitionToLobby = function(skipAnim = false) {
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     document.body.classList.remove('force-landscape');
-    
+     
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
         ds.style.opacity = '0';
@@ -420,10 +420,10 @@ window.goToLobby = async function(isAutoLogin = false) {
     isProcessing = false; 
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
-    
+     
     MusicController.play('bgm-menu'); 
     createLobbyFlares();
-    
+     
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
@@ -494,7 +494,7 @@ function startPvPListener() {
     const matchRef = doc(db, "matches", window.currentMatchId);
     let namesUpdated = false;
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
-    
+     
     const ensureMyRole = (data) => {
         if (window.myRole) return;
         if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
@@ -555,14 +555,14 @@ function startPvPListener() {
             const enemyRole = (window.myRole === 'player1') ? 'player2' : 'player1';
             const enemyData = matchData[enemyRole];
             
-            // Se a XP do inimigo no banco for maior que a local, ele usou TREINAR
+            // Se a XP do inimigo no banco for maior que a local, ele usou TREINAR ou ganhou bônus
             if (enemyData && enemyData.xp && enemyData.xp.length > monster.xp.length) {
                 const startIdx = monster.xp.length;
                 for (let i = startIdx; i < enemyData.xp.length; i++) {
                     const newCard = enemyData.xp[i];
-                    // Anima a carta voando do baralho do inimigo para a XP dele
+                    // Anima a carta voando do baralho do inimigo para a XP dele (Visual)
                     animateFly('m-deck-container', 'm-xp', newCard, () => {
-                         triggerXPGlow('m');
+                          triggerXPGlow('m');
                     }, false, false, false);
                 }
                 monster.xp = enemyData.xp;
@@ -571,11 +571,11 @@ function startPvPListener() {
                 
                 // Se a XP zerou no banco, significa que ele upou
                 if (enemyData.xp.length === 0 && monster.xp.length >= 5) {
-                     monster.xp = [];
-                     if(enemyData.deck) monster.deck = enemyData.deck;
-                     if(enemyData.lvl) monster.lvl = enemyData.lvl;
-                     checkLevelUp(monster, () => {}); 
-                     updateUI();
+                      monster.xp = [];
+                      if(enemyData.deck) monster.deck = enemyData.deck;
+                      if(enemyData.lvl) monster.lvl = enemyData.lvl;
+                      checkLevelUp(monster, () => {}); 
+                      updateUI();
                 }
             } else if (enemyData && enemyData.xp && enemyData.xp.length === 0 && monster.xp.length >= 5) {
                 // Caso especial: Reset de nível detectado diretamente
@@ -1378,7 +1378,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
-    // CORREÇÃO: LÓGICA DE XP EXTRA NO PVP
+    // CORREÇÃO: LÓGICA DE XP EXTRA NO PVP (TREINAR + BONUS)
     function handleExtraXP(u) { 
         // LÓGICA PVP:
         if (window.gameMode === 'pvp' && window.currentMatchId) {
@@ -1397,7 +1397,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
              // Se É O INIMIGO (MONSTRO):
              // NÃO FAZ NADA AQUI!
              // Deixamos o listener (onSnapshot) detectar a mudança no DB e animar a carta correta.
-             // Isso evita que puxemos uma carta localmente que seja diferente da do DB.
              else {
                  return;
              }
@@ -1413,8 +1412,13 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         }
     }
 
-    if(!pDead && pAct === 'TREINAR') handleExtraXP(player); if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
-    if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
+    // 1. Efeito da Carta TREINAR
+    if(!pDead && pAct === 'TREINAR') handleExtraXP(player); 
+    if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
+
+    // 2. Efeito de ATAQUE vs DESCANSAR
+    if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); 
+    if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
 
     setTimeout(() => {
         animateFly('p-slot', 'p-xp', pAct, () => { 
