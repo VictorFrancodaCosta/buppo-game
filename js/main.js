@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL COMPLETA: XP REATIVO + MAESTRIAS + LOADER SEGURO)
+// ARQUIVO: js/main.js (VERSÃO CORREÇÃO SAGUÃO E BOTOES)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -32,7 +32,7 @@ try {
 let currentUser = null;
 const audios = {}; 
 let assetsLoaded = 0; 
-let gameStarted = false; // Controle para evitar duplo start
+let gameStarted = false; 
 window.gameAssets = []; 
 window.pvpUnsubscribe = null; 
 let searchInterval = null;
@@ -265,8 +265,17 @@ window.playUIHoverSound = function() {
 };
 
 window.showScreen = function(screenId) {
+    const el = document.getElementById(screenId);
+    if (!el) {
+        console.error(`Tela não encontrada: ${screenId}`);
+        return;
+    }
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(screenId).classList.add('active');
+    el.classList.add('active');
+    
+    // Força visibilidade se estiver oculta por style direto
+    el.style.display = 'flex';
+    
     const configBtn = document.getElementById('btn-config-toggle');
     const surrenderBtn = document.getElementById('btn-surrender');
     if(screenId === 'game-screen') {
@@ -282,12 +291,15 @@ window.showScreen = function(screenId) {
 
 // --- CONTROLE DE TELA CHEIA E ROTAÇÃO ---
 window.openDeckSelector = function() {
+    console.log("Abrindo seletor de deck...");
     document.body.classList.add('force-landscape');
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
         ds.style.display = 'flex';
         ds.style.opacity = '1';
         ds.style.pointerEvents = 'auto'; 
+        ds.classList.add('active'); // Garantia extra
+        
         const options = document.querySelectorAll('.deck-option');
         options.forEach(opt => {
             opt.style = "";
@@ -320,6 +332,7 @@ window.openDeckSelector = function() {
 
 // --- SELEÇÃO DE DECK ---
 window.selectDeck = function(deckType) {
+    console.log("Deck selecionado:", deckType);
     if(audios['sfx-deck-select']) {
         try {
             audios['sfx-deck-select'].currentTime = 0;
@@ -418,10 +431,14 @@ window.transitionToLobby = function(skipAnim = false) {
 }
 
 window.goToLobby = async function(isAutoLogin = false) {
-    if(!currentUser) {
-        window.showScreen('start-screen');
-        MusicController.play('bgm-menu'); 
-        return;
+    if(!currentUser && !isAutoLogin) {
+        // Se for forçado e não tiver user, tenta pegar do auth
+        if(auth.currentUser) currentUser = auth.currentUser;
+        else {
+            window.showScreen('start-screen');
+            MusicController.play('bgm-menu'); 
+            return;
+        }
     }
     isProcessing = false; 
     let bg = document.getElementById('game-background');
@@ -430,17 +447,21 @@ window.goToLobby = async function(isAutoLogin = false) {
     MusicController.play('bgm-menu'); 
     createLobbyFlares();
      
-    const userRef = doc(db, "players", currentUser.uid);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-        await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
-        document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
-        document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
-    } else {
-        const d = userSnap.data();
-        document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
-        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+    if (currentUser) {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+            await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
+            document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
+            document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
+        } else {
+            const d = userSnap.data();
+            document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
+            document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+        }
     }
+    
+    // Atualiza Ranking
     const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
     onSnapshot(q, (snapshot) => {
         let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
@@ -454,6 +475,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         html += '</tbody></table>';
         document.getElementById('ranking-content').innerHTML = html;
     });
+    
     window.showScreen('lobby-screen');
     document.getElementById('end-screen').classList.remove('visible'); 
 };
@@ -878,6 +900,9 @@ function createLobbyFlares() {
     for(let i=0; i < 70; i++) {
         let flare = document.createElement('div');
         flare.className = 'lobby-flare';
+        // Garantia de que partículas não bloqueiam cliques
+        flare.style.pointerEvents = 'none';
+        
         flare.style.left = Math.random() * 100 + '%';
         flare.style.top = Math.random() * 100 + '%';
         let size = 4 + Math.random() * 18; 
@@ -1588,4 +1613,27 @@ setTimeout(() => {
         console.warn("Timeout de segurança ativado: Iniciando jogo forçadamente.");
         finishLoading();
     }
-}, 3000);
+}, 3000); 
+
+// --- BINDING GLOBAL DE BOTOES (PARA ONCLICK NO HTML) ---
+window.startPvE = function() {
+    console.log("Botão PvE clicado!");
+    window.gameMode = 'pve'; 
+    window.playNavSound();
+    window.openDeckSelector(); 
+};
+
+window.startPvPSearch = function() {
+    console.log("Botão PvP clicado!");
+    if (!currentUser) {
+        console.log("Usuário não logado. Tentando auth global...");
+        if(auth.currentUser) currentUser = auth.currentUser;
+        else {
+            alert("Faça login primeiro!");
+            return;
+        }
+    }
+    window.gameMode = 'pvp'; 
+    window.playNavSound();
+    window.openDeckSelector(); 
+};
