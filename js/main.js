@@ -677,30 +677,34 @@ window.handleLogout = function() {
 async function saveMatchHistory(result, pointsChange) {
     if (!currentUser) return;
     try {
-        let enemyName = "PVE"; // Padrão para PvE
+        let enemyName = "TREINAMENTO"; 
         
-        // Se for PvP, tenta pegar o nome real
-        if (window.gameMode === 'pvp' && window.pvpStartData) {
-            enemyName = (window.myRole === 'player1') ? window.pvpStartData.player2.name : window.pvpStartData.player1.name;
-            // Limpa o nome (pega só o primeiro nome)
-            if(enemyName) enemyName = enemyName.split(' ')[0].toUpperCase();
+        if (window.gameMode === 'pvp') {
+            // Tenta pegar o nome do objeto de dados da partida
+            if (window.pvpStartData) {
+                const oppData = (window.myRole === 'player1') ? window.pvpStartData.player2 : window.pvpStartData.player1;
+                if (oppData && oppData.name) {
+                    enemyName = oppData.name.split(' ')[0].toUpperCase();
+                }
+            } else {
+                // Fallback caso os dados da partida tenham sumido
+                enemyName = "OPONENTE ONLINE";
+            }
         }
 
         const historyRef = collection(db, "players", currentUser.uid, "history");
         await addDoc(historyRef, {
-            result: result, // 'WIN' ou 'LOSS'
+            result: result,
             opponent: enemyName,
             mode: window.gameMode || 'pve',
             deck: window.currentDeck,
             points: pointsChange,
             timestamp: Date.now()
         });
-        console.log("Histórico salvo!");
     } catch (e) {
         console.error("Erro ao salvar histórico:", e);
     }
 }
-
 // --- ATUALIZAÇÃO NAS FUNÇÕES DE VITÓRIA/DERROTA ---
 
 window.registrarVitoriaOnline = async function(modo = 'pve') {
@@ -1116,33 +1120,30 @@ function dealAllInitialCards() {
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
 
 function onCardClick(index) {
-    if(isProcessing) return; if (!player.hand[index]) return;
+    if(isProcessing) return; 
+    if (!player.hand[index]) return;
     
-    // Se já escolheu uma carta no PvP, não deixa clicar em outra
+    // Força o sumiço do tooltip imediatamente ao clicar
+    if(tt) tt.style.display = 'none';
+    document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active');
+
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
 
-    playSound('sfx-play'); document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active');
-    document.getElementById('tooltip-box').style.display = 'none'; isLethalHover = false; 
+    playSound('sfx-play');
+    isLethalHover = false; 
     let cardKey = player.hand[index];
     if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
     
     if(cardKey === 'DESARMAR') { 
         window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => {
-            if(window.gameMode === 'pvp') {
-                lockInPvPMove(index, choice); 
-            } else {
-                playCardFlow(index, choice); 
-            }
+            if(window.gameMode === 'pvp') { lockInPvPMove(index, choice); } 
+            else { playCardFlow(index, choice); }
         }); 
     } else { 
-        if(window.gameMode === 'pvp') {
-            lockInPvPMove(index, null); 
-        } else {
-            playCardFlow(index, null); 
-        }
+        if(window.gameMode === 'pvp') { lockInPvPMove(index, null); } 
+        else { playCardFlow(index, null); }
     }
 }
-
 // ATUALIZAÇÃO: TRAVAR CARTA NO PVP
 async function lockInPvPMove(index, disarmChoice) {
     const handContainer = document.getElementById('player-hand');
@@ -1361,29 +1362,28 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
 
 // === NOVO: COMMITAR O TURNO AO DB DE FORMA CORRETA ===
 // Agora salva o array INTEIRO para garantir consistência
-async function commitTurnToDB(pAct, extraCard = null) {
+async function commitTurnToDB(pAct) {
     if (!window.currentMatchId) return;
     const matchRef = doc(db, "matches", window.currentMatchId);
     
-    // Constrói o novo estado local
-    let newXP = [...player.xp]; // Já foi atualizado localmente no resolveTurn
-    let newDeck = [...player.deck]; // Já foi atualizado localmente no resolveTurn
+    let newXP = [...player.xp];
+    let newDeck = [...player.deck];
 
     try {
         let updateData = {};
-        if (window.myRole === 'player1') {
-            updateData['player1.xp'] = newXP;
-            updateData['player1.deck'] = newDeck;
-        } else {
-            updateData['player2.xp'] = newXP;
-            updateData['player2.deck'] = newDeck;
-        }
+        const myKey = (window.myRole === 'player1') ? 'player1' : 'player2';
+        const oppKey = (window.myRole === 'player1') ? 'player2' : 'player1';
+
+        // Sincroniza TUDO: XP, Deck e o HP (fundamental para Maestria de Ataque)
+        updateData[`${myKey}.xp`] = newXP;
+        updateData[`${myKey}.deck`] = newDeck;
+        updateData[`${myKey}.hp`] = player.hp;
+        updateData[`${oppKey}.hp`] = monster.hp; // Aqui o oponente recebe o dano da maestria
         
-        console.log("Commitando turno ao DB (XP Total):", newXP);
+        console.log("Enviando atualização de turno e HP...");
         await updateDoc(matchRef, updateData);
-        
     } catch (e) {
-        console.error("Erro ao commitar turno ao DB:", e);
+        console.error("Erro ao commitar turno:", e);
     }
 }
 
