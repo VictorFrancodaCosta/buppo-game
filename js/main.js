@@ -1,4 +1,4 @@
-// ARQUIVO: js/main.js (VERSÃO FINAL DEFINITIVA - TODAS AS CORREÇÕES)
+// ARQUIVO: js/main.js (VERSÃO FINAL COMPLETA - BUPPO)
 
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -34,6 +34,7 @@ window.gameAssets = [];
 window.pvpUnsubscribe = null; 
 let searchInterval = null;
 let matchTimerInterval = null;
+let matchSeconds = 0;
 let myQueueRef = null;
 let queueListener = null;
 const tt = document.getElementById('tooltip-box');
@@ -95,26 +96,22 @@ let isLethalHover = false;
 let mixerInterval = null;
 
 // --- ESTADOS GLOBAIS ---
-window.isMatchStarting = false;
-window.currentDeck = 'knight';
-window.myRole = null; 
-window.currentMatchId = null;
-window.pvpSelectedCardIndex = null; 
-window.isResolvingTurn = false; 
-window.pvpStartData = null; 
+window.isMatchStarting = false; window.currentDeck = 'knight'; window.myRole = null; 
+window.currentMatchId = null; window.pvpSelectedCardIndex = null; 
+window.isResolvingTurn = false; window.pvpStartData = null; 
 
-// --- GESTÃO DE TELAS (CORREÇÃO DE CLIQUES) ---
+// --- GESTÃO DE TELAS (FIX DE CLIQUES) ---
 window.showScreen = function(id) {
     document.querySelectorAll('.screen').forEach(s => {
         s.classList.remove('active');
-        s.style.display = 'none'; // Importante: Remove do fluxo
-        s.style.pointerEvents = 'none'; // Importante: Remove interação
+        s.style.display = 'none'; 
+        s.style.pointerEvents = 'none';
     });
     const target = document.getElementById(id);
     if(target) {
         target.classList.add('active');
         target.style.display = 'flex';
-        target.style.pointerEvents = 'all'; // Reativa interação
+        target.style.pointerEvents = 'all';
     }
 };
 
@@ -166,10 +163,9 @@ const MusicController = {
             }
             return; 
         } 
-        const maxVol = 0.5 * window.masterVol;
         if (this.currentTrackId && audios[this.currentTrackId]) this.fadeOut(audios[this.currentTrackId]);
         if (trackId && audios[trackId]) {
-            audios[trackId].currentTime = 0; if (!window.isMuted) { audios[trackId].volume = 0; audios[trackId].play().catch(()=>{}); this.fadeIn(audios[trackId], maxVol); }
+            audios[trackId].currentTime = 0; if (!window.isMuted) { audios[trackId].volume = 0; audios[trackId].play().catch(()=>{}); this.fadeIn(audios[trackId], 0.5 * window.masterVol); }
         }
         this.currentTrackId = trackId;
     },
@@ -407,7 +403,73 @@ async function playCardFlow(index, pDisarmChoice) {
     }, false, true, false);
 }
 
-// --- PVP ---
+// --- PVP: INICIO CORRIGIDO ---
+async function initiateMatchmaking() {
+    window.showScreen('matchmaking-screen');
+    const timerEl = document.getElementById('mm-timer');
+    if(timerEl) timerEl.innerText = "00:00";
+    matchSeconds = 0;
+
+    // CORREÇÃO TIMER: Inicia o relógio visualmente
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    matchTimerInterval = setInterval(() => {
+        matchSeconds++;
+        const m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
+        const s = (matchSeconds % 60).toString().padStart(2, '0');
+        if(timerEl) timerEl.innerText = `${m}:${s}`;
+    }, 1000);
+
+    myQueueRef = doc(collection(db, "queue"));
+    await setDoc(myQueueRef, { 
+        uid: currentUser.uid, 
+        name: currentUser.displayName, 
+        timestamp: Date.now(), 
+        matchId: null,
+        deck: window.currentDeck
+    });
+    
+    queueListener = onSnapshot(myQueueRef, (snap) => {
+        if (snap.exists() && snap.data().matchId) enterMatch(snap.data().matchId);
+    });
+
+    // CORREÇÃO BUSCA: Loop ativo para achar outros players
+    if(searchInterval) clearInterval(searchInterval);
+    searchInterval = setInterval(async () => {
+        const q = query(collection(db, "queue"), orderBy("timestamp", "desc"), limit(5));
+        const s = await getDocs(q);
+        s.forEach(async dSnap => {
+            const d = dSnap.data();
+            // Evita achar a si mesmo ou tickets já em partida ou tickets muito velhos (>1min)
+            if (d.uid !== currentUser.uid && !d.matchId && (Date.now() - d.timestamp < 60000)) {
+                const mid = "match_" + Date.now();
+                await updateDoc(dSnap.ref, { matchId: mid });
+                await updateDoc(myQueueRef, { matchId: mid });
+                createMatchDoc(mid, d.uid, d.name, d.deck);
+            }
+        });
+    }, 3000);
+}
+
+async function createMatchDoc(mid, oppId, oppName, oppDeck) {
+    const p1D = generateShuffledDeck(); const p2D = generateShuffledDeck();
+    await setDoc(doc(db, "matches", mid), {
+        player1: { uid: currentUser.uid, name: currentUser.displayName, hp: 6, deck: p1D, xp: [] },
+        player2: { uid: oppId, name: oppName, hp: 6, deck: p2D, xp: [] },
+        status: 'playing', createdAt: Date.now()
+    });
+}
+
+async function enterMatch(mid) {
+    clearInterval(searchInterval);
+    if(matchTimerInterval) clearInterval(matchTimerInterval);
+    
+    window.currentMatchId = mid;
+    const s = await getDoc(doc(db, "matches", mid));
+    window.pvpStartData = s.data();
+    window.myRole = (s.data().player1.uid === currentUser.uid) ? 'player1' : 'player2';
+    window.transitionToGame();
+}
+
 async function lockInPvPMove(index, disarmChoice) {
     const cardEl = document.getElementById('player-hand').children[index];
     if(cardEl) cardEl.classList.add('card-selected');
@@ -435,7 +497,6 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     let myCardEl = handContainer.children[window.pvpSelectedCardIndex || 0];
     if(myCardEl) myCardEl.style.opacity = '0';
     
-    // Remove local
     if(window.pvpSelectedCardIndex !== null) player.hand.splice(window.pvpSelectedCardIndex, 1);
     else { const idx = player.hand.indexOf(myMove); if(idx>-1) player.hand.splice(idx,1); }
     
@@ -475,7 +536,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(pDmg > 0) { showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); triggerDamageEffect(true); }
     if(mDmg > 0) { showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); triggerDamageEffect(false); }
     
-    // Cura acontece ANTES da Maestria
     if(player.hp > 0 && pAct === 'DESCANSAR') { 
         let h = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + h); 
         showFloatingText('p-lvl', `+${h} HP`, "#55efc4"); triggerHealEffect(true); 
@@ -489,15 +549,12 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
 
     setTimeout(() => {
         const handleXP = (u, act, isOpp) => {
-            // Animação de XP
             animateFly(u.id === 'p' ? 'p-slot' : 'm-slot', u.id + '-xp', act, () => {
                 u.xp.push(act); triggerXPGlow(u.id); updateUI();
                 
                 checkLevelUp(u, () => {
-                    // Após processar Level Up e Maestrias:
                     if(isOpp) {
-                        // Se for PvP, salva o turno (HP atualizado pelas maestrias)
-                        if (window.gameMode === 'pvp') commitTurnToDB(); 
+                        if (window.gameMode === 'pvp') commitTurnToDB(); // Sync Final com Dano Maestria
                         checkEndGame();
                     } else {
                         if(player.hp > 0) drawCardLogic(player, 1);
@@ -505,7 +562,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
                 });
             }, false, false, !isOpp);
         };
-        // Processa Player depois Monstro
         handleXP(player, pAct, false); 
         handleXP(monster, mAct, true);
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
@@ -520,7 +576,6 @@ async function commitTurnToDB() {
         const myKey = window.myRole;
         const oppKey = (window.myRole === 'player1') ? 'player2' : 'player1';
         let data = {};
-        // Meus dados
         data[`${myKey}.hp`] = player.hp;
         data[`${myKey}.xp`] = player.xp;
         data[`${myKey}.lvl`] = player.lvl;
@@ -528,8 +583,7 @@ async function commitTurnToDB() {
         data[`${myKey}.bonusAtk`] = player.bonusAtk;
         data[`${myKey}.bonusBlock`] = player.bonusBlock;
         data[`${myKey}.deck`] = player.deck;
-        // CORREÇÃO: Envia HP do oponente (dano de maestria calculado localmente)
-        data[`${oppKey}.hp`] = monster.hp; 
+        data[`${oppKey}.hp`] = monster.hp; // Envia o dano da maestria ao oponente
         
         await updateDoc(matchRef, data);
     } catch (e) { console.error("Sync Error:", e); }
@@ -539,7 +593,7 @@ function applyMastery(u, k) {
     if(k === 'ATAQUE') { 
         u.bonusAtk++; 
         let target = (u === player) ? monster : player; 
-        target.hp -= u.bonusAtk; // Dano local
+        target.hp -= u.bonusAtk; 
         showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); 
         triggerDamageEffect(u !== player); 
     } 
@@ -597,49 +651,6 @@ async function saveMatchHistory(result, points) {
     });
 }
 
-// --- MATCHMAKING ---
-async function initiateMatchmaking() {
-    window.showScreen('matchmaking-screen');
-    myQueueRef = doc(collection(db, "queue"));
-    await setDoc(myQueueRef, { uid: currentUser.uid, name: currentUser.displayName, timestamp: Date.now(), matchId: null });
-    
-    queueListener = onSnapshot(myQueueRef, (snap) => {
-        if (snap.exists() && snap.data().matchId) enterMatch(snap.data().matchId);
-    });
-
-    searchInterval = setInterval(async () => {
-        const q = query(collection(db, "queue"), orderBy("timestamp", "desc"), limit(5));
-        const s = await getDocs(q);
-        s.forEach(async dSnap => {
-            const d = dSnap.data();
-            if (d.uid !== currentUser.uid && !d.matchId) {
-                const mid = "match_" + Date.now();
-                await updateDoc(dSnap.ref, { matchId: mid });
-                await updateDoc(myQueueRef, { matchId: mid });
-                createMatchDoc(mid, d.uid, d.name);
-            }
-        });
-    }, 3000);
-}
-
-async function createMatchDoc(mid, oppId, oppName) {
-    const p1D = generateShuffledDeck(); const p2D = generateShuffledDeck();
-    await setDoc(doc(db, "matches", mid), {
-        player1: { uid: currentUser.uid, name: currentUser.displayName, hp: 6, deck: p1D, xp: [] },
-        player2: { uid: oppId, name: oppName, hp: 6, deck: p2D, xp: [] },
-        status: 'playing', createdAt: Date.now()
-    });
-}
-
-async function enterMatch(mid) {
-    clearInterval(searchInterval);
-    window.currentMatchId = mid;
-    const s = await getDoc(doc(db, "matches", mid));
-    window.pvpStartData = s.data();
-    window.myRole = (s.data().player1.uid === currentUser.uid) ? 'player1' : 'player2';
-    window.transitionToGame();
-}
-
 // --- PVP UPDATE LISTENER ---
 function startPvPListener() {
     if(!window.currentMatchId) return;
@@ -648,20 +659,18 @@ function startPvPListener() {
         if (!docSnap.exists()) return;
         const data = docSnap.data();
         
-        // Atualiza nomes
         if(data.player1 && data.player2) {
             const p1n = data.player1.name; const p2n = data.player2.name;
             document.querySelector('#p-stats-cluster .unit-name').innerText = (window.myRole === 'player1') ? p1n : p2n;
             document.querySelector('#m-stats-cluster .unit-name').innerText = (window.myRole === 'player1') ? p2n : p1n;
         }
 
-        // Sync HP, XP, Level
         const myData = data[window.myRole];
         const oppKey = (window.myRole === 'player1') ? 'player2' : 'player1';
         const oppData = data[oppKey];
 
         if(myData && myData.hp !== undefined && myData.hp !== player.hp) {
-            player.hp = myData.hp; // Atualiza meu HP (dano maestria recebido)
+            player.hp = myData.hp; 
             updateUI();
         }
         if(oppData) {
@@ -670,7 +679,6 @@ function startPvPListener() {
             monster.maxHp = oppData.maxHp;
             monster.bonusAtk = oppData.bonusAtk;
             monster.bonusBlock = oppData.bonusBlock;
-            // XP Sync visual
             if(oppData.xp && oppData.xp.length > monster.xp.length) {
                 let card = oppData.xp[oppData.xp.length-1];
                 animateFly('m-deck-container', 'm-xp', card, ()=>{ monster.xp.push(card); updateUI(); }, false, false, false);
@@ -698,17 +706,15 @@ function updateLoader() {
     if(assetsLoaded >= totalAssets) setTimeout(() => hideLayer('loading-screen'), 800);
 }
 
-// Failsafe 4s para destravar tela
+// Failsafe 4s
 setTimeout(() => { hideLayer('loading-screen'); }, 4000);
 
-// Listener Global para fechar Tooltip
 document.addEventListener('mouseover', (e) => {
     if (!e.target.closest('.hand-card') && !e.target.closest('.mastery-icon') && !e.target.closest('.xp-mini')) {
         if(tt) tt.style.display = 'none';
     }
 });
 
-// Funções de UI
 function checkEndGame() {
     if(player.hp <= 0 || monster.hp <= 0) {
         isProcessing = true; MusicController.stopCurrent();
@@ -759,7 +765,7 @@ window.openHistory = async function() {
 };
 window.closeHistory = () => { document.getElementById('history-screen').style.display = 'none'; };
 
-// Funções Gráficas
+// --- FUNÇÕES GRAFICAS OBRIGATÓRIAS ---
 function animateFly(sid, eid, k, cb, d, t, isP) {
     let s = (typeof sid === 'string') ? document.getElementById(sid).getBoundingClientRect() : sid;
     let e = document.getElementById(eid).getBoundingClientRect();
@@ -789,10 +795,20 @@ function apply3DTilt(el, isH) {
 
 function triggerDamageEffect(isP) { playSound('sfx-hit'); spawnParticles(window.innerWidth/2, window.innerHeight/2, '#ff0000'); }
 function triggerHealEffect(isP) { playSound('sfx-heal'); }
-function triggerLevelUpVisuals(uId) { /* Visual extra opcional */ }
-function createLobbyFlares() { /* Visual extra opcional */ }
+function triggerLevelUpVisuals(uId) { 
+    let el = document.createElement('div'); el.className = 'levelup-text'; el.innerText = "LEVEL UP!";
+    document.getElementById(uId === 'p' ? 'p-stats-cluster' : 'm-stats-cluster').appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+}
+function createLobbyFlares() { /* FX */ }
 
 // Boot
+window.cancelPvPSearch = async () => {
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    if (searchInterval) clearInterval(searchInterval);
+    window.showScreen('deck-selection-screen'); // Volta para seleção
+    if(myQueueRef) await updateDoc(myQueueRef, { cancelled: true });
+};
 window.startPvE = () => { window.gameMode = 'pve'; window.openDeckSelector(); };
 window.startPvPSearch = () => { window.gameMode = 'pvp'; window.openDeckSelector(); };
 window.handleLogout = () => signOut(auth).then(() => location.reload());
