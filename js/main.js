@@ -104,8 +104,8 @@ window.isResolvingTurn = false; window.pvpStartData = null;
 window.showScreen = function(id) {
     document.querySelectorAll('.screen').forEach(s => {
         s.classList.remove('active');
-        s.style.display = 'none'; 
-        s.style.pointerEvents = 'none';
+        s.style.display = 'none'; // Garante que saia do fluxo
+        s.style.pointerEvents = 'none'; // Garante que não bloqueie cliques
     });
     const target = document.getElementById(id);
     if(target) {
@@ -793,6 +793,13 @@ function apply3DTilt(el, isH) {
     el.addEventListener('mouseleave', () => el.style.transform = '');
 }
 
+function showFloatingText(id, t, c) {
+    let el = document.createElement('div'); el.className='floating-text'; el.innerText=t; el.style.color=c;
+    let r = document.getElementById(id).getBoundingClientRect();
+    el.style.left = r.left + 'px'; el.style.top = r.top + 'px';
+    document.body.appendChild(el); setTimeout(() => el.remove(), 2000);
+}
+
 function triggerDamageEffect(isP) { playSound('sfx-hit'); spawnParticles(window.innerWidth/2, window.innerHeight/2, '#ff0000'); }
 function triggerHealEffect(isP) { playSound('sfx-heal'); }
 function triggerLevelUpVisuals(uId) { 
@@ -801,6 +808,29 @@ function triggerLevelUpVisuals(uId) {
     setTimeout(() => el.remove(), 2000);
 }
 function createLobbyFlares() { /* FX */ }
+function resetUnit(u, deck, role) {
+    u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.bonusAtk = 0; u.bonusBlock = 0; u.disabled = null; u.originalRole = role;
+    if(deck) u.deck = [...deck];
+    else { u.deck = []; for(let k in DECK_TEMPLATE) for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); shuffle(u.deck); }
+}
+function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
+function renderTable(key, slotId, isPlayer = false) { 
+    let el = document.getElementById(slotId); el.innerHTML = '';
+    let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`;
+    let imgUrl = getCardArt(key, isPlayer); card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
+    el.appendChild(card); 
+}
+function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
+function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
+function bindFixedTooltip(el,k) { const updatePos = () => { let rect = el.getBoundingClientRect(); tt.style.left = (rect.left + rect.width / 2) + 'px'; }; return { onmouseenter: (e) => { showTT(k); tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); tt.style.top = 'auto'; tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); tt.classList.add('tooltip-anim-up'); updatePos(); el.addEventListener('mousemove', updatePos); } }; }
+function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {try { c.volume = 0; c.play().catch(()=>{}); } catch(e){} if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
+function updateAudioMixer() { const cineAudio = audios['sfx-cine']; if(!cineAudio) return; const mVol = window.masterVol || 1.0; const maxCine = 0.6 * mVol; let targetCine = isLethalHover ? maxCine : 0; if(window.isMuted) { try { cineAudio.volume = 0; } catch(e){} return; } try { if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); } catch(e){} }
+function triggerBlockEffect(isPlayer) { try { if(isPlayer && window.currentDeck === 'mage') { playSound('sfx-block-mage'); } else { playSound('sfx-block'); } if (!isPlayer) { let ov = document.getElementById('block-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } document.body.classList.add('shake-screen'); setTimeout(() => document.body.classList.remove('shake-screen'), 200); } } catch(e) {} }
+function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
+function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
+function initGlobalHoverLogic() { let lastTarget = null; document.body.addEventListener('mouseover', (e) => { const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn'; const target = e.target.closest(selector); if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } else if (!target) { lastTarget = null; } }); }
+function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
+function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
 // Boot
 window.cancelPvPSearch = async () => {
@@ -812,5 +842,11 @@ window.cancelPvPSearch = async () => {
 window.startPvE = () => { window.gameMode = 'pve'; window.openDeckSelector(); };
 window.startPvPSearch = () => { window.gameMode = 'pvp'; window.openDeckSelector(); };
 window.handleLogout = () => signOut(auth).then(() => location.reload());
+window.openModal = (t, d, opts, cb) => { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; };
+window.cancelModal = () => { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; };
+window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
+window.toggleFullScreen = function() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } else { if (document.exitFullscreen) { document.exitFullscreen(); } } }
 
+// Initializers
+initAmbientParticles();
 preloadGame();
