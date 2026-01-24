@@ -456,6 +456,11 @@ function startGameFlow() {
     isProcessing = false; 
     window.isResolvingTurn = false; 
     window.pvpSelectedCardIndex = null; 
+    
+    // Remove qualquer texto de status antigo
+    const oldStatus = document.getElementById('pvp-status-bar');
+    if(oldStatus) oldStatus.remove();
+
     startCinematicLoop(); 
     window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand');
@@ -487,7 +492,7 @@ function startGameFlow() {
 }
 
 // ======================================================
-// LISTENER PVP CORRIGIDO (LÓGICA REATIVA + VISUAL LEVEL UP + MAESTRIA)
+// LISTENER PVP ROBUSTO (CORRIGIDO: DETECÇÃO DE TURNO)
 // ======================================================
 function startPvPListener() {
     if(!window.currentMatchId) return;
@@ -496,9 +501,10 @@ function startPvPListener() {
     let namesUpdated = false;
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
       
+    // Garante a Role
     const ensureMyRole = (data) => {
         if (window.myRole) return;
-        if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
+        if (data.player1 && data.player1.uid === currentUser.uid) window.myRole = 'player1';
         else window.myRole = 'player2';
     };
 
@@ -507,6 +513,7 @@ function startPvPListener() {
         const matchData = docSnap.data();
         ensureMyRole(matchData);
 
+        // Abandono
         if (matchData.status === 'abandoned') {
             if (matchData.abandonedBy && currentUser && matchData.abandonedBy !== currentUser.uid) {
                 console.log("Oponente desconectou. Decretando vitória.");
@@ -528,6 +535,7 @@ function startPvPListener() {
             return; 
         }
 
+        // Nomes
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
             if (window.myRole === 'player1') {
@@ -544,56 +552,61 @@ function startPvPListener() {
             namesUpdated = true; 
         }
 
-        // Detecta jogadas
-        if (matchData.p1Move && matchData.p2Move) {
+        // --- DETECÇÃO DE JOGADAS (CRUCIAL) ---
+        // Verifica se ambos os campos existem e não são nulos
+        const p1Ready = matchData.p1Move && matchData.p1Move.length > 0;
+        const p2Ready = matchData.p2Move && matchData.p2Move.length > 0;
+
+        if (p1Ready && p2Ready) {
             if (!window.isResolvingTurn) {
-                console.log("Turno pronto! Resolvendo...");
+                console.log(">> AMBOS JOGARAM! RESOLVENDO TURNO <<");
+                // Remove status bar se existir
+                const sb = document.getElementById('pvp-status-bar');
+                if(sb) sb.remove();
+                
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
+            }
+        } else {
+            // Se só um jogou e eu sou esse um, atualizo o status
+            if (window.myRole === 'player1' && p1Ready && !p2Ready) {
+                 showPvPStatus("AGUARDANDO OPONENTE...");
+            } else if (window.myRole === 'player2' && p2Ready && !p1Ready) {
+                 showPvPStatus("AGUARDANDO OPONENTE...");
             }
         }
           
-        // --- SYNC REATIVO DE XP E BÔNUS (CORREÇÃO TOTAL) ---
+        // --- SYNC REATIVO DE XP E BÔNUS ---
         if (window.gameMode === 'pvp' && window.myRole) {
-            // Definições de papéis
             const myServerRole = window.myRole;
             const enemyServerRole = (window.myRole === 'player1') ? 'player2' : 'player1';
             
             const myData = matchData[myServerRole];
             const enemyData = matchData[enemyServerRole];
             
-            // 1. VERIFICA SE EU SOFRI DANO VIA MAESTRIA DO OPONENTE
-            // (Se o servidor diz que tenho menos vida do que eu acho que tenho)
+            // Dano Externo (Maestria Oponente)
             if (myData && myData.hp !== undefined) {
                 if (myData.hp < player.hp) {
-                    console.log("Detectado dano externo (Maestria). Atualizando HP.");
                     let dmg = player.hp - myData.hp;
                     player.hp = myData.hp;
                     showFloatingText('p-lvl', `-${dmg}`, "#ff7675");
                     triggerDamageEffect(true, true);
-                    updateUI();
+                    updateUI(); // Isso vai chamar updateUI, que agora protege a seleção
                     checkEndGame();
                 }
             }
             
             if (enemyData) {
-                // Sincroniza Deck (se disponível)
                 if(enemyData.deck) monster.deck = [...enemyData.deck];
 
-                // Sincroniza XP e Animação
                 const serverXP = enemyData.xp || [];
                 const localXP = monster.xp || [];
 
-                // Se o servidor tem MAIS cartas que o local, significa que o inimigo ganhou XP
+                // Oponente ganhou XP
                 if (serverXP.length > localXP.length) {
                     const diff = serverXP.length - localXP.length;
                     const startIdx = localXP.length;
-                    
-                    console.log(`Inimigo ganhou ${diff} carta(s) de XP. Atualizando visual.`);
-
                     for (let i = startIdx; i < serverXP.length; i++) {
                         const newCardKey = serverXP[i]; 
-                        
-                        // Animação Visual: Deck Inimigo -> XP Inimigo
                         animateFly('m-deck-container', 'm-xp', newCardKey, () => {
                             triggerXPGlow('m');
                         }, false, false, false);
@@ -601,32 +614,18 @@ function startPvPListener() {
                     monster.xp = [...serverXP];
                     updateUI();
                 } 
-                // Se o servidor tem MENOS cartas (resetou XP/Level Up)
+                // Oponente Level Up
                 else if (serverXP.length < localXP.length) {
                     monster.xp = [...serverXP];
-                    
-                    // --- CORREÇÃO: VISUAL DO LEVEL UP DO INIMIGO ---
-                    // Se o nível novo for maior que o atual, força a animação
                     if (enemyData.lvl && enemyData.lvl > monster.lvl) {
                         triggerLevelUpVisuals('m');
                         playSound('sfx-levelup');
                     }
-
-                    // --- CORREÇÃO: Sincronia Total de Status do Inimigo ---
                     if(enemyData.lvl) monster.lvl = enemyData.lvl;
                     if(enemyData.maxHp) monster.maxHp = enemyData.maxHp;
-                    
-                    // Atualiza bônus para exibir os ícones corretamente
                     if(enemyData.bonusAtk !== undefined) monster.bonusAtk = enemyData.bonusAtk;
                     if(enemyData.bonusBlock !== undefined) monster.bonusBlock = enemyData.bonusBlock;
-                    
-                    // Importante: Sincronizar HP também, pois Maestria de Ataque causa dano direto
-                    if(enemyData.hp !== undefined) {
-                        monster.hp = enemyData.hp; 
-                    }
-
-                    // Não precisamos mais do checkLevelUp aqui pois já forçamos a animação acima
-                    // e os dados já foram sincronizados.
+                    if(enemyData.hp !== undefined) monster.hp = enemyData.hp; 
                     updateUI();
                 }
             }
@@ -634,11 +633,38 @@ function startPvPListener() {
     });
 }
 
+function showPvPStatus(msg) {
+    let el = document.getElementById('pvp-status-bar');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'pvp-status-bar';
+        // Estilo fixo para garantir que apareça
+        el.style.position = 'fixed';
+        el.style.top = '15%';
+        el.style.left = '50%';
+        el.style.transform = 'translateX(-50%)';
+        el.style.background = 'rgba(0,0,0,0.7)';
+        el.style.color = '#ffd700';
+        el.style.padding = '10px 20px';
+        el.style.borderRadius = '20px';
+        el.style.zIndex = '9999';
+        el.style.fontSize = '14px';
+        el.style.border = '1px solid #ffd700';
+        el.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+        document.body.appendChild(el);
+    }
+    el.innerText = msg;
+}
+
 function checkEndGame(){ 
     if(player.hp<=0 || monster.hp<=0) { 
         isProcessing = true; 
         isLethalHover = false; 
         MusicController.stopCurrent();
+        // Remove status se existir
+        const sb = document.getElementById('pvp-status-bar');
+        if(sb) sb.remove();
+
         setTimeout(()=>{ 
             let title = document.getElementById('end-title'); 
             let isWin = player.hp > 0;
@@ -695,23 +721,16 @@ async function saveMatchHistory(result, pointsChange) {
     if (!currentUser) return;
     try {
         let enemyName = "PVE"; // Padrão para PvE
-        
-        // CORREÇÃO: Tenta pegar o nome real do PvP com Fallback
         if (window.gameMode === 'pvp') {
-            // Tentativa 1: Dados iniciais
             if (window.pvpStartData) {
                  enemyName = (window.myRole === 'player1') ? window.pvpStartData.player2.name : window.pvpStartData.player1.name;
             }
-            
-            // Tentativa 2: Nome na interface (Fallback se pvpStartData falhar)
             if (!enemyName || enemyName === "PVE") {
                 const domName = document.querySelector('#m-stats-cluster .unit-name');
                 if (domName && domName.innerText !== 'Monstro') {
                     enemyName = domName.innerText;
                 }
             }
-            
-            // Limpeza
             if(enemyName) enemyName = enemyName.split(' ')[0].toUpperCase();
         }
 
@@ -730,8 +749,6 @@ async function saveMatchHistory(result, pointsChange) {
     }
 }
 
-// --- ATUALIZAÇÃO NAS FUNÇÕES DE VITÓRIA/DERROTA ---
-
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!currentUser) return;
     try {
@@ -740,19 +757,13 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
         if(userSnap.exists()) {
             const data = userSnap.data();
             let modoAtual = window.gameMode || 'pve';
-            // Se veio parâmetro explícito 'pvp', usa ele (caso de desistência)
             if (modo === 'pvp') modoAtual = 'pvp';
-
             let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
-            
             await updateDoc(userRef, {
                 totalWins: (data.totalWins || 0) + 1,
                 score: (data.score || 0) + pontosGanhos
             });
-            
-            // >>> SALVA HISTÓRICO <<<
             await saveMatchHistory('WIN', pontosGanhos);
-            
             console.log(`Vitória registrada (${modoAtual}): +${pontosGanhos} pontos.`);
         }
     } catch(e) { console.error("Erro ao salvar vitória:", e); }
@@ -767,17 +778,12 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
             const data = userSnap.data();
             let modoAtual = window.gameMode || 'pve';
             if (modo === 'pvp') modoAtual = 'pvp';
-
             let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3;
             let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
-            
             await updateDoc(userRef, {
                 score: novoScore
             });
-
-            // >>> SALVA HISTÓRICO <<<
             await saveMatchHistory('LOSS', -pontosPerdidos);
-            
             console.log(`Derrota registrada (${modoAtual}): -${pontosPerdidos} pontos.`);
         }
     } catch(e) { console.error("Erro ao salvar derrota:", e); }
@@ -791,14 +797,12 @@ window.restartMatch = function() {
 
 async function notifyAbandonment() {
     if (!window.currentMatchId || !currentUser) return;
-    console.log("Tentando notificar abandono ao servidor...");
     const matchRef = doc(db, "matches", window.currentMatchId);
     try {
         await updateDoc(matchRef, {
             status: 'abandoned',
             abandonedBy: currentUser.uid
         });
-        console.log("Abandono notificado com sucesso.");
     } catch (e) {
         console.error("Erro ao notificar abandono:", e);
     }
@@ -904,28 +908,21 @@ window.onload = function() {
         if (!backBtn) backBtn = deckScreen.querySelector('button'); 
 
         if (backBtn) {
-            console.log("Botão de voltar do deck encontrado e vinculado via JS.");
             backBtn.style.zIndex = "9999"; 
             backBtn.style.pointerEvents = "all"; 
-             
             backBtn.onclick = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log("CLIQUE DETECTADO NO BOTÃO VOLTAR");
                 window.playNavSound();
                 window.transitionToLobby(true); 
             };
-        } else {
-            console.warn("AVISO: Botão de voltar não encontrado no HTML da tela de deck.");
         }
     }
 };
 
 document.addEventListener('click', function(e) {
     const target = e.target.closest('#deck-selection-screen .circle-btn, #deck-selection-screen .btn-back, #deck-selection-screen button, .return-btn');
-      
     if (target) {
-        console.log("Botão de voltar detectado via Delegação.");
         e.stopPropagation();
         window.playNavSound();
         window.transitionToLobby(true); 
@@ -1160,7 +1157,6 @@ function onCardClick(index) {
     document.body.classList.remove('cinematic-active'); 
     document.body.classList.remove('tension-active');
     
-    // CORREÇÃO: Força esconder tooltip imediatamente ao clicar
     document.getElementById('tooltip-box').style.display = 'none'; 
     isLethalHover = false; 
     
@@ -1186,6 +1182,12 @@ function onCardClick(index) {
 
 // ATUALIZAÇÃO: TRAVAR CARTA NO PVP
 async function lockInPvPMove(index, disarmChoice) {
+    // 1. GARANTE A IDENTIDADE DO JOGADOR
+    if (!window.myRole && window.pvpStartData && currentUser) {
+        if (window.pvpStartData.player1.uid === currentUser.uid) window.myRole = 'player1';
+        else window.myRole = 'player2';
+    }
+    
     const handContainer = document.getElementById('player-hand');
     const cardEl = handContainer.children[index];
     if(cardEl) {
@@ -1195,7 +1197,7 @@ async function lockInPvPMove(index, disarmChoice) {
     window.pvpSelectedCardIndex = index;
     
     isProcessing = true; 
-    showCenterText("AGUARDANDO OPONENTE...", "#ffd700");
+    showPvPStatus("AGUARDANDO OPONENTE...");
 
     const cardKey = player.hand[index];
     const matchRef = doc(db, "matches", window.currentMatchId);
@@ -1208,11 +1210,16 @@ async function lockInPvPMove(index, disarmChoice) {
             [updateField]: cardKey,
             [disarmField]: disarmChoice || null
         });
+        console.log(`Jogada enviada: ${cardKey} (${updateField})`);
     } catch (e) {
         console.error("Erro ao enviar jogada:", e);
+        // Destrava em caso de erro
         isProcessing = false;
         window.pvpSelectedCardIndex = null;
         if(cardEl) cardEl.classList.remove('card-selected');
+        const sb = document.getElementById('pvp-status-bar');
+        if(sb) sb.remove();
+        showCenterText("ERRO AO ENVIAR", "red");
     }
 }
 
@@ -1302,8 +1309,8 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     isProcessing = true; // Trava cliques
     
     // Remove texto de espera
-    const centerTxt = document.querySelector('.center-text');
-    if(centerTxt) centerTxt.remove();
+    const sb = document.getElementById('pvp-status-bar');
+    if(sb) sb.remove();
 
     // Identifica moves
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
@@ -1315,7 +1322,7 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         myDisarmChoice = p2Disarm; enemyDisarmChoice = p1Disarm;
     }
 
-    // --- LÓGICA VISUAL DA MÃO (Sem risco de crashar o jogo) ---
+    // --- LÓGICA VISUAL DA MÃO (BLINDADA) ---
     try {
         if (window.pvpSelectedCardIndex === null || window.pvpSelectedCardIndex === undefined) {
             window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
@@ -1325,9 +1332,11 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         let startRect = null;
 
         if (handContainer) {
+            // Tenta pegar pelo índice salvo
             if (window.pvpSelectedCardIndex > -1 && handContainer.children[window.pvpSelectedCardIndex]) {
                 myCardEl = handContainer.children[window.pvpSelectedCardIndex];
             } else {
+                // Fallback: Pega a primeira carta visualmente disponível
                 const handCards = Array.from(handContainer.children);
                 if(handCards.length > 0) myCardEl = handCards[0]; 
             }
@@ -1337,8 +1346,8 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
             myCardEl.classList.remove('card-selected');
             myCardEl.style.opacity = '0';
         }
-        // Remove da mão (visual/logico)
-        if (window.pvpSelectedCardIndex > -1) {
+        // Remove da mão (lógica)
+        if (window.pvpSelectedCardIndex > -1 && player.hand[window.pvpSelectedCardIndex] === myMove) {
             player.hand.splice(window.pvpSelectedCardIndex, 1);
         } else {
             const idx = player.hand.indexOf(myMove);
@@ -1388,11 +1397,10 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         
         // 3. FAILSAFE: Destrava tudo depois de 4.5 segundos
         setTimeout(() => {
-            console.log("Executando Failsafe de Destravamento...");
             window.pvpSelectedCardIndex = null;
             window.isResolvingTurn = false;
             if (isProcessing) {
-                console.warn("UI estava travada. Forçando liberação.");
+                console.warn("Failsafe: Forçando liberação da UI.");
                 isProcessing = false;
             }
         }, 4500);
@@ -1401,14 +1409,13 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
 }
 
 // === NOVO: COMMITAR O TURNO AO DB DE FORMA CORRETA ===
-// Agora salva o array INTEIRO para garantir consistência
 async function commitTurnToDB(pAct, extraCard = null) {
     if (!window.currentMatchId) return;
     const matchRef = doc(db, "matches", window.currentMatchId);
     
     // Constrói o novo estado local
-    let newXP = [...player.xp]; // Já foi atualizado localmente no resolveTurn
-    let newDeck = [...player.deck]; // Já foi atualizado localmente no resolveTurn
+    let newXP = [...player.xp]; 
+    let newDeck = [...player.deck]; 
 
     try {
         let updateData = {};
@@ -1474,26 +1481,17 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
     if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
 
-    // CORREÇÃO: LÓGICA DE XP EXTRA NO PVP (TREINAR + BONUS)
-    // Se for PvP, só executo a lógica SE EU SOU O JOGADOR DA AÇÃO.
-    // O oponente apenas recebe o update pelo snapshot.
     function handleExtraXP(u) { 
-        // LÓGICA PVP:
         if (window.gameMode === 'pvp' && window.currentMatchId) {
-             // SÓ CALCULA SE FOR O PRÓPRIO JOGADOR
              if (u === player) {
                  if(u.deck.length > 0) {
                      let card = u.deck.pop(); 
-                     // Animação Local
                      animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
                         u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
                       }, false, false, true);
                  }
              }
-             // SE FOR O INIMIGO, NÃO FAZ NADA AQUI. 
-             // O LISTENER DO DB VAI VER QUE O ARRAY CRESCEU E ANIMAR.
         } 
-        // LÓGICA PVE (Normal):
         else {
             if(u.deck.length > 0) { 
                 let card = u.deck.pop(); 
@@ -1504,23 +1502,19 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         }
     }
 
-    // 1. Efeito da Carta TREINAR
     if(!pDead && pAct === 'TREINAR') handleExtraXP(player); 
     if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
 
-    // 2. Efeito de ATAQUE vs DESCANSAR
     if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); 
     if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
 
     setTimeout(() => {
-        // MOVIMENTO DA CARTA DA MÃO PARA A XP
         animateFly('p-slot', 'p-xp', pAct, () => { 
             if(!pDead) { 
                 player.xp.push(pAct); 
                 triggerXPGlow('p'); 
                 updateUI(); 
 
-                // AGORA SALVAMOS TUDO NO DB DE UMA VEZ
                 if (window.gameMode === 'pvp') {
                     commitTurnToDB(pAct); 
                 }
@@ -1547,7 +1541,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
-// ATUALIZAÇÃO: CHECK LEVEL UP COM SYNC RNG (CORRIGIDO)
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         let xpContainer = document.getElementById(u.id + '-xp'); 
@@ -1583,18 +1576,14 @@ function checkLevelUp(u, doneCb) {
                 u.xp.forEach(x => u.deck.push(x)); 
                 u.xp = []; 
                 
-                // MÁGICA 2.0: No PvP, usa a role ORIGINAL para a semente
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
                     shuffle(u.deck, s);
-                    
-                    // === SYNC IMPORTANTE: SÓ O DONO DO DECK ATUALIZA O BANCO ===
                     if (u === player) {
                         syncLevelUpToDB(u);
                     }
-
                 } else {
-                    shuffle(u.deck); // PvE normal
+                    shuffle(u.deck); 
                 }
 
                 let clones = document.getElementsByClassName('xp-anim-clone'); 
@@ -1701,7 +1690,6 @@ function updateUnit(u) {
     if(u===player) {
         let hc=document.getElementById('player-hand'); hc.innerHTML='';
         
-        // CORREÇÃO: Bloqueia interação/tooltips se estiver processando
         if (isProcessing) hc.style.pointerEvents = 'none'; 
         else hc.style.pointerEvents = 'auto';
 
@@ -1710,6 +1698,11 @@ function updateUnit(u) {
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
             
+            // CORREÇÃO: MANTÉM VISUALMENTE SELECIONADO SE A UI REDESENHAR
+            if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i) {
+                c.classList.add('card-selected');
+            }
+
             if(window.isMatchStarting) {
                 c.style.opacity = '0';
             } else {
