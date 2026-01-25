@@ -111,6 +111,31 @@ window.pvpSelectedCardIndex = null;
 window.isResolvingTurn = false; 
 window.pvpStartData = null; 
 
+// --- FUNÇÃO CRÍTICA: LIMPEZA DE ESTADO ---
+// Garante que dados de partidas anteriores não contaminem a próxima
+function cleanupMatchState() {
+    console.log("--- LIMPANDO ESTADO DA PARTIDA ---");
+    if (window.pvpUnsubscribe) {
+        window.pvpUnsubscribe();
+        window.pvpUnsubscribe = null;
+    }
+    if (searchInterval) {
+        clearInterval(searchInterval);
+        searchInterval = null;
+    }
+    
+    window.currentMatchId = null;
+    window.myRole = null; 
+    window.pvpStartData = null;
+    window.pvpSelectedCardIndex = null;
+    window.isResolvingTurn = false;
+    isProcessing = false;
+    
+    // Remove barras de status antigas
+    const sb = document.getElementById('pvp-status-bar');
+    if(sb) sb.remove();
+}
+
 function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) {
         return MAGE_ASSETS[cardKey];
@@ -382,7 +407,8 @@ window.transitionToGame = function() {
 }
 
 window.transitionToLobby = function(skipAnim = false) {
-    if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
+    cleanupMatchState(); // LIMPEZA IMPORTANTE
+    
     document.body.classList.remove('force-landscape');
       
     const ds = document.getElementById('deck-selection-screen');
@@ -416,6 +442,9 @@ window.goToLobby = async function(isAutoLogin = false) {
         MusicController.play('bgm-menu'); 
         return;
     }
+    
+    cleanupMatchState(); // Garante limpeza ao chegar no lobby
+    
     isProcessing = false; 
     let bg = document.getElementById('game-background');
     if(bg) bg.classList.add('lobby-mode');
@@ -492,7 +521,7 @@ function startGameFlow() {
 }
 
 // ======================================================
-// LISTENER PVP ROBUSTO (CORRIGIDO: DETECÇÃO DE TURNO)
+// LISTENER PVP ROBUSTO (CORRIGIDO: IDENTIDADE E TURNO)
 // ======================================================
 function startPvPListener() {
     if(!window.currentMatchId) return;
@@ -501,16 +530,23 @@ function startPvPListener() {
     let namesUpdated = false;
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
       
-    // Garante a Role
+    // Garante a Role (Verificação Forçada)
     const ensureMyRole = (data) => {
-        if (window.myRole) return;
+        // SEMPRE RECALCULA para evitar dados antigos
         if (data.player1 && data.player1.uid === currentUser.uid) window.myRole = 'player1';
-        else window.myRole = 'player2';
+        else if (data.player2 && data.player2.uid === currentUser.uid) window.myRole = 'player2';
     };
 
     window.pvpUnsubscribe = onSnapshot(matchRef, (docSnap) => {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
+        
+        // SEGURANÇA: Se eu não estou nessa partida, ignora
+        if (matchData.player1.uid !== currentUser.uid && matchData.player2.uid !== currentUser.uid) {
+            console.warn("Recebendo dados de partida alheia. Ignorando.");
+            return;
+        }
+
         ensureMyRole(matchData);
 
         // Abandono
@@ -529,7 +565,7 @@ function startPvPListener() {
                     playSound('sfx-win');
                     if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
                     document.getElementById('end-screen').classList.add('visible');
-                    if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
+                    cleanupMatchState();
                 }, 500);
             }
             return; 
@@ -1908,6 +1944,9 @@ window.startPvPSearch = function() {
 // --- FUNÇÃO QUE INICIA A FILA APÓS ESCOLHER O DECK ---
 async function initiateMatchmaking() {
     console.log("--- INICIANDO MATCHMAKING ---");
+    // GARANTE QUE O ESTADO ANTERIOR ESTÁ LIMPO
+    cleanupMatchState();
+
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'flex';
     
