@@ -573,6 +573,12 @@ function startPvPListener() {
             } else if (window.myRole === 'player2' && p2Ready && !p1Ready) {
                  showPvPStatus("AGUARDANDO OPONENTE...");
             }
+            // Se eu cancelei a jogada, removemos o status
+            else if (window.myRole === 'player1' && !p1Ready) {
+                 const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
+            } else if (window.myRole === 'player2' && !p2Ready) {
+                 const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
+            }
         }
           
         // --- SYNC REATIVO DE XP E BÔNUS ---
@@ -1149,7 +1155,14 @@ function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = p
 function onCardClick(index) {
     if(isProcessing) return; if (!player.hand[index]) return;
     
-    // Se já escolheu uma carta no PvP, não deixa clicar em outra
+    // --- LÓGICA DE DESELECT (NOVA) ---
+    // Se clicar na carta JÁ selecionada e o jogo ainda não estiver resolvendo o turno, cancela.
+    if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === index) {
+        cancelPvPMove();
+        return;
+    }
+
+    // Se já escolheu OUTRA carta no PvP, não deixa clicar em mais nada (bloqueio normal)
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
 
     playSound('sfx-play'); 
@@ -1220,6 +1233,42 @@ async function lockInPvPMove(index, disarmChoice) {
         const sb = document.getElementById('pvp-status-bar');
         if(sb) sb.remove();
         showCenterText("ERRO AO ENVIAR", "red");
+    }
+}
+
+// === NOVA FUNÇÃO: CANCELAR JOGADA NO PVP ===
+async function cancelPvPMove() {
+    if (window.isResolvingTurn) return; // Se a batalha já começou, não pode cancelar
+    isProcessing = true; 
+
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    
+    const updateField = (window.myRole === 'player1') ? 'p1Move' : 'p2Move';
+    const disarmField = (window.myRole === 'player1') ? 'p1Disarm' : 'p2Disarm';
+    
+    try {
+        // Envia NULL para cancelar a jogada no servidor
+        await updateDoc(matchRef, {
+            [updateField]: null,
+            [disarmField]: null
+        });
+        
+        console.log("Jogada cancelada!");
+        
+        // Reseta estado local
+        window.pvpSelectedCardIndex = null;
+        isProcessing = false;
+        
+        // Remove texto de aguardando
+        const sb = document.getElementById('pvp-status-bar');
+        if(sb) sb.remove();
+        
+        // Atualiza UI para remover a classe 'card-selected'
+        updateUI(); 
+        
+    } catch (e) {
+        console.error("Erro ao cancelar jogada:", e);
+        isProcessing = false;
     }
 }
 
@@ -1349,10 +1398,17 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         // Remove da mão (lógica)
         if (window.pvpSelectedCardIndex > -1 && player.hand[window.pvpSelectedCardIndex] === myMove) {
             player.hand.splice(window.pvpSelectedCardIndex, 1);
+            
+            // >>> CORREÇÃO DO ZOOM INFINITO <<<
+            // Limpa o índice IMEDIATAMENTE após remover a carta, 
+            // para que o próximo updateUI não ache que ainda estamos selecionando algo.
+            window.pvpSelectedCardIndex = null;
         } else {
             const idx = player.hand.indexOf(myMove);
             if(idx > -1) player.hand.splice(idx, 1);
+            window.pvpSelectedCardIndex = null; // Limpa também no fallback
         }
+        
         playerHistory.push(myMove);
 
         // Animação de entrada
