@@ -110,9 +110,9 @@ window.currentMatchId = null;
 window.pvpSelectedCardIndex = null; 
 window.isResolvingTurn = false; 
 window.pvpStartData = null; 
+window.latestMatchData = null; // NOVO: Para sync visual
 
 // --- FUNÇÃO CRÍTICA: LIMPEZA DE ESTADO ---
-// Garante que dados de partidas anteriores não contaminem a próxima
 function cleanupMatchState() {
     console.log("--- LIMPANDO ESTADO DA PARTIDA ---");
     if (window.pvpUnsubscribe) {
@@ -129,6 +129,7 @@ function cleanupMatchState() {
     window.pvpStartData = null;
     window.pvpSelectedCardIndex = null;
     window.isResolvingTurn = false;
+    window.latestMatchData = null;
     isProcessing = false;
     
     // Remove barras de status antigas
@@ -407,8 +408,7 @@ window.transitionToGame = function() {
 }
 
 window.transitionToLobby = function(skipAnim = false) {
-    cleanupMatchState(); // LIMPEZA IMPORTANTE
-    
+    cleanupMatchState(); 
     document.body.classList.remove('force-landscape');
       
     const ds = document.getElementById('deck-selection-screen');
@@ -443,7 +443,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         return;
     }
     
-    cleanupMatchState(); // Garante limpeza ao chegar no lobby
+    cleanupMatchState(); 
     
     isProcessing = false; 
     let bg = document.getElementById('game-background');
@@ -486,7 +486,6 @@ function startGameFlow() {
     window.isResolvingTurn = false; 
     window.pvpSelectedCardIndex = null; 
     
-    // Remove qualquer texto de status antigo
     const oldStatus = document.getElementById('pvp-status-bar');
     if(oldStatus) oldStatus.remove();
 
@@ -521,7 +520,7 @@ function startGameFlow() {
 }
 
 // ======================================================
-// LISTENER PVP ROBUSTO (CORRIGIDO: IDENTIDADE E TURNO)
+// LISTENER PVP ROBUSTO (CORRIGIDO)
 // ======================================================
 function startPvPListener() {
     if(!window.currentMatchId) return;
@@ -530,9 +529,8 @@ function startPvPListener() {
     let namesUpdated = false;
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
       
-    // Garante a Role (Verificação Forçada)
+    // Garante a Role
     const ensureMyRole = (data) => {
-        // SEMPRE RECALCULA para evitar dados antigos
         if (data.player1 && data.player1.uid === currentUser.uid) window.myRole = 'player1';
         else if (data.player2 && data.player2.uid === currentUser.uid) window.myRole = 'player2';
     };
@@ -541,6 +539,9 @@ function startPvPListener() {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
         
+        // SALVA DADOS PARA SYNC VISUAL
+        window.latestMatchData = matchData;
+
         // SEGURANÇA: Se eu não estou nessa partida, ignora
         if (matchData.player1.uid !== currentUser.uid && matchData.player2.uid !== currentUser.uid) {
             console.warn("Recebendo dados de partida alheia. Ignorando.");
@@ -593,17 +594,20 @@ function startPvPListener() {
         const p1Ready = matchData.p1Move && matchData.p1Move.length > 0;
         const p2Ready = matchData.p2Move && matchData.p2Move.length > 0;
 
+        // FORÇA A ATUALIZAÇÃO DA UI PARA TRAVAR A CARTA CLICADA
+        // Se eu joguei, mas o oponente não, a UI precisa saber disso
+        updateUI();
+
         if (p1Ready && p2Ready) {
             if (!window.isResolvingTurn) {
                 console.log(">> AMBOS JOGARAM! RESOLVENDO TURNO <<");
-                // Remove status bar se existir
                 const sb = document.getElementById('pvp-status-bar');
                 if(sb) sb.remove();
                 
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
             }
         } else {
-            // Se só um jogou e eu sou esse um, atualizo o status
+            // Status update
             if (window.myRole === 'player1' && p1Ready && !p2Ready) {
                  showPvPStatus("AGUARDANDO OPONENTE...");
             } else if (window.myRole === 'player2' && p2Ready && !p1Ready) {
@@ -619,14 +623,15 @@ function startPvPListener() {
             const myData = matchData[myServerRole];
             const enemyData = matchData[enemyServerRole];
             
-            // Dano Externo (Maestria Oponente)
-            if (myData && myData.hp !== undefined) {
+            // --- CORREÇÃO: SÓ VERIFICA DANO EXTERNO SE NÃO ESTIVER RESOLVENDO TURNO ---
+            // Isso impede que a cura do DESCANSAR seja confundida com dano no meio do turno
+            if (!window.isResolvingTurn && myData && myData.hp !== undefined) {
                 if (myData.hp < player.hp) {
                     let dmg = player.hp - myData.hp;
                     player.hp = myData.hp;
                     showFloatingText('p-lvl', `-${dmg}`, "#ff7675");
                     triggerDamageEffect(true, true);
-                    updateUI(); // Isso vai chamar updateUI, que agora protege a seleção
+                    updateUI(); 
                     checkEndGame();
                 }
             }
@@ -697,7 +702,6 @@ function checkEndGame(){
         isProcessing = true; 
         isLethalHover = false; 
         MusicController.stopCurrent();
-        // Remove status se existir
         const sb = document.getElementById('pvp-status-bar');
         if(sb) sb.remove();
 
@@ -752,11 +756,10 @@ window.handleLogout = function() {
     signOut(auth).then(() => { location.reload(); });
 };
 
-// --- FUNÇÃO CORRIGIDA: SALVAR NOME CORRETO NO HISTÓRICO ---
 async function saveMatchHistory(result, pointsChange) {
     if (!currentUser) return;
     try {
-        let enemyName = "PVE"; // Padrão para PvE
+        let enemyName = "PVE"; 
         if (window.gameMode === 'pvp') {
             if (window.pvpStartData) {
                  enemyName = (window.myRole === 'player1') ? window.pvpStartData.player2.name : window.pvpStartData.player1.name;
@@ -772,7 +775,7 @@ async function saveMatchHistory(result, pointsChange) {
 
         const historyRef = collection(db, "players", currentUser.uid, "history");
         await addDoc(historyRef, {
-            result: result, // 'WIN' ou 'LOSS'
+            result: result, 
             opponent: enemyName,
             mode: window.gameMode || 'pve',
             deck: window.currentDeck,
@@ -1522,8 +1525,20 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     updateUI();
     let pDead = player.hp <= 0, mDead = monster.hp <= 0;
     
-    if(!pDead && pAct === 'DESCANSAR') { let healAmount = (pDmg === 0) ? 3 : 2; player.hp = Math.min(player.maxHp, player.hp + healAmount); showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); playSound('sfx-heal'); }
-    if(!mDead && mAct === 'DESCANSAR') { let healAmount = (mDmg === 0) ? 3 : 2; monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); triggerHealEffect(false); playSound('sfx-heal'); }
+    // --- CORREÇÃO DA CURA: FORÇA VISUAL LOCAL ---
+    if(!pDead && pAct === 'DESCANSAR') { 
+        let healAmount = (pDmg === 0) ? 3 : 2; 
+        player.hp = Math.min(player.maxHp, player.hp + healAmount); 
+        showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); 
+        triggerHealEffect(true); 
+        playSound('sfx-heal'); 
+    }
+    if(!mDead && mAct === 'DESCANSAR') { 
+        let healAmount = (mDmg === 0) ? 3 : 2; 
+        monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); 
+        triggerHealEffect(false); 
+        playSound('sfx-heal'); 
+    }
 
     function handleExtraXP(u) { 
         if (window.gameMode === 'pvp' && window.currentMatchId) {
@@ -1741,16 +1756,29 @@ function updateUnit(u) {
             hc.style.pointerEvents = 'auto'; // Libera se estiver normal
         }
 
+        // VERIFICA NO BANCO SE JÁ TEM CARTA SELECIONADA
+        let moveInDB = null;
+        if (window.gameMode === 'pvp' && window.latestMatchData) {
+             const role = window.myRole;
+             const field = role === 'player1' ? 'p1Move' : 'p2Move';
+             moveInDB = window.latestMatchData[field];
+        }
+
         u.hand.forEach((k,i)=>{
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`;
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
             
-            // --- VISUAL DE SELEÇÃO E TRAVAMENTO ---
-            if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i) {
+            // --- VISUAL DE SELEÇÃO E TRAVAMENTO (CORREÇÃO CLIQUE DUPLO) ---
+            // A carta fica selecionada se:
+            // 1. O jogador clicou nela agora (pvpSelectedCardIndex)
+            // 2. OU se o banco de dados diz que ela já foi jogada (moveInDB)
+            const isLocallySelected = (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i);
+            const isDBSelected = (window.gameMode === 'pvp' && moveInDB === k && window.pvpSelectedCardIndex === null);
+
+            if (isLocallySelected || isDBSelected) {
                 c.classList.add('card-selected');
-                hc.style.pointerEvents = 'none'; // Se tem uma selecionada, trava o resto da mão (hover/click)
-                c.style.pointerEvents = 'auto';  // Mas essa carta específica pode receber eventos (caso cliquemos nela de novo, embora agora nao faça nada)
+                hc.style.pointerEvents = 'none'; 
             }
 
             if(window.isMatchStarting) {
