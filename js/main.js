@@ -2349,3 +2349,67 @@ setTimeout(() => {
 }, 3000); // 3 seconds timeout
 
 preloadGame();
+
+
+/* =========================================================
+   BUPPO VISUAL UPGRADE - CHATGPT
+   ========================================================= */
+
+/* ===== HOVER 3D DAS CARTAS ===== */
+
+document.addEventListener("mousemove", (e) => {
+
+    const cards = document.querySelectorAll(".card");
+
+    cards.forEach(card => {
+
+        const rect = card.getBoundingClientRect();
+
+        const px = (e.clientX - rect.left) / rect.width;
+        const py = (e.clientY - rect.top) / rect.height;
+
+        const rx = ((px - 0.5) * 2).toFixed(2);
+        const ry = ((py - 0.5) * 2).toFixed(2);
+
+        card.style.setProperty("--rx", rx);
+        card.style.setProperty("--ry", ry);
+    });
+});
+
+/* ===== EFEITO DE IMPACTO ===== */
+
+function applyCardImpact(element) {
+
+    if (!element) return;
+
+    element.classList.add("card-impact");
+
+    setTimeout(() => {
+        element.classList.remove("card-impact");
+    }, 280);
+}
+
+/* ===== OBSERVADOR AUTOMÁTICO ===== */
+
+const impactObserver = new MutationObserver(() => {
+
+    const cards = document.querySelectorAll(".card");
+
+    cards.forEach(card => {
+
+        if (card.dataset.visualEnhanced) return;
+
+        card.dataset.visualEnhanced = "true";
+
+        card.addEventListener("click", () => {
+            applyCardImpact(card);
+        });
+
+    });
+});
+
+impactObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
