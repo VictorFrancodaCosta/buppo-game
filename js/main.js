@@ -2349,3 +2349,41 @@ setTimeout(() => {
 }, 3000); // 3 seconds timeout
 
 preloadGame();
+
+/* =========================================================
+   BUPPO SAFE CINEMATIC EFFECTS
+   ========================================================= */
+
+function applyBuppoImpact(element){
+
+    if(!element) return;
+
+    element.classList.remove("buppo-hit");
+    element.classList.remove("buppo-shake");
+
+    void element.offsetWidth;
+
+    element.classList.add("buppo-hit");
+    element.classList.add("buppo-shake");
+
+    setTimeout(() => {
+
+        element.classList.remove("buppo-hit");
+        element.classList.remove("buppo-shake");
+
+    }, 280);
+}
+
+/* ===== IMPACTO AUTOMÁTICO EM CLIQUES ===== */
+
+document.addEventListener("click", (e) => {
+
+    const targetCard = e.target.closest(".card");
+
+    if(targetCard){
+
+        applyBuppoImpact(targetCard);
+
+    }
+
+});
