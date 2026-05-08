@@ -1281,3 +1281,103 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     background: rgba(255, 215, 0, 0.1);
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
 }
+
+/* =========================================================
+   BUPPO SAFE CINEMATIC EFFECTS
+   ========================================================= */
+
+/* ===== GLOW PREMIUM ===== */
+
+.card::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .18s ease;
+
+    box-shadow:
+        inset 0 0 20px rgba(255,255,255,.06),
+        0 0 20px rgba(255,215,0,.10);
+}
+
+/* ===== HOVER MAIS PREMIUM ===== */
+
+.hand-card:hover .card::after{
+    opacity:1;
+}
+
+.hand-card:hover .card{
+
+    filter:
+        brightness(1.08)
+        saturate(1.12);
+
+    box-shadow:
+        0 0 18px rgba(255,215,0,.20),
+        0 14px 30px rgba(0,0,0,.45);
+}
+
+/* ===== CARTAS VIVAS NA MESA ===== */
+
+@keyframes buppoIdleGlow{
+
+    0%{
+        filter:brightness(1);
+    }
+
+    50%{
+        filter:brightness(1.04);
+    }
+
+    100%{
+        filter:brightness(1);
+    }
+}
+
+.card-on-table{
+    animation:buppoIdleGlow 3s ease-in-out infinite;
+}
+
+/* ===== FLASH DE IMPACTO ===== */
+
+@keyframes buppoHitFlash{
+
+    0%{
+        filter:brightness(1);
+    }
+
+    40%{
+        filter:
+            brightness(1.8)
+            saturate(1.4);
+    }
+
+    100%{
+        filter:brightness(1);
+    }
+}
+
+.buppo-hit{
+    animation:buppoHitFlash .28s ease;
+}
+
+/* ===== SHAKE DE DANO ===== */
+
+@keyframes buppoShake{
+
+    0%{ margin-left:0px; }
+
+    25%{ margin-left:-4px; }
+
+    50%{ margin-left:4px; }
+
+    75%{ margin-left:-2px; }
+
+    100%{ margin-left:0px; }
+}
+
+.buppo-shake{
+    animation:buppoShake .18s ease;
+}
