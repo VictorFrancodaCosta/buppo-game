@@ -2387,3 +2387,37 @@ document.addEventListener("click", (e) => {
     }
 
 });
+
+
+/* =========================================================
+   BUPPO CINEMATIC IMPACT
+   ========================================================= */
+
+function applyCardImpact(card){
+
+    if(!card) return;
+
+    card.classList.remove("card-impact");
+
+    void card.offsetWidth;
+
+    card.classList.add("card-impact");
+
+    setTimeout(() => {
+
+        card.classList.remove("card-impact");
+
+    }, 250);
+}
+
+document.addEventListener("click", (e) => {
+
+    const card = e.target.closest(".card");
+
+    if(card){
+
+        applyCardImpact(card);
+
+    }
+
+});
