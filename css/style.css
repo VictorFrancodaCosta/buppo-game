@@ -1304,11 +1304,11 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 /* ===== HOVER MAIS PREMIUM ===== */
 
-.hand-card:hover .card::after{
+.card:hover::after{
     opacity:1;
 }
 
-.hand-card:hover .card{
+.card:hover{
 
     filter:
         brightness(1.08)
@@ -1338,6 +1338,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
 .card-on-table{
     animation:buppoIdleGlow 3s ease-in-out infinite;
+    transition: filter 0.2s ease;
 }
 
 /* ===== FLASH DE IMPACTO ===== */
