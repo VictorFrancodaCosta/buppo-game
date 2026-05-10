@@ -11,17 +11,17 @@ export const DECK_TEMPLATE = {
 };
 
 export const CARDS_DB = {
-    'ATAQUE': {
-        img: 'assets/img/carta_ataque_cavaleiro.png',
-        layers: [
-            'assets/img/ataque_camada1_fundo.jpg',
-            'assets/img/ataque_camada2_espada.png',
-            'assets/img/ataque_camada3_texto.png'
-        ],
-        color: 'border-red',
-        fCol: '#ff4757',
-        icon: '⚔️',
-        customTooltip: `
+'ATAQUE': {
+    img: 'assets/img/carta_ataque_cavaleiro.png',
+    layers: [
+        'assets/img/ataque_camada1_fundo.jpg',
+        'assets/img/ataque_camada2_espada.png',
+        'assets/img/ataque_camada3_texto.png'
+    ],
+    color: 'border-red',
+    fCol: '#ff4757',
+    icon: '⚔️',
+    customTooltip: `
             <div class="tt-desc">Causa <span class="dynamic-val">{PLAYER_LVL}</span> (Nível) de dano ao oponente.</div>
             <div class="tt-cartoon-title cartoon-orange">BÔNUS - GOLPE SURPRESA</div>
             <div class="tt-text">Se o oponente jogar <span class="highlight-card hc-green">DESCANSAR</span> neste turno, coloque a carta do topo de seu baralho em sua área de experiência.</div>
