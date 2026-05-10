@@ -11,16 +11,16 @@ export const DECK_TEMPLATE = {
 };
 
 export const CARDS_DB = {
-'ATAQUE': {
-    img: 'assets/img/carta_ataque_cavaleiro.png',
-    layers: [
-        'assets/img/ataque_camada1_fundo.jpg',
-        'assets/img/ataque_camada2_espada.png',
-        'assets/img/ataque_camada3_texto.png'
-    ],
-    color: 'border-red',
-    fCol: '#ff4757',
-    icon: '⚔️',
+    'ATAQUE': {
+        img: 'assets/img/carta_ataque_cavaleiro.png',
+        layers: [
+            'assets/img/ataque_camada1_fundo.jpg',
+            'assets/img/ataque_camada2_espada.png',
+            'assets/img/ataque_camada3_texto.png'
+        ],
+        color: 'border-red',
+        fCol: '#ff4757',
+        icon: '⚔️',
     customTooltip: `
             <div class="tt-desc">Causa <span class="dynamic-val">{PLAYER_LVL}</span> (Nível) de dano ao oponente.</div>
             <div class="tt-cartoon-title cartoon-orange">BÔNUS - GOLPE SURPRESA</div>
