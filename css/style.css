@@ -247,32 +247,36 @@ body.theme-cavaleiro #game-background,
     animation: hudFloat 4s ease-in-out infinite; 
 }
 
+
+/* --- A "RECEITA" DA ANIMAÇÃO DE FLUTUAÇÃO --- */
+@keyframes hudFloat { 
+    0%, 100% { transform: translateY(0); } 
+    50% { transform: translateY(-15px); } /* Flutua 15px para cima */
+}
 /* ---------------------------------------------------------------------- */
 /* HUD DO JOGADOR (INFERIOR ESQUERDO) */
 /* ---------------------------------------------------------------------- */
 #p-stats-cluster {
     position: fixed;
-    bottom: 30px; /* <--- REDUZIDO DE 180px PARA DESCER O PAINEL */
-    left: calc(50% - 50vw + 2px); 
+    bottom: 40px; 
+    left: calc(50% - 50vw + 40px); /* Margem de 40px da esquerda */
     width: 370px; 
     height: 138px;
-    
-    background-image: url('../assets/img/cluster_jogador.webp'); /* Ou a imagem que você estiver usando */
+    background-image: url('../assets/img/cluster_jogador.webp');
     background-size: 100% 100%;
     background-repeat: no-repeat;
-    
     background-color: transparent !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     padding: 0 !important;
     min-width: auto !important;
-    
     display: block !important;
     z-index: 100;
-    
     filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); 
-    animation: hudFloat 4s ease-in-out infinite !important; /* <--- !important PARA FORÇAR A ANIMAÇÃO */
+    
+    /* Aplica a animação limpa (sem o !important que poderia estar bugando) */
+    animation: hudFloat 4s ease-in-out infinite; 
 }
 
 #p-stats-cluster .unit-info { display: contents; }
@@ -344,15 +348,13 @@ body.theme-cavaleiro #game-background,
 /* ---------------------------------------------------------------------- */
 #m-stats-cluster {
     position: fixed;
-    top: 10px;
-    right: calc(50% - 50vw + 2px); 
+    top: 20px;
+    right: calc(50% - 50vw + 40px); /* Margem de 40px da direita */
     width: 370px; 
     height: 138px;
-    
-    background-image: url('../assets/img/cluster_inimigo.webp'); /* Ou a sua imagem invertida */
+    background-image: url('../assets/img/cluster_inimigo.webp');
     background-size: 100% 100%;
     background-repeat: no-repeat;
-    
     background-color: transparent !important;
     border: none !important;
     border-radius: 0 !important;
@@ -362,7 +364,9 @@ body.theme-cavaleiro #game-background,
     display: block !important;
     z-index: 100;
     filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); 
-    animation: hudFloat 4s ease-in-out infinite !important; /* <--- !important PARA FORÇAR A ANIMAÇÃO */
+    
+    /* Aplica a mesma animação limpa */
+    animation: hudFloat 4s ease-in-out infinite; 
 }
 
 #m-stats-cluster .unit-info { display: contents; }
