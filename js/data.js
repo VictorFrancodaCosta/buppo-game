@@ -13,11 +13,6 @@ export const DECK_TEMPLATE = {
 export const CARDS_DB = {
     'ATAQUE': {
         img: 'assets/img/carta_ataque_cavaleiro.png',
-        layers: [
-            'assets/img/ataque_camada1_fundo.jpg',
-            'assets/img/ataque_camada2_espada.png',
-            'assets/img/ataque_camada3_texto.png'
-        ],
         color: 'border-red',
         fCol: '#ff4757',
         icon: '⚔️',
