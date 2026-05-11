@@ -1191,19 +1191,25 @@ function onCardClick(index) {
     if(isProcessing) return; if (!player.hand[index]) return;
     
     // --- LÓGICA DE BLOQUEIO PVP ---
-    // Se o jogo é PvP e já tem carta selecionada, NÃO FAZ NADA (Não permite trocar/deselecionar)
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
 
+    // NOVO: TRAVA A MÃO IMEDIATAMENTE (Impede o bug do mouse rápido)
+    let hc = document.getElementById('player-hand');
+    if (hc) hc.style.pointerEvents = 'none';
+
     playSound('sfx-play'); 
-    document.body.classList.remove('focus-hand'); 
-    document.body.classList.remove('cinematic-active'); 
-    document.body.classList.remove('tension-active');
     
+    // Limpa efeitos imediatamente
+    document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active'); 
     document.getElementById('tooltip-box').style.display = 'none'; 
     isLethalHover = false; 
     
     let cardKey = player.hand[index];
-    if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
+    if(player.disabled === cardKey) { 
+        showCenterText("DESARMADA!"); 
+        if (hc) hc.style.pointerEvents = 'auto'; // Destrava se a jogada for inválida
+        return; 
+    }
     
     if(cardKey === 'DESARMAR') { 
         window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => {
@@ -1729,7 +1735,18 @@ function renderTable(key, slotId, isPlayer = false) {
     el.appendChild(card); 
 }
 
-function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
+function updateUI() { 
+    // NOVO: GARANTIA DE LIMPEZA DE EFEITOS
+    // Se alguma carta ou XP foi destruída enquanto o mouse estava em cima, limpa tudo:
+    document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active', 'focus-xp');
+    const tt = document.getElementById('tooltip-box');
+    if(tt) tt.style.display = 'none';
+    isLethalHover = false;
+
+    updateUnit(player); 
+    updateUnit(monster); 
+    document.getElementById('turn-txt').innerText = "TURNO " + turnCount; 
+}
 
 function updateUnit(u) {
     document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
@@ -1871,27 +1888,13 @@ function showFloatingText(eid, txt, col) {
 }
 
 window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
-window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
-const tt=document.getElementById('tooltip-box');
-
-function bindFixedTooltip(el,k) { 
-    const updatePos = () => { 
-        let rect = el.getBoundingClientRect(); 
-        tt.style.left = (rect.left + rect.width / 2) + 'px'; 
-    }; 
-    return { 
-        onmouseenter: (e) => { 
-            showTT(k); 
-            tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
-            tt.style.top = 'auto'; 
-             
-            tt.classList.remove('tooltip-anim-up'); 
-            tt.classList.remove('tooltip-anim-down'); 
-            tt.classList.add('tooltip-anim-up'); 
-            updatePos(); 
-            el.addEventListener('mousemove', updatePos); 
-        } 
-    }; 
+window.cancelModal = function() { 
+    document.getElementById('modal-overlay').style.display='none'; 
+    isProcessing = false; 
+    
+    // Restaura a capacidade de clicar nas cartas se o jogador desistir do Desarmar
+    let hc = document.getElementById('player-hand');
+    if(hc) hc.style.pointerEvents = 'auto'; 
 }
 
 function showTT(k) {
