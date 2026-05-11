@@ -1282,58 +1282,52 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 }
 
 /* =========================================
-   CURSOR CUSTOMIZADO (MOUSE)
+   CURSOR CUSTOMIZADO (ULTRA RÁPIDO - GPU)
 ========================================= */
-/* 1. Esconde o cursor padrão do sistema no corpo todo e nos botões */
+/* 1. Esconde o cursor padrão do sistema */
 body, button, a, .card, .circle-btn, .deck-option, .mini-btn {
     cursor: none !important; 
 }
 
-/* 2. O nosso novo cursor */
+/* 2. O Motor Invisível (Move ultra rápido usando a Placa de Vídeo) */
 #custom-cursor {
     position: fixed;
     top: 0; left: 0;
-    width: 36px; height: 36px; /* Tamanho do seu ponteiro */
-    
-    /* VVV Coloque a imagem do seu ponteiro normal aqui VVV */
+    width: 36px; height: 36px; 
+    pointer-events: none; 
+    z-index: 9999999; 
+    will-change: transform; /* <-- MAGIA DA GPU AQUI */
+}
+
+/* 3. A Imagem Visível (Onde acontecem as animações de brilho e escala) */
+#cursor-img {
+    width: 100%; height: 100%;
     background-image: url('../assets/img/cursor_normal.webp'); 
     background-size: contain;
     background-repeat: no-repeat;
     
-    /* CRÍTICO: Deixa os cliques passarem "através" da imagem */
-    pointer-events: none; 
-    z-index: 9999999; /* Fica acima de TUDO no jogo */
-    
-    /* Opcional: Centraliza a ponta do cursor com o clique real */
-    transform: translate(-10%, -10%); 
-    
-    /* Uma animação leve constante (ex: flutuando ou brilhando) */
+    transform: translate(-10%, -10%) scale(1);
+    transition: transform 0.1s ease-out; /* Suaviza apenas o "soquinho" do clique */
     animation: cursorIdle 2s infinite alternate;
 }
 
-/* 3. Estado quando passa o mouse em algo clicável (Cartas/Botões) */
-#custom-cursor.hovering {
-    /* VVV Se quiser, pode colocar uma imagem diferente para o hover VVV */
-    /* background-image: url('../assets/img/cursor_hover.webp'); */
-    
-    transform: translate(-10%, -10%) scale(1.3);
-    filter: drop-shadow(0 0 10px var(--gold));
+/* 4. Estado Hover (Quando passa por cima de botões) */
+#custom-cursor.hovering #cursor-img {
     animation: cursorClickable 0.5s infinite alternate;
 }
 
-/* Animações do Cursor */
+/* Animações Isoladas */
 @keyframes cursorIdle {
     from { filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8)); }
     to { filter: drop-shadow(0 5px 8px rgba(0,0,0,0.5)); }
 }
 
 @keyframes cursorClickable {
-    from { transform: translate(-10%, -10%) scale(1.1); }
-    to { transform: translate(-10%, -10%) scale(1.3); }
+    from { transform: translate(-10%, -10%) scale(1.1); filter: drop-shadow(0 0 10px var(--gold)); }
+    to { transform: translate(-10%, -10%) scale(1.3); filter: drop-shadow(0 0 20px var(--gold)); }
 }
 
-/* 4. PROTEÇÃO PARA CELULAR (Touchscreen) */
-/* Se for um dispositivo de toque (onde não tem mouse), volta ao normal */
+/* Proteção Mobile */
 @media (pointer: coarse), (max-width: 768px) {
     #custom-cursor { display: none !important; }
     body, button, a, .card, .circle-btn, .deck-option, .mini-btn { cursor: auto !important; }
