@@ -1897,9 +1897,35 @@ window.cancelModal = function() {
     if(hc) hc.style.pointerEvents = 'auto'; 
 }
 
+/* ==========================================================
+   CÓDIGO QUE FOI APAGADO SEM QUERER (COLE ISTO AQUI)
+========================================================== */
+const tt = document.getElementById('tooltip-box');
+
+function bindFixedTooltip(el,k) { 
+    const updatePos = () => { 
+        let rect = el.getBoundingClientRect(); 
+        tt.style.left = (rect.left + rect.width / 2) + 'px'; 
+    }; 
+    return { 
+        onmouseenter: (e) => { 
+            showTT(k); 
+            tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
+            tt.style.top = 'auto'; 
+             
+            tt.classList.remove('tooltip-anim-up'); 
+            tt.classList.remove('tooltip-anim-down'); 
+            tt.classList.add('tooltip-anim-up'); 
+            updatePos(); 
+            el.addEventListener('mousemove', updatePos); 
+        } 
+    }; 
+}
+/* ========================================================== */
+
 function showTT(k) {
     let db = CARDS_DB[k];
-    document.getElementById('tt-title').innerHTML = k; 
+    document.getElementById('tt-title').innerHTML = k;
     if (db.customTooltip) {
         let content = db.customTooltip;
         let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
