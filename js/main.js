@@ -2480,3 +2480,121 @@ if (customCursor && window.matchMedia("(pointer: fine)").matches) {
         if(cursorImg) cursorImg.style.transform = 'translate(-10%, -10%) scale(1)';
     });
 }
+
+// --- LÓGICA DE PERSISTÊNCIA DE CONFIGURAÇÕES ---
+
+// 1. Carregar configurações quando logar
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUser = user;
+        await loadUserSettings(); // Carrega volumes do banco
+        window.goToLobby(true); 
+    } else {
+        // ... (resto do código de deslogar)
+    }
+});
+
+async function loadUserSettings() {
+    if(!currentUser) return;
+    try {
+        const settingsRef = doc(db, "players", currentUser.uid, "config", "audio");
+        const snap = await getDoc(settingsRef);
+        
+        if (snap.exists()) {
+            const data = snap.data();
+            window.masterVol = data.master ?? 1.0;
+            window.musicVol = data.music ?? 1.0;
+            window.sfxVol = data.sfx ?? 1.0;
+            window.isMuted = data.isMuted ?? false;
+            
+            // Atualiza os sliders na UI
+            updateSlidersUI();
+            // Aplica os volumes
+            window.updateVol('master', window.masterVol, false);
+            applyMuteVisuals();
+        }
+    } catch(e) { console.error("Erro ao carregar configs:", e); }
+}
+
+// 2. Salvar configurações com Debounce (para não pesar o banco)
+let saveTimeout = null;
+async function saveUserSettings() {
+    if(!currentUser) return;
+    if(saveTimeout) clearTimeout(saveTimeout);
+    
+    saveTimeout = setTimeout(async () => {
+        const settingsRef = doc(db, "players", currentUser.uid, "config", "audio");
+        await setDoc(settingsRef, {
+            master: window.masterVol,
+            music: window.musicVol,
+            sfx: window.sfxVol,
+            isMuted: window.isMuted,
+            updatedAt: Date.now()
+        });
+        console.log("Configurações salvas em nuvem.");
+    }, 1000); 
+}
+
+// 3. Função de Volume Atualizada
+window.updateVol = function(type, val, shouldSave = true) { 
+    const value = parseFloat(val);
+    if(type === 'master') window.masterVol = value; 
+    if(type === 'music') window.musicVol = value; 
+    if(type === 'sfx') window.sfxVol = value; 
+
+    // Atualiza Texto da Porcentagem
+    const txtEl = document.getElementById(`val-${type}`);
+    if(txtEl) txtEl.innerText = Math.round(value * 100) + "%";
+
+    // Aplica volume da música agora
+    if(MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
+        let finalMusicVol = window.isMuted ? 0 : (0.5 * window.masterVol * window.musicVol);
+        audios[MusicController.currentTrackId].volume = finalMusicVol;
+    }
+
+    if(shouldSave) saveUserSettings();
+}
+
+// 4. Lógica LIGADO / DESLIGADO
+window.toggleMasterMute = function() {
+    window.isMuted = !window.isMuted;
+    window.playNavSound();
+    
+    applyMuteVisuals();
+    
+    // Força atualização da música atual
+    window.updateVol('master', window.masterVol); 
+    saveUserSettings();
+};
+
+function applyMuteVisuals() {
+    const btn = document.getElementById('master-mute-btn');
+    if(btn) {
+        if(window.isMuted) {
+            btn.innerText = "DESLIGADO";
+            btn.classList.add('mute-off');
+        } else {
+            btn.innerText = "LIGADO";
+            btn.classList.remove('mute-off');
+        }
+    }
+}
+
+function updateSlidersUI() {
+    if(document.getElementById('slide-master')) document.getElementById('slide-master').value = window.masterVol;
+    if(document.getElementById('slide-music')) document.getElementById('slide-music').value = window.musicVol;
+    if(document.getElementById('slide-sfx')) document.getElementById('slide-sfx').value = window.sfxVol;
+    
+    ['master', 'music', 'sfx'].forEach(t => {
+        const el = document.getElementById(`val-${t}`);
+        if(el) el.innerText = Math.round((t === 'master' ? window.masterVol : (t === 'music' ? window.musicVol : window.sfxVol)) * 100) + "%";
+    });
+}
+
+// Ajuste na playSound para respeitar o Mudo
+function playSound(key) { 
+    if(window.isMuted) return; // SE ESTIVER MUDO, NÃO TOCA NADA
+    if(audios[key]) { 
+        // ... (mantenha sua lógica de volume finalVol anterior aqui)
+    }
+}
