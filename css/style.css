@@ -22,13 +22,13 @@
     --purple-btn: #8e44ad;
     
     /* === ARTES E BACKGROUNDS === */
-    --cardback-url: url('https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png');
-    --lobby-bg-url: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
+    --cardback-url: url('../assets/img/deck_verso_cavaleiro.webp');
+    --lobby-bg-url: url('../assets/img/bg_saguao.webp');
 
     /* DEFINIÇÃO DAS MESAS */
-    --table-saguao: url('https://i.ibb.co/Dfpkhhtr/ARTE-SAGU-O.png');
-    --table-cavaleiro: url('https://i.ibb.co/zhx4QY51/MESA-DE-JOGO.png');
-    --table-mago: url('https://i.ibb.co/Z1GNKZGp/MESA-DE-JOGO-MAGO.png');
+    --table-saguao: url('../assets/img/bg_saguao.webp');
+    --table-cavaleiro: url('../assets/img/mesa_cavaleiro.webp');
+    --table-mago: url('../assets/img/mesa_mago.webp');
 
     /* PADRÃO INICIAL (Cavaleiro) */
     --bg-image-url: var(--table-saguao);
@@ -246,7 +246,7 @@ body.theme-cavaleiro #game-background,
     width: 370px; 
     height: 138px;
     
-    background-image: url('https://i.ibb.co/tpVT4ymn/Camada-0.png');
+    background-image: url('../assets/img/ui_moldura_perfil.webp');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
@@ -343,7 +343,7 @@ body.theme-cavaleiro #game-background,
     width: 370px; 
     height: 138px;
     
-    background-image: url('https://i.ibb.co/fY7nJm6v/Camada-1.png');
+    background-image: url('../assets/img/ui_moldura_perfil.webp');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
@@ -475,7 +475,7 @@ body.theme-cavaleiro #game-background,
     height: 105px;
     
     /* Imagem de Fundo NOVA */
-    background-image: url('https://i.ibb.co/SXPndxhb/AREA-DE-EXPERIENCIA.png');
+    background-image: url('../assets/img/ui_area_xp.webp');
     
     /* 'contain' garante que a imagem inteira apareça sem esticar/deformar */
     background-size: contain; 
