@@ -101,6 +101,8 @@ let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let isProcessing = false; let turnCount = 1; let playerHistory = []; 
 window.masterVol = 1.0; 
+window.musicVol = 1.0; /* NOVO */
+window.sfxVol = 1.0;   /* NOVO */
 let isLethalHover = false; 
 let mixerInterval = null;
 
@@ -194,7 +196,7 @@ const MusicController = {
                 }
                 return; 
             } 
-            const maxVol = 0.5 * window.masterVol;
+            const maxVol = 0.5 * window.masterVol * window.musicVol;
             if (this.currentTrackId && audios[this.currentTrackId]) {
                 const oldAudio = audios[this.currentTrackId];
                 this.fadeOut(oldAudio);
@@ -288,13 +290,25 @@ window.playUIHoverSound = function() {
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
+    
     const configBtn = document.getElementById('btn-config-toggle');
     const surrenderBtn = document.getElementById('btn-surrender');
-    if(screenId === 'game-screen') {
-        if(surrenderBtn) surrenderBtn.style.display = 'block';
+    const separator = document.getElementById('cfg-separator');
+    
+    // O botão de engrenagem aparece tanto no saguão quanto no jogo
+    if(screenId === 'game-screen' || screenId === 'lobby-screen') {
         if(configBtn) configBtn.style.display = 'flex'; 
+        
+        // Se for jogo, mostra "Abandonar" e a linha separadora. Se for Saguão, esconde.
+        if (screenId === 'game-screen') {
+            if(surrenderBtn) surrenderBtn.style.display = 'block';
+            if(separator) separator.style.display = 'block';
+        } else {
+            if(surrenderBtn) surrenderBtn.style.display = 'none';
+            if(separator) separator.style.display = 'none';
+        }
     } else {
-        if(surrenderBtn) surrenderBtn.style.display = 'none';
+        // Em outras telas (ex: login) esconde tudo
         if(configBtn) configBtn.style.display = 'none';
         const panel = document.getElementById('config-panel');
         if(panel) { panel.style.display = 'none'; panel.classList.remove('active'); }
@@ -1017,44 +1031,88 @@ function updateAudioMixer() {
 window.toggleConfig = function() { let p = document.getElementById('config-panel'); if(p.style.display==='flex'){ p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); } else { p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); } }
 document.addEventListener('click', function(e) { const panel = document.getElementById('config-panel'); const btn = document.getElementById('btn-config-toggle'); if (panel && panel.classList.contains('active') && !panel.contains(e.target) && (btn && !btn.contains(e.target))) window.toggleConfig(); });
 
+// ATUALIZA OS VOLUMES EM TEMPO REAL
 window.updateVol = function(type, val) { 
-    if(type==='master') window.masterVol = parseFloat(val); 
-    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 
-     'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 
-     'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
-        if(audios[k]) {
-            let vol = window.masterVol || 1.0;
-            try {
-                if(k === 'sfx-ui-hover') {
-                    audios[k].volume = 0.3 * vol;
-                } else if (k === 'sfx-levelup') {
-                    audios[k].volume = 1.0 * vol;
-                } else if (k === 'sfx-train') {
-                    audios[k].volume = 0.5 * vol;
-                } else {
-                    audios[k].volume = 0.8 * vol;
-                }
-            } catch(e){}
-        }
-    }); 
+    if(type === 'master') window.masterVol = parseFloat(val); 
+    if(type === 'music') window.musicVol = parseFloat(val); 
+    if(type === 'sfx') window.sfxVol = parseFloat(val); 
+
+    // Ajusta a música que está tocando AGORA
+    if(MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
+        audios[MusicController.currentTrackId].volume = 0.5 * window.masterVol * window.musicVol;
+    }
 }
+
 function playSound(key) { 
     if(audios[key]) { 
         try {
+            let finalVol = window.masterVol * window.sfxVol; // Multiplica geral pelo SFX
+            
             if (key === 'sfx-levelup') {
-                audios[key].volume = 1.0 * (window.masterVol || 1.0);
+                audios[key].volume = 1.0 * finalVol;
                 if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
-                audios[key].play().catch(e => console.log("Audio prevented:", e));
-                let clone = audios[key].cloneNode();
-                clone.volume = audios[key].volume;
-                clone.play().catch(()=>{});
+                audios[key].play().catch(()=>{});
             } else {
                 if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
-                audios[key].play().catch(e => console.log("Audio prevented:", e)); 
+                
+                if (key === 'sfx-train') audios[key].volume = 0.5 * finalVol;
+                else if (key === 'sfx-ui-hover') audios[key].volume = 0.3 * finalVol;
+                else audios[key].volume = 0.8 * finalVol;
+                
+                audios[key].play().catch(()=>{}); 
             }
         } catch(e){}
     } 
 }
+
+window.playNavSound = function() { 
+    let s = audios['sfx-nav']; 
+    if(s) { 
+        try {
+            if (s.readyState >= 2) s.currentTime = 0; 
+            s.volume = 0.8 * window.masterVol * window.sfxVol; // Aplica o novo filtro
+            s.play().catch(()=>{});
+        } catch(e) {}
+    } 
+};
+
+window.playUIHoverSound = function() {
+    let now = Date.now();
+    if (now - lastHoverTime < 50) return; 
+    let base = audios['sfx-ui-hover'];
+    if(base) { 
+        try {
+            let s = base.cloneNode(); 
+            s.volume = 0.3 * window.masterVol * window.sfxVol; // Aplica o novo filtro
+            s.play().catch(()=>{}); 
+            lastHoverTime = now;
+        } catch(e){}
+    }
+};
+
+// --- CONTROLES DOS NOVOS MENUS MODAIS ---
+window.openSoundMenu = function() {
+    window.toggleConfig(); // Fecha a abinha drop-down
+    window.playNavSound();
+    document.getElementById('settings-overlay').style.display = 'flex';
+    document.getElementById('sound-modal').style.display = 'block';
+    document.getElementById('about-modal').style.display = 'none';
+};
+
+window.openAboutMenu = function() {
+    window.toggleConfig(); // Fecha a abinha drop-down
+    window.playNavSound();
+    document.getElementById('settings-overlay').style.display = 'flex';
+    document.getElementById('sound-modal').style.display = 'none';
+    document.getElementById('about-modal').style.display = 'block';
+};
+
+window.closeSettingsModal = function(e) {
+    // Permite fechar clicando no fundo desfocado (overlay), mas não na caixa em si
+    if (e && e.target !== document.getElementById('settings-overlay')) return;
+    window.playNavSound();
+    document.getElementById('settings-overlay').style.display = 'none';
+};
 
 function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
 initAmbientParticles();
