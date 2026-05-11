@@ -1108,6 +1108,7 @@ async function commitTurnToDB(pAct, extraCard = null) {
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
+    
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
 
@@ -1119,7 +1120,9 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let clash = false;
     let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); 
     let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE'); 
-    if(pBlocks) { clash = true; triggerBlockEffect(true); } else if(mBlocks) { clash = true; triggerBlockEffect(false); }
+    
+    if(pBlocks) { clash = true; triggerBlockEffect(true); }
+    else if(mBlocks) { clash = true; triggerBlockEffect(false); }
 
     let nextPlayerDisabled = null; let nextMonsterDisabled = null;
     if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
@@ -1129,4 +1132,254 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
     if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
 
-    if(pDmg > 0) { player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff76
+    if(pDmg > 0) { 
+        player.hp -= pDmg; 
+        showFloatingText('p-lvl', `-${pDmg}`, "#ff7675"); 
+        let soundOn = !(clash && mAct === 'BLOQUEIO'); 
+        if (!mBlocks) { triggerDamageEffect(true, soundOn); }
+    }
+
+    if(mDmg > 0) { 
+        monster.hp -= mDmg; 
+        showFloatingText('m-lvl', `-${mDmg}`, "#ff7675"); 
+        let soundOn = !(clash && pAct === 'BLOQUEIO'); 
+        triggerDamageEffect(false, soundOn); 
+    }
+    
+    updateUI();
+    let pDead = player.hp <= 0, mDead = monster.hp <= 0;
+    
+    if(!pDead && pAct === 'DESCANSAR') { 
+        let healAmount = (pDmg === 0) ? 3 : 2; 
+        player.hp = Math.min(player.maxHp, player.hp + healAmount); 
+        showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); 
+        triggerHealEffect(true); 
+        playSound('sfx-heal'); 
+    }
+    if(!mDead && mAct === 'DESCANSAR') { 
+        let healAmount = (mDmg === 0) ? 3 : 2; 
+        monster.hp = Math.min(monster.maxHp, monster.hp + healAmount); 
+        triggerHealEffect(false); 
+        playSound('sfx-heal'); 
+    }
+
+    function handleExtraXP(u) { 
+        if (window.gameMode === 'pvp' && window.currentMatchId) {
+             if (u === player) {
+                 if(u.deck.length > 0) {
+                     let card = u.deck.pop(); 
+                     animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
+                        u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
+                      }, false, false, true);
+                 }
+             }
+        } 
+        else {
+            if(u.deck.length > 0) { 
+                let card = u.deck.pop(); 
+                animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { 
+                    u.xp.push(card); triggerXPGlow(u.id); updateUI(); 
+                }, false, false, (u.id === 'p')); 
+            } 
+        }
+    }
+
+    if(!pDead && pAct === 'TREINAR') handleExtraXP(player); 
+    if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
+
+    if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player); 
+    if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
+
+    setTimeout(() => {
+        animateFly('p-slot', 'p-xp', pAct, () => { 
+            if(!pDead) { 
+                player.xp.push(pAct); 
+                triggerXPGlow('p'); 
+                updateUI(); 
+
+                if (window.gameMode === 'pvp') {
+                    commitTurnToDB(pAct); 
+                }
+            } 
+            
+            checkLevelUp(player, () => { 
+                if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); 
+            }); 
+        }, false, false, true);
+
+        animateFly('m-slot', 'm-xp', mAct, () => { 
+            if (window.gameMode !== 'pvp' && !mDead) { 
+                monster.xp.push(mAct); 
+                triggerXPGlow('m'); 
+                updateUI(); 
+            } 
+            checkLevelUp(monster, () => { 
+                if(!mDead) drawCardLogic(monster, 1); 
+                checkEndGame(); 
+            }); 
+        }, false, false, false);
+        
+        document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
+    }, 700);
+}
+
+function checkLevelUp(u, doneCb) {
+    if(u.xp.length >= 5) {
+        let xpContainer = document.getElementById(u.id + '-xp'); 
+        let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
+        minis.forEach(realCard => {
+            let rect = realCard.getBoundingClientRect(); 
+            let clone = document.createElement('div'); 
+            clone.className = 'xp-anim-clone';
+            clone.style.left = rect.left + 'px'; 
+            clone.style.top = rect.top + 'px'; 
+            clone.style.width = rect.width + 'px'; 
+            clone.style.height = rect.height + 'px'; 
+            clone.style.backgroundImage = realCard.style.backgroundImage;
+            if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down');
+            document.body.appendChild(clone);
+        });
+        minis.forEach(m => m.style.opacity = '0');
+
+        setTimeout(() => {
+            let counts = {}; 
+            u.xp.forEach(x => counts[x] = (counts[x]||0)+1); 
+            let triggers = []; 
+            for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
+            
+            processMasteries(u, triggers, () => {
+                let lvlEl = document.getElementById(u.id+'-lvl'); 
+                u.lvl++; 
+                lvlEl.classList.add('level-up-anim'); 
+                triggerLevelUpVisuals(u.id); 
+                playSound('sfx-levelup'); 
+                setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
+
+                u.xp.forEach(x => u.deck.push(x)); 
+                u.xp = []; 
+                
+                if (window.gameMode === 'pvp' && window.currentMatchId) {
+                    let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
+                    shuffle(u.deck, s);
+                    if (u === player) {
+                        syncLevelUpToDB(u);
+                    }
+                } else {
+                    shuffle(u.deck); 
+                }
+
+                let clones = document.getElementsByClassName('xp-anim-clone'); 
+                while(clones.length > 0) clones[0].remove();
+                updateUI(); 
+                doneCb();
+            });
+        }, 1000); 
+    } else { doneCb(); }
+}
+
+function triggerLevelUpVisuals(unitId) {
+    let clusterId = (unitId === 'p') ? 'p-stats-cluster' : 'm-stats-cluster';
+    let cluster = document.getElementById(clusterId);
+    if(!cluster) return;
+    const text = document.createElement('div');
+    text.innerText = "LEVEL UP!";
+    text.className = 'levelup-text'; 
+    if (unitId === 'p') { text.classList.add('lvl-anim-up'); } else { text.classList.add('lvl-anim-down'); }
+    cluster.appendChild(text);
+    setTimeout(() => { text.remove(); }, 2000);
+}
+
+function processMasteries(u, triggers, cb) {
+    if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
+    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); } 
+    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } 
+    else if(type === 'TREINAR' && u.id === 'm') {
+        let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR' && x !== 'DESCANSAR'))]; 
+        if(opts.length > 0) {
+            let choice = opts[0];
+            if(u.hp <= 4 && opts.includes('DESCANSAR')) choice = 'DESCANSAR';
+            else if(opts.includes('ATAQUE')) choice = 'ATAQUE';
+            else if(opts.includes('BLOQUEIO')) choice = 'BLOQUEIO';
+            if(choice === 'DESARMAR') { let target = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE'; player.disabled = target; showFloatingText('p-lvl', "BLOQUEADO!", "#fab1a0"); } else { applyMastery(u, choice); }
+        }
+        processMasteries(u, triggers, cb);
+    }
+    else if(type === 'DESARMAR' && u.id === 'm') { let target = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE'; player.disabled = target; showFloatingText('p-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }
+    else { applyMastery(u, type); processMasteries(u, triggers, cb); }
+}
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
+function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
+
+function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false, isPlayer = false) {
+    let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
+    let e = { top: 0, left: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
+
+    const fly = document.createElement('div');
+    fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
+    
+    let imgUrl = getCardArt(cardKey, isPlayer);
+    fly.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
+    if (isToTable) fly.classList.add('card-bounce');
+
+    if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; } 
+    else { let w = window.innerWidth < 768 ? '84px' : '105px'; let h = window.innerWidth < 768 ? '120px' : '150px'; fly.style.width=w; fly.style.height=h; }
+
+    let tableW = window.innerWidth < 768 ? '110px' : '180px';
+    let tableH = window.innerWidth < 768 ? '170px' : '260px';
+
+    fly.style.top=s.top+'px'; fly.style.left=s.left+'px';
+    if(endId.includes('xp')) fly.style.transform='scale(0.3)';
+    document.body.appendChild(fly); fly.offsetHeight;
+    
+    if(isToTable) { fly.style.width=tableW; fly.style.height=tableH; }
+    fly.style.top=e.top+'px'; fly.style.left=e.left+'px';
+    setTimeout(() => { fly.remove(); if(cb) cb(); }, 250);
+}
+
+function drawCardAnimated(unit, deckId, handId, cb) { 
+    if(cb) cb(); 
+}
+
+function renderTable(key, slotId, isPlayer = false) { 
+    let el = document.getElementById(slotId); 
+    el.innerHTML = ''; 
+    let card = document.createElement('div'); 
+    card.className = `card ${CARDS_DB[key].color} card-on-table`; 
+    let imgUrl = getCardArt(key, isPlayer);
+    card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`; 
+    el.appendChild(card); 
+}
+
+// --- LÓGICA DO CURSOR CUSTOMIZADO (ZERO LAG) ---
+const customCursor = document.getElementById('custom-cursor');
+const cursorImg = document.getElementById('cursor-img');
+
+if (customCursor && window.matchMedia("(pointer: fine)").matches) {
+    let mouseX = 0;
+    let mouseY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+
+    function renderCursor() {
+        customCursor.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
+        requestAnimationFrame(renderCursor);
+    }
+    requestAnimationFrame(renderCursor);
+
+    document.addEventListener('mouseover', (e) => {
+        const isClickable = e.target.closest('button, .circle-btn, .card, .deck-option, .mini-btn, .xp-mini');
+        if (isClickable) customCursor.classList.add('hovering');
+        else customCursor.classList.remove('hovering');
+    });
+
+    document.addEventListener('mousedown', () => {
+        if(cursorImg) cursorImg.style.transform = 'translate(-10%, -10%) scale(0.8)';
+    });
+    
+    document.addEventListener('mouseup', () => {
+        if(cursorImg) cursorImg.style.transform = 'translate(-10%, -10%) scale(1)';
+    });
+}
