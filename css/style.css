@@ -343,7 +343,7 @@ body.theme-cavaleiro #game-background,
     width: 370px; 
     height: 138px;
     
-    background-image: url('../assets/img/cluster_jogador.webp');
+    background-image: url('../assets/img/cluster_inimigo.webp');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
