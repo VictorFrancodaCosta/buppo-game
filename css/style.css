@@ -67,7 +67,7 @@ body.theme-cavaleiro #game-background,
 /* --- UI E CONTROLES --- */
 #top-left-controls { 
     position: fixed; top: 15px; 
-    left: calc(50% - 50vw + 15px); /* <-- NOVA REGRA */
+    left: calc(50% - 50vw + 40px); /* <-- NOVA REGRA */
     z-index: 60000; display: flex; gap: 10px; 
 }
 .circle-btn {
@@ -171,13 +171,13 @@ body.theme-cavaleiro #game-background,
 /* CONFIG E FULLSCREEN */
 #btn-fullscreen { 
     position: fixed; bottom: 20px; 
-    right: calc(50% - 50vw + 20px); /* <-- NOVA REGRA */
+    right: calc(50% - 50vw + 40px); /* <-- NOVA REGRA */
     z-index: 20000; font-size: 28px; cursor: pointer; color: rgba(255, 255, 255, 0.4); transition: 0.3s; background: transparent; border: none; width: auto; height: auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); 
 }
 #btn-fullscreen:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 15px var(--gold); }
 #config-panel { 
     position: fixed; top: 65px; 
-    left: calc(50% - 50vw + 15px); /* <-- NOVA REGRA */
+    left: calc(50% - 50vw + 40px); /* <-- NOVA REGRA */
     z-index: 5000; background: var(--wood-light); border: 3px solid var(--wood-dark); border-radius: 12px; padding: 15px; width: 220px; display: none; flex-direction: column; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); color: var(--txt-primary); 
 }
 #config-panel.active { display: flex; animation: slideDown 0.2s ease-out; }
@@ -542,7 +542,7 @@ body.theme-cavaleiro #game-background,
 .middle-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; gap: 80px; perspective: 1200px; pointer-events: none; z-index: 10; padding-bottom: 120px; box-sizing: border-box; }
 .turn-display { 
     position: absolute; top: 50%; 
-    left: calc(50% - 50vw + 20px); /* <-- NOVA REGRA */
+    left: calc(50% - 50vw + 40px); /* <-- NOVA REGRA */
     transform: translateY(-50%) rotate(-90deg); transform-origin: left center; font-family: 'Russo One', sans-serif; font-size: 24px; color: var(--gold); opacity: 0.9; letter-spacing: 6px; text-shadow: 2px 2px 0 #000; white-space: nowrap; 
 }
 .slot { width: 170px; height: 250px; border: none; display: flex; justify-content: center; align-items: center; background: transparent; transform: rotateX(25deg); transform-style: preserve-3d; perspective: 1000px; pointer-events: auto; }
