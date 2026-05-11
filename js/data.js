@@ -16,7 +16,7 @@ export const CARDS_DB = {
         color: 'border-red',
         fCol: '#ff4757',
         icon: '⚔️',
-    customTooltip: `
+        customTooltip: `
             <div class="tt-desc">Causa <span class="dynamic-val">{PLAYER_LVL}</span> (Nível) de dano ao oponente.</div>
             <div class="tt-cartoon-title cartoon-orange">BÔNUS - GOLPE SURPRESA</div>
             <div class="tt-text">Se o oponente jogar <span class="highlight-card hc-green">DESCANSAR</span> neste turno, coloque a carta do topo de seu baralho em sua área de experiência.</div>
