@@ -2352,23 +2352,31 @@ setTimeout(() => {
 
 preloadGame();
 
-// --- LÓGICA DO CURSOR CUSTOMIZADO ---
+// --- LÓGICA DO CURSOR CUSTOMIZADO (ZERO LAG) ---
 const customCursor = document.getElementById('custom-cursor');
+const cursorImg = document.getElementById('cursor-img');
 
-// Só ativa a lógica se estiver no PC (se o cursor existir no HTML)
 if (customCursor && window.matchMedia("(pointer: fine)").matches) {
-    
-    // 1. Faz a imagem seguir o X e Y do mouse
+    let mouseX = 0;
+    let mouseY = 0;
+
+    // 1. Apenas lê a posição do mouse (não tenta desenhar ainda)
     document.addEventListener('mousemove', (e) => {
-        customCursor.style.left = e.clientX + 'px';
-        customCursor.style.top = e.clientY + 'px';
+        mouseX = e.clientX;
+        mouseY = e.clientY;
     });
 
-    // 2. Detecta quando o mouse passa por cima de coisas clicáveis
+    // 2. Loop de Renderização (Desenha junto com a taxa de atualização do monitor)
+    function renderCursor() {
+        // Usa translate3d para ativar a aceleração de hardware
+        customCursor.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
+        requestAnimationFrame(renderCursor);
+    }
+    requestAnimationFrame(renderCursor);
+
+    // 3. Detecta Hover (Botões, Cartas, etc)
     document.addEventListener('mouseover', (e) => {
-        // Lista de coisas que fazem o cursor mudar de animação
         const isClickable = e.target.closest('button, .circle-btn, .card, .deck-option, .mini-btn, .xp-mini');
-        
         if (isClickable) {
             customCursor.classList.add('hovering');
         } else {
@@ -2376,16 +2384,12 @@ if (customCursor && window.matchMedia("(pointer: fine)").matches) {
         }
     });
 
-    // 3. Efeito de clique (dá um "soquinho" quando você clica)
+    // 4. Efeito de Clique ("Soquinho") focado apenas na imagem
     document.addEventListener('mousedown', () => {
-        customCursor.style.transform = 'translate(-10%, -10%) scale(0.8)';
+        if(cursorImg) cursorImg.style.transform = 'translate(-10%, -10%) scale(0.8)';
     });
     
     document.addEventListener('mouseup', () => {
-        if (customCursor.classList.contains('hovering')) {
-            customCursor.style.transform = 'translate(-10%, -10%) scale(1.3)';
-        } else {
-            customCursor.style.transform = 'translate(-10%, -10%) scale(1)';
-        }
+        if(cursorImg) cursorImg.style.transform = 'translate(-10%, -10%) scale(1)';
     });
 }
