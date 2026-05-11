@@ -252,12 +252,12 @@ body.theme-cavaleiro #game-background,
 /* ---------------------------------------------------------------------- */
 #p-stats-cluster {
     position: fixed;
-    bottom: 180px; 
+    bottom: 30px; /* <--- REDUZIDO DE 180px PARA DESCER O PAINEL */
     left: calc(50% - 50vw + 2px); 
     width: 370px; 
     height: 138px;
     
-    background-image: url('../assets/img/cluster_jogador.webp');
+    background-image: url('../assets/img/cluster_jogador.webp'); /* Ou a imagem que você estiver usando */
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
@@ -272,7 +272,7 @@ body.theme-cavaleiro #game-background,
     z-index: 100;
     
     filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); 
-    animation: hudFloat 4s ease-in-out infinite;
+    animation: hudFloat 4s ease-in-out infinite !important; /* <--- !important PARA FORÇAR A ANIMAÇÃO */
 }
 
 #p-stats-cluster .unit-info { display: contents; }
@@ -349,9 +349,7 @@ body.theme-cavaleiro #game-background,
     width: 370px; 
     height: 138px;
     
-    /* Usa a imagem invertida. Se você usou o truque do ::before em vez de virar a imagem, 
-       basta apagar a linha do background-image abaixo e manter o seu ::before */
-    background-image: url('../assets/img/cluster_inimigo.webp');
+    background-image: url('../assets/img/cluster_inimigo.webp'); /* Ou a sua imagem invertida */
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
@@ -364,7 +362,7 @@ body.theme-cavaleiro #game-background,
     display: block !important;
     z-index: 100;
     filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); 
-    animation: hudFloat 4s ease-in-out infinite;
+    animation: hudFloat 4s ease-in-out infinite !important; /* <--- !important PARA FORÇAR A ANIMAÇÃO */
 }
 
 #m-stats-cluster .unit-info { display: contents; }
