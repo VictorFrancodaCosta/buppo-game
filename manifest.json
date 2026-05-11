@@ -8,15 +8,14 @@
   "orientation": "landscape",
   "icons": [
     {
-      "src": "https://i.ibb.co/mrzG1z9k/Sem-T-tulo-1.png",
+      "src": "assets/img/logo_buppo.webp",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/webp"
     },
     {
-      "src": "https://i.ibb.co/mrzG1z9k/Sem-T-tulo-1.png",
+      "src": "assets/img/logo_buppo.webp",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/webp"
     }
   ]
 }
- 
