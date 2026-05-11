@@ -36,43 +36,40 @@ let searchInterval = null;
 
 // --- ASSETS LOCAIS ---
 const MAGE_ASSETS = {
-    'ATAQUE': 'assets/img/carta_ataque_mago.png',
-    'BLOQUEIO': 'assets/img/carta_bloqueio_mago.png',
-    'DESCANSAR': 'assets/img/carta_descansar_mago.png',
-    'DESARMAR': 'assets/img/carta_desarmar_mago.png',
-    'TREINAR': 'assets/img/carta_treinar_mago.png',
-    'DECK_IMG': 'assets/img/deck_verso_mago.png',
-    'DECK_SELECT': 'assets/img/card_selecao_mago.png'
+    'ATAQUE': 'assets/img/carta_ataque_mago.webp',
+    'BLOQUEIO': 'assets/img/carta_bloqueio_mago.webp',
+    'DESCANSAR': 'assets/img/carta_descansar_mago.webp',
+    'DESARMAR': 'assets/img/carta_desarmar_mago.webp',
+    'TREINAR': 'assets/img/carta_treinar_mago.webp',
+    'DECK_IMG': 'assets/img/deck_verso_mago.webp',
+    'DECK_SELECT': 'assets/img/card_selecao_mago.webp'
 };
 
 const ASSETS_TO_LOAD = {
     images: [
-        'assets/img/logo_buppo.png',
-        'assets/img/mesa_cavaleiro.png',
-        'assets/img/mesa_mago.png',
-        'assets/img/bg_saguao.png',
-        'assets/img/ui_moldura_perfil.png',
-        'assets/img/ui_placa_selecao.png',
-        'assets/img/card_selecao_cavaleiro.png',
-        'assets/img/card_selecao_mago.png',
-        'assets/img/deck_verso_cavaleiro.png',
-        'assets/img/deck_verso_mago.png',
-        'assets/img/card_verso_padrao.png',
-        'assets/img/ui_mesa_deck.png',
-        'assets/img/ui_area_xp.png',
-        'assets/img/carta_ataque_cavaleiro.png',
-        'assets/img/carta_bloqueio_cavaleiro.png',
-        'assets/img/carta_descansar_cavaleiro.png',
-        'assets/img/carta_desarmar_cavaleiro.png',
-        'assets/img/carta_treinar_cavaleiro.png',
-        'assets/img/carta_ataque_mago.png',
-        'assets/img/carta_bloqueio_mago.png',
-        'assets/img/carta_descansar_mago.png',
-        'assets/img/carta_desarmar_mago.png',
-        'assets/img/carta_treinar_mago.png',
-        'assets/img/ataque_camada1_fundo.jpg',
-        'assets/img/ataque_camada2_espada.png',
-        'assets/img/ataque_camada3_texto.png'
+        'assets/img/logo_buppo.webp',
+        'assets/img/mesa_cavaleiro.webp',
+        'assets/img/mesa_mago.webp',
+        'assets/img/bg_saguao.webp',
+        'assets/img/ui_moldura_perfil.webp',
+        'assets/img/ui_placa_selecao.webp',
+        'assets/img/card_selecao_cavaleiro.webp',
+        'assets/img/card_selecao_mago.webp',
+        'assets/img/deck_verso_cavaleiro.webp',
+        'assets/img/deck_verso_mago.webp',
+        'assets/img/card_verso_padrao.webp',
+        'assets/img/ui_mesa_deck.webp',
+        'assets/img/ui_area_xp.webp',
+        'assets/img/carta_ataque_cavaleiro.webp',
+        'assets/img/carta_bloqueio_cavaleiro.webp',
+        'assets/img/carta_descansar_cavaleiro.webp',
+        'assets/img/carta_desarmar_cavaleiro.webp',
+        'assets/img/carta_treinar_cavaleiro.webp',
+        'assets/img/carta_ataque_mago.webp',
+        'assets/img/carta_bloqueio_mago.webp',
+        'assets/img/carta_descansar_mago.webp',
+        'assets/img/carta_desarmar_mago.webp',
+        'assets/img/carta_treinar_mago.webp',
     ],
     audio: [
         { id: 'bgm-menu', src: 'assets/audio/musica_menu.wav', loop: true }, 
@@ -1736,7 +1733,7 @@ function updateUnit(u) {
         if(window.currentDeck === 'mage') {
             deckImgEl.src = MAGE_ASSETS.DECK_IMG;
         } else {
-            deckImgEl.src = 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png';
+            deckImgEl.src = 'assets/img/deck_verso_mago.webp';
         }
     }
 
