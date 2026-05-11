@@ -2351,3 +2351,41 @@ setTimeout(() => {
 }, 3000); // 3 seconds timeout
 
 preloadGame();
+
+// --- LÓGICA DO CURSOR CUSTOMIZADO ---
+const customCursor = document.getElementById('custom-cursor');
+
+// Só ativa a lógica se estiver no PC (se o cursor existir no HTML)
+if (customCursor && window.matchMedia("(pointer: fine)").matches) {
+    
+    // 1. Faz a imagem seguir o X e Y do mouse
+    document.addEventListener('mousemove', (e) => {
+        customCursor.style.left = e.clientX + 'px';
+        customCursor.style.top = e.clientY + 'px';
+    });
+
+    // 2. Detecta quando o mouse passa por cima de coisas clicáveis
+    document.addEventListener('mouseover', (e) => {
+        // Lista de coisas que fazem o cursor mudar de animação
+        const isClickable = e.target.closest('button, .circle-btn, .card, .deck-option, .mini-btn, .xp-mini');
+        
+        if (isClickable) {
+            customCursor.classList.add('hovering');
+        } else {
+            customCursor.classList.remove('hovering');
+        }
+    });
+
+    // 3. Efeito de clique (dá um "soquinho" quando você clica)
+    document.addEventListener('mousedown', () => {
+        customCursor.style.transform = 'translate(-10%, -10%) scale(0.8)';
+    });
+    
+    document.addEventListener('mouseup', () => {
+        if (customCursor.classList.contains('hovering')) {
+            customCursor.style.transform = 'translate(-10%, -10%) scale(1.3)';
+        } else {
+            customCursor.style.transform = 'translate(-10%, -10%) scale(1)';
+        }
+    });
+}
