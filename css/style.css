@@ -175,12 +175,50 @@ body.theme-cavaleiro #game-background,
     z-index: 20000; font-size: 28px; cursor: pointer; color: rgba(255, 255, 255, 0.4); transition: 0.3s; background: transparent; border: none; width: auto; height: auto; text-shadow: 0 2px 5px rgba(0,0,0,0.8); 
 }
 #btn-fullscreen:hover { color: var(--gold); transform: scale(1.2); text-shadow: 0 0 15px var(--gold); }
+/* AJUSTE DO PAINEL DE CONFIG (Z-INDEX E ANIMAÇÃO) */
 #config-panel { 
-    position: fixed; top: 65px; 
-    left: calc(50% - 50vw + 40px); /* <-- NOVA REGRA */
-    z-index: 5000; background: var(--wood-light); border: 3px solid var(--wood-dark); border-radius: 12px; padding: 15px; width: 220px; display: none; flex-direction: column; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); color: var(--txt-primary); 
+    position: fixed; 
+    top: 80px; 
+    left: calc(50% - 50vw + 40px);
+    z-index: 999999; /* ACIMA DE TUDO */
+    background: var(--wood-light); 
+    border: 3px solid var(--wood-dark); 
+    border-radius: 12px; 
+    padding: 12px; 
+    width: 200px; 
+    display: none; 
+    flex-direction: column; 
+    gap: 5px; 
+    box-shadow: 0 15px 50px rgba(0,0,0,0.9); 
+    color: var(--txt-primary);
+    transform-origin: top left; /* O salto começa do canto superior */
 }
-#config-panel.active { display: flex; animation: slideDown 0.2s ease-out; }
+
+/* ANIMAÇÃO DE SALTO (BOUNCE) */
+#config-panel.active { 
+    display: flex; 
+    animation: configJump 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+}
+
+@keyframes configJump {
+    0% { transform: scale(0.4); opacity: 0; }
+    70% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Ajuste dos textos das porcentagens nos sliders */
+.val-pct {
+    color: var(--gold);
+    font-family: 'Russo One', sans-serif;
+    font-size: 11px;
+}
+
+/* Estilo do botão mudo quando desligado */
+.mute-off {
+    background: #c0392b !important;
+    border-color: #e74c3c !important;
+    color: #fff !important;
+}
 #btn-surrender { background: #c0392b; color: #fff; border: 1px solid #e74c3c; padding: 10px; font-family: 'Russo One'; cursor: pointer; border-radius: 5px; text-transform: uppercase; font-size: 12px; width: 100%; }
 #btn-surrender:hover { background: #e74c3c; }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
