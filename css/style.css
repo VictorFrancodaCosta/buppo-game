@@ -246,7 +246,7 @@ body.theme-cavaleiro #game-background,
     width: 370px; 
     height: 138px;
     
-    background-image: url('../assets/img/ui_moldura_perfil.webp');
+    background-image: url('../assets/img/cluster_jogador.webp');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
@@ -343,7 +343,7 @@ body.theme-cavaleiro #game-background,
     width: 370px; 
     height: 138px;
     
-    background-image: url('../assets/img/ui_moldura_perfil.webp');
+    background-image: url('../assets/img/cluster_jogador.webp');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     
