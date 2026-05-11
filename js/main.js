@@ -68,6 +68,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_descansar_mago.webp',
         'assets/img/carta_desarmar_mago.webp',
         'assets/img/carta_treinar_mago.webp'
+        'assets/img/cluster_jogador.webp'
     ],
     audio: [
         { id: 'bgm-menu', src: 'assets/audio/musica_menu.wav', loop: true }, 
