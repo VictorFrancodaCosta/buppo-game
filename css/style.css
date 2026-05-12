@@ -91,12 +91,47 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 .lobby-frame-container { position: relative; z-index: 5; width: auto; height: 85vh; display: flex; justify-content: center; align-items: center; animation: frameFloat 4s ease-in-out infinite; }
 @keyframes frameFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 .lobby-frame-img { height: 100%; width: auto; filter: drop-shadow(0 20px 50px rgba(0,0,0,0.8)); display: block; }
+/* Empurra os textos mais para o centro para não bater na borda da madeira */
 .lobby-ui-overlay { 
     position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
     display: flex; flex-direction: column; align-items: center; 
-    padding: 22% 5% 14% 5%; /* Padding lateral corrigido de 14% para 5% */
+    padding: 26% 18% 14% 18%; /* <-- Aumentei as porcentagens aqui para espremer para o meio */
     box-sizing: border-box; text-align: center; color: #fff; 
     text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
+}
+
+/* Ajusta a largura máxima dos botões para não saírem da tábua */
+#btn-play-pvp {
+    width: 100%;
+    max-width: 240px; /* <-- Reduzido para caber bem na madeira */
+    background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%);
+    border: 2px solid #fff;
+    border-radius: 50px;
+    padding: 12px 0;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+    transition: transform 0.2s, filter 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 1px 1px 0 rgba(255,255,255,0.4);
+    animation: pulseGold 2s infinite;
+}
+
+#btn-play-pve {
+    width: 90%; 
+    max-width: 220px; /* <-- Reduzido para caber bem na madeira */
+    background: #8e44ad;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50px;
+    padding: 8px 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
 }
 .user-stats { color: #ffd700; font-size: 15px; font-weight: 700; margin-bottom: 15px; font-family: 'Russo One'; }
 .ranking-scroll { flex-grow: 1; width: 100%; overflow-y: auto; margin-bottom: 15px; scrollbar-width: thin; scrollbar-color: var(--wood-dark) transparent; }
