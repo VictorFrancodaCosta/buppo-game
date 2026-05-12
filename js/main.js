@@ -110,6 +110,8 @@ window.isResolvingTurn = false;
 window.pvpStartData = null; 
 window.latestMatchData = null;
 
+const tt = document.getElementById('tooltip-box');
+
 function cleanupMatchState() {
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     if (searchInterval) { clearInterval(searchInterval); searchInterval = null; }
@@ -592,9 +594,7 @@ function checkEndGame(){
     } else { isProcessing = false; } 
 }
 
-// =========================================================
-// COLE ESTAS DUAS FUNÇÕES AQUI
-// =========================================================
+// --- CARREGAR E SALVAR CONFIGURAÇÕES ---
 async function loadUserSettings() {
     if(!currentUser) return;
     try {
@@ -739,6 +739,111 @@ window.abandonMatch = function() {
             }
         );
     }
+}
+
+window.openHistory = async function() {
+    if(!currentUser) return;
+    window.playNavSound();
+    
+    const screen = document.getElementById('history-screen');
+    const container = document.getElementById('history-list-container');
+    screen.style.display = 'flex';
+    container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Consultando arquivos...</div>';
+
+    try {
+        const historyRef = collection(db, "players", currentUser.uid, "history");
+        const q = query(historyRef, orderBy("timestamp", "desc"), limit(20));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Nenhuma batalha registrada ainda.</div>';
+            return;
+        }
+
+        let html = '';
+        querySnapshot.forEach((doc) => {
+            const h = doc.data();
+            const date = new Date(h.timestamp);
+            const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+            const resultClass = h.result === 'WIN' ? 'win' : 'loss';
+            const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : 'DERROTA';
+            const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
+
+            let vsText = "";
+            if (h.opponent === 'PVE' || h.mode === 'pve') {
+                 vsText = `${resultTxt} PVE`;
+            } else {
+                 vsText = `${resultTxt} vs ${h.opponent}`;
+            }
+
+            html += `
+                <div class="history-item ${resultClass}">
+                    <div>
+                        <div class="h-vs">${vsText}</div>
+                        <div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div>
+                    </div>
+                    <div class="h-score">${scoreTxt} PTS</div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+
+    } catch(e) {
+        console.error("Erro ao carregar histórico:", e);
+        container.innerHTML = '<div style="color:red; text-align:center;">Erro ao carregar.</div>';
+    }
+};
+
+window.closeHistory = function() {
+    window.playNavSound();
+    document.getElementById('history-screen').style.display = 'none';
+};
+
+function bindFixedTooltip(el,k) { 
+    const updatePos = () => { 
+        let rect = el.getBoundingClientRect(); 
+        if(tt) tt.style.left = (rect.left + rect.width / 2) + 'px'; 
+    }; 
+    return { 
+        onmouseenter: (e) => { 
+            showTT(k); 
+            if(tt) {
+                tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
+                tt.style.top = 'auto'; 
+                tt.classList.remove('tooltip-anim-up'); 
+                tt.classList.remove('tooltip-anim-down'); 
+                tt.classList.add('tooltip-anim-up'); 
+            }
+            updatePos(); 
+            el.addEventListener('mousemove', updatePos); 
+        } 
+    }; 
+}
+
+function showTT(k) {
+    if(!tt) return;
+    let db = CARDS_DB[k];
+    const titleEl = document.getElementById('tt-title');
+    const contentEl = document.getElementById('tt-content');
+    if(titleEl) titleEl.innerHTML = k; 
+    
+    if (db.customTooltip) {
+        let content = db.customTooltip;
+        let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
+        content = content.replace('{PLAYER_LVL}', currentLvl);
+        let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
+        let reflectDmg = 1 + bonusBlock;
+        content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
+        if(contentEl) contentEl.innerHTML = content;
+    } else {
+        if(contentEl) contentEl.innerHTML = `
+            <span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span>
+            <span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>
+            <span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>
+        `;
+    }
+    tt.style.display = 'block';
 }
 
 function preloadGame() {
@@ -986,7 +1091,7 @@ function onCardClick(index) {
 
     playSound('sfx-play'); 
     document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active'); 
-    document.getElementById('tooltip-box').style.display = 'none'; 
+    if(tt) tt.style.display = 'none'; 
     isLethalHover = false; 
     
     let cardKey = player.hand[index];
@@ -1424,3 +1529,21 @@ if (customCursor && window.matchMedia("(pointer: fine)").matches) {
         if(cursorImg) cursorImg.style.transform = 'translate(-10%, -10%) scale(1)';
     });
 }
+
+// Safety Loader: Start the game even if assets fail
+setTimeout(() => {
+    if (assetsLoaded < totalAssets) {
+        console.warn("Forcing game start (assets timeout)");
+        updateLoader(); // Try one last update
+        const loading = document.getElementById('loading-screen');
+        if(loading) loading.style.display = 'none';
+        
+        // Force init logic just in case
+        if(!window.hoverLogicInitialized) {
+            initGlobalHoverLogic();
+            window.hoverLogicInitialized = true;
+        }
+    }
+}, 3000); // 3 seconds timeout
+
+preloadGame();
