@@ -631,83 +631,8 @@ async function saveUserSettings() {
         });
     }, 1000); 
 }
-// =========================================================
 
-// =========================================================
-// COLE ESTAS DUAS FUNÇÕES AQUI
-// =========================================================
-async function loadUserSettings() {
-    if(!currentUser) return;
-    try {
-        const settingsRef = doc(db, "players", currentUser.uid, "config", "audio");
-        const snap = await getDoc(settingsRef);
-        
-        if (snap.exists()) {
-            const data = snap.data();
-            window.masterVol = data.master ?? 1.0;
-            window.musicVol = data.music ?? 1.0;
-            window.sfxVol = data.sfx ?? 1.0;
-            window.isMuted = data.isMuted ?? false;
-            
-            updateSlidersUI();
-            window.updateVol('master', window.masterVol, false);
-            applyMuteVisuals();
-        }
-    } catch(e) { console.error("Erro ao carregar configs:", e); }
-}
-
-let saveTimeout = null;
-async function saveUserSettings() {
-    if(!currentUser) return;
-    if(saveTimeout) clearTimeout(saveTimeout);
-    
-    saveTimeout = setTimeout(async () => {
-        const settingsRef = doc(db, "players", currentUser.uid, "config", "audio");
-        await setDoc(settingsRef, {
-            master: window.masterVol,
-            music: window.musicVol,
-            sfx: window.sfxVol,
-            isMuted: window.isMuted,
-            updatedAt: Date.now()
-        });
-    }, 1000); 
-}
-// =========================================================
-
-// (ESTE BLOCO JÁ EXISTE NO SEU CÓDIGO, APENAS MANTENHA-O ABAIXO DAS FUNÇÕES)
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        currentUser = user;
-        await loadUserSettings();
-        window.goToLobby(true); 
-    } else {
-        currentUser = null;
-        window.showScreen('start-screen');
-        const bg = document.getElementById('game-background');
-        if(bg) bg.classList.remove('lobby-mode');
-        const btnTxt = document.getElementById('btn-text');
-        if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
-        MusicController.play('bgm-menu'); 
-    }
-});
-
-// (ESTE BLOCO JÁ EXISTE NO SEU CÓDIGO, APENAS MANTENHA-O ABAIXO DAS FUNÇÕES)
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        currentUser = user;
-        await loadUserSettings();
-        window.goToLobby(true); 
-    } else {
-        currentUser = null;
-        window.showScreen('start-screen');
-        const bg = document.getElementById('game-background');
-        if(bg) bg.classList.remove('lobby-mode');
-        const btnTxt = document.getElementById('btn-text');
-        if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
-        MusicController.play('bgm-menu'); 
-    }
-});
-
+// --- AUTENTICAÇÃO ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
