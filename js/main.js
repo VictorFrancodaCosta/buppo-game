@@ -18,7 +18,7 @@ try {
     auth = getAuth(app);
     db = getFirestore(app);
     provider = new GoogleAuthProvider();
-} catch (e) {}
+} catch (e) { console.error(e); }
 
 let currentUser = null;
 const audios = {}; 
@@ -594,6 +594,7 @@ function checkEndGame(){
     } else { isProcessing = false; } 
 }
 
+// --- CARREGAR E SALVAR CONFIGURAÇÕES ---
 async function loadUserSettings() {
     if(!currentUser) return;
     try {
@@ -631,6 +632,7 @@ async function saveUserSettings() {
     }, 1000); 
 }
 
+// --- AUTENTICAÇÃO ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
@@ -843,6 +845,11 @@ function showTT(k) {
     }
     tt.style.display = 'block';
 }
+
+function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
+initAmbientParticles();
+
+function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
 function triggerDamageEffect(isPlayer, playAudio = true) { 
     try { 
@@ -1527,15 +1534,6 @@ function apply3DTilt(element, isHand = false) {
     }); 
 }
 
-// ======================================================
-// LÓGICA DE MATCHMAKING E DECK
-// ======================================================
-
-let matchTimerInterval = null;
-let matchSeconds = 0;
-let myQueueRef = null; 
-let queueListener = null;
-
 window.startPvE = function() {
     window.gameMode = 'pve'; 
     window.playNavSound();
@@ -1549,7 +1547,7 @@ window.startPvPSearch = function() {
     window.openDeckSelector(); 
 };
 
-async function initiateMatchmaking() {
+window.initiateMatchmaking = async function() {
     console.log("--- INICIANDO MATCHMAKING ---");
     cleanupMatchState();
 
@@ -1562,10 +1560,11 @@ async function initiateMatchmaking() {
     document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
     document.querySelector('.cancel-btn').style.display = "block";
     
-    matchSeconds = 0;
+    let matchTimerInterval = null;
+    let matchSeconds = 0;
     const timerEl = document.getElementById('mm-timer');
     timerEl.innerText = "00:00";
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    
     matchTimerInterval = setInterval(() => {
         matchSeconds++;
         let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
@@ -1574,7 +1573,7 @@ async function initiateMatchmaking() {
     }, 1000);
 
     try {
-        myQueueRef = doc(collection(db, "queue")); 
+        let myQueueRef = doc(collection(db, "queue")); 
         const myData = {
             uid: currentUser.uid,
             name: currentUser.displayName,
@@ -1587,22 +1586,24 @@ async function initiateMatchmaking() {
         
         await setDoc(myQueueRef, myData);
 
-        queueListener = onSnapshot(myQueueRef, (docSnap) => {
+        let queueListener = onSnapshot(myQueueRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 if (data.matchId) {
-                    enterMatch(data.matchId); 
+                    if (matchTimerInterval) clearInterval(matchTimerInterval);
+                    if (searchInterval) clearInterval(searchInterval);
+                    enterMatch(data.matchId, queueListener); 
                 }
             }
         });
 
         if (searchInterval) clearInterval(searchInterval);
-        findOpponentInQueue();
+        findOpponentInQueue(myQueueRef);
         
         searchInterval = setInterval(() => {
             if (document.getElementById('matchmaking-screen').style.display === 'flex' 
                 && document.querySelector('.mm-title').innerText !== "PARTIDA ENCONTRADA!") {
-                findOpponentInQueue();
+                findOpponentInQueue(myQueueRef);
             } else {
                 clearInterval(searchInterval);
             }
@@ -1611,9 +1612,9 @@ async function initiateMatchmaking() {
     } catch (e) {
         window.cancelPvPSearch();
     }
-}
+};
 
-async function findOpponentInQueue() {
+async function findOpponentInQueue(myQueueRef) {
     try {
         const queueRef = collection(db, "queue");
         const q = query(queueRef, orderBy("timestamp", "desc"), limit(20));
@@ -1644,48 +1645,30 @@ async function findOpponentInQueue() {
             const p1DeckCards = generateShuffledDeck();
             const p2DeckCards = generateShuffledDeck();
 
-            await createMatchDocument(
-                matchId, 
-                currentUser.uid, opponentDoc.data().uid, 
-                currentUser.displayName, opponentDoc.data().name,
-                window.currentDeck, opponentDoc.data().deck,
-                p1DeckCards, p2DeckCards
-            );
+            const matchRef = doc(db, "matches", matchId);
+            const cleanName1 = currentUser.displayName ? currentUser.displayName.split(' ')[0].toUpperCase() : "JOGADOR 1";
+            const cleanName2 = opponentDoc.data().name ? opponentDoc.data().name.split(' ')[0].toUpperCase() : "JOGADOR 2";
+
+            await setDoc(matchRef, {
+                player1: { uid: currentUser.uid, name: cleanName1, deckType: window.currentDeck, hp: 6, status: 'selecting', hand: [], deck: p1DeckCards, xp: [] },
+                player2: { uid: opponentDoc.data().uid, name: cleanName2, deckType: opponentDoc.data().deck, hp: 6, status: 'selecting', hand: [], deck: p2DeckCards, xp: [] },
+                turn: 1, status: 'playing', createdAt: Date.now()
+            });
         }
     } catch (e) {}
 }
 
-async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckType, p2DeckType, p1DeckCards, p2DeckCards) {
-    const matchRef = doc(db, "matches", matchId);
-    const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1";
-    const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
-    const d1Type = p1DeckType || 'knight';
-    const d2Type = p2DeckType || 'knight';
-
-    await setDoc(matchRef, {
-        player1: { uid: p1Id, name: cleanName1, deckType: d1Type, hp: 6, status: 'selecting', hand: [], deck: p1DeckCards, xp: [] },
-        player2: { uid: p2Id, name: cleanName2, deckType: d2Type, hp: 6, status: 'selecting', hand: [], deck: p2DeckCards, xp: [] },
-        turn: 1, status: 'playing', createdAt: Date.now()
-    });
-}
-
 window.cancelPvPSearch = async function() {
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
     if (searchInterval) clearInterval(searchInterval); 
     
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'none';
 
-    if (myQueueRef) {
-        await updateDoc(myQueueRef, { cancelled: true });
-        myQueueRef = null;
-    }
     window.transitionToLobby(true);
 };
 
-async function enterMatch(matchId) {
+async function enterMatch(matchId, queueListener) {
     if (queueListener) queueListener();
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
 
     const matchRef = doc(db, "matches", matchId);
     const matchSnap = await getDoc(matchRef);
@@ -1739,7 +1722,105 @@ async function syncLevelUpToDB(u) {
     try { await updateDoc(matchRef, updates); } catch(e) {}
 }
 
-// O PRELOAD DEVE SER A ÚLTIMA COISA DO ARQUIVO:
+window.updateVol = function(type, val, shouldSave = true) { 
+    const value = parseFloat(val);
+    if(type === 'master') window.masterVol = value; 
+    if(type === 'music') window.musicVol = value; 
+    if(type === 'sfx') window.sfxVol = value; 
+
+    const txtEl = document.getElementById(`val-${type}`);
+    if(txtEl) txtEl.innerText = Math.round(value * 100) + "%";
+
+    if(MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
+        let finalMusicVol = window.isMuted ? 0 : (0.5 * window.masterVol * window.musicVol);
+        audios[MusicController.currentTrackId].volume = finalMusicVol;
+    }
+
+    if(shouldSave) saveUserSettings();
+}
+
+window.toggleMasterMute = function() {
+    window.isMuted = !window.isMuted;
+    window.playNavSound();
+    applyMuteVisuals();
+    window.updateVol('master', window.masterVol); 
+    saveUserSettings();
+};
+
+function applyMuteVisuals() {
+    const btn = document.getElementById('master-mute-btn');
+    if(btn) {
+        if(window.isMuted) { btn.innerText = "DESLIGADO"; btn.classList.add('mute-off'); } 
+        else { btn.innerText = "LIGADO"; btn.classList.remove('mute-off'); }
+    }
+}
+
+function updateSlidersUI() {
+    if(document.getElementById('slide-master')) document.getElementById('slide-master').value = window.masterVol;
+    if(document.getElementById('slide-music')) document.getElementById('slide-music').value = window.musicVol;
+    if(document.getElementById('slide-sfx')) document.getElementById('slide-sfx').value = window.sfxVol;
+    ['master', 'music', 'sfx'].forEach(t => {
+        const el = document.getElementById(`val-${t}`);
+        if(el) el.innerText = Math.round((t === 'master' ? window.masterVol : (t === 'music' ? window.musicVol : window.sfxVol)) * 100) + "%";
+    });
+}
+
+window.openSoundMenu = function() {
+    window.toggleConfig(); 
+    window.playNavSound();
+    document.getElementById('settings-overlay').style.display = 'flex';
+    document.getElementById('sound-modal').style.display = 'block';
+    document.getElementById('about-modal').style.display = 'none';
+};
+
+window.openAboutMenu = function() {
+    window.toggleConfig(); 
+    window.playNavSound();
+    document.getElementById('settings-overlay').style.display = 'flex';
+    document.getElementById('sound-modal').style.display = 'none';
+    document.getElementById('about-modal').style.display = 'block';
+};
+
+window.closeSettingsModal = function(e) {
+    if (e && e.target !== document.getElementById('settings-overlay')) return;
+    window.playNavSound();
+    document.getElementById('settings-overlay').style.display = 'none';
+};
+
+function preloadGame() {
+    ASSETS_TO_LOAD.images.forEach(src => { 
+        let img = new Image(); img.src = src; window.gameAssets.push(img);
+        img.onload = () => updateLoader(); img.onerror = () => updateLoader(); 
+    });
+    ASSETS_TO_LOAD.audio.forEach(a => { 
+        let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; 
+        audios[a.id] = s; window.gameAssets.push(s);
+        s.onloadedmetadata = () => updateLoader(); s.onerror = () => updateLoader(); 
+        setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); 
+    });
+}
+
+function updateLoader() {
+    assetsLoaded++; 
+    let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
+    const fill = document.getElementById('loader-fill');
+    if(fill) fill.style.width = pct + '%';
+    if(assetsLoaded >= totalAssets) {
+        if(window.updateVol) window.updateVol('master', window.masterVol || 1.0, false);
+        setTimeout(() => {
+            const loading = document.getElementById('loading-screen');
+            if(loading) {
+                loading.style.opacity = '0';
+                setTimeout(() => loading.style.display = 'none', 500);
+            }
+            if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
+        }, 800); 
+        document.body.addEventListener('click', () => { 
+            if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) MusicController.play('bgm-menu');
+        }, { once: true });
+    }
+}
+
 setTimeout(() => {
     if (assetsLoaded < totalAssets) {
         console.warn("Forcing game start (assets timeout)");
