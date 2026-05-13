@@ -328,7 +328,7 @@ window.selectDeck = function(deckType) {
         selectionScreen.style.opacity = "0";
         setTimeout(() => {
             selectionScreen.style.display = 'none';
-            if (window.gameMode === 'pvp') initiateMatchmaking(); 
+            if (window.gameMode === 'pvp') window.initiateMatchmaking(); 
             else window.transitionToGame();
         }, 500);
     }, 400);
@@ -608,9 +608,9 @@ async function loadUserSettings() {
             window.sfxVol = data.sfx ?? 1.0;
             window.isMuted = data.isMuted ?? false;
             
-            updateSlidersUI();
+            window.updateSlidersUI();
             window.updateVol('master', window.masterVol, false);
-            applyMuteVisuals();
+            window.applyMuteVisuals();
         }
     } catch(e) { console.error("Erro ao carregar configs:", e); }
 }
@@ -1291,8 +1291,18 @@ function processMasteries(u, triggers, cb) {
     else if(type === 'DESARMAR' && u.id === 'm') { let target = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE'; player.disabled = target; showFloatingText('p-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }
     else { applyMastery(u, type); processMasteries(u, triggers, cb); }
 }
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
-function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
+
+function applyMastery(u, k) { 
+    if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } 
+    if(k === 'BLOQUEIO') u.bonusBlock++; 
+    if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } 
+    updateUI(); 
+}
+
+function drawCardLogic(u, qty) { 
+    for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); 
+    u.hand.sort(); 
+}
 
 function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false, isPlayer = false) {
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
@@ -1742,12 +1752,12 @@ window.updateVol = function(type, val, shouldSave = true) {
 window.toggleMasterMute = function() {
     window.isMuted = !window.isMuted;
     window.playNavSound();
-    applyMuteVisuals();
+    window.applyMuteVisuals();
     window.updateVol('master', window.masterVol); 
     saveUserSettings();
 };
 
-function applyMuteVisuals() {
+window.applyMuteVisuals = function() {
     const btn = document.getElementById('master-mute-btn');
     if(btn) {
         if(window.isMuted) { btn.innerText = "DESLIGADO"; btn.classList.add('mute-off'); } 
@@ -1755,7 +1765,7 @@ function applyMuteVisuals() {
     }
 }
 
-function updateSlidersUI() {
+window.updateSlidersUI = function() {
     if(document.getElementById('slide-master')) document.getElementById('slide-master').value = window.masterVol;
     if(document.getElementById('slide-music')) document.getElementById('slide-music').value = window.musicVol;
     if(document.getElementById('slide-sfx')) document.getElementById('slide-sfx').value = window.sfxVol;
@@ -1786,6 +1796,37 @@ window.closeSettingsModal = function(e) {
     window.playNavSound();
     document.getElementById('settings-overlay').style.display = 'none';
 };
+
+// Funções Essenciais de Preload e Visual que haviam sido apagadas
+function createLobbyFlares() {
+    const container = document.getElementById('lobby-particles');
+    if(!container) return; container.innerHTML = ''; 
+    for(let i=0; i < 70; i++) {
+        let flare = document.createElement('div');
+        flare.className = 'lobby-flare';
+        flare.style.left = Math.random() * 100 + '%'; flare.style.top = Math.random() * 100 + '%';
+        let size = 4 + Math.random() * 18; 
+        flare.style.width = size + 'px'; flare.style.height = size + 'px';
+        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
+        flare.style.animationDelay = (Math.random() * 4) + 's';
+        container.appendChild(flare);
+    }
+}
+
+function initGlobalHoverLogic() {
+    let lastTarget = null;
+    document.body.addEventListener('mouseover', (e) => {
+        const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn';
+        const target = e.target.closest(selector);
+        if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } 
+        else if (!target) { lastTarget = null; }
+    });
+}
+
+window.toggleFullScreen = function() {
+    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
+    else { if (document.exitFullscreen) document.exitFullscreen(); }
+}
 
 function preloadGame() {
     ASSETS_TO_LOAD.images.forEach(src => { 
@@ -1821,6 +1862,7 @@ function updateLoader() {
     }
 }
 
+// Inicialização principal
 setTimeout(() => {
     if (assetsLoaded < totalAssets) {
         console.warn("Forcing game start (assets timeout)");
