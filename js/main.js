@@ -594,7 +594,6 @@ function checkEndGame(){
     } else { isProcessing = false; } 
 }
 
-// --- CARREGAR E SALVAR CONFIGURAÇÕES ---
 async function loadUserSettings() {
     if(!currentUser) return;
     try {
@@ -632,7 +631,6 @@ async function saveUserSettings() {
     }, 1000); 
 }
 
-// --- AUTENTICAÇÃO ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
@@ -1797,7 +1795,6 @@ window.closeSettingsModal = function(e) {
     document.getElementById('settings-overlay').style.display = 'none';
 };
 
-// Funções Essenciais de Preload e Visual que haviam sido apagadas
 function createLobbyFlares() {
     const container = document.getElementById('lobby-particles');
     if(!container) return; container.innerHTML = ''; 
@@ -1811,6 +1808,26 @@ function createLobbyFlares() {
         flare.style.animationDelay = (Math.random() * 4) + 's';
         container.appendChild(flare);
     }
+}
+
+function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
+initAmbientParticles();
+
+function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
+
+function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {try { c.volume = 0; c.play().catch(()=>{}); } catch(e){} if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
+
+function updateAudioMixer() { 
+    const cineAudio = audios['sfx-cine']; 
+    if(!cineAudio) return; 
+    const mVol = window.masterVol || 1.0;
+    const maxCine = 0.6 * mVol; 
+    let targetCine = isLethalHover ? maxCine : 0; 
+    if(window.isMuted) { try { cineAudio.volume = 0; } catch(e){} return; }
+    try {
+        if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
+        else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
+    } catch(e){}
 }
 
 function initGlobalHoverLogic() {
@@ -1862,7 +1879,6 @@ function updateLoader() {
     }
 }
 
-// Inicialização principal
 setTimeout(() => {
     if (assetsLoaded < totalAssets) {
         console.warn("Forcing game start (assets timeout)");
