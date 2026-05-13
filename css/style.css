@@ -82,33 +82,45 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 #btn-login:hover { transform: scale(1.05); box-shadow: 0 0 30px #9b59b6; background: #9b59b6; }
 
 /* =========================================
-   TELA SAGUÃO (TAMANHOS FIXOS E ALINHAMENTO)
+   TELA SAGUÃO (TRAVADA CONTRA ZOOM)
 ========================================= */
-#lobby-screen { justify-content: center !important; align-items: flex-start !important; padding-left: 5%; z-index: 10000; position: relative; }
+#lobby-screen { 
+    position: relative; 
+    width: 100vw; 
+    height: 100vh; 
+    overflow: hidden; 
+    z-index: 10000; 
+    display: none; 
+}
 
+/* Logo na direita com posição fixa para nunca desalinhar */
 .lobby-logo-right { 
-    position: fixed; 
-    left: 70%; 
+    position: absolute; 
+    left: 65%; /* Cravado em 65% da tela */
     top: 50%; 
     transform: translate(-50%, -50%); 
-    width: 420px;
+    width: 450px; /* Tamanho fixo */
     height: auto; 
     filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9)); 
     z-index: 25; 
     pointer-events: none; 
 }
 
+/* Painel de Madeira Cravado na esquerda */
 .lobby-frame-container { 
-    position: relative; 
+    position: absolute; 
+    left: 25%; /* Cravado em 25% da tela */
+    top: 50%;
+    transform: translate(-50%, -50%);
     z-index: 5; 
-    width: 380px; 
-    height: 720px; 
+    width: 380px; /* Tamanho fixo inquebrável */
+    height: 720px; /* Tamanho fixo inquebrável */
     display: flex; 
     justify-content: center; 
     align-items: center; 
     animation: frameFloat 4s ease-in-out infinite; 
 }
-@keyframes frameFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes frameFloat { 0%, 100% { transform: translate(-50%, -50%); } 50% { transform: translate(-50%, calc(-50% - 10px)); } }
 
 .lobby-frame-img { 
     position: absolute; 
@@ -123,7 +135,7 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 .lobby-ui-overlay { 
     position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
     display: flex; flex-direction: column; align-items: center; 
-    padding: 130px 40px 60px 40px; 
+    padding: 130px 40px 60px 40px; /* Margens internas travadas */
     box-sizing: border-box; text-align: center; color: #fff; 
     text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
 }
@@ -156,12 +168,11 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 #btn-logout:hover { background: rgba(255,0,0,0.4); color: #fff; }
 
 @media (max-width: 900px) { 
-    .lobby-logo-right { left: 50%; top: 10%; width: 300px; position: absolute; z-index: 20; }
-    .lobby-frame-container { transform: scale(0.85); margin-top: 60px; } 
-    #btn-play-pvp .btn-title { font-size: 18px; }
-    #btn-play-pve .btn-title { font-size: 14px; }
+    .lobby-logo-right { left: 50%; top: 15%; width: 300px; transform: translate(-50%, -50%); }
+    .lobby-frame-container { transform: translate(-50%, -50%) scale(0.85); left: 50%; top: 60%; } 
 }
 
+/* TELA FIM */
 #end-screen { position: fixed; top: 0; left: calc(50% - 50vw); width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 20000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; backdrop-filter: blur(5px); }
 #end-screen.visible { opacity: 1; pointer-events: auto; }
 .end-content { text-align: center; transform: scale(0.8); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
