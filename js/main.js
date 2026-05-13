@@ -594,7 +594,6 @@ function checkEndGame(){
     } else { isProcessing = false; } 
 }
 
-// --- CARREGAR E SALVAR CONFIGURAÇÕES ---
 async function loadUserSettings() {
     if(!currentUser) return;
     try {
@@ -632,7 +631,6 @@ async function saveUserSettings() {
     }, 1000); 
 }
 
-// --- AUTENTICAÇÃO ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
@@ -845,173 +843,6 @@ function showTT(k) {
     }
     tt.style.display = 'block';
 }
-
-function preloadGame() {
-    ASSETS_TO_LOAD.images.forEach(src => { 
-        let img = new Image(); img.src = src; window.gameAssets.push(img);
-        img.onload = () => updateLoader(); img.onerror = () => updateLoader(); 
-    });
-    ASSETS_TO_LOAD.audio.forEach(a => { 
-        let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; 
-        audios[a.id] = s; window.gameAssets.push(s);
-        s.onloadedmetadata = () => updateLoader(); s.onerror = () => updateLoader(); 
-        setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); 
-    });
-}
-
-function updateLoader() {
-    assetsLoaded++; 
-    let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
-    const fill = document.getElementById('loader-fill');
-    if(fill) fill.style.width = pct + '%';
-    if(assetsLoaded >= totalAssets) {
-        if(window.updateVol) window.updateVol('master', window.masterVol || 1.0, false);
-        setTimeout(() => {
-            const loading = document.getElementById('loading-screen');
-            if(loading) {
-                loading.style.opacity = '0';
-                setTimeout(() => loading.style.display = 'none', 500);
-            }
-            if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
-        }, 800); 
-        document.body.addEventListener('click', () => { 
-            if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) MusicController.play('bgm-menu');
-        }, { once: true });
-    }
-}
-
-function initGlobalHoverLogic() {
-    let lastTarget = null;
-    document.body.addEventListener('mouseover', (e) => {
-        const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn';
-        const target = e.target.closest(selector);
-        if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } 
-        else if (!target) { lastTarget = null; }
-    });
-}
-
-window.addEventListener('beforeunload', () => {
-    if (window.gameMode === 'pvp' && window.currentMatchId && !document.getElementById('end-screen').classList.contains('visible')) { notifyAbandonment(); }
-});
-
-window.toggleFullScreen = function() {
-    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
-    else { if (document.exitFullscreen) document.exitFullscreen(); }
-}
-
-function createLobbyFlares() {
-    const container = document.getElementById('lobby-particles');
-    if(!container) return; container.innerHTML = ''; 
-    for(let i=0; i < 70; i++) {
-        let flare = document.createElement('div');
-        flare.className = 'lobby-flare';
-        flare.style.left = Math.random() * 100 + '%'; flare.style.top = Math.random() * 100 + '%';
-        let size = 4 + Math.random() * 18; 
-        flare.style.width = size + 'px'; flare.style.height = size + 'px';
-        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
-        flare.style.animationDelay = (Math.random() * 4) + 's';
-        container.appendChild(flare);
-    }
-}
-
-function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {try { c.volume = 0; c.play().catch(()=>{}); } catch(e){} if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
-
-function updateAudioMixer() { 
-    const cineAudio = audios['sfx-cine']; 
-    if(!cineAudio) return; 
-    const mVol = window.masterVol || 1.0;
-    const maxCine = 0.6 * mVol; 
-    let targetCine = isLethalHover ? maxCine : 0; 
-    if(window.isMuted) { try { cineAudio.volume = 0; } catch(e){} return; }
-    try {
-        if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
-        else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
-    } catch(e){}
-}
-
-window.toggleConfig = function() { 
-    let p = document.getElementById('config-panel'); 
-    if(p.style.display==='flex'){ 
-        p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); 
-    } else { 
-        p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); 
-    } 
-}
-document.addEventListener('click', function(e) { 
-    const panel = document.getElementById('config-panel'); 
-    const btn = document.getElementById('btn-config-toggle'); 
-    if (panel && panel.classList.contains('active') && !panel.contains(e.target) && (btn && !btn.contains(e.target))) window.toggleConfig(); 
-});
-
-window.updateVol = function(type, val, shouldSave = true) { 
-    const value = parseFloat(val);
-    if(type === 'master') window.masterVol = value; 
-    if(type === 'music') window.musicVol = value; 
-    if(type === 'sfx') window.sfxVol = value; 
-
-    const txtEl = document.getElementById(`val-${type}`);
-    if(txtEl) txtEl.innerText = Math.round(value * 100) + "%";
-
-    if(MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
-        let finalMusicVol = window.isMuted ? 0 : (0.5 * window.masterVol * window.musicVol);
-        audios[MusicController.currentTrackId].volume = finalMusicVol;
-    }
-
-    if(shouldSave) saveUserSettings();
-}
-
-window.toggleMasterMute = function() {
-    window.isMuted = !window.isMuted;
-    window.playNavSound();
-    applyMuteVisuals();
-    window.updateVol('master', window.masterVol); 
-    saveUserSettings();
-};
-
-function applyMuteVisuals() {
-    const btn = document.getElementById('master-mute-btn');
-    if(btn) {
-        if(window.isMuted) { btn.innerText = "DESLIGADO"; btn.classList.add('mute-off'); } 
-        else { btn.innerText = "LIGADO"; btn.classList.remove('mute-off'); }
-    }
-}
-
-function updateSlidersUI() {
-    if(document.getElementById('slide-master')) document.getElementById('slide-master').value = window.masterVol;
-    if(document.getElementById('slide-music')) document.getElementById('slide-music').value = window.musicVol;
-    if(document.getElementById('slide-sfx')) document.getElementById('slide-sfx').value = window.sfxVol;
-    ['master', 'music', 'sfx'].forEach(t => {
-        const el = document.getElementById(`val-${t}`);
-        if(el) el.innerText = Math.round((t === 'master' ? window.masterVol : (t === 'music' ? window.musicVol : window.sfxVol)) * 100) + "%";
-    });
-}
-
-window.openSoundMenu = function() {
-    window.toggleConfig(); 
-    window.playNavSound();
-    document.getElementById('settings-overlay').style.display = 'flex';
-    document.getElementById('sound-modal').style.display = 'block';
-    document.getElementById('about-modal').style.display = 'none';
-};
-
-window.openAboutMenu = function() {
-    window.toggleConfig(); 
-    window.playNavSound();
-    document.getElementById('settings-overlay').style.display = 'flex';
-    document.getElementById('sound-modal').style.display = 'none';
-    document.getElementById('about-modal').style.display = 'block';
-};
-
-window.closeSettingsModal = function(e) {
-    if (e && e.target !== document.getElementById('settings-overlay')) return;
-    window.playNavSound();
-    document.getElementById('settings-overlay').style.display = 'none';
-};
-
-function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
-initAmbientParticles();
-
-function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
 function triggerDamageEffect(isPlayer, playAudio = true) { 
     try { 
@@ -1368,7 +1199,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
     }, 700);
 }
-
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         let xpContainer = document.getElementById(u.id + '-xp'); 
