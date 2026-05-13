@@ -21,6 +21,7 @@
     <meta name="apple-mobile-web-app-title" content="BUPPO">
 </head>
 <body>
+
     <div id="loading-screen">
         <div class="loader-title">BUPPO</div>
         <div class="loader-bar-bg"><div class="loader-bar-fill" id="loader-fill"></div></div>
@@ -46,24 +47,24 @@
     
     <div id="game-container">
         <div id="top-left-controls">
-            <div class="circle-btn" onclick="toggleConfig()" id="btn-config-toggle">
+            <div class="circle-btn" onclick="window.toggleConfig()" id="btn-config-toggle">
                 <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.49l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c-0.24,0-0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
             </div>
         </div>
 
-        <div id="btn-fullscreen" onclick="toggleFullScreen()">⛶</div>
+        <div id="btn-fullscreen" onclick="window.toggleFullScreen()">⛶</div>
 
         <div id="config-panel">
             <button class="cfg-menu-btn" onclick="window.openSoundMenu()">SOM</button>
             <button class="cfg-menu-btn" onclick="window.openAboutMenu()">SOBRE</button>
             <hr id="cfg-separator" style="border:1px solid #555; width:100%; margin: 5px 0;">
-            <button id="btn-surrender" class="cfg-menu-btn exit-btn" onclick="abandonMatch()">ABANDONAR PARTIDA</button>
+            <button id="btn-surrender" class="cfg-menu-btn exit-btn" onclick="window.abandonMatch()">ABANDONAR PARTIDA</button>
         </div>
 
         <div id="start-screen" class="screen active">
             <div class="start-bg-layer"></div>
             <img src="assets/img/logo_buppo.webp" alt="BUPPO LOGO" class="game-logo">
-            <button id="btn-login" onclick="googleLogin()"><span id="btn-text">LOGIN COM GOOGLE</span></button>
+            <button id="btn-login" onclick="window.googleLogin()"><span id="btn-text">LOGIN COM GOOGLE</span></button>
             <p id="login-status" style="color: #888; font-family: 'Montserrat'; font-size: 12px; margin-top:-20px;"></p>
         </div>
 
@@ -97,7 +98,7 @@
                         📜 HISTÓRICO DE PARTIDAS
                     </button>
 
-                    <button id="btn-logout" onclick="handleLogout()">TROCAR DE CONTA</button>
+                    <button id="btn-logout" onclick="window.handleLogout()">TROCAR DE CONTA</button>
                 </div>
             </div>
         </div>
@@ -108,29 +109,29 @@
                 <div class="mm-title">PROCURANDO OPONENTE...</div>
                 <div class="mm-desc">Buscando jogadores com nível próximo ao seu</div>
                 <div class="mm-timer" id="mm-timer">00:00</div>
-                <button class="mini-btn cancel-btn" onclick="cancelPvPSearch()">CANCELAR BUSCA</button>
+                <button class="mini-btn cancel-btn" onclick="window.cancelPvPSearch()">CANCELAR BUSCA</button>
             </div>
         </div>
 
         <div id="deck-selection-screen" class="screen">
            <img src="assets/img/ui_placa_selecao.webp" alt="Selecione seu Deck" class="img-titulo-placa">
             <div class="deck-options-container">
-                <div class="deck-option" onclick="selectDeck('knight')" data-name="Forjado pela honra, guiado pela espada">
+                <div class="deck-option" onclick="window.selectDeck('knight')" data-name="Forjado pela honra, guiado pela espada">
                     <img src="assets/img/card_selecao_cavaleiro.webp" alt="Deck Cavaleiro">
                 </div>
-                <div class="deck-option" onclick="selectDeck('mage')" data-name="Magia em estado puro">
+                <div class="deck-option" onclick="window.selectDeck('mage')" data-name="Magia em estado puro">
                     <img src="assets/img/card_selecao_mago.webp" alt="Deck Mago">
                 </div>
             </div>
-            <button class="return-btn" onclick="playNavSound(); window.goToLobby()">VOLTAR AO SAGUÃO</button>
+            <button class="return-btn" onclick="window.playNavSound(); window.goToLobby()">VOLTAR AO SAGUÃO</button>
         </div>
 
         <div id="end-screen">
             <div class="end-content">
                 <h1 id="end-title" class="win-theme">VITÓRIA</h1>
                 <div class="end-btn-row">
-                    <button class="big-btn" onclick="window.playNavSound(); restartMatch()">JOGAR NOVAMENTE</button>
-                    <button class="big-btn secondary-btn" onclick="window.playNavSound(); transitionToLobby()">SAGUÃO</button>
+                    <button class="big-btn" onclick="window.playNavSound(); window.restartMatch()">JOGAR NOVAMENTE</button>
+                    <button class="big-btn secondary-btn" onclick="window.playNavSound(); window.transitionToLobby()">SAGUÃO</button>
                 </div>
             </div>
         </div>
@@ -174,14 +175,14 @@
             <div id="history-list-container">
                 <div class="loading-text">Carregando pergaminhos...</div>
             </div>
-            <button class="mini-btn" onclick="closeHistory()">FECHAR</button>
+            <button class="mini-btn" onclick="window.closeHistory()">FECHAR</button>
         </div>
     </div>
 
     <div id="tooltip-box"><h3 id="tt-title"></h3><div id="tt-content"></div></div>
-    <div id="modal-overlay" class="modal-overlay" onclick="cancelModal()"><div class="modal-box" onclick="event.stopPropagation()"><h2 id="modal-title"></h2><p id="modal-desc"></p><div class="modal-btns" id="modal-btns"></div></div></div>
+    <div id="modal-overlay" class="modal-overlay" onclick="window.cancelModal()"><div class="modal-box" onclick="event.stopPropagation()"><h2 id="modal-title"></h2><p id="modal-desc"></p><div class="modal-btns" id="modal-btns"></div></div></div>
 
-    <div id="settings-overlay" class="modal-overlay" onclick="closeSettingsModal(event)" style="display: none; z-index: 40000;">
+    <div id="settings-overlay" class="modal-overlay" onclick="window.closeSettingsModal(event)" style="display: none; z-index: 40000;">
         
         <div id="sound-modal" class="modal-box" onclick="event.stopPropagation()" style="display:none; min-width: 320px;">
             <h2 style="color: var(--gold); margin-top: 0; font-family: 'Russo One'; text-shadow: 2px 2px 0 #000;">CONFIGURAÇÕES DE ÁUDIO</h2>
@@ -193,18 +194,24 @@
 
             <div class="slider-container">
                 <div style="display:flex; justify-content:space-between;"><span class="cfg-label">VOLUME GERAL</span><span id="val-master" class="val-pct">100%</span></div>
-                <input type="range" id="slide-master" class="cfg-slider" min="0" max="1" step="0.05" oninput="updateVol('master', this.value)">
+                <input type="range" id="slide-master" class="cfg-slider" min="0" max="1" step="0.05" oninput="window.updateVol('master', this.value)">
             </div>
             <div class="slider-container">
                 <div style="display:flex; justify-content:space-between;"><span class="cfg-label">MÚSICA</span><span id="val-music" class="val-pct">100%</span></div>
-                <input type="range" id="slide-music" class="cfg-slider" min="0" max="1" step="0.05" oninput="updateVol('music', this.value)">
+                <input type="range" id="slide-music" class="cfg-slider" min="0" max="1" step="0.05" oninput="window.updateVol('music', this.value)">
             </div>
             <div class="slider-container">
                 <div style="display:flex; justify-content:space-between;"><span class="cfg-label">EFEITOS (SFX)</span><span id="val-sfx" class="val-pct">100%</span></div>
-                <input type="range" id="slide-sfx" class="cfg-slider" min="0" max="1" step="0.05" oninput="updateVol('sfx', this.value)">
+                <input type="range" id="slide-sfx" class="cfg-slider" min="0" max="1" step="0.05" oninput="window.updateVol('sfx', this.value)">
             </div>
             
-<button class="mini-btn" style="margin-top: 20px; width: 100%;" onclick="closeSettingsModal()">SALVAR E VOLTAR</button>
+            <button class="mini-btn" style="margin-top: 20px; width: 100%;" onclick="window.closeSettingsModal()">SALVAR E VOLTAR</button>
+        </div>
+        
+        <div id="about-modal" class="modal-box" onclick="event.stopPropagation()" style="display:none;">
+            <h2 style="color: var(--gold); margin-top: 0; font-family: 'Russo One'; text-shadow: 2px 2px 0 #000;">SOBRE O BUPPO</h2>
+            <p style="color: #ecf0f1; font-family: 'Montserrat'; font-size: 16px; margin: 30px 0;">Em breve...</p>
+            <button class="mini-btn" style="margin-top: 10px;" onclick="window.closeSettingsModal()">FECHAR</button>
         </div>
 
     </div>
