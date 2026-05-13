@@ -844,10 +844,72 @@ function showTT(k) {
     tt.style.display = 'block';
 }
 
-function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
+function initAmbientParticles() { 
+    const container = document.getElementById('ambient-particles'); 
+    if(!container) return; 
+    for(let i=0; i<50; i++) { 
+        let d = document.createElement('div'); 
+        d.className = 'ember'; 
+        d.style.left = Math.random() * 100 + '%'; 
+        d.style.animationDuration = (5 + Math.random() * 5) + 's'; 
+        d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); 
+        container.appendChild(d); 
+    } 
+}
 initAmbientParticles();
 
-function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
+function spawnParticles(x, y, color) { 
+    for(let i=0; i<15; i++) { 
+        let p = document.createElement('div'); 
+        p.className = 'particle'; 
+        p.style.backgroundColor = color; 
+        p.style.left = x + 'px'; 
+        p.style.top = y + 'px'; 
+        let angle = Math.random() * Math.PI * 2; 
+        let vel = 50 + Math.random() * 100; 
+        p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); 
+        p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); 
+        document.body.appendChild(p); 
+        setTimeout(() => p.remove(), 800); 
+    } 
+}
+
+function startCinematicLoop() { 
+    const c = audios['sfx-cine']; 
+    if(c) {
+        try { c.volume = 0; c.play().catch(()=>{}); } catch(e){} 
+        if(mixerInterval) clearInterval(mixerInterval); 
+        mixerInterval = setInterval(updateAudioMixer, 30); 
+    }
+}
+
+function updateAudioMixer() { 
+    const cineAudio = audios['sfx-cine']; 
+    if(!cineAudio) return; 
+    const mVol = window.masterVol || 1.0;
+    const maxCine = 0.6 * mVol; 
+    let targetCine = isLethalHover ? maxCine : 0; 
+    if(window.isMuted) { try { cineAudio.volume = 0; } catch(e){} return; }
+    try {
+        if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
+        else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
+    } catch(e){}
+}
+
+function initGlobalHoverLogic() {
+    let lastTarget = null;
+    document.body.addEventListener('mouseover', (e) => {
+        const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn';
+        const target = e.target.closest(selector);
+        if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } 
+        else if (!target) { lastTarget = null; }
+    });
+}
+
+window.toggleFullScreen = function() {
+    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
+    else { if (document.exitFullscreen) document.exitFullscreen(); }
+}
 
 function triggerDamageEffect(isPlayer, playAudio = true) { 
     try { 
@@ -1540,309 +1602,6 @@ function apply3DTilt(element, isHand = false) {
         element.style.setProperty('--rx', 0);
         element.style.setProperty('--ry', 0);
     }); 
-}
-
-window.startPvE = function() {
-    window.gameMode = 'pve'; 
-    window.playNavSound();
-    window.openDeckSelector(); 
-};
-
-window.startPvPSearch = function() {
-    if (!currentUser) return; 
-    window.gameMode = 'pvp';
-    window.playNavSound();
-    window.openDeckSelector(); 
-};
-
-window.initiateMatchmaking = async function() {
-    console.log("--- INICIANDO MATCHMAKING ---");
-    cleanupMatchState();
-
-    const mmScreen = document.getElementById('matchmaking-screen');
-    mmScreen.style.display = 'flex';
-    
-    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
-    document.querySelector('.mm-title').style.color = "var(--gold)";
-    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
-    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
-    document.querySelector('.cancel-btn').style.display = "block";
-    
-    let matchTimerInterval = null;
-    let matchSeconds = 0;
-    const timerEl = document.getElementById('mm-timer');
-    timerEl.innerText = "00:00";
-    
-    matchTimerInterval = setInterval(() => {
-        matchSeconds++;
-        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
-        let s = (matchSeconds % 60).toString().padStart(2, '0');
-        timerEl.innerText = `${m}:${s}`;
-    }, 1000);
-
-    try {
-        let myQueueRef = doc(collection(db, "queue")); 
-        const myData = {
-            uid: currentUser.uid,
-            name: currentUser.displayName,
-            deck: window.currentDeck,
-            timestamp: Date.now(),
-            matchId: null,
-            cancelled: false,
-            status: 'waiting'
-        };
-        
-        await setDoc(myQueueRef, myData);
-
-        let queueListener = onSnapshot(myQueueRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.matchId) {
-                    if (matchTimerInterval) clearInterval(matchTimerInterval);
-                    if (searchInterval) clearInterval(searchInterval);
-                    enterMatch(data.matchId, queueListener); 
-                }
-            }
-        });
-
-        if (searchInterval) clearInterval(searchInterval);
-        findOpponentInQueue(myQueueRef);
-        
-        searchInterval = setInterval(() => {
-            if (document.getElementById('matchmaking-screen').style.display === 'flex' 
-                && document.querySelector('.mm-title').innerText !== "PARTIDA ENCONTRADA!") {
-                findOpponentInQueue(myQueueRef);
-            } else {
-                clearInterval(searchInterval);
-            }
-        }, 4000);
-
-    } catch (e) {
-        window.cancelPvPSearch();
-    }
-};
-
-async function findOpponentInQueue(myQueueRef) {
-    try {
-        const queueRef = collection(db, "queue");
-        const q = query(queueRef, orderBy("timestamp", "desc"), limit(20));
-        const querySnapshot = await getDocs(q);
-
-        let opponentDoc = null;
-        const now = Date.now();
-
-        for (const docSnap of querySnapshot.docs) {
-            const data = docSnap.data();
-            if (data.uid === currentUser.uid) continue;
-            if (data.matchId !== null) continue;
-            if (data.cancelled === true) continue;
-            if (now - data.timestamp > 120000) continue;
-            opponentDoc = docSnap;
-            break; 
-        }
-
-        if (opponentDoc) {
-            if (searchInterval) clearInterval(searchInterval);
-
-            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-            const oppRef = opponentDoc.ref;
-
-            await updateDoc(oppRef, { matchId: matchId });
-            if (myQueueRef) await updateDoc(myQueueRef, { matchId: matchId });
-
-            const p1DeckCards = generateShuffledDeck();
-            const p2DeckCards = generateShuffledDeck();
-
-            const matchRef = doc(db, "matches", matchId);
-            const cleanName1 = currentUser.displayName ? currentUser.displayName.split(' ')[0].toUpperCase() : "JOGADOR 1";
-            const cleanName2 = opponentDoc.data().name ? opponentDoc.data().name.split(' ')[0].toUpperCase() : "JOGADOR 2";
-
-            await setDoc(matchRef, {
-                player1: { uid: currentUser.uid, name: cleanName1, deckType: window.currentDeck, hp: 6, status: 'selecting', hand: [], deck: p1DeckCards, xp: [] },
-                player2: { uid: opponentDoc.data().uid, name: cleanName2, deckType: opponentDoc.data().deck, hp: 6, status: 'selecting', hand: [], deck: p2DeckCards, xp: [] },
-                turn: 1, status: 'playing', createdAt: Date.now()
-            });
-        }
-    } catch (e) {}
-}
-
-window.cancelPvPSearch = async function() {
-    if (searchInterval) clearInterval(searchInterval); 
-    
-    const mmScreen = document.getElementById('matchmaking-screen');
-    mmScreen.style.display = 'none';
-
-    window.transitionToLobby(true);
-};
-
-async function enterMatch(matchId, queueListener) {
-    if (queueListener) queueListener();
-
-    const matchRef = doc(db, "matches", matchId);
-    const matchSnap = await getDoc(matchRef);
-    if(matchSnap.exists()) {
-        const data = matchSnap.data();
-        window.pvpStartData = data; 
-        if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
-        else window.myRole = 'player2';
-    }
-
-    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
-    document.querySelector('.mm-title').style.color = "#2ecc71";
-    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
-    document.querySelector('.radar-spinner').style.animation = "none";
-    document.querySelector('.cancel-btn').style.display = "none";
-
-    setTimeout(() => {
-        const mmScreen = document.getElementById('matchmaking-screen');
-        mmScreen.style.display = 'none';
-        window.currentMatchId = matchId;
-        window.transitionToGame(); 
-    }, 1500);
-}
-
-async function syncLevelUpToDB(u) {
-    if (!window.currentMatchId) return;
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    let updates = {};
-    let targetKey = "";
-    let opponentKey = ""; 
-
-    if (u === player) {
-        targetKey = (window.myRole === 'player1') ? 'player1' : 'player2';
-        opponentKey = (window.myRole === 'player1') ? 'player2' : 'player1';
-    } else {
-        targetKey = (window.myRole === 'player1') ? 'player2' : 'player1';
-    }
-    
-    updates[`${targetKey}.xp`] = [];        
-    updates[`${targetKey}.deck`] = u.deck;  
-    updates[`${targetKey}.lvl`] = u.lvl;    
-    updates[`${targetKey}.hp`] = u.hp;            
-    updates[`${targetKey}.maxHp`] = u.maxHp;      
-    updates[`${targetKey}.bonusAtk`] = u.bonusAtk;      
-    updates[`${targetKey}.bonusBlock`] = u.bonusBlock;  
-
-    if (u === player) {
-        updates[`${opponentKey}.hp`] = monster.hp; 
-    }
-    
-    try { await updateDoc(matchRef, updates); } catch(e) {}
-}
-
-window.updateVol = function(type, val, shouldSave = true) { 
-    const value = parseFloat(val);
-    if(type === 'master') window.masterVol = value; 
-    if(type === 'music') window.musicVol = value; 
-    if(type === 'sfx') window.sfxVol = value; 
-
-    const txtEl = document.getElementById(`val-${type}`);
-    if(txtEl) txtEl.innerText = Math.round(value * 100) + "%";
-
-    if(MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
-        let finalMusicVol = window.isMuted ? 0 : (0.5 * window.masterVol * window.musicVol);
-        audios[MusicController.currentTrackId].volume = finalMusicVol;
-    }
-
-    if(shouldSave) saveUserSettings();
-}
-
-window.toggleMasterMute = function() {
-    window.isMuted = !window.isMuted;
-    window.playNavSound();
-    window.applyMuteVisuals();
-    window.updateVol('master', window.masterVol); 
-    saveUserSettings();
-};
-
-window.applyMuteVisuals = function() {
-    const btn = document.getElementById('master-mute-btn');
-    if(btn) {
-        if(window.isMuted) { btn.innerText = "DESLIGADO"; btn.classList.add('mute-off'); } 
-        else { btn.innerText = "LIGADO"; btn.classList.remove('mute-off'); }
-    }
-}
-
-window.updateSlidersUI = function() {
-    if(document.getElementById('slide-master')) document.getElementById('slide-master').value = window.masterVol;
-    if(document.getElementById('slide-music')) document.getElementById('slide-music').value = window.musicVol;
-    if(document.getElementById('slide-sfx')) document.getElementById('slide-sfx').value = window.sfxVol;
-    ['master', 'music', 'sfx'].forEach(t => {
-        const el = document.getElementById(`val-${t}`);
-        if(el) el.innerText = Math.round((t === 'master' ? window.masterVol : (t === 'music' ? window.musicVol : window.sfxVol)) * 100) + "%";
-    });
-}
-
-window.openSoundMenu = function() {
-    window.toggleConfig(); 
-    window.playNavSound();
-    document.getElementById('settings-overlay').style.display = 'flex';
-    document.getElementById('sound-modal').style.display = 'block';
-    document.getElementById('about-modal').style.display = 'none';
-};
-
-window.openAboutMenu = function() {
-    window.toggleConfig(); 
-    window.playNavSound();
-    document.getElementById('settings-overlay').style.display = 'flex';
-    document.getElementById('sound-modal').style.display = 'none';
-    document.getElementById('about-modal').style.display = 'block';
-};
-
-window.closeSettingsModal = function(e) {
-    if (e && e.target !== document.getElementById('settings-overlay')) return;
-    window.playNavSound();
-    document.getElementById('settings-overlay').style.display = 'none';
-};
-
-function createLobbyFlares() {
-    const container = document.getElementById('lobby-particles');
-    if(!container) return; container.innerHTML = ''; 
-    for(let i=0; i < 70; i++) {
-        let flare = document.createElement('div');
-        flare.className = 'lobby-flare';
-        flare.style.left = Math.random() * 100 + '%'; flare.style.top = Math.random() * 100 + '%';
-        let size = 4 + Math.random() * 18; 
-        flare.style.width = size + 'px'; flare.style.height = size + 'px';
-        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
-        flare.style.animationDelay = (Math.random() * 4) + 's';
-        container.appendChild(flare);
-    }
-}
-
-function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } }
-initAmbientParticles();
-
-function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
-
-function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {try { c.volume = 0; c.play().catch(()=>{}); } catch(e){} if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
-
-function updateAudioMixer() { 
-    const cineAudio = audios['sfx-cine']; 
-    if(!cineAudio) return; 
-    const mVol = window.masterVol || 1.0;
-    const maxCine = 0.6 * mVol; 
-    let targetCine = isLethalHover ? maxCine : 0; 
-    if(window.isMuted) { try { cineAudio.volume = 0; } catch(e){} return; }
-    try {
-        if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
-        else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
-    } catch(e){}
-}
-
-function initGlobalHoverLogic() {
-    let lastTarget = null;
-    document.body.addEventListener('mouseover', (e) => {
-        const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn';
-        const target = e.target.closest(selector);
-        if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } 
-        else if (!target) { lastTarget = null; }
-    });
-}
-
-window.toggleFullScreen = function() {
-    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
-    else { if (document.exitFullscreen) document.exitFullscreen(); }
 }
 
 function preloadGame() {
