@@ -38,7 +38,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp'
     ],
     audio: [
-        { id: 'bgm-menu', src: 'assets/audio/musica_menu.wav', loop: true }, 
+        { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true }, 
         { id: 'bgm-loop', src: 'assets/audio/musica_batalha.mp3', loop: true },
         { id: 'sfx-nav', src: 'assets/audio/sfx_click.mp3' }, 
         { id: 'sfx-deal', src: 'assets/audio/sfx_dar_cartas.mp3' }, 
