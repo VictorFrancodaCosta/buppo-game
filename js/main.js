@@ -76,13 +76,19 @@ window.cleanupMatchState = function() {
     window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; window.latestMatchData = null;
     window.isProcessing = false;
     const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
+    
+    // LIMPEZA DA MESA (GARANTE QUE O TEMA DO DECK SEJA REMOVIDO)
+    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
 }
 
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select'] && window.sfxEnabled) { try { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); } catch(e){} }
     window.currentDeck = deckType;
+    
+    // Aplica a nova mesa escolhida
     document.body.classList.remove('theme-cavaleiro', 'theme-mago');
     if (deckType === 'mage') document.body.classList.add('theme-mago'); else document.body.classList.add('theme-cavaleiro');
+    
     document.querySelectorAll('.deck-option').forEach(opt => {
         if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
             opt.style.transition = "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
@@ -142,8 +148,17 @@ window.transitionToLobby = function(skipAnim = false) {
 }
 
 window.goToLobby = async function(isAutoLogin = false) {
-    if(!window.currentUser) { window.showScreen('start-screen'); MusicController.play('bgm-menu'); return; }
+    if(!window.currentUser) { 
+        window.showScreen('start-screen'); 
+        document.body.classList.remove('theme-cavaleiro', 'theme-mago');
+        MusicController.play('bgm-menu'); 
+        return; 
+    }
     window.cleanupMatchState(); window.isProcessing = false;
+    
+    // FORÇA A REMOÇÃO DAS MESAS DOS DECKS
+    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
+    
     let bg = document.getElementById('game-background'); if(bg) bg.classList.add('lobby-mode');
     MusicController.play('bgm-menu'); createLobbyFlares();
 
@@ -334,7 +349,10 @@ onAuthStateChanged(auth, (user) => {
     else {
         window.currentUser = null; window.showScreen('start-screen');
         const bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode');
-        const btnTxt = document.getElementById('btn-text'); if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
+        
+        // FORÇA A REMOÇÃO DOS TEMAS AO DESLOGAR
+        document.body.classList.remove('theme-cavaleiro', 'theme-mago');
+        
         MusicController.play('bgm-menu');
     }
 });
