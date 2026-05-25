@@ -1,0 +1,68 @@
+/* ARQUIVO: css/lobby.css */
+/* START SCREEN */
+#start-screen { justify-content: center !important; align-items: center; gap: 20px; z-index: 10000; background: transparent; overflow: hidden; }
+.start-bg-layer { position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; background-image: var(--bg-image-url); background-size: cover; background-position: center; filter: blur(6px) brightness(0.3); z-index: 0; animation: bgZoomFast 3s infinite alternate ease-in-out; }
+@keyframes bgZoomFast { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
+.game-logo { max-width: 450px; width: 80%; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); z-index: 2; position: relative; animation: logoFloat 3s ease-in-out infinite; }
+@keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+#btn-login { padding: 15px 40px; font-size: 18px; font-family: 'Russo One', sans-serif; background: var(--purple-btn); color: #fff; border: 2px solid #fff; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(142, 68, 173, 0.6); transition: 0.2s; text-transform: uppercase; z-index: 2; position: relative; letter-spacing: 1px; min-width: 280px; }
+#btn-login:hover { transform: scale(1.05); box-shadow: 0 0 30px #9b59b6; background: #9b59b6; }
+
+/* LOBBY SCREEN */
+#lobby-screen { justify-content: center !important; align-items: flex-start !important; padding-left: 5%; z-index: 10000; position: relative; }
+.lobby-logo-right { position: fixed; left: 62%; top: 50%; transform: translate(-50%, -50%); max-width: 450px; width: 35vw; height: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9)); z-index: 5; pointer-events: none; }
+.lobby-frame-container { position: relative; z-index: 5; width: auto; height: 85vh; display: flex; justify-content: center; align-items: center; animation: frameFloat 4s ease-in-out infinite; }
+@keyframes frameFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.lobby-frame-img { height: 100%; width: auto; filter: drop-shadow(0 20px 50px rgba(0,0,0,0.8)); display: block; }
+.lobby-ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; padding: 22% 14% 14% 14%; box-sizing: border-box; text-align: center; color: #fff; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.user-welcome { font-family: 'Russo One'; font-size: 26px; margin-bottom: 5px; text-transform: uppercase; color: #fff; }
+.user-stats { color: #ffd700; font-size: 15px; font-weight: 700; margin-bottom: 15px; font-family: 'Russo One'; }
+.ranking-scroll { flex-grow: 1; width: 100%; overflow-y: auto; margin-bottom: 15px; scrollbar-width: thin; scrollbar-color: var(--wood-dark) transparent; }
+#ranking-table { width: 100%; border-collapse: collapse; font-size: 14px; color: #fff; }
+#ranking-table th { text-align: left; padding: 5px; border-bottom: 2px solid #fff; font-family: 'Russo One'; color: var(--gold); text-shadow: 2px 2px 0 #000; }
+#ranking-table td { padding: 8px 5px; border-bottom: 1px solid rgba(255,255,255,0.3); font-weight: 700; text-shadow: 1px 1px 0 #000; }
+.rank-1 { color: #ffd700 !important; font-size: 16px; } 
+.lobby-btn-row { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-bottom: 10px; align-items: center; }
+#btn-play-pvp { width: 100%; background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%); border: 2px solid #fff; border-radius: 50px; padding: 12px 0; cursor: pointer; box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4); transition: transform 0.2s, filter 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; text-shadow: 1px 1px 0 rgba(255,255,255,0.4); animation: pulseGold 2s infinite; }
+#btn-play-pvp:hover { transform: scale(1.05); filter: brightness(1.1); }
+#btn-play-pvp .btn-title { font-family: 'Russo One', sans-serif; font-size: 22px; color: #5d4037; text-transform: uppercase; }
+#btn-play-pvp .btn-sub { font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 800; color: #8e44ad; margin-top: -2px; }
+@keyframes pulseGold { 0% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(241, 196, 15, 0); } 100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); } }
+#btn-play-pve { width: 90%; background: #8e44ad; border: 2px solid rgba(255,255,255,0.3); border-radius: 50px; padding: 8px 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.2s; }
+#btn-play-pve:hover { background: #9b59b6; transform: scale(1.02); }
+#btn-play-pve .btn-title { font-family: 'Russo One', sans-serif; font-size: 16px; color: #ecf0f1; }
+#btn-play-pve .btn-sub { font-family: 'Montserrat', sans-serif; font-size: 9px; color: #bdc3c7; }
+#btn-logout { background: rgba(0,0,0,0.4); border: 1px solid #fff; color: #ccc; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 12px; font-family: 'Russo One'; text-transform: uppercase; }
+#btn-logout:hover { background: rgba(255,0,0,0.4); color: #fff; }
+#lobby-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
+.lobby-flare { position: absolute; background: radial-gradient(circle, #fff 10%, var(--gold) 60%, transparent 100%); border-radius: 50%; opacity: 0; box-shadow: 0 0 15px var(--gold); filter: blur(2px); animation: flareFloat linear infinite both; }
+@keyframes flareFloat { 0% { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); } 10% { opacity: 0.8; } 80% { opacity: 0.6; } 100% { opacity: 0; transform: translateY(-150px) scale(0) rotate(45deg); } }
+
+/* DECK SELECTION */
+#deck-selection-screen { position: fixed; top: 0; left: calc(50% - 50vw); width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(12px); z-index: 15000; display: none; flex-direction: column; justify-content: center; align-items: center; gap: 20px; padding: 20px; padding-bottom: 10vh; box-sizing: border-box; opacity: 0; transition: opacity 0.5s ease; }
+#deck-selection-screen.active { display: flex !important; opacity: 1; }
+@keyframes titleFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.img-titulo-placa { width: 100%; max-width: 600px; height: auto; display: block; filter: drop-shadow(0px 5px 10px rgba(0,0,0,0.5)); animation: titleFloat 3s ease-in-out infinite; margin-top: -80px; margin-bottom: 10px;}
+.deck-options-container { display: flex; gap: 30px; align-items: center; justify-content: center; perspective: 1000px; margin-bottom: 80px; }
+.deck-option { position: relative; cursor: pointer; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); background: transparent; border: none; outline: none; padding: 0; width: 420px; display: flex; justify-content: center; }
+.deck-option img { width: 100%; height: auto; display: block; filter: grayscale(100%) brightness(0.6) drop-shadow(0 10px 10px rgba(0,0,0,0.5)); transform: scale(0.95); transition: all 0.4s ease-out; border-radius: 0; box-shadow: none !important; }
+.deck-option:hover { z-index: 10; }
+.deck-option:hover img { transform: scale(1.1) translateY(-10px); filter: grayscale(0%) brightness(1.1) drop-shadow(0 0 30px rgba(255, 215, 0, 0.5)); }
+.deck-option::after { content: attr(data-name); position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(20px); font-family: 'Montserrat', sans-serif; font-weight: 400; font-size: 14px; color: #ecf0f1; text-align: center; width: 160%; opacity: 0; transition: all 0.3s ease; pointer-events: none; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+.deck-option:hover::after { opacity: 1; transform: translateX(-50%) translateY(10px); }
+.return-btn { margin-top: 0; padding: 12px 35px; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.5); font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 2px; cursor: pointer; transition: 0.3s; border-radius: 50px; text-transform: uppercase; }
+.return-btn:hover { color: #fff; border-color: #fff; background: rgba(255,255,255,0.1); box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+
+/* MATCHMAKING */
+.matchmaking-box { display: flex; flex-direction: column; align-items: center; gap: 15px; min-width: 300px; }
+.mm-title { font-family: 'Russo One', sans-serif; font-size: 24px; color: var(--gold); text-transform: uppercase; text-shadow: 2px 2px 0 #000; margin-top: 10px; text-align: center; }
+.mm-desc { font-family: 'Montserrat', sans-serif; font-size: 14px; color: #ddd; text-align: center; max-width: 250px; }
+.mm-timer { font-family: 'Russo One', sans-serif; font-size: 32px; color: #fff; margin: 10px 0; }
+.cancel-btn { background: #c0392b !important; border-color: #e74c3c !important; font-size: 12px; color: #fff !important; }
+.cancel-btn:hover { background: #e74c3c !important; }
+.radar-spinner { width: 60px; height: 60px; border: 4px solid rgba(255, 215, 0, 0.3); border-top: 4px solid var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* MEDIA QUERIES LOBBY */
+@media (max-width: 768px) { #lobby-screen { align-items: center !important; justify-content: center !important; padding-left: 0 !important; overflow: hidden; } .lobby-frame-container { width: 95vw; max-width: 550px; height: auto; max-height: 80vh; margin-top: 80px; display: flex; justify-content: center; align-items: center; } .lobby-frame-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; } .lobby-ui-overlay { padding: 28% 14% 12% 14%; } .user-welcome { font-size: 22px; margin-bottom: 5px; } .user-stats { font-size: 13px; margin-bottom: 12px; } #ranking-table { font-size: 13px; } #ranking-table th, #ranking-table td { padding: 6px 4px; } .ranking-scroll { margin-bottom: 15px; max-height: 180px; } #btn-play-match { font-size: 20px; padding: 12px 0; width: 90%; margin-bottom: 8px; } #btn-logout { font-size: 11px; padding: 6px 18px; } .lobby-logo-right { left: 50%; top: 5%; transform: translate(-50%, 0); width: 410px; position: absolute; z-index: 20; } #btn-play-pvp .btn-title { font-size: 18px; } #btn-play-pve .btn-title { font-size: 14px; } .lobby-btn-row { gap: 8px; } }
+@media (max-height: 800px) { .deck-option { width: 300px; } .img-titulo-placa { max-width: 450px; } #deck-selection-screen { gap: 15px; } }
