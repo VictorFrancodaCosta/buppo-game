@@ -12,7 +12,7 @@ export const DECK_TEMPLATE = {
 
 export const CARDS_DB = {
     'ATAQUE': {
-        img: 'assets/img/carta_ataque_cavaleiro.png',
+        img: 'assets/img/carta_ataque_cavaleiro.webp',
         color: 'border-red',
         fCol: '#ff4757',
         icon: '⚔️',
@@ -28,7 +28,7 @@ export const CARDS_DB = {
         mastery: 'Dano Extra = Qtd Maestrias'
     },
     'BLOQUEIO': {
-        img: 'assets/img/carta_bloqueio_cavaleiro.png',
+        img: 'assets/img/carta_bloqueio_cavaleiro.webp',
         color: 'border-blue',
         fCol: '#2ed573',
         icon: '🛡️',
@@ -44,7 +44,7 @@ export const CARDS_DB = {
         mastery: '+1 Dano Refletido'
     },
     'DESCANSAR': {
-        img: 'assets/img/carta_descansar_cavaleiro.png',
+        img: 'assets/img/carta_descansar_cavaleiro.webp',
         color: 'border-green',
         fCol: '#7bed9f',
         icon: '❤️',
@@ -58,7 +58,7 @@ export const CARDS_DB = {
         mastery: '+1 HP Máximo Permanente'
     },
     'DESARMAR': {
-        img: 'assets/img/carta_desarmar_cavaleiro.png',
+        img: 'assets/img/carta_desarmar_cavaleiro.webp',
         color: 'border-yellow',
         fCol: '#ffa502',
         icon: '🚫',
@@ -74,7 +74,7 @@ export const CARDS_DB = {
         mastery: 'Bloqueia carta específica'
     },
     'TREINAR': {
-        img: 'assets/img/carta_treinar_cavaleiro.png',
+        img: 'assets/img/carta_treinar_cavaleiro.webp',
         color: 'border-purple',
         fCol: '#a29bfe',
         icon: '✨',
@@ -88,4 +88,3 @@ export const CARDS_DB = {
         mastery: 'Copia outra Maestria'
     }
 };
- 
