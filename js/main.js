@@ -112,6 +112,25 @@ window.latestMatchData = null;
 
 const tt = document.getElementById('tooltip-box');
 
+function cleanupMatchState() {
+    if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
+    if (searchInterval) { clearInterval(searchInterval); searchInterval = null; }
+    window.currentMatchId = null;
+    window.myRole = null; 
+    window.pvpStartData = null;
+    window.pvpSelectedCardIndex = null;
+    window.isResolvingTurn = false;
+    window.latestMatchData = null;
+    isProcessing = false;
+    const sb = document.getElementById('pvp-status-bar');
+    if(sb) sb.remove();
+}
+
+function getCardArt(cardKey, isPlayer) {
+    if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) return MAGE_ASSETS[cardKey];
+    return CARDS_DB[cardKey].img;
+}
+
 function stringToSeed(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -137,11 +156,6 @@ function generateShuffledDeck() {
     let deck = [];
     for(let k in DECK_TEMPLATE) { for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k); }
     shuffle(deck); return deck;
-}
-
-function getCardArt(cardKey, isPlayer) {
-    if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) return MAGE_ASSETS[cardKey];
-    return CARDS_DB[cardKey].img;
 }
 
 const MusicController = {
@@ -194,29 +208,6 @@ const MusicController = {
     }
 };
 
-function playSound(key) { 
-    if(window.isMuted) return; 
-    if(audios[key]) { 
-        try {
-            let finalVol = window.masterVol * window.sfxVol;
-            if (key === 'sfx-levelup') {
-                audios[key].volume = 1.0 * finalVol;
-                if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
-                audios[key].play().catch(()=>{});
-                let clone = audios[key].cloneNode();
-                clone.volume = audios[key].volume;
-                clone.play().catch(()=>{});
-            } else {
-                if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
-                if (key === 'sfx-train') audios[key].volume = 0.5 * finalVol;
-                else if (key === 'sfx-ui-hover') audios[key].volume = 0.3 * finalVol;
-                else audios[key].volume = 0.8 * finalVol;
-                audios[key].play().catch(()=>{}); 
-            }
-        } catch(e){}
-    } 
-}
-
 window.playNavSound = function() { 
     let s = audios['sfx-nav']; 
     if(s && !window.isMuted) { 
@@ -243,352 +234,37 @@ window.playUIHoverSound = function() {
     }
 };
 
-function startCinematicLoop() { 
-    const c = audios['sfx-cine']; 
-    if(c) {
-        try { c.volume = 0; c.play().catch(()=>{}); } catch(e){} 
-        if(mixerInterval) clearInterval(mixerInterval); 
-        mixerInterval = setInterval(updateAudioMixer, 30); 
-    }
-}
-
-function updateAudioMixer() { 
-    const cineAudio = audios['sfx-cine']; 
-    if(!cineAudio) return; 
-    const mVol = window.masterVol || 1.0;
-    const maxCine = 0.6 * mVol; 
-    let targetCine = isLethalHover ? maxCine : 0; 
-    if(window.isMuted) { try { cineAudio.volume = 0; } catch(e){} return; }
-    try {
-        if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
-        else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
-    } catch(e){}
-}
-
-window.updateSlidersUI = function() {
-    if(document.getElementById('slide-master')) document.getElementById('slide-master').value = window.masterVol;
-    if(document.getElementById('slide-music')) document.getElementById('slide-music').value = window.musicVol;
-    if(document.getElementById('slide-sfx')) document.getElementById('slide-sfx').value = window.sfxVol;
-    ['master', 'music', 'sfx'].forEach(t => {
-        const el = document.getElementById(`val-${t}`);
-        if(el) el.innerText = Math.round((t === 'master' ? window.masterVol : (t === 'music' ? window.musicVol : window.sfxVol)) * 100) + "%";
-    });
-};
-
-window.applyMuteVisuals = function() {
-    const btn = document.getElementById('master-mute-btn');
-    if(btn) {
-        if(window.isMuted) { btn.innerText = "DESLIGADO"; btn.classList.add('mute-off'); } 
-        else { btn.innerText = "LIGADO"; btn.classList.remove('mute-off'); }
-    }
-};
-
-window.updateVol = function(type, val, shouldSave = true) { 
-    const value = parseFloat(val);
-    if(type === 'master') window.masterVol = value; 
-    if(type === 'music') window.musicVol = value; 
-    if(type === 'sfx') window.sfxVol = value; 
-
-    const txtEl = document.getElementById(`val-${type}`);
-    if(txtEl) txtEl.innerText = Math.round(value * 100) + "%";
-
-    if(MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
-        let finalMusicVol = window.isMuted ? 0 : (0.5 * window.masterVol * window.musicVol);
-        audios[MusicController.currentTrackId].volume = finalMusicVol;
-    }
-
-    if(shouldSave) saveUserSettings();
-};
-
-window.toggleMasterMute = function() {
-    window.isMuted = !window.isMuted;
-    window.playNavSound();
-    window.applyMuteVisuals();
-    window.updateVol('master', window.masterVol); 
-    saveUserSettings();
-};
-
-window.openSoundMenu = function() {
-    window.toggleConfig(); 
-    window.playNavSound();
-    document.getElementById('settings-overlay').style.display = 'flex';
-    document.getElementById('sound-modal').style.display = 'block';
-    document.getElementById('about-modal').style.display = 'none';
-};
-
-window.openAboutMenu = function() {
-    window.toggleConfig(); 
-    window.playNavSound();
-    document.getElementById('settings-overlay').style.display = 'flex';
-    document.getElementById('sound-modal').style.display = 'none';
-    document.getElementById('about-modal').style.display = 'block';
-};
-
-window.closeSettingsModal = function(e) {
-    if (e && e.target !== document.getElementById('settings-overlay')) return;
-    window.playNavSound();
-    document.getElementById('settings-overlay').style.display = 'none';
-};
-
-window.toggleConfig = function() { 
-    let p = document.getElementById('config-panel'); 
-    if(p.style.display==='flex'){ 
-        p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); 
-    } else { 
-        p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); 
-    } 
-};
-
-window.toggleFullScreen = function() {
-    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
-    else { if (document.exitFullscreen) document.exitFullscreen(); }
-};
-
-let saveTimeout = null;
-async function saveUserSettings() {
-    if(!currentUser) return;
-    if(saveTimeout) clearTimeout(saveTimeout);
-    
-    saveTimeout = setTimeout(async () => {
-        const settingsRef = doc(db, "players", currentUser.uid, "config", "audio");
-        await setDoc(settingsRef, {
-            master: window.masterVol,
-            music: window.musicVol,
-            sfx: window.sfxVol,
-            isMuted: window.isMuted,
-            updatedAt: Date.now()
-        });
-    }, 1000); 
-}
-
-async function loadUserSettings() {
-    if(!currentUser) return;
-    try {
-        const settingsRef = doc(db, "players", currentUser.uid, "config", "audio");
-        const snap = await getDoc(settingsRef);
-        
-        if (snap.exists()) {
-            const data = snap.data();
-            window.masterVol = data.master ?? 1.0;
-            window.musicVol = data.music ?? 1.0;
-            window.sfxVol = data.sfx ?? 1.0;
-            window.isMuted = data.isMuted ?? false;
-            
-            window.updateSlidersUI();
-            window.updateVol('master', window.masterVol, false);
-            window.applyMuteVisuals();
-        }
-    } catch(e) { console.error("Erro ao carregar configs:", e); }
-}
-
-window.createLobbyFlares = function() {
-    const container = document.getElementById('lobby-particles');
-    if(!container) return; container.innerHTML = ''; 
-    for(let i=0; i < 70; i++) {
-        let flare = document.createElement('div');
-        flare.className = 'lobby-flare';
-        flare.style.left = Math.random() * 100 + '%'; flare.style.top = Math.random() * 100 + '%';
-        let size = 4 + Math.random() * 18; 
-        flare.style.width = size + 'px'; flare.style.height = size + 'px';
-        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
-        flare.style.animationDelay = (Math.random() * 4) + 's';
-        container.appendChild(flare);
-    }
-};
-
-function initAmbientParticles() { 
-    const container = document.getElementById('ambient-particles'); 
-    if(!container) return; 
-    for(let i=0; i<50; i++) { 
-        let d = document.createElement('div'); 
-        d.className = 'ember'; 
-        d.style.left = Math.random() * 100 + '%'; 
-        d.style.animationDuration = (5 + Math.random() * 5) + 's'; 
-        d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); 
-        container.appendChild(d); 
-    } 
-}
-
-function spawnParticles(x, y, color) { 
-    for(let i=0; i<15; i++) { 
-        let p = document.createElement('div'); 
-        p.className = 'particle'; 
-        p.style.backgroundColor = color; 
-        p.style.left = x + 'px'; 
-        p.style.top = y + 'px'; 
-        let angle = Math.random() * Math.PI * 2; 
-        let vel = 50 + Math.random() * 100; 
-        p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); 
-        p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); 
-        document.body.appendChild(p); 
-        setTimeout(() => p.remove(), 800); 
-    } 
-}
-
-function triggerDamageEffect(isPlayer, playAudio = true) { 
-    try { 
-        if(playAudio) { if(!isPlayer && window.currentDeck === 'mage') playSound('sfx-hit-mage'); else playSound('sfx-hit'); } 
-        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
-        let slot = document.getElementById(elId); 
-        if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } 
-        if (isPlayer) {
-            document.body.classList.add('shake-screen'); 
-            setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
-            if(window.triggerDamageEffect) window.triggerDamageEffect(); 
-            let ov = document.getElementById('dmg-overlay'); 
-            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
-        }
-    } catch(e) {} 
-}
-
-function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
-
-function triggerHealEffect(isPlayer) { 
-    try { 
-        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
-        let slot = document.getElementById(elId); 
-        if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } 
-        if (isPlayer) {
-            if(window.triggerHealEffect) window.triggerHealEffect();
-            let ov = document.getElementById('heal-overlay'); 
-            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
-        }
-    } catch(e) {} 
-}
-
-function triggerBlockEffect(isPlayer) { 
-    try { 
-        if(isPlayer && window.currentDeck === 'mage') playSound('sfx-block-mage'); else playSound('sfx-block'); 
-        if (!isPlayer) {
-             if(window.triggerBlockEffect) window.triggerBlockEffect(); 
-             let ov = document.getElementById('block-overlay'); 
-             if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
-             document.body.classList.add('shake-screen'); 
-             setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
-        }
-    } catch(e) {} 
-}
-
-function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
-
-function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
-
-function showFloatingText(eid, txt, col) { 
-    let el = document.createElement('div'); 
-    el.className='floating-text'; 
-    el.innerText=txt; 
-    el.style.color=col; 
-    let parent = document.getElementById(eid);
-    if(parent) {
-        let rect = parent.getBoundingClientRect();
-        el.style.left = (rect.left + rect.width/2) + 'px';
-        el.style.top = (rect.top) + 'px';
-        document.body.appendChild(el); 
-    } else {
-         document.body.appendChild(el);
-    }
-    setTimeout(()=>el.remove(), 2000); 
-}
-
-function apply3DTilt(element, isHand = false) { 
-    if(window.innerWidth < 768) return; 
-    element.addEventListener('mousemove', (e) => { 
-        const rect = element.getBoundingClientRect(); 
-        const x = e.clientX - rect.left; 
-        const y = e.clientY - rect.top; 
-        const xPct = (x / rect.width) - 0.5; 
-        const yPct = (y / rect.height) - 0.5; 
-        element.style.setProperty('--rx', xPct);
-        element.style.setProperty('--ry', yPct);
-        let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; 
-        let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
-        if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
-        element.style.transform = `${lift} ${rotate}`; 
-        let art = element.querySelector('.card-art'); 
-        if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
-    }); 
-    element.addEventListener('mouseleave', () => { 
-        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
-        let art = element.querySelector('.card-art'); 
-        if(art) art.style.backgroundPosition = 'center'; 
-        element.style.setProperty('--rx', 0);
-        element.style.setProperty('--ry', 0);
-    }); 
-}
-
-function bindFixedTooltip(el,k) { 
-    const updatePos = () => { 
-        let rect = el.getBoundingClientRect(); 
-        if(tt) tt.style.left = (rect.left + rect.width / 2) + 'px'; 
-    }; 
-    return { 
-        onmouseenter: (e) => { 
-            showTT(k); 
-            if(tt) {
-                tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
-                tt.style.top = 'auto'; 
-                tt.classList.remove('tooltip-anim-up'); 
-                tt.classList.remove('tooltip-anim-down'); 
-                tt.classList.add('tooltip-anim-up'); 
+function playSound(key) { 
+    if(window.isMuted) return; 
+    if(audios[key]) { 
+        try {
+            let finalVol = window.masterVol * window.sfxVol;
+            if (key === 'sfx-levelup') {
+                audios[key].volume = 1.0 * finalVol;
+                if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
+                audios[key].play().catch(()=>{});
+                let clone = audios[key].cloneNode();
+                clone.volume = audios[key].volume;
+                clone.play().catch(()=>{});
+            } else {
+                if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
+                if (key === 'sfx-train') audios[key].volume = 0.5 * finalVol;
+                else if (key === 'sfx-ui-hover') audios[key].volume = 0.3 * finalVol;
+                else audios[key].volume = 0.8 * finalVol;
+                audios[key].play().catch(()=>{}); 
             }
-            updatePos(); 
-            el.addEventListener('mousemove', updatePos); 
-        } 
-    }; 
+        } catch(e){}
+    } 
 }
-
-function showTT(k) {
-    if(!tt) return;
-    let db = CARDS_DB[k];
-    const titleEl = document.getElementById('tt-title');
-    const contentEl = document.getElementById('tt-content');
-    if(titleEl) titleEl.innerHTML = k; 
-    if (db.customTooltip) {
-        let content = db.customTooltip;
-        let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
-        content = content.replace('{PLAYER_LVL}', currentLvl);
-        let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
-        let reflectDmg = 1 + bonusBlock;
-        content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
-        if(contentEl) contentEl.innerHTML = content;
-    } else {
-        if(contentEl) contentEl.innerHTML = `
-            <span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span>
-            <span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>
-            <span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>
-        `;
-    }
-    tt.style.display = 'block';
-}
-
-window.openModal = function(t,d,opts,cb) { 
-    document.getElementById('modal-title').innerText=t; 
-    document.getElementById('modal-desc').innerText=d; 
-    let g=document.getElementById('modal-btns'); 
-    g.innerHTML=''; 
-    opts.forEach(o=>{ 
-        let b=document.createElement('button'); 
-        b.className='mini-btn'; 
-        b.innerText=o; 
-        b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; 
-        g.appendChild(b); 
-    }); 
-    document.getElementById('modal-overlay').style.display='flex'; 
-};
-
-window.cancelModal = function() { 
-    document.getElementById('modal-overlay').style.display='none'; 
-    isProcessing = false; 
-    let hc = document.getElementById('player-hand');
-    if(hc) hc.style.pointerEvents = 'auto'; 
-};
 
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
+    
     const configBtn = document.getElementById('btn-config-toggle');
     const surrenderBtn = document.getElementById('btn-surrender');
     const separator = document.getElementById('cfg-separator');
+    
     if(screenId === 'game-screen' || screenId === 'lobby-screen') {
         if(configBtn) configBtn.style.display = 'flex'; 
         if (screenId === 'game-screen') {
@@ -628,6 +304,7 @@ window.selectDeck = function(deckType) {
     document.body.classList.remove('theme-cavaleiro', 'theme-mago'); 
     if (deckType === 'mage') document.body.classList.add('theme-mago');
     else document.body.classList.add('theme-cavaleiro');
+
     const options = document.querySelectorAll('.deck-option');
     options.forEach(opt => {
         if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
@@ -644,6 +321,7 @@ window.selectDeck = function(deckType) {
             opt.style.filter = "grayscale(100%)";
         }
     });
+
     setTimeout(() => {
         const selectionScreen = document.getElementById('deck-selection-screen');
         selectionScreen.style.transition = "opacity 0.5s";
@@ -680,6 +358,7 @@ window.transitionToLobby = function(skipAnim = false) {
     document.body.classList.remove('force-landscape');
     const ds = document.getElementById('deck-selection-screen');
     if(ds) { ds.style.opacity = '0'; ds.style.pointerEvents = 'none'; ds.style.display = 'none'; ds.classList.remove('active'); }
+
     if (skipAnim) {
         window.goToLobby(false);
     } else {
@@ -694,183 +373,80 @@ window.transitionToLobby = function(skipAnim = false) {
     }
 };
 
+window.createLobbyFlares = function() {
+    const container = document.getElementById('lobby-particles');
+    if(!container) return; container.innerHTML = ''; 
+    for(let i=0; i < 70; i++) {
+        let flare = document.createElement('div');
+        flare.className = 'lobby-flare';
+        flare.style.left = Math.random() * 100 + '%'; flare.style.top = Math.random() * 100 + '%';
+        let size = 4 + Math.random() * 18; 
+        flare.style.width = size + 'px'; flare.style.height = size + 'px';
+        flare.style.animationDuration = (3 + Math.random() * 5) + 's'; 
+        flare.style.animationDelay = (Math.random() * 4) + 's';
+        container.appendChild(flare);
+    }
+};
+
 window.goToLobby = async function(isAutoLogin = false) {
-    if(!currentUser) {
-        window.showScreen('start-screen');
-        MusicController.play('bgm-menu'); 
-        return;
-    }
-    cleanupMatchState(); 
-    isProcessing = false; 
-    let bg = document.getElementById('game-background');
-    if(bg) bg.classList.add('lobby-mode');
-    MusicController.play('bgm-menu'); 
-    window.createLobbyFlares();
-      
-    const userRef = doc(db, "players", currentUser.uid);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-        await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
-        document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
-        document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
-    } else {
-        const d = userSnap.data();
-        document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
-        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
-    }
-    const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
-    onSnapshot(q, (snapshot) => {
-        let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
-        let pos = 1;
-        snapshot.forEach((doc) => {
-            const p = doc.data();
-            let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : ""));
-            html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
-            pos++;
-        });
-        html += '</tbody></table>';
-        document.getElementById('ranking-content').innerHTML = html;
-    });
-    window.showScreen('lobby-screen');
-    document.getElementById('end-screen').classList.remove('visible'); 
-};
-
-window.startPvE = function() {
-    window.gameMode = 'pve'; 
-    window.playNavSound();
-    window.openDeckSelector(); 
-};
-
-window.startPvPSearch = function() {
-    if (!currentUser) return; 
-    window.gameMode = 'pvp';
-    window.playNavSound();
-    window.openDeckSelector(); 
-};
-
-window.initiateMatchmaking = async function() {
-    cleanupMatchState();
-    const mmScreen = document.getElementById('matchmaking-screen');
-    mmScreen.style.display = 'flex';
-    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
-    document.querySelector('.mm-title').style.color = "var(--gold)";
-    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
-    document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
-    document.querySelector('.cancel-btn').style.display = "block";
-    
-    let matchTimerInterval = null;
-    let matchSeconds = 0;
-    const timerEl = document.getElementById('mm-timer');
-    timerEl.innerText = "00:00";
-    
-    matchTimerInterval = setInterval(() => {
-        matchSeconds++;
-        let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
-        let s = (matchSeconds % 60).toString().padStart(2, '0');
-        timerEl.innerText = `${m}:${s}`;
-    }, 1000);
-
     try {
-        myQueueRef = doc(collection(db, "queue")); 
-        const myData = { uid: currentUser.uid, name: currentUser.displayName, deck: window.currentDeck, timestamp: Date.now(), matchId: null, cancelled: false, status: 'waiting' };
-        await setDoc(myQueueRef, myData);
+        if(!currentUser) {
+            window.showScreen('start-screen');
+            MusicController.play('bgm-menu'); 
+            const btnText = document.getElementById('btn-text');
+            if(btnText) btnText.innerText = "LOGIN COM GOOGLE";
+            return;
+        }
 
-        let queueListener = onSnapshot(myQueueRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.matchId) {
-                    if (matchTimerInterval) clearInterval(matchTimerInterval);
-                    if (searchInterval) clearInterval(searchInterval);
-                    enterMatch(data.matchId, queueListener); 
-                }
-            }
-        });
-
-        if (searchInterval) clearInterval(searchInterval);
-        findOpponentInQueue(myQueueRef);
+        cleanupMatchState(); 
+        isProcessing = false; 
         
-        searchInterval = setInterval(() => {
-            if (document.getElementById('matchmaking-screen').style.display === 'flex' && document.querySelector('.mm-title').innerText !== "PARTIDA ENCONTRADA!") {
-                findOpponentInQueue(myQueueRef);
-            } else {
-                clearInterval(searchInterval);
-            }
-        }, 4000);
-    } catch (e) { window.cancelPvPSearch(); }
-};
+        let bg = document.getElementById('game-background');
+        if(bg) bg.classList.add('lobby-mode');
+        
+        MusicController.play('bgm-menu'); 
+        window.createLobbyFlares();
 
-async function findOpponentInQueue(myQueueRef) {
-    try {
-        const queueRef = collection(db, "queue");
-        const q = query(queueRef, orderBy("timestamp", "desc"), limit(20));
-        const querySnapshot = await getDocs(q);
+        // BLINDAGEM: Troca a tela imediatamente para não travar
+        window.showScreen('lobby-screen');
+          
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        const safeName = currentUser.displayName ? currentUser.displayName.split(' ')[0].toUpperCase() : "JOGADOR";
 
-        let opponentDoc = null;
-        const now = Date.now();
-
-        for (const docSnap of querySnapshot.docs) {
-            const data = docSnap.data();
-            if (data.uid === currentUser.uid) continue;
-            if (data.matchId !== null) continue;
-            if (data.cancelled === true) continue;
-            if (now - data.timestamp > 120000) continue;
-            opponentDoc = docSnap; break; 
+        if (!userSnap.exists()) {
+            await setDoc(userRef, { name: currentUser.displayName || "Jogador", score: 0, totalWins: 0 });
+            document.getElementById('lobby-username').innerText = `OLÁ, ${safeName}`;
+            document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
+        } else {
+            const d = userSnap.data();
+            const dName = d.name ? d.name.split(' ')[0].toUpperCase() : safeName;
+            document.getElementById('lobby-username').innerText = `OLÁ, ${dName}`;
+            document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
         }
 
-        if (opponentDoc) {
-            if (searchInterval) clearInterval(searchInterval);
-            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-            const oppRef = opponentDoc.ref;
-            await updateDoc(oppRef, { matchId: matchId });
-            if (myQueueRef) await updateDoc(myQueueRef, { matchId: matchId });
-
-            const p1DeckCards = generateShuffledDeck();
-            const p2DeckCards = generateShuffledDeck();
-            const matchRef = doc(db, "matches", matchId);
-            const cleanName1 = currentUser.displayName ? currentUser.displayName.split(' ')[0].toUpperCase() : "JOGADOR 1";
-            const cleanName2 = opponentDoc.data().name ? opponentDoc.data().name.split(' ')[0].toUpperCase() : "JOGADOR 2";
-
-            await setDoc(matchRef, {
-                player1: { uid: currentUser.uid, name: cleanName1, deckType: window.currentDeck, hp: 6, status: 'selecting', hand: [], deck: p1DeckCards, xp: [] },
-                player2: { uid: opponentDoc.data().uid, name: cleanName2, deckType: opponentDoc.data().deck, hp: 6, status: 'selecting', hand: [], deck: p2DeckCards, xp: [] },
-                turn: 1, status: 'playing', createdAt: Date.now()
+        const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
+        onSnapshot(q, (snapshot) => {
+            let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
+            let pos = 1;
+            snapshot.forEach((docSnap) => {
+                const p = docSnap.data();
+                const pName = p.name ? p.name.split(' ')[0].toUpperCase() : "JOGADOR";
+                let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : ""));
+                html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${pName}</td><td>${p.score || 0}</td></tr>`;
+                pos++;
             });
-        }
-    } catch (e) {}
-}
+            html += '</tbody></table>';
+            document.getElementById('ranking-content').innerHTML = html;
+        });
+        
+        document.getElementById('end-screen').classList.remove('visible'); 
 
-window.cancelPvPSearch = async function() {
-    if (searchInterval) clearInterval(searchInterval); 
-    const mmScreen = document.getElementById('matchmaking-screen');
-    mmScreen.style.display = 'none';
-    if (myQueueRef) { await updateDoc(myQueueRef, { cancelled: true }); myQueueRef = null; }
-    window.transitionToLobby(true);
-};
-
-async function enterMatch(matchId, queueListener) {
-    if (queueListener) queueListener();
-    const matchRef = doc(db, "matches", matchId);
-    const matchSnap = await getDoc(matchRef);
-    if(matchSnap.exists()) {
-        const data = matchSnap.data();
-        window.pvpStartData = data; 
-        if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
-        else window.myRole = 'player2';
+    } catch (err) {
+        console.error("Erro fatal ao carregar o Saguão:", err);
+        window.showScreen('lobby-screen'); // Mostra a tela mesmo se o banco der erro
     }
-
-    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!";
-    document.querySelector('.mm-title').style.color = "#2ecc71";
-    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71";
-    document.querySelector('.radar-spinner').style.animation = "none";
-    document.querySelector('.cancel-btn').style.display = "none";
-
-    setTimeout(() => {
-        const mmScreen = document.getElementById('matchmaking-screen');
-        mmScreen.style.display = 'none';
-        window.currentMatchId = matchId;
-        window.transitionToGame(); 
-    }, 1500);
-}
+};
 
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
@@ -1052,33 +628,397 @@ function checkEndGame(){
     } else { isProcessing = false; } 
 }
 
-async function syncLevelUpToDB(u) {
-    if (!window.currentMatchId) return;
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    let updates = {};
-    let targetKey = "";
-    let opponentKey = ""; 
+window.updateSlidersUI = function() {
+    if(document.getElementById('slide-master')) document.getElementById('slide-master').value = window.masterVol;
+    if(document.getElementById('slide-music')) document.getElementById('slide-music').value = window.musicVol;
+    if(document.getElementById('slide-sfx')) document.getElementById('slide-sfx').value = window.sfxVol;
+    ['master', 'music', 'sfx'].forEach(t => {
+        const el = document.getElementById(`val-${t}`);
+        if(el) el.innerText = Math.round((t === 'master' ? window.masterVol : (t === 'music' ? window.musicVol : window.sfxVol)) * 100) + "%";
+    });
+};
 
-    if (u === player) {
-        targetKey = (window.myRole === 'player1') ? 'player1' : 'player2';
-        opponentKey = (window.myRole === 'player1') ? 'player2' : 'player1';
-    } else {
-        targetKey = (window.myRole === 'player1') ? 'player2' : 'player1';
+window.applyMuteVisuals = function() {
+    const btn = document.getElementById('master-mute-btn');
+    if(btn) {
+        if(window.isMuted) { btn.innerText = "DESLIGADO"; btn.classList.add('mute-off'); } 
+        else { btn.innerText = "LIGADO"; btn.classList.remove('mute-off'); }
     }
-    
-    updates[`${targetKey}.xp`] = [];        
-    updates[`${targetKey}.deck`] = u.deck;  
-    updates[`${targetKey}.lvl`] = u.lvl;    
-    updates[`${targetKey}.hp`] = u.hp;            
-    updates[`${targetKey}.maxHp`] = u.maxHp;      
-    updates[`${targetKey}.bonusAtk`] = u.bonusAtk;      
-    updates[`${targetKey}.bonusBlock`] = u.bonusBlock;  
+};
 
-    if (u === player) {
-        updates[`${opponentKey}.hp`] = monster.hp; 
-    }
-    try { await updateDoc(matchRef, updates); } catch(e) {}
+async function loadUserSettings() {
+    if(!currentUser) return;
+    try {
+        const settingsRef = doc(db, "players", currentUser.uid, "config", "audio");
+        const snap = await getDoc(settingsRef);
+        
+        if (snap.exists()) {
+            const data = snap.data();
+            window.masterVol = data.master ?? 1.0;
+            window.musicVol = data.music ?? 1.0;
+            window.sfxVol = data.sfx ?? 1.0;
+            window.isMuted = data.isMuted ?? false;
+            
+            window.updateSlidersUI();
+            window.updateVol('master', window.masterVol, false);
+            window.applyMuteVisuals();
+        }
+    } catch(e) { console.error("Erro ao carregar configs:", e); }
 }
+
+let saveTimeout = null;
+async function saveUserSettings() {
+    if(!currentUser) return;
+    if(saveTimeout) clearTimeout(saveTimeout);
+    
+    saveTimeout = setTimeout(async () => {
+        const settingsRef = doc(db, "players", currentUser.uid, "config", "audio");
+        await setDoc(settingsRef, {
+            master: window.masterVol,
+            music: window.musicVol,
+            sfx: window.sfxVol,
+            isMuted: window.isMuted,
+            updatedAt: Date.now()
+        });
+    }, 1000); 
+}
+
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUser = user;
+        await loadUserSettings();
+        window.goToLobby(true); 
+    } else {
+        currentUser = null;
+        window.showScreen('start-screen');
+        const bg = document.getElementById('game-background');
+        if(bg) bg.classList.remove('lobby-mode');
+        const btnTxt = document.getElementById('btn-text');
+        if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
+        MusicController.play('bgm-menu'); 
+    }
+});
+
+window.googleLogin = async function() {
+    window.playNavSound(); 
+    const btnText = document.getElementById('btn-text');
+    if(btnText) btnText.innerText = "CONECTANDO...";
+    try { 
+        await signInWithPopup(auth, provider); 
+        // O onAuthStateChanged assume o controle se der certo
+    } 
+    catch (error) { 
+        console.error("Erro no login:", error);
+        if(btnText) {
+            btnText.innerText = "ERRO - TENTE NOVAMENTE"; 
+            setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000); 
+        }
+    }
+};
+
+window.handleLogout = function() {
+    window.playNavSound();
+    signOut(auth).then(() => { location.reload(); });
+};
+
+async function saveMatchHistory(result, pointsChange) {
+    if (!currentUser) return;
+    try {
+        let enemyName = "PVE"; 
+        if (window.gameMode === 'pvp') {
+            if (window.pvpStartData) enemyName = (window.myRole === 'player1') ? window.pvpStartData.player2.name : window.pvpStartData.player1.name;
+            if (!enemyName || enemyName === "PVE") {
+                const domName = document.querySelector('#m-stats-cluster .unit-name');
+                if (domName && domName.innerText !== 'Monstro') enemyName = domName.innerText;
+            }
+            if(enemyName) enemyName = enemyName.split(' ')[0].toUpperCase();
+        }
+
+        const historyRef = collection(db, "players", currentUser.uid, "history");
+        await addDoc(historyRef, { result: result, opponent: enemyName, mode: window.gameMode || 'pve', deck: window.currentDeck, points: pointsChange, timestamp: Date.now() });
+    } catch (e) { console.error("Erro ao salvar histórico:", e); }
+}
+
+window.registrarVitoriaOnline = async function(modo = 'pve') {
+    if(!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if(userSnap.exists()) {
+            const data = userSnap.data();
+            let modoAtual = window.gameMode || 'pve';
+            if (modo === 'pvp') modoAtual = 'pvp';
+            let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
+            await updateDoc(userRef, { totalWins: (data.totalWins || 0) + 1, score: (data.score || 0) + pontosGanhos });
+            await saveMatchHistory('WIN', pontosGanhos);
+        }
+    } catch(e) {}
+};
+
+window.registrarDerrotaOnline = async function(modo = 'pve') {
+    if(!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if(userSnap.exists()) {
+            const data = userSnap.data();
+            let modoAtual = window.gameMode || 'pve';
+            if (modo === 'pvp') modoAtual = 'pvp';
+            let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3;
+            let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
+            await updateDoc(userRef, { score: novoScore });
+            await saveMatchHistory('LOSS', -pontosPerdidos);
+        }
+    } catch(e) {}
+};
+
+window.restartMatch = function() {
+    document.getElementById('end-screen').classList.remove('visible');
+    setTimeout(startGameFlow, 50);
+    MusicController.play('bgm-loop'); 
+};
+
+async function notifyAbandonment() {
+    if (!window.currentMatchId || !currentUser) return;
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    try { await updateDoc(matchRef, { status: 'abandoned', abandonedBy: currentUser.uid }); } catch (e) {}
+}
+
+window.abandonMatch = function() {
+    if(document.getElementById('game-screen').classList.contains('active')) {
+        window.toggleConfig(); 
+        window.openModal(
+            "ABANDONAR?", "Sair da partida contará como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], 
+            async (choice) => { 
+                if (choice === "SAIR") {
+                    if (window.gameMode === 'pvp') await notifyAbandonment(); 
+                    window.registrarDerrotaOnline(window.gameMode);
+                    window.transitionToLobby();
+                }
+            }
+        );
+    }
+};
+
+window.openHistory = async function() {
+    if(!currentUser) return;
+    window.playNavSound();
+    
+    const screen = document.getElementById('history-screen');
+    const container = document.getElementById('history-list-container');
+    screen.style.display = 'flex';
+    container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Consultando arquivos...</div>';
+
+    try {
+        const historyRef = collection(db, "players", currentUser.uid, "history");
+        const q = query(historyRef, orderBy("timestamp", "desc"), limit(20));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Nenhuma batalha registrada ainda.</div>';
+            return;
+        }
+
+        let html = '';
+        querySnapshot.forEach((doc) => {
+            const h = doc.data();
+            const date = new Date(h.timestamp);
+            const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+            const resultClass = h.result === 'WIN' ? 'win' : 'loss';
+            const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : 'DERROTA';
+            const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
+
+            let vsText = "";
+            if (h.opponent === 'PVE' || h.mode === 'pve') {
+                 vsText = `${resultTxt} PVE`;
+            } else {
+                 vsText = `${resultTxt} vs ${h.opponent}`;
+            }
+
+            html += `
+                <div class="history-item ${resultClass}">
+                    <div>
+                        <div class="h-vs">${vsText}</div>
+                        <div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div>
+                    </div>
+                    <div class="h-score">${scoreTxt} PTS</div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+
+    } catch(e) {
+        console.error("Erro ao carregar histórico:", e);
+        container.innerHTML = '<div style="color:red; text-align:center;">Erro ao carregar.</div>';
+    }
+};
+
+window.closeHistory = function() {
+    window.playNavSound();
+    document.getElementById('history-screen').style.display = 'none';
+};
+
+function bindFixedTooltip(el,k) { 
+    const updatePos = () => { 
+        let rect = el.getBoundingClientRect(); 
+        if(tt) tt.style.left = (rect.left + rect.width / 2) + 'px'; 
+    }; 
+    return { 
+        onmouseenter: (e) => { 
+            showTT(k); 
+            if(tt) {
+                tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); 
+                tt.style.top = 'auto'; 
+                tt.classList.remove('tooltip-anim-up'); 
+                tt.classList.remove('tooltip-anim-down'); 
+                tt.classList.add('tooltip-anim-up'); 
+            }
+            updatePos(); 
+            el.addEventListener('mousemove', updatePos); 
+        } 
+    }; 
+}
+
+function showTT(k) {
+    if(!tt) return;
+    let db = CARDS_DB[k];
+    const titleEl = document.getElementById('tt-title');
+    const contentEl = document.getElementById('tt-content');
+    if(titleEl) titleEl.innerHTML = k; 
+    
+    if (db.customTooltip) {
+        let content = db.customTooltip;
+        let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
+        content = content.replace('{PLAYER_LVL}', currentLvl);
+        let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
+        let reflectDmg = 1 + bonusBlock;
+        content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg);
+        if(contentEl) contentEl.innerHTML = content;
+    } else {
+        if(contentEl) contentEl.innerHTML = `
+            <span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span>
+            <span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span>
+            <span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>
+        `;
+    }
+    tt.style.display = 'block';
+}
+
+function initAmbientParticles() { 
+    const container = document.getElementById('ambient-particles'); 
+    if(!container) return; 
+    for(let i=0; i<50; i++) { 
+        let d = document.createElement('div'); 
+        d.className = 'ember'; 
+        d.style.left = Math.random() * 100 + '%'; 
+        d.style.animationDuration = (5 + Math.random() * 5) + 's'; 
+        d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); 
+        container.appendChild(d); 
+    } 
+}
+initAmbientParticles();
+
+function spawnParticles(x, y, color) { 
+    for(let i=0; i<15; i++) { 
+        let p = document.createElement('div'); 
+        p.className = 'particle'; 
+        p.style.backgroundColor = color; 
+        p.style.left = x + 'px'; 
+        p.style.top = y + 'px'; 
+        let angle = Math.random() * Math.PI * 2; 
+        let vel = 50 + Math.random() * 100; 
+        p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); 
+        p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); 
+        document.body.appendChild(p); 
+        setTimeout(() => p.remove(), 800); 
+    } 
+}
+
+function startCinematicLoop() { 
+    const c = audios['sfx-cine']; 
+    if(c) {
+        try { c.volume = 0; c.play().catch(()=>{}); } catch(e){} 
+        if(mixerInterval) clearInterval(mixerInterval); 
+        mixerInterval = setInterval(updateAudioMixer, 30); 
+    }
+}
+
+function updateAudioMixer() { 
+    const cineAudio = audios['sfx-cine']; 
+    if(!cineAudio) return; 
+    const mVol = window.masterVol || 1.0;
+    const maxCine = 0.6 * mVol; 
+    let targetCine = isLethalHover ? maxCine : 0; 
+    if(window.isMuted) { try { cineAudio.volume = 0; } catch(e){} return; }
+    try {
+        if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
+        else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
+    } catch(e){}
+}
+
+window.initGlobalHoverLogic = function() {
+    let lastTarget = null;
+    document.body.addEventListener('mouseover', (e) => {
+        const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn';
+        const target = e.target.closest(selector);
+        if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } 
+        else if (!target) { lastTarget = null; }
+    });
+};
+
+window.toggleFullScreen = function() {
+    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
+    else { if (document.exitFullscreen) document.exitFullscreen(); }
+};
+
+function triggerDamageEffect(isPlayer, playAudio = true) { 
+    try { 
+        if(playAudio) { if(!isPlayer && window.currentDeck === 'mage') playSound('sfx-hit-mage'); else playSound('sfx-hit'); } 
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
+        let slot = document.getElementById(elId); 
+        if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); } 
+        if (isPlayer) {
+            document.body.classList.add('shake-screen'); 
+            setTimeout(() => document.body.classList.remove('shake-screen'), 400); 
+            if(window.triggerDamageEffect) window.triggerDamageEffect(); 
+            let ov = document.getElementById('dmg-overlay'); 
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); } 
+        }
+    } catch(e) {} 
+}
+
+function triggerCritEffect() { let ov = document.getElementById('crit-overlay'); if(ov) { ov.style.opacity = '1'; document.body.style.filter = "grayscale(0.8) contrast(1.2)"; document.body.style.transition = "filter 0.05s"; setTimeout(() => { ov.style.opacity = '0'; setTimeout(() => { document.body.style.transition = "filter 0.5s"; document.body.style.filter = "none"; }, 800); }, 100); } }
+
+function triggerHealEffect(isPlayer) { 
+    try { 
+        let elId = isPlayer ? 'p-slot' : 'm-slot'; 
+        let slot = document.getElementById(elId); 
+        if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); } 
+        if (isPlayer) {
+            if(window.triggerHealEffect) window.triggerHealEffect();
+            let ov = document.getElementById('heal-overlay'); 
+            if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); } 
+        }
+    } catch(e) {} 
+}
+
+function triggerBlockEffect(isPlayer) { 
+    try { 
+        if(isPlayer && window.currentDeck === 'mage') playSound('sfx-block-mage'); else playSound('sfx-block'); 
+        if (!isPlayer) {
+             if(window.triggerBlockEffect) window.triggerBlockEffect(); 
+             let ov = document.getElementById('block-overlay'); 
+             if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); } 
+             document.body.classList.add('shake-screen'); 
+             setTimeout(() => document.body.classList.remove('shake-screen'), 200); 
+        }
+    } catch(e) {} 
+}
+
+function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
+
+function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 
 function resetUnit(u, predefinedDeck = null, role = null) { 
     u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.originalRole = role || 'pve'; 
@@ -1102,7 +1042,7 @@ function dealAllInitialCards() {
 
 function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
 
-function onCardClick(index) {
+window.onCardClick = function(index) {
     if(isProcessing) return; if (!player.hand[index]) return;
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
 
@@ -1128,7 +1068,7 @@ function onCardClick(index) {
     } else { 
         if(window.gameMode === 'pvp') lockInPvPMove(index, null); else playCardFlow(index, null); 
     }
-}
+};
 
 async function lockInPvPMove(index, disarmChoice) {
     if (!window.myRole && window.pvpStartData && currentUser) {
@@ -1594,7 +1534,7 @@ function updateUnit(u) {
             let imgUrl = getCardArt(k, true);
             c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
             
-            c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
+            c.onclick=()=>window.onCardClick(i); bindFixedTooltip(c,k); 
             c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
             c.onmouseleave = (e) => { if(tt) tt.style.display='none'; document.body.classList.remove('focus-hand'); document.body.classList.remove('cinematic-active'); document.body.classList.remove('tension-active'); isLethalHover = false; };
             hc.appendChild(c); apply3DTilt(c, true);
@@ -1617,199 +1557,19 @@ function updateUnit(u) {
     if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
 }
 
-function bindMasteryTooltip(el, key, value, ownerId) {
-    return {
-        onmouseenter: (e) => {
-            if(!tt) return;
-            let db=CARDS_DB[key];
-            const titleEl = document.getElementById('tt-title');
-            const contentEl = document.getElementById('tt-content');
-            if(titleEl) titleEl.innerHTML = key; 
-            if(contentEl) contentEl.innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
-            tt.style.display = 'block';
-            tt.classList.remove('tooltip-anim-up'); tt.classList.remove('tooltip-anim-down'); 
-            void tt.offsetWidth; 
-            let rect = el.getBoundingClientRect();
-            if(ownerId === 'p') {
-                tt.classList.add('tooltip-anim-up');
-                tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
-                tt.style.top = 'auto';
-            } else {
-                tt.classList.add('tooltip-anim-down');
-                tt.style.top = (rect.bottom + 10) + 'px';
-                tt.style.bottom = 'auto';
-            }
-            tt.style.left = (rect.left + rect.width/2) + 'px';
-            tt.style.transform = "translateX(-50%)"; 
-        }
-    };
-}
-
-function addMI(parent, key, value, col, ownerId){ 
-    let d = document.createElement('div'); d.className = 'mastery-icon'; 
-    d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`;
-    d.style.borderColor = col; 
-    let handlers = bindMasteryTooltip(d, key, value, ownerId);
-    d.onmouseenter = handlers.onmouseenter;
-    d.onmouseleave = () => { if(tt) tt.style.display = 'none'; }; 
-    parent.appendChild(d); 
-}
-
-window.googleLogin = async function() {
-    window.playNavSound(); 
-    const btnText = document.getElementById('btn-text');
-    btnText.innerText = "CONECTANDO...";
-    try { await signInWithPopup(auth, provider); } 
-    catch (error) { btnText.innerText = "ERRO - TENTE NOVAMENTE"; setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000); }
-};
-
-window.handleLogout = function() {
-    window.playNavSound();
-    signOut(auth).then(() => { location.reload(); });
-};
-
-async function saveMatchHistory(result, pointsChange) {
-    if (!currentUser) return;
-    try {
-        let enemyName = "PVE"; 
-        if (window.gameMode === 'pvp') {
-            if (window.pvpStartData) enemyName = (window.myRole === 'player1') ? window.pvpStartData.player2.name : window.pvpStartData.player1.name;
-            if (!enemyName || enemyName === "PVE") {
-                const domName = document.querySelector('#m-stats-cluster .unit-name');
-                if (domName && domName.innerText !== 'Monstro') enemyName = domName.innerText;
-            }
-            if(enemyName) enemyName = enemyName.split(' ')[0].toUpperCase();
-        }
-        const historyRef = collection(db, "players", currentUser.uid, "history");
-        await addDoc(historyRef, { result: result, opponent: enemyName, mode: window.gameMode || 'pve', deck: window.currentDeck, points: pointsChange, timestamp: Date.now() });
-    } catch (e) {}
-}
-
-window.registrarVitoriaOnline = async function(modo = 'pve') {
-    if(!currentUser) return;
-    try {
-        const userRef = doc(db, "players", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        if(userSnap.exists()) {
-            const data = userSnap.data();
-            let modoAtual = window.gameMode || 'pve';
-            if (modo === 'pvp') modoAtual = 'pvp';
-            let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
-            await updateDoc(userRef, { totalWins: (data.totalWins || 0) + 1, score: (data.score || 0) + pontosGanhos });
-            await saveMatchHistory('WIN', pontosGanhos);
-        }
-    } catch(e) {}
-};
-
-window.registrarDerrotaOnline = async function(modo = 'pve') {
-    if(!currentUser) return;
-    try {
-        const userRef = doc(db, "players", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        if(userSnap.exists()) {
-            const data = userSnap.data();
-            let modoAtual = window.gameMode || 'pve';
-            if (modo === 'pvp') modoAtual = 'pvp';
-            let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3;
-            let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
-            await updateDoc(userRef, { score: novoScore });
-            await saveMatchHistory('LOSS', -pontosPerdidos);
-        }
-    } catch(e) {}
-};
-
-window.restartMatch = function() {
-    document.getElementById('end-screen').classList.remove('visible');
-    setTimeout(startGameFlow, 50);
-    MusicController.play('bgm-loop'); 
-};
-
-async function notifyAbandonment() {
-    if (!window.currentMatchId || !currentUser) return;
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    try { await updateDoc(matchRef, { status: 'abandoned', abandonedBy: currentUser.uid }); } catch (e) {}
-}
-
-window.abandonMatch = function() {
-    if(document.getElementById('game-screen').classList.contains('active')) {
-        window.toggleConfig(); 
-        window.openModal(
-            "ABANDONAR?", "Sair da partida contará como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], 
-            async (choice) => { 
-                if (choice === "SAIR") {
-                    if (window.gameMode === 'pvp') await notifyAbandonment(); 
-                    window.registrarDerrotaOnline(window.gameMode);
-                    window.transitionToLobby();
-                }
-            }
-        );
-    }
-};
-
-window.openHistory = async function() {
-    if(!currentUser) return;
-    window.playNavSound();
-    
-    const screen = document.getElementById('history-screen');
-    const container = document.getElementById('history-list-container');
-    screen.style.display = 'flex';
-    container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Consultando arquivos...</div>';
-
-    try {
-        const historyRef = collection(db, "players", currentUser.uid, "history");
-        const q = query(historyRef, orderBy("timestamp", "desc"), limit(20));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Nenhuma batalha registrada ainda.</div>';
-            return;
-        }
-
-        let html = '';
-        querySnapshot.forEach((doc) => {
-            const h = doc.data();
-            const date = new Date(h.timestamp);
-            const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-            const resultClass = h.result === 'WIN' ? 'win' : 'loss';
-            const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : 'DERROTA';
-            const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
-
-            let vsText = "";
-            if (h.opponent === 'PVE' || h.mode === 'pve') {
-                 vsText = `${resultTxt} PVE`;
-            } else {
-                 vsText = `${resultTxt} vs ${h.opponent}`;
-            }
-
-            html += `
-                <div class="history-item ${resultClass}">
-                    <div>
-                        <div class="h-vs">${vsText}</div>
-                        <div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div>
-                    </div>
-                    <div class="h-score">${scoreTxt} PTS</div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
-    } catch(e) {
-        container.innerHTML = '<div style="color:red; text-align:center;">Erro ao carregar.</div>';
-    }
-};
-
-window.closeHistory = function() {
-    window.playNavSound();
-    document.getElementById('history-screen').style.display = 'none';
+window.toggleConfig = function() { 
+    let p = document.getElementById('config-panel'); 
+    if(p.style.display==='flex'){ 
+        p.style.display='none'; p.classList.remove('active'); document.body.classList.remove('config-mode'); 
+    } else { 
+        p.style.display='flex'; p.classList.add('active'); document.body.classList.add('config-mode'); 
+    } 
 };
 
 document.addEventListener('click', function(e) { 
     const panel = document.getElementById('config-panel'); 
     const btn = document.getElementById('btn-config-toggle'); 
     if (panel && panel.classList.contains('active') && !panel.contains(e.target) && (btn && !btn.contains(e.target))) window.toggleConfig(); 
-});
-
-window.addEventListener('beforeunload', () => {
-    if (window.gameMode === 'pvp' && window.currentMatchId && !document.getElementById('end-screen').classList.contains('visible')) { notifyAbandonment(); }
 });
 
 function preloadGame() {
@@ -1838,29 +1598,13 @@ function updateLoader() {
                 loading.style.opacity = '0';
                 setTimeout(() => loading.style.display = 'none', 500);
             }
-            if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
+            if(!window.hoverLogicInitialized) { window.initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
         }, 800); 
         document.body.addEventListener('click', () => { 
             if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) MusicController.play('bgm-menu');
         }, { once: true });
     }
 }
-
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        currentUser = user;
-        await loadUserSettings();
-        window.goToLobby(true); 
-    } else {
-        currentUser = null;
-        window.showScreen('start-screen');
-        const bg = document.getElementById('game-background');
-        if(bg) bg.classList.remove('lobby-mode');
-        const btnTxt = document.getElementById('btn-text');
-        if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE";
-        MusicController.play('bgm-menu'); 
-    }
-});
 
 setTimeout(() => {
     if (assetsLoaded < totalAssets) {
@@ -1869,7 +1613,7 @@ setTimeout(() => {
         const loading = document.getElementById('loading-screen');
         if(loading) loading.style.display = 'none';
         if(!window.hoverLogicInitialized) {
-            initGlobalHoverLogic();
+            window.initGlobalHoverLogic();
             window.hoverLogicInitialized = true;
         }
     }
