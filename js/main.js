@@ -1223,15 +1223,3 @@ setTimeout(() => {
 }, 3000); 
 
 preloadGame();
-
-const customCursor = document.getElementById('custom-cursor');
-const cursorImg = document.getElementById('cursor-img');
-if (customCursor && window.matchMedia("(pointer: fine)").matches) {
-    let mouseX = 0; let mouseY = 0;
-    document.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
-    function renderCursor() { customCursor.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`; requestAnimationFrame(renderCursor); }
-    requestAnimationFrame(renderCursor);
-    document.addEventListener('mouseover', (e) => { const isClickable = e.target.closest('button, .circle-btn, .card, .deck-option, .mini-btn, .xp-mini'); if (isClickable) customCursor.classList.add('hovering'); else customCursor.classList.remove('hovering'); });
-    document.addEventListener('mousedown', () => { if(cursorImg) cursorImg.style.transform = 'translate(-10%, -10%) scale(0.8)'; });
-    document.addEventListener('mouseup', () => { if(cursorImg) cursorImg.style.transform = 'translate(-10%, -10%) scale(1)'; });
-}
