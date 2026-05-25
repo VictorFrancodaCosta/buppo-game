@@ -110,7 +110,7 @@ window.currentMatchId = null;
 window.pvpSelectedCardIndex = null; 
 window.isResolvingTurn = false; 
 window.pvpStartData = null; 
-window.latestMatchData = null; // NOVO: Para sync visual
+window.latestMatchData = null; 
 
 // --- FUNÇÃO CRÍTICA: LIMPEZA DE ESTADO ---
 function cleanupMatchState() {
@@ -132,7 +132,6 @@ function cleanupMatchState() {
     window.latestMatchData = null;
     isProcessing = false;
     
-    // Remove barras de status antigas
     const sb = document.getElementById('pvp-status-bar');
     if(sb) sb.remove();
 }
@@ -519,9 +518,6 @@ function startGameFlow() {
     }
 }
 
-// ======================================================
-// LISTENER PVP ROBUSTO (CORRIGIDO)
-// ======================================================
 function startPvPListener() {
     if(!window.currentMatchId) return;
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
@@ -529,7 +525,6 @@ function startPvPListener() {
     let namesUpdated = false;
     console.log("Iniciando escuta PvP na partida:", window.currentMatchId);
       
-    // Garante a Role
     const ensureMyRole = (data) => {
         if (data.player1 && data.player1.uid === currentUser.uid) window.myRole = 'player1';
         else if (data.player2 && data.player2.uid === currentUser.uid) window.myRole = 'player2';
@@ -539,10 +534,8 @@ function startPvPListener() {
         if (!docSnap.exists()) return;
         const matchData = docSnap.data();
         
-        // SALVA DADOS PARA SYNC VISUAL
         window.latestMatchData = matchData;
 
-        // SEGURANÇA: Se eu não estou nessa partida, ignora
         if (matchData.player1.uid !== currentUser.uid && matchData.player2.uid !== currentUser.uid) {
             console.warn("Recebendo dados de partida alheia. Ignorando.");
             return;
@@ -550,7 +543,6 @@ function startPvPListener() {
 
         ensureMyRole(matchData);
 
-        // Abandono
         if (matchData.status === 'abandoned') {
             if (matchData.abandonedBy && currentUser && matchData.abandonedBy !== currentUser.uid) {
                 console.log("Oponente desconectou. Decretando vitória.");
@@ -572,7 +564,6 @@ function startPvPListener() {
             return; 
         }
 
-        // Nomes
         if (!namesUpdated && matchData.player1 && matchData.player2) {
             let myName, enemyName;
             if (window.myRole === 'player1') {
@@ -589,13 +580,9 @@ function startPvPListener() {
             namesUpdated = true; 
         }
 
-        // --- DETECÇÃO DE JOGADAS (CRUCIAL) ---
-        // Verifica se ambos os campos existem e não são nulos
         const p1Ready = matchData.p1Move && matchData.p1Move.length > 0;
         const p2Ready = matchData.p2Move && matchData.p2Move.length > 0;
 
-        // FORÇA A ATUALIZAÇÃO DA UI PARA TRAVAR A CARTA CLICADA
-        // Se eu joguei, mas o oponente não, a UI precisa saber disso
         updateUI();
 
         if (p1Ready && p2Ready) {
@@ -607,7 +594,6 @@ function startPvPListener() {
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
             }
         } else {
-            // Status update
             if (window.myRole === 'player1' && p1Ready && !p2Ready) {
                  showPvPStatus("AGUARDANDO OPONENTE...");
             } else if (window.myRole === 'player2' && p2Ready && !p1Ready) {
@@ -615,7 +601,6 @@ function startPvPListener() {
             }
         }
           
-        // --- SYNC REATIVO DE XP E BÔNUS ---
         if (window.gameMode === 'pvp' && window.myRole) {
             const myServerRole = window.myRole;
             const enemyServerRole = (window.myRole === 'player1') ? 'player2' : 'player1';
@@ -623,8 +608,6 @@ function startPvPListener() {
             const myData = matchData[myServerRole];
             const enemyData = matchData[enemyServerRole];
             
-            // --- CORREÇÃO: SÓ VERIFICA DANO EXTERNO SE NÃO ESTIVER RESOLVENDO TURNO ---
-            // Isso impede que a cura do DESCANSAR seja confundida com dano no meio do turno
             if (!window.isResolvingTurn && myData && myData.hp !== undefined) {
                 if (myData.hp < player.hp) {
                     let dmg = player.hp - myData.hp;
@@ -642,7 +625,6 @@ function startPvPListener() {
                 const serverXP = enemyData.xp || [];
                 const localXP = monster.xp || [];
 
-                // Oponente ganhou XP
                 if (serverXP.length > localXP.length) {
                     const diff = serverXP.length - localXP.length;
                     const startIdx = localXP.length;
@@ -655,7 +637,6 @@ function startPvPListener() {
                     monster.xp = [...serverXP];
                     updateUI();
                 } 
-                // Oponente Level Up
                 else if (serverXP.length < localXP.length) {
                     monster.xp = [...serverXP];
                     if (enemyData.lvl && enemyData.lvl > monster.lvl) {
@@ -667,6 +648,7 @@ function startPvPListener() {
                     if(enemyData.bonusAtk !== undefined) monster.bonusAtk = enemyData.bonusAtk;
                     if(enemyData.bonusBlock !== undefined) monster.bonusBlock = enemyData.bonusBlock;
                     if(enemyData.hp !== undefined) monster.hp = enemyData.hp; 
+                    if(enemyData.hand !== undefined) monster.hand = [...enemyData.hand]; 
                     updateUI();
                 }
             }
@@ -679,7 +661,6 @@ function showPvPStatus(msg) {
     if (!el) {
         el = document.createElement('div');
         el.id = 'pvp-status-bar';
-        // Estilo fixo para garantir que apareça
         el.style.position = 'fixed';
         el.style.top = '15%';
         el.style.left = '50%';
@@ -1130,16 +1111,14 @@ function triggerBlockEffect(isPlayer) {
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 
-// ATUALIZAÇÃO: Aceita um deck opcional e faz cópia segura
 function resetUnit(u, predefinedDeck = null, role = null) { 
     u.hp = 6; 
     u.maxHp = 6; 
     u.lvl = 1; 
     u.xp = []; 
     u.hand = []; 
-    u.originalRole = role || 'pve'; // IDENTIDADE FIXA (player1/player2)
+    u.originalRole = role || 'pve'; 
     
-    // Importante: Cria cópia ([...]) para não mexer no array original do banco
     if (predefinedDeck) {
         console.log(`[SYNC] Carregando deck sincronizado para ${u.id}: ${predefinedDeck.length} cartas.`);
         u.deck = [...predefinedDeck]; 
@@ -1188,8 +1167,6 @@ function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = p
 function onCardClick(index) {
     if(isProcessing) return; if (!player.hand[index]) return;
     
-    // --- LÓGICA DE BLOQUEIO PVP ---
-    // Se o jogo é PvP e já tem carta selecionada, NÃO FAZ NADA (Não permite trocar/deselecionar)
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
 
     playSound('sfx-play'); 
@@ -1220,9 +1197,7 @@ function onCardClick(index) {
     }
 }
 
-// ATUALIZAÇÃO: TRAVAR CARTA NO PVP
 async function lockInPvPMove(index, disarmChoice) {
-    // 1. GARANTE A IDENTIDADE DO JOGADOR
     if (!window.myRole && window.pvpStartData && currentUser) {
         if (window.pvpStartData.player1.uid === currentUser.uid) window.myRole = 'player1';
         else window.myRole = 'player2';
@@ -1253,7 +1228,6 @@ async function lockInPvPMove(index, disarmChoice) {
         console.log(`Jogada enviada: ${cardKey} (${updateField})`);
     } catch (e) {
         console.error("Erro ao enviar jogada:", e);
-        // Destrava em caso de erro
         isProcessing = false;
         window.pvpSelectedCardIndex = null;
         if(cardEl) cardEl.classList.remove('card-selected');
@@ -1296,7 +1270,6 @@ async function playCardFlow(index, pDisarmChoice) {
     let cardKey = player.hand.splice(index, 1)[0]; 
     playerHistory.push(cardKey);
 
-    // --- MODO PvE (IA) ---
     let aiMove = getBestAIMove(); 
     let mCardKey = 'ATAQUE'; 
     let mDisarmTarget = null; 
@@ -1342,17 +1315,14 @@ async function playCardFlow(index, pDisarmChoice) {
     }, false, true, false);
 }
 
-// ATUALIZAÇÃO: Animação Simultânea e Resolução
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     if (window.isResolvingTurn) return; 
     window.isResolvingTurn = true; 
-    isProcessing = true; // Trava cliques
+    isProcessing = true; 
     
-    // Remove texto de espera
     const sb = document.getElementById('pvp-status-bar');
     if(sb) sb.remove();
 
-    // Identifica moves
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
     if (window.myRole === 'player1') {
         myMove = p1Move; enemyMove = p2Move;
@@ -1362,7 +1332,6 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         myDisarmChoice = p2Disarm; enemyDisarmChoice = p1Disarm;
     }
 
-    // --- LÓGICA VISUAL DA MÃO (BLINDADA) ---
     try {
         if (window.pvpSelectedCardIndex === null || window.pvpSelectedCardIndex === undefined) {
             window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
@@ -1372,11 +1341,9 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         let startRect = null;
 
         if (handContainer) {
-            // Tenta pegar pelo índice salvo
             if (window.pvpSelectedCardIndex > -1 && handContainer.children[window.pvpSelectedCardIndex]) {
                 myCardEl = handContainer.children[window.pvpSelectedCardIndex];
             } else {
-                // Fallback: Pega a primeira carta visualmente disponível
                 const handCards = Array.from(handContainer.children);
                 if(handCards.length > 0) myCardEl = handCards[0]; 
             }
@@ -1386,23 +1353,18 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
             myCardEl.classList.remove('card-selected');
             myCardEl.style.opacity = '0';
         }
-        // Remove da mão (lógica)
+        
         if (window.pvpSelectedCardIndex > -1 && player.hand[window.pvpSelectedCardIndex] === myMove) {
             player.hand.splice(window.pvpSelectedCardIndex, 1);
-            
-            // >>> CORREÇÃO DO ZOOM INFINITO <<<
-            // Limpa o índice IMEDIATAMENTE após remover a carta, 
-            // para que o próximo updateUI não ache que ainda estamos selecionando algo.
             window.pvpSelectedCardIndex = null;
         } else {
             const idx = player.hand.indexOf(myMove);
             if(idx > -1) player.hand.splice(idx, 1);
-            window.pvpSelectedCardIndex = null; // Limpa também no fallback
+            window.pvpSelectedCardIndex = null;
         }
         
         playerHistory.push(myMove);
 
-        // Animação de entrada
         animateFly(startRect || 'player-hand', 'p-slot', myMove, () => {
             renderTable(myMove, 'p-slot', true);
         }, false, true, true);
@@ -1416,10 +1378,8 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         console.error("Erro na preparação visual (ignorado):", e);
     }
 
-    // --- RESOLUÇÃO BLINDADA ---
     setTimeout(() => {
         try {
-            // 1. GARANTIA DE LIMPEZA DO BANCO
             if (window.myRole === 'player1') {
                 setTimeout(() => {
                     const matchRef = doc(db, "matches", window.currentMatchId);
@@ -1432,17 +1392,14 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
                 }, 4000); 
             }
 
-            // 2. TENTA RESOLVER A LÓGICA
             resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
         } catch (error) {
             console.error("CRASH NO RESOLVE TURN (Recuperando...):", error);
-            // Em caso de erro grave, forçamos o destravamento
             updateUI();
             window.isResolvingTurn = false;
             isProcessing = false;
         } 
         
-        // 3. FAILSAFE: Destrava tudo depois de 4.5 segundos
         setTimeout(() => {
             window.pvpSelectedCardIndex = null;
             window.isResolvingTurn = false;
@@ -1455,12 +1412,10 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     }, 600);
 }
 
-// === NOVO: COMMITAR O TURNO AO DB DE FORMA CORRETA ===
 async function commitTurnToDB(pAct, extraCard = null) {
     if (!window.currentMatchId) return;
     const matchRef = doc(db, "matches", window.currentMatchId);
     
-    // Constrói o novo estado local
     let newXP = [...player.xp]; 
     let newDeck = [...player.deck]; 
 
@@ -1525,7 +1480,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     updateUI();
     let pDead = player.hp <= 0, mDead = monster.hp <= 0;
     
-    // --- CORREÇÃO DA CURA: FORÇA VISUAL LOCAL ---
     if(!pDead && pAct === 'DESCANSAR') { 
         let healAmount = (pDmg === 0) ? 3 : 2; 
         player.hp = Math.min(player.maxHp, player.hp + healAmount); 
@@ -1579,8 +1533,24 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
                 }
             } 
             
-            checkLevelUp(player, () => { 
-                if(!pDead) drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { drawCardLogic(player, 1); turnCount++; updateUI(); isProcessing = false; }); 
+            // --- MODIFICAÇÃO CHAVE AQUI ---
+            checkLevelUp(player, (leveledUp) => { 
+                if(!pDead) {
+                    // Se não upou de nível, saca +1 carta normalmente
+                    if(!leveledUp) {
+                        drawCardAnimated(player, 'p-deck-container', 'player-hand', () => { 
+                            drawCardLogic(player, 1); 
+                            turnCount++; 
+                            updateUI(); 
+                            isProcessing = false; 
+                        }); 
+                    } else {
+                        // Se upou, a mão já tem as 6 cartas novas. Só finaliza o turno.
+                        turnCount++; 
+                        updateUI(); 
+                        isProcessing = false;
+                    }
+                } 
             }); 
         }, false, false, true);
 
@@ -1590,8 +1560,13 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
                 triggerXPGlow('m'); 
                 updateUI(); 
             } 
-            checkLevelUp(monster, () => { 
-                if(!mDead) drawCardLogic(monster, 1); 
+            // --- E PARA O MONSTRO AQUI ---
+            checkLevelUp(monster, (leveledUp) => { 
+                if(!mDead) {
+                    if(!leveledUp) {
+                        drawCardLogic(monster, 1); 
+                    }
+                }
                 checkEndGame(); 
             }); 
         }, false, false, false);
@@ -1600,6 +1575,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
+// === LÓGICA CORRIGIDA E BLINDADA DE LEVEL UP ===
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         let xpContainer = document.getElementById(u.id + '-xp'); 
@@ -1632,26 +1608,39 @@ function checkLevelUp(u, doneCb) {
                 playSound('sfx-levelup'); 
                 setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
 
+                // 1. XP de volta pro Deck
                 u.xp.forEach(x => u.deck.push(x)); 
                 u.xp = []; 
+
+                // 2. Mão Atual inteira de volta pro Deck
+                u.hand.forEach(x => u.deck.push(x));
+                u.hand = [];
                 
+                // 3. Embaralha e Saca 6 Novas (Mão Cheia Renovada)
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl;
                     shuffle(u.deck, s);
+                    
+                    // Saca imediatamente antes de sincronizar, para a mão correta ir para o banco
+                    drawCardLogic(u, 6);
+                    
                     if (u === player) {
                         syncLevelUpToDB(u);
                     }
                 } else {
                     shuffle(u.deck); 
+                    // Saca imediatamente (Modo PvE)
+                    drawCardLogic(u, 6);
                 }
 
                 let clones = document.getElementsByClassName('xp-anim-clone'); 
                 while(clones.length > 0) clones[0].remove();
+                
                 updateUI(); 
-                doneCb();
+                doneCb(true); // Indica que SUBIU de nível
             });
         }, 1000); 
-    } else { doneCb(); }
+    } else { doneCb(false); } // Indica que NÃO subiu de nível
 }
 
 function triggerLevelUpVisuals(unitId) {
@@ -1749,14 +1738,12 @@ function updateUnit(u) {
     if(u===player) {
         let hc=document.getElementById('player-hand'); hc.innerHTML='';
         
-        // --- CONTROLE DE CLIQUE E HOVER ---
         if (isProcessing) {
-            hc.style.pointerEvents = 'none'; // Trava tudo se estiver processando
+            hc.style.pointerEvents = 'none'; 
         } else {
-            hc.style.pointerEvents = 'auto'; // Libera se estiver normal
+            hc.style.pointerEvents = 'auto'; 
         }
 
-        // VERIFICA NO BANCO SE JÁ TEM CARTA SELECIONADA
         let moveInDB = null;
         if (window.gameMode === 'pvp' && window.latestMatchData) {
              const role = window.myRole;
@@ -1769,10 +1756,6 @@ function updateUnit(u) {
             c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
             
-            // --- VISUAL DE SELEÇÃO E TRAVAMENTO (CORREÇÃO CLIQUE DUPLO) ---
-            // A carta fica selecionada se:
-            // 1. O jogador clicou nela agora (pvpSelectedCardIndex)
-            // 2. OU se o banco de dados diz que ela já foi jogada (moveInDB)
             const isLocallySelected = (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i);
             const isDBSelected = (window.gameMode === 'pvp' && moveInDB === k && window.pvpSelectedCardIndex === null);
 
@@ -1954,38 +1937,32 @@ let matchSeconds = 0;
 let myQueueRef = null; 
 let queueListener = null;
 
-// Botão PvE (Treino) - Vai direto para seleção de deck
 window.startPvE = function() {
     window.gameMode = 'pve'; 
     window.playNavSound();
     window.openDeckSelector(); 
 };
 
-// --- INICIAR JOGO (Botão PvP) ---
 window.startPvPSearch = function() {
     if (!currentUser) return; 
-    window.gameMode = 'pvp'; // Define que é PvP
+    window.gameMode = 'pvp'; 
     window.playNavSound();
-    window.openDeckSelector(); // Vai para a escolha de cartas PRIMEIRO
+    window.openDeckSelector(); 
 };
 
-// --- FUNÇÃO QUE INICIA A FILA APÓS ESCOLHER O DECK ---
 async function initiateMatchmaking() {
     console.log("--- INICIANDO MATCHMAKING ---");
-    // GARANTE QUE O ESTADO ANTERIOR ESTÁ LIMPO
     cleanupMatchState();
 
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'flex';
     
-    // Reset visual
     document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE...";
     document.querySelector('.mm-title').style.color = "var(--gold)";
     document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)";
     document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite";
     document.querySelector('.cancel-btn').style.display = "block";
     
-    // Timer visual
     matchSeconds = 0;
     const timerEl = document.getElementById('mm-timer');
     timerEl.innerText = "00:00";
@@ -1998,7 +1975,6 @@ async function initiateMatchmaking() {
     }, 1000);
 
     try {
-        // 1. Criar meu Ticket na Fila
         myQueueRef = doc(collection(db, "queue")); 
         const myData = {
             uid: currentUser.uid,
@@ -2006,7 +1982,7 @@ async function initiateMatchmaking() {
             deck: window.currentDeck,
             timestamp: Date.now(),
             matchId: null,
-            cancelled: false, // Importante
+            cancelled: false, 
             status: 'waiting'
         };
         
@@ -2014,7 +1990,6 @@ async function initiateMatchmaking() {
         await setDoc(myQueueRef, myData);
         console.log("Ticket criado com ID:", myQueueRef.id);
 
-        // 2. Ouvir meu próprio ticket (para saber se alguém me achou)
         queueListener = onSnapshot(myQueueRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
@@ -2025,16 +2000,11 @@ async function initiateMatchmaking() {
             }
         });
 
-        // 3. Buscar oponentes ativamente (Repetir a cada 4 segundos)
-        // Isso resolve o problema de "ficar esperando eternamente"
         if (searchInterval) clearInterval(searchInterval);
         
-        // Tenta agora
         findOpponentInQueue();
         
-        // E continua tentando
         searchInterval = setInterval(() => {
-            // Só busca se ainda estiver esperando
             if (document.getElementById('matchmaking-screen').style.display === 'flex' 
                 && document.querySelector('.mm-title').innerText !== "PARTIDA ENCONTRADA!") {
                 console.log("Tentando buscar novamente...");
@@ -2055,9 +2025,6 @@ async function findOpponentInQueue() {
         console.log("Executando findOpponentInQueue...");
         const queueRef = collection(db, "queue");
         
-        // QUERY SIMPLIFICADA:
-        // Traz os últimos 20 tickets. Removemos os 'where' complexos 
-        // para evitar problemas de índice. Filtraremos no Javascript (Client-side).
         const q = query(
             queueRef, 
             orderBy("timestamp", "desc"), 
@@ -2070,51 +2037,37 @@ async function findOpponentInQueue() {
         let opponentDoc = null;
         const now = Date.now();
 
-        // FILTRAGEM MANUAL (Mais seguro para esse estágio)
         for (const docSnap of querySnapshot.docs) {
             const data = docSnap.data();
             const docId = docSnap.id;
 
-            // 1. Não posso ser eu mesmo
             if (data.uid === currentUser.uid) continue;
-
-            // 2. Tem que estar esperando (sem matchId)
             if (data.matchId !== null) continue;
-
-            // 3. Não pode ter cancelado
             if (data.cancelled === true) continue;
-
-            // 4. VERIFICAÇÃO DE "ZUMBI"
-            // Se o ticket tem mais de 2 minutos, ignoramos (jogador fechou o app)
             if (now - data.timestamp > 120000) {
                 console.log(`Ticket ${docId} ignorado (Muito antigo/Zumbi)`);
                 continue;
             }
 
-            // ACHAMOS UM VÁLIDO!
             console.log("Oponente VÁLIDO encontrado:", data.name);
             opponentDoc = docSnap;
-            break; // Para o loop
+            break; 
         }
 
         if (opponentDoc) {
             console.log("Iniciando processo de match com:", opponentDoc.data().name);
             
-            // Para o intervalo de busca para não tentar parear duas vezes
             if (searchInterval) clearInterval(searchInterval);
 
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
             const oppRef = opponentDoc.ref;
 
-            // TENTA TRAVAR O OPONENTE (Atualização Atômica seria ideal, mas vamos simples)
             await updateDoc(oppRef, { matchId: matchId });
             
-            // Atualiza meu ticket
             if (myQueueRef) {
                 await updateDoc(myQueueRef, { matchId: matchId });
             }
 
-            // Gera decks e cria a sala
             const p1DeckCards = generateShuffledDeck();
             const p2DeckCards = generateShuffledDeck();
 
@@ -2134,7 +2087,6 @@ async function findOpponentInQueue() {
     }
 }
 
-// ATUALIZAÇÃO: Agora salvamos os DECKS COMPLETOS no banco
 async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckType, p2DeckType, p1DeckCards, p2DeckCards) {
     const matchRef = doc(db, "matches", matchId);
     
@@ -2151,7 +2103,7 @@ async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckTy
             hp: 6, 
             status: 'selecting', 
             hand: [], 
-            deck: p1DeckCards, // Salva o array embaralhado
+            deck: p1DeckCards, 
             xp: [] 
         },
         player2: { 
@@ -2161,7 +2113,7 @@ async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckTy
             hp: 6, 
             status: 'selecting', 
             hand: [], 
-            deck: p2DeckCards, // Salva o array embaralhado
+            deck: p2DeckCards, 
             xp: [] 
         },
         turn: 1,
@@ -2170,27 +2122,21 @@ async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckTy
     });
 }
 
-// --- CANCELAR BUSCA ---
 window.cancelPvPSearch = async function() {
-    // 1. Limpa os intervalos de busca
     if (matchTimerInterval) clearInterval(matchTimerInterval);
-    if (searchInterval) clearInterval(searchInterval); // <--- ADICIONE ISSO
+    if (searchInterval) clearInterval(searchInterval);
     
-    // ... (o resto do código continua igual: deletar ticket, esconder tela, etc)
     const mmScreen = document.getElementById('matchmaking-screen');
     mmScreen.style.display = 'none';
 
     if (myQueueRef) {
-        // Marca como cancelado para não aparecer nas buscas dos outros
         await updateDoc(myQueueRef, { cancelled: true });
         myQueueRef = null;
     }
     
-    // Volta ao lobby
     window.transitionToLobby(true);
 };
 
-// --- ENTRAR NA PARTIDA (Sucesso) ---
 async function enterMatch(matchId) {
     console.log("PARTIDA ENCONTRADA! ID:", matchId);
     
@@ -2201,10 +2147,7 @@ async function enterMatch(matchId) {
     const matchSnap = await getDoc(matchRef);
     if(matchSnap.exists()) {
         const data = matchSnap.data();
-        
-        // SALVAR DADOS INICIAIS (incluindo decks) GLOBALMENTE
         window.pvpStartData = data; 
-
         if(data.player1.uid === currentUser.uid) window.myRole = 'player1';
         else window.myRole = 'player2';
     }
@@ -2223,35 +2166,31 @@ async function enterMatch(matchId) {
     }, 1500);
 }
 
-// === CORREÇÃO: Sincroniza TODOS os status vitais no Level Up ===
+// === LÓGICA DE LEVEL UP NO PVP CORRIGIDA ===
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;
     const matchRef = doc(db, "matches", window.currentMatchId);
     
     let updates = {};
     let targetKey = "";
-    let opponentKey = ""; // Para atualizar o HP do inimigo se levamos dano
+    let opponentKey = ""; 
 
-    // Identifica se sou player1 ou player2
     if (u === player) {
         targetKey = (window.myRole === 'player1') ? 'player1' : 'player2';
         opponentKey = (window.myRole === 'player1') ? 'player2' : 'player1';
     } else {
-        // Isso raramente acontece, pois só sincronizamos o próprio player
         targetKey = (window.myRole === 'player1') ? 'player2' : 'player1';
     }
     
-    // ATUALIZAÇÃO: Salvar HP, MAXHP e BÔNUS para evitar desync
-    updates[`${targetKey}.xp`] = [];        // Zera a XP
-    updates[`${targetKey}.deck`] = u.deck;  // Salva o deck
-    updates[`${targetKey}.lvl`] = u.lvl;    // Salva o nível
-    updates[`${targetKey}.hp`] = u.hp;            // Salva HP atual (para caso de cura/dano)
-    updates[`${targetKey}.maxHp`] = u.maxHp;      // Salva Max HP
-    updates[`${targetKey}.bonusAtk`] = u.bonusAtk;      // Salva Espadas
-    updates[`${targetKey}.bonusBlock`] = u.bonusBlock;  // Salva Escudos
+    updates[`${targetKey}.xp`] = [];        
+    updates[`${targetKey}.deck`] = u.deck;  
+    updates[`${targetKey}.hand`] = u.hand;  // <--- NOVA ADIÇÃO PARA SINCRONIZAR A NOVA MÃO
+    updates[`${targetKey}.lvl`] = u.lvl;    
+    updates[`${targetKey}.hp`] = u.hp;            
+    updates[`${targetKey}.maxHp`] = u.maxHp;      
+    updates[`${targetKey}.bonusAtk`] = u.bonusAtk;      
+    updates[`${targetKey}.bonusBlock`] = u.bonusBlock;  
 
-    // Se causamos dano ao inimigo (via maestria), atualizamos o HP dele também
-    // O objeto 'monster' representa o inimigo localmente
     if (u === player) {
         updates[`${opponentKey}.hp`] = monster.hp; 
     }
@@ -2264,8 +2203,6 @@ async function syncLevelUpToDB(u) {
     }
 }
 
-// === NOVO: Funções de Interface do Histórico ===
-
 window.openHistory = async function() {
     if(!currentUser) return;
     window.playNavSound();
@@ -2276,7 +2213,6 @@ window.openHistory = async function() {
     container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Consultando arquivos...</div>';
 
     try {
-        // Busca os últimos 20 jogos da sub-coleção history
         const historyRef = collection(db, "players", currentUser.uid, "history");
         const q = query(historyRef, orderBy("timestamp", "desc"), limit(20));
         const querySnapshot = await getDocs(q);
@@ -2289,17 +2225,13 @@ window.openHistory = async function() {
         let html = '';
         querySnapshot.forEach((doc) => {
             const h = doc.data();
-            
-            // Formata data
             const date = new Date(h.timestamp);
             const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
             
-            // Define classes visual
             const resultClass = h.result === 'WIN' ? 'win' : 'loss';
             const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : 'DERROTA';
             const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
 
-            // --- LÓGICA DE EXIBIÇÃO: PVE vs PVP ---
             let vsText = "";
             if (h.opponent === 'PVE' || h.mode === 'pve') {
                  vsText = `${resultTxt} PVE`;
@@ -2331,21 +2263,18 @@ window.closeHistory = function() {
     document.getElementById('history-screen').style.display = 'none';
 };
 
-
-// Safety Loader: Start the game even if assets fail
 setTimeout(() => {
     if (assetsLoaded < totalAssets) {
         console.warn("Forcing game start (assets timeout)");
-        updateLoader(); // Try one last update
+        updateLoader(); 
         const loading = document.getElementById('loading-screen');
         if(loading) loading.style.display = 'none';
         
-        // Force init logic just in case
         if(!window.hoverLogicInitialized) {
             initGlobalHoverLogic();
             window.hoverLogicInitialized = true;
         }
     }
-}, 3000); // 3 seconds timeout
+}, 3000); 
 
 preloadGame();
