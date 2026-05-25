@@ -51,6 +51,13 @@ export function resetUnit(u, predefinedDeck = null, role = null) {
     u.bonusAtk = 0; 
 }
 
+export function drawCardLogic(u, qty) {
+    for(let i=0; i<qty; i++) {
+        if(u.deck.length > 0) u.hand.push(u.deck.pop()); 
+    }
+    u.hand.sort(); 
+}
+
 export function getBestAIMove(monster, player, playerHistory, turnCount) {
     let moves = []; 
     monster.hand.forEach((card, index) => { 
