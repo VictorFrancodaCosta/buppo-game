@@ -1,159 +1,90 @@
-/* ARQUIVO: css/effects.css */
+// ARQUIVO: js/data.js
 
-/* =========================================
-   1. EFEITO DE CURA (VERDE + LUZ)
-========================================= */
+export const ACTION_KEYS = ['ATAQUE', 'BLOQUEIO', 'DESCANSAR', 'TREINAR', 'DESARMAR'];
 
-/* Respiro da tela: Zoom suave */
-.screen-breathe {
-    animation: breatheMotion 1s ease-in-out;
-}
-@keyframes breatheMotion {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
-}
+export const DECK_TEMPLATE = {
+    'ATAQUE': 10,
+    'BLOQUEIO': 8,
+    'DESCANSAR': 4,
+    'TREINAR': 4,
+    'DESARMAR': 4
+};
 
-/* Aura Verde */
-#heal-overlay {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    pointer-events: none; z-index: 9000;
-    background: radial-gradient(circle, transparent 40%, rgba(46, 204, 113, 0.6) 100%);
-    opacity: 0;
-    mix-blend-mode: screen;
-}
-#heal-overlay.active {
-    animation: glowPulse 1.5s ease-out forwards;
-}
-
-/* Luz Sagrada Central */
-.holy-light {
-    position: fixed; top: 0; left: 50%; width: 60vw; height: 100vh;
-    transform: translateX(-50%);
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 224, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
-    pointer-events: none; z-index: 8999;
-    opacity: 0;
-}
-.holy-light.active {
-    animation: lightBeam 1.2s ease-in-out forwards;
-}
-
-/* Partículas de Cura */
-.heal-particle {
-    position: absolute;
-    color: #2ecc71; 
-    font-family: 'Bangers', cursive; 
-    font-size: 2rem;
-    text-shadow: 0 0 5px #f1c40f;
-    opacity: 0;
-    user-select: none;
-    animation: floatUp 2s ease-out forwards;
-}
-
-/* =========================================
-   2. EFEITO DE DANO (VERMELHO + TREMOR)
-========================================= */
-
-/* Tremor Forte */
-.shake-screen-hard {
-    animation: violentShake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-    transform: translate3d(0, 0, 0);
-}
-@keyframes violentShake {
-    10%, 90% { transform: translate3d(-4px, -2px, 0) rotate(-0.5deg); }
-    20%, 80% { transform: translate3d(6px, 4px, 0) rotate(0.5deg); }
-    30%, 50%, 70% { transform: translate3d(-8px, -6px, 0) rotate(-1deg); }
-    40%, 60% { transform: translate3d(8px, 6px, 0) rotate(1deg); }
-}
-
-/* Linha de Corte */
-.screen-cut-line {
-    position: fixed; top: 50%; left: 50%; width: 150vw; height: 8px; background: #fff;
-    transform: translate(-50%, -50%) rotate(-35deg) scaleX(0);
-    z-index: 10000; pointer-events: none;
-    box-shadow: 0 0 15px rgba(255,255,255,0.9), 0 0 30px rgba(255, 255, 255, 0.6);
-    clip-path: polygon(0 40%, 100% 0, 95% 100%, 5% 60%);
-    opacity: 0;
-}
-.screen-cut-line.active {
-    animation: slashAnimation 0.4s ease-out forwards;
-}
-
-/* Sangue */
-#blood-container {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    pointer-events: none; z-index: 9998; mix-blend-mode: multiply; 
-}
-.blood-spot {
-    position: absolute;
-    background: radial-gradient(circle at 30% 30%, #8b0000 20%, #500000 70%, transparent 80%);
-    border-radius: 50%; opacity: 0;
-    animation: bloodFadeIn 2.5s ease-out forwards;
-}
-.big-splatter {
-    filter: blur(1px);
-    border-radius: 40% 60% 50% 50% / 50% 40% 60% 50%;
-}
-
-/* =========================================
-   3. EFEITO DE BLOQUEIO (AZUL + RECUO)
-========================================= */
-
-/* Recuo da tela (Impacto Absorvido) */
-.screen-recoil {
-    animation: recoilMotion 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-@keyframes recoilMotion {
-    0% { transform: scale(1); }
-    30% { transform: scale(0.96); } /* Encolhe */
-    100% { transform: scale(1); } /* Volta */
-}
-
-/* Vignette Azul */
-#block-overlay {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    pointer-events: none; z-index: 9000;
-    background: radial-gradient(circle, transparent 40%, rgba(52, 152, 219, 0.8) 90%);
-    opacity: 0;
-    mix-blend-mode: screen; 
-}
-#block-overlay.active {
-    animation: flashBlue 0.6s ease-out forwards;
-}
-
-/* Onda de Choque */
-.shockwave-ring {
-    position: fixed; top: 50%; left: 50%;
-    width: 0px; height: 0px;
-    border-radius: 50%; background: transparent;
-    border: 30px solid rgba(255, 255, 255, 0.9); 
-    box-shadow: 0 0 30px #3498db, inset 0 0 20px #3498db;
-    transform: translate(-50%, -50%);
-    z-index: 9001; opacity: 0; pointer-events: none;
-}
-.shockwave-ring.active {
-    animation: shockwaveExpand 0.5s ease-out forwards;
-}
-
-/* Partículas Gerais (Brilhos) */
-#particles-container {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    pointer-events: none; z-index: 9001;
-}
-.sparkle-particle {
-    position: absolute; width: 10px; height: 10px;
-    background: #fff; border-radius: 50%;
-    box-shadow: 0 0 10px #fff, 0 0 20px #2ecc71;
-    opacity: 0;
-    animation: floatUpSparkle 1.5s ease-out forwards;
-}
-
-/* === TODAS AS ANIMAÇÕES (KEYFRAMES) === */
-@keyframes glowPulse { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes lightBeam { 0% { opacity: 0; transform: translateX(-50%) scaleX(0.5); } 50% { opacity: 1; transform: translateX(-50%) scaleX(1); } 100% { opacity: 0; transform: translateX(-50%) scaleX(0.8); } }
-@keyframes floatUp { 0% { transform: translateY(100vh) scale(0.5) rotate(0deg); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-10vh) scale(1.2) rotate(20deg); opacity: 0; } }
-@keyframes slashAnimation { 0% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(0); opacity: 0; } 10% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(1); opacity: 1; } 40% { opacity: 1; } 100% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(1); opacity: 0; } }
-@keyframes bloodFadeIn { 0% { transform: scale(0.5); opacity: 0; } 5% { transform: scale(1.05); opacity: 1; } 10% { transform: scale(1); opacity: 0.9; } 70% { opacity: 0.9; } 100% { opacity: 0; } }
-@keyframes flashBlue { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes shockwaveExpand { 0% { width: 0vw; height: 0vw; border-width: 40px; opacity: 1; } 100% { width: 150vw; height: 150vw; border-width: 0px; opacity: 0; } }
-@keyframes floatUpSparkle { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 30% { opacity: 0.8; transform: translateY(60vh) scale(1); } 100% { transform: translateY(20vh) scale(0); opacity: 0; } }
+export const CARDS_DB = {
+    'ATAQUE': {
+        img: 'assets/img/carta_ataque_cavaleiro.webp',
+        color: 'border-red',
+        fCol: '#ff4757',
+        icon: '⚔️',
+        customTooltip: `
+            <div class="tt-desc">Causa <span class="dynamic-val">{PLAYER_LVL}</span> (Nível) de dano ao oponente.</div>
+            <div class="tt-cartoon-title cartoon-orange">BÔNUS - GOLPE SURPRESA</div>
+            <div class="tt-text">Se o oponente jogar <span class="highlight-card hc-green">DESCANSAR</span> neste turno, coloque a carta do topo de seu baralho em sua área de experiência.</div>
+            <div class="tt-cartoon-title cartoon-purple">MAESTRIA EM ATAQUE</div>
+            <div class="tt-text">O oponente recebe uma quantidade de dano igual a quantidade de maestrias de ataque que você possui.</div>
+        `,
+        base: 'Dano = Nível',
+        bonus: '+XP se inimigo Descansar',
+        mastery: 'Dano Extra = Qtd Maestrias'
+    },
+    'BLOQUEIO': {
+        img: 'assets/img/carta_bloqueio_cavaleiro.webp',
+        color: 'border-blue',
+        fCol: '#2ed573',
+        icon: '🛡️',
+        customTooltip: `
+            <div class="tt-desc">Previna todo dano de combate causado a você neste turno.</div>
+            <div class="tt-cartoon-title cartoon-orange">BÔNUS - CONTRA-GOLPE</div>
+            <div class="tt-text">Se o oponente jogar <span class="highlight-card hc-red">ATAQUE</span> neste turno, cause <span class="dynamic-val">{PLAYER_BLOCK_DMG}</span> de dano aquele oponente.</div>
+            <div class="tt-cartoon-title cartoon-purple">MAESTRIA EM BLOQUEIO</div>
+            <div class="tt-text">Seus Contra-Golpes causam 1 ponto de dano a mais.</div>
+        `,
+        base: 'Anula Dano',
+        bonus: 'Reflete 1 de Dano',
+        mastery: '+1 Dano Refletido'
+    },
+    'DESCANSAR': {
+        img: 'assets/img/carta_descansar_cavaleiro.webp',
+        color: 'border-green',
+        fCol: '#7bed9f',
+        icon: '❤️',
+        customTooltip: `
+            <div class="tt-desc">No final do turno, restaure <span class="highlight-val">2</span> pontos de vida.</div>
+            <div class="tt-cartoon-title cartoon-orange">BÔNUS - REVITALIZAR</div>
+            <div class="tt-text">Se você não receber dano durante o combate deste turno, esta ação restaura <span class="highlight-val">1</span> ponto de vida a mais.</div>
+        `,
+        base: 'Cura 2 HP (3 se não sofrer dano)',
+        bonus: 'Nenhum',
+        mastery: '+1 HP Máximo Permanente'
+    },
+    'DESARMAR': {
+        img: 'assets/img/carta_desarmar_cavaleiro.webp',
+        color: 'border-yellow',
+        fCol: '#ffa502',
+        icon: '🚫',
+        customTooltip: `
+            <div class="tt-desc">Escolha uma ação. O oponente não poderá jogar a ação escolhida durante o próximo turno.</div>
+            <div class="tt-cartoon-title cartoon-orange">BÔNUS - COLISÃO PERFEITA</div>
+            <div class="tt-text">Se o oponente também jogar <span class="highlight-card hc-yellow">DESARMAR</span> neste turno, ambas ações são anuladas.</div>
+            <div class="tt-cartoon-title cartoon-purple">MAESTRIA EM DESARMAR</div>
+            <div class="tt-text">Escolha uma ação. O oponente não poderá jogar a ação escolhida durante o próximo turno.</div>
+        `,
+        base: 'Anula Próxima Ação',
+        bonus: 'Nenhum',
+        mastery: 'Bloqueia carta específica'
+    },
+    'TREINAR': {
+        img: 'assets/img/carta_treinar_cavaleiro.webp',
+        color: 'border-purple',
+        fCol: '#a29bfe',
+        icon: '✨',
+        customTooltip: `
+            <div class="tt-desc">Coloque a carta do topo de seu baralho em sua área de experiência.</div>
+            <div class="tt-cartoon-title cartoon-purple">MAESTRIA EM TREINAR</div>
+            <div class="tt-text">Dispare o efeito de maestria de outra ação em sua área de experiência.</div>
+        `,
+        base: '+1 XP Extra',
+        bonus: 'Acelera Level Up',
+        mastery: 'Copia outra Maestria'
+    }
+};
