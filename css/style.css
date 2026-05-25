@@ -1,9 +1,5 @@
 /* ARQUIVO: css/style.css */
 
-/* IMPORTANTE: FONTES */
-@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap'); /* NOVA FONTE CARTOON */
-
 /* REMOVE O HIGHLIGHT DE TOQUE NO CELULAR */
 * {
     -webkit-tap-highlight-color: transparent; /* Chrome/Safari/Android/iOS */
