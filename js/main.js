@@ -12,9 +12,10 @@ window.gameAssets = [];
 window.pvpUnsubscribe = null; 
 let searchInterval = null;
 
-// NOVAS VARIÁVEIS DE CONTROLE DE ÁUDIO
-window.musicMuted = false;
-window.sfxMuted = false;
+// NOVAS VARIÁVEIS DE CONTROLE DE ÁUDIO (INICIAM COM 50%)
+window.masterVol = 0.5; 
+window.musicEnabled = true;
+window.sfxEnabled = true;
 
 // --- ASSETS LOCAIS ---
 const MAGE_ASSETS = {
@@ -70,7 +71,6 @@ let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let isProcessing = false; let turnCount = 1; let playerHistory = []; 
-window.masterVol = 1.0; 
 let isLethalHover = false; 
 let mixerInterval = null;
 
@@ -85,7 +85,6 @@ window.pvpStartData = null;
 window.latestMatchData = null; 
 
 function cleanupMatchState() {
-    console.log("--- LIMPANDO ESTADO DA PARTIDA ---");
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     if (searchInterval) { clearInterval(searchInterval); searchInterval = null; }
     window.currentMatchId = null; window.myRole = null; window.pvpStartData = null;
@@ -106,7 +105,7 @@ const MusicController = {
         if (!audios[trackId]) return;
         try {
             if (this.currentTrackId === trackId) {
-                if (audios[trackId].paused && !window.musicMuted) {
+                if (audios[trackId].paused && window.musicEnabled) {
                     const audio = audios[trackId];
                     if (audio.readyState >= 2) audio.currentTime = 0;
                     audio.volume = 0; audio.play().catch(()=>{});
@@ -122,13 +121,13 @@ const MusicController = {
             if (trackId && audios[trackId]) {
                 const newAudio = audios[trackId];
                 if (newAudio.readyState >= 2) newAudio.currentTime = 0;
-                if (!window.musicMuted) {
+                if (window.musicEnabled) {
                     newAudio.volume = 0; newAudio.play().catch(()=>{});
                     this.fadeIn(newAudio, maxVol);
                 }
             }
             this.currentTrackId = trackId;
-        } catch(e) { console.warn("MusicController:", e); }
+        } catch(e) {}
     },
     stopCurrent() {
         if (this.currentTrackId && audios[this.currentTrackId]) { this.fadeOut(audios[this.currentTrackId]); }
@@ -152,44 +151,8 @@ const MusicController = {
     }
 };
 
-window.isMuted = false;
-window.toggleMute = function() {
-    window.isMuted = !window.isMuted;
-    const btn = document.getElementById('btn-sound');
-    const iconOn = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M3,9v6h4l5,5V4L7,9H3z M16.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C15.48,15.29,16.5,13.77,16.5,12z M14,3.23v2.06 c2.89,0.86,5,3.54,5,6.71s-2.11,5.85-5,6.71v2.06c4.01-0.91,7-4.49,7-8.77S18.01,4.14,14,3.23z"/></svg>`;
-    const iconOff = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M16.5,12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45,2.45C16.42,12.5,16.5,12.26,16.5,12z M19,12c0,0.94-0.2,1.82-0.54,2.64l1.51,1.51C20.63,14.91,21,13.5,21,12c0-4.28-2.99-7.86-7-8.77v2.06C16.89,6.15,19,8.83,19,12z M4.27,3L3,4.27l4.56,4.56C7.39,8.91,7.2,8.96,7,9H3v6h4l5,5v-6.73l4.25,4.25c-0.67,0.52-1.42,0.93-2.25,1.18v2.06c1.38-0.31,2.63-0.95,3.69-1.81L19.73,21L21,19.73L9,7.73V4L4.27,3z M12,4L9.91,6.09L12,8.18V4z"/></svg>`;
-    if(btn) btn.innerHTML = window.isMuted ? iconOff : iconOn;
-    
-    window.musicMuted = window.isMuted;
-    window.sfxMuted = window.isMuted;
-    const checkMusic = document.getElementById('check-music');
-    const checkSfx = document.getElementById('check-sfx');
-    if (checkMusic) checkMusic.checked = !window.musicMuted;
-    if (checkSfx) checkSfx.checked = !window.sfxMuted;
-
-    Object.values(audios).forEach(audio => { if(audio) audio.muted = window.isMuted; });
-    if(!window.isMuted && MusicController.currentTrackId) {
-        const audio = audios[MusicController.currentTrackId];
-        if(audio && audio.paused) audio.play().catch(()=>{});
-    }
-}
-
-window.toggleSoundType = function(type) {
-    window.playNavSound();
-    if (type === 'music') {
-        window.musicMuted = !document.getElementById('check-music').checked;
-        if (window.musicMuted) {
-            if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].pause();
-        } else {
-            if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].play().catch(()=>{});
-        }
-    } else {
-        window.sfxMuted = !document.getElementById('check-sfx').checked;
-    }
-};
-
 window.playNavSound = function() { 
-    if (window.sfxMuted) return;
+    if(!window.sfxEnabled) return;
     let s = audios['sfx-nav']; 
     if(s) { 
         try { if (s.readyState >= 2) s.currentTime = 0; s.play().catch(()=>{}); } catch(e) {}
@@ -198,11 +161,11 @@ window.playNavSound = function() {
 
 let lastHoverTime = 0;
 window.playUIHoverSound = function() {
-    if (window.sfxMuted) return;
+    if(!window.sfxEnabled) return;
     let now = Date.now();
     if (now - lastHoverTime < 50) return; 
     let base = audios['sfx-ui-hover'];
-    if(base && !window.isMuted) { 
+    if(base) { 
         try { let s = base.cloneNode(); s.volume = 0.3 * (window.masterVol || 1.0); s.play().catch(()=>{}); lastHoverTime = now; } catch(e){}
     }
 };
@@ -248,7 +211,7 @@ window.openDeckSelector = function() {
 })();
 
 window.selectDeck = function(deckType) {
-    if(audios['sfx-deck-select'] && !window.sfxMuted) { try { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); } catch(e){} }
+    if(audios['sfx-deck-select'] && window.sfxEnabled) { try { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); } catch(e){} }
     window.currentDeck = deckType; 
     document.body.classList.remove('theme-cavaleiro', 'theme-mago'); 
     if (deckType === 'mage') document.body.classList.add('theme-mago'); else document.body.classList.add('theme-cavaleiro');
@@ -319,13 +282,31 @@ window.goToLobby = async function(isAutoLogin = false) {
     const userRef = doc(db, "players", currentUser.uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
-        await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
+        await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0, settings: { vol: 0.5, music: true, sfx: true } });
         document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`;
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
+        window.updateVol('master', 0.5);
     } else {
         const d = userSnap.data();
         document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+        
+        if(d.settings) {
+            window.masterVol = d.settings.vol !== undefined ? d.settings.vol : 0.5;
+            window.musicEnabled = d.settings.music !== undefined ? d.settings.music : true;
+            window.sfxEnabled = d.settings.sfx !== undefined ? d.settings.sfx : true;
+            
+            let slider = document.getElementById('vol-slider'); if(slider) slider.value = window.masterVol;
+            let chkM = document.getElementById('check-music'); if(chkM) chkM.checked = window.musicEnabled;
+            let chkS = document.getElementById('check-sfx'); if(chkS) chkS.checked = window.sfxEnabled;
+            
+            window.updateVol('master', window.masterVol);
+            if (!window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
+                audios[MusicController.currentTrackId].pause();
+            } else if (window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
+                audios[MusicController.currentTrackId].play().catch(()=>{});
+            }
+        }
     }
     const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
     onSnapshot(q, (snapshot) => {
@@ -341,12 +322,14 @@ window.goToLobby = async function(isAutoLogin = false) {
         document.getElementById('ranking-content').innerHTML = html;
     });
     window.showScreen('lobby-screen'); document.getElementById('end-screen').classList.remove('visible'); 
+    
+    // Mostra a engrenagem no Lobby
+    document.getElementById('btn-config-toggle').style.display = 'flex';
 };
 
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     isProcessing = false; window.isResolvingTurn = false; window.pvpSelectedCardIndex = null; 
-    const oldStatus = document.getElementById('pvp-status-bar'); if(oldStatus) oldStatus.remove();
     startCinematicLoop(); window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand'); if (handEl) { handEl.innerHTML = ''; handEl.classList.add('preparing'); }
     if (window.gameMode === 'pvp' && window.pvpStartData) {
@@ -560,13 +543,13 @@ function updateLoader() {
     assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); 
     const fill = document.getElementById('loader-fill'); if(fill) fill.style.width = pct + '%';
     if(assetsLoaded >= totalAssets) {
-        if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
+        if(window.updateVol) window.updateVol('master', window.masterVol);
         setTimeout(() => {
             const loading = document.getElementById('loading-screen');
             if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
             if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
         }, 800); 
-        document.body.addEventListener('click', () => { if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) { MusicController.play('bgm-menu'); } }, { once: true });
+        document.body.addEventListener('click', () => { if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused && window.musicEnabled)) { MusicController.play('bgm-menu'); } }, { once: true });
     }
 }
 
@@ -580,8 +563,6 @@ function initGlobalHoverLogic() {
 }
 
 window.onload = function() {
-    const btnSound = document.getElementById('btn-sound');
-    if (btnSound) { btnSound.onclick = null; btnSound.addEventListener('click', (e) => { e.stopPropagation(); window.toggleMute(); }); }
     const deckScreen = document.getElementById('deck-selection-screen');
     if (deckScreen) {
         let backBtn = deckScreen.querySelector('.btn-back') || deckScreen.querySelector('.circle-btn') || deckScreen.querySelector('button'); 
@@ -616,73 +597,85 @@ function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {try { c.vol
 
 function updateAudioMixer() { 
     const cineAudio = audios['sfx-cine']; if(!cineAudio) return; 
-    const mVol = window.masterVol || 1.0; const maxCine = 0.6 * mVol; let targetCine = isLethalHover ? maxCine : 0; 
-    if(window.musicMuted) { try { cineAudio.volume = 0; } catch(e){} return; }
+    const mVol = window.masterVol || 0.5; const maxCine = 0.6 * mVol; let targetCine = isLethalHover ? maxCine : 0; 
+    if(!window.sfxEnabled) { try { cineAudio.volume = 0; } catch(e){} return; }
     try {
         if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); 
         else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); 
     } catch(e){}
 }
 
-// === NOVA FUNÇÃO TOGGLE CONFIG COM ANIMAÇÃO E FECHAMENTO ===
-window.toggleConfig = function() { 
-    window.playNavSound();
-    const overlay = document.getElementById('config-overlay'); 
-    const content = document.getElementById('config-panel-content');
-    const abandonArea = document.getElementById('abandon-area');
-
-    if (overlay.style.display === 'flex') {
-        content.classList.remove('config-pop-in'); 
-        content.classList.add('config-pop-out');
-        setTimeout(() => { 
-            overlay.style.display = 'none'; 
-            content.classList.remove('config-pop-out'); 
-        }, 200);
-    } else { 
-        const isGameActive = document.getElementById('game-screen').classList.contains('active');
-        if(abandonArea) abandonArea.style.display = isGameActive ? 'block' : 'none';
-        overlay.style.display = 'flex'; 
-        content.classList.add('config-pop-in'); 
-    } 
-};
-
-// FECHAR AO CLICAR FORA DA JANELA
-document.addEventListener('click', function(e) { 
-    const overlay = document.getElementById('config-overlay'); 
-    if (overlay && overlay.style.display === 'flex') {
-        if (e.target === overlay) {
-            window.toggleConfig();
-        }
-    }
-});
+// === NOVO SISTEMA DE CONFIGURAÇÕES ===
+window.saveAudioSettings = async function() {
+    if (!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        await updateDoc(userRef, {
+            settings: { vol: window.masterVol, music: window.musicEnabled, sfx: window.sfxEnabled }
+        });
+    } catch(e) { console.error("Erro ao salvar config", e); }
+}
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
-    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
+    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'bgm-loop', 'sfx-nav', 'sfx-cine'].forEach(k => { 
         if(audios[k]) {
-            let vol = window.masterVol || 1.0;
-            try {
-                if(k === 'sfx-ui-hover') audios[k].volume = 0.3 * vol;
-                else if (k === 'sfx-levelup') audios[k].volume = 1.0 * vol;
-                else if (k === 'sfx-train') audios[k].volume = 0.5 * vol;
-                else audios[k].volume = 0.8 * vol;
-            } catch(e){}
+            let baseVol = 0.8;
+            if(k === 'sfx-ui-hover') baseVol = 0.3;
+            else if (k === 'sfx-levelup') baseVol = 1.0;
+            else if (k === 'sfx-train') baseVol = 0.5;
+            else if (k.startsWith('bgm')) baseVol = 0.5;
+            else if (k === 'sfx-cine') baseVol = 0.6;
+            try { audios[k].volume = baseVol * window.masterVol; } catch(e){}
         }
     }); 
+    if(window.saveAudioSettings) window.saveAudioSettings();
 }
 
+window.toggleSoundType = function(type) {
+    window.playNavSound();
+    if (type === 'music') {
+        window.musicEnabled = document.getElementById('check-music').checked;
+        if (!window.musicEnabled) {
+            if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].pause();
+        } else {
+            if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].play().catch(()=>{});
+        }
+    } else {
+        window.sfxEnabled = document.getElementById('check-sfx').checked;
+    }
+    if(window.saveAudioSettings) window.saveAudioSettings();
+};
+
+window.toggleConfig = function() { 
+    window.playNavSound();
+    const overlay = document.getElementById('config-overlay'); 
+    const box = overlay.querySelector('.config-box');
+    const abandonArea = document.getElementById('abandon-area');
+
+    if (overlay.style.display === 'flex') {
+        box.classList.remove('config-pop-in'); 
+        box.classList.add('config-pop-out');
+        setTimeout(() => { overlay.style.display = 'none'; box.classList.remove('config-pop-out'); }, 200);
+    } else { 
+        const isGameActive = document.getElementById('game-screen').classList.contains('active');
+        if(abandonArea) abandonArea.style.display = isGameActive ? 'block' : 'none';
+        overlay.style.display = 'flex'; box.classList.add('config-pop-in'); 
+    } 
+};
+
 function playSound(key) { 
-    if (window.sfxMuted && !key.startsWith('bgm')) return;
+    if (!window.sfxEnabled && !key.startsWith('bgm')) return;
     if(audios[key]) { 
         try {
             if (key === 'sfx-levelup') {
-                audios[key].volume = 1.0 * (window.masterVol || 1.0);
+                audios[key].volume = 1.0 * window.masterVol;
                 if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
-                audios[key].play().catch(e => console.log("Audio:", e));
+                audios[key].play().catch(()=>{});
                 let clone = audios[key].cloneNode(); clone.volume = audios[key].volume; clone.play().catch(()=>{});
             } else {
                 if (audios[key].readyState >= 2) audios[key].currentTime = 0; 
-                audios[key].play().catch(e => console.log("Audio:", e)); 
+                audios[key].play().catch(()=>{}); 
             }
         } catch(e){}
     } 
