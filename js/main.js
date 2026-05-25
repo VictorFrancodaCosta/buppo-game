@@ -76,8 +76,6 @@ window.cleanupMatchState = function() {
     window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; window.latestMatchData = null;
     window.isProcessing = false;
     const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
-    
-    // LIMPEZA DA MESA (GARANTE QUE O TEMA DO DECK SEJA REMOVIDO)
     document.body.classList.remove('theme-cavaleiro', 'theme-mago');
 }
 
@@ -85,7 +83,6 @@ window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select'] && window.sfxEnabled) { try { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); } catch(e){} }
     window.currentDeck = deckType;
     
-    // Aplica a nova mesa escolhida
     document.body.classList.remove('theme-cavaleiro', 'theme-mago');
     if (deckType === 'mage') document.body.classList.add('theme-mago'); else document.body.classList.add('theme-cavaleiro');
     
@@ -155,8 +152,6 @@ window.goToLobby = async function(isAutoLogin = false) {
         return; 
     }
     window.cleanupMatchState(); window.isProcessing = false;
-    
-    // FORÇA A REMOÇÃO DAS MESAS DOS DECKS
     document.body.classList.remove('theme-cavaleiro', 'theme-mago');
     
     let bg = document.getElementById('game-background'); if(bg) bg.classList.add('lobby-mode');
@@ -308,7 +303,9 @@ function startPvPListener() {
                     if(enemyData.lvl) monster.lvl = enemyData.lvl; if(enemyData.maxHp) monster.maxHp = enemyData.maxHp;
                     if(enemyData.bonusAtk !== undefined) monster.bonusAtk = enemyData.bonusAtk;
                     if(enemyData.bonusBlock !== undefined) monster.bonusBlock = enemyData.bonusBlock;
-                    if(enemyData.hp !== undefined) monster.hp = enemyData.hp; updateUI();
+                    if(enemyData.hp !== undefined) monster.hp = enemyData.hp; 
+                    if(enemyData.hand !== undefined) monster.hand = [...enemyData.hand]; // NOVO: Sync the hand count
+                    updateUI();
                 }
             }
         }
@@ -349,10 +346,7 @@ onAuthStateChanged(auth, (user) => {
     else {
         window.currentUser = null; window.showScreen('start-screen');
         const bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode');
-        
-        // FORÇA A REMOÇÃO DOS TEMAS AO DESLOGAR
         document.body.classList.remove('theme-cavaleiro', 'theme-mago');
-        
         MusicController.play('bgm-menu');
     }
 });
@@ -664,12 +658,22 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
                 player.xp.push(pAct); triggerXPGlow('p'); updateUI();
                 if (window.gameMode === 'pvp') commitTurnToDB(pAct);
             }
-            checkLevelUp(player, () => { if(!pDead) { baseDraw(player, 1); turnCount++; updateUI(); window.isProcessing = false; } });
+            checkLevelUp(player, (leveledUp) => { 
+                if(!pDead) { 
+                    if(!leveledUp) baseDraw(player, 1); 
+                    turnCount++; updateUI(); window.isProcessing = false; 
+                } 
+            });
         }, false, false, true);
 
         animateFly('m-slot', 'm-xp', mAct, () => {
             if (window.gameMode !== 'pvp' && !mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); }
-            checkLevelUp(monster, () => { if(!mDead) baseDraw(monster, 1); checkEndGame(); });
+            checkLevelUp(monster, (leveledUp) => { 
+                if(!mDead) {
+                    if(!leveledUp) baseDraw(monster, 1);
+                    checkEndGame(); 
+                }
+            });
         }, false, false, false);
 
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
@@ -692,17 +696,31 @@ function checkLevelUp(u, doneCb) {
             processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++;
                 lvlEl.classList.add('level-up-anim'); triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
+                
+                // --- NOVA REGRA DE LEVEL UP AQUI ---
+                // Retorna XP pro Deck
                 u.xp.forEach(x => u.deck.push(x)); u.xp = [];
+                // Retorna a MÃO inteira pro Deck
+                u.hand.forEach(x => u.deck.push(x)); u.hand = [];
 
+                // Embaralha
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl; shuffle(u.deck, s);
-                    if (u === player) syncLevelUpToDB(u);
                 } else { shuffle(u.deck); }
+                
+                // Compra exatamente 6 novas cartas (mão cheia)
+                baseDraw(u, 6);
+
+                // Sincroniza com Firebase (agora envia a mão limpa/nova também)
+                if (window.gameMode === 'pvp' && window.currentMatchId) {
+                    if (u === player) syncLevelUpToDB(u);
+                }
+
                 let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
-                updateUI(); doneCb();
+                updateUI(); doneCb(true); // Retorna true indicando que upou
             });
         }, 1000);
-    } else { doneCb(); }
+    } else { doneCb(false); } // Retorna false indicando que NÃO upou
 }
 
 function processMasteries(u, triggers, cb) {
@@ -733,7 +751,11 @@ async function syncLevelUpToDB(u) {
     if (u === player) { targetKey = (window.myRole === 'player1') ? 'player1' : 'player2'; opponentKey = (window.myRole === 'player1') ? 'player2' : 'player1'; }
     else { targetKey = (window.myRole === 'player1') ? 'player2' : 'player1'; }
 
-    updates[`${targetKey}.xp`] = []; updates[`${targetKey}.deck`] = u.deck; updates[`${targetKey}.lvl`] = u.lvl; updates[`${targetKey}.hp`] = u.hp; updates[`${targetKey}.maxHp`] = u.maxHp; updates[`${targetKey}.bonusAtk`] = u.bonusAtk; updates[`${targetKey}.bonusBlock`] = u.bonusBlock;
+    updates[`${targetKey}.xp`] = []; 
+    updates[`${targetKey}.deck`] = u.deck; 
+    updates[`${targetKey}.hand`] = u.hand; // NOVA LINHA: Sincroniza a nova mão no banco também
+    
+    updates[`${targetKey}.lvl`] = u.lvl; updates[`${targetKey}.hp`] = u.hp; updates[`${targetKey}.maxHp`] = u.maxHp; updates[`${targetKey}.bonusAtk`] = u.bonusAtk; updates[`${targetKey}.bonusBlock`] = u.bonusBlock;
     if (u === player) updates[`${opponentKey}.hp`] = monster.hp;
     try { await updateDoc(matchRef, updates); } catch(e) {}
 }
