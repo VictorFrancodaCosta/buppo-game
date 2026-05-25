@@ -138,18 +138,35 @@
 
         <div id="btn-fullscreen" onclick="toggleFullScreen()">⛶</div>
 
-        <div id="config-panel">
-            <div class="cfg-row"><span class="cfg-label">Volume Geral</span><input type="range" class="cfg-slider" min="0" max="1" step="0.1" value="1" oninput="updateVol('master', this.value)"></div>
-            <hr style="border:1px solid #555; width:100%">
-            <button id="btn-surrender" onclick="abandonMatch()">ABANDONAR PARTIDA</button>
+<div id="config-panel" class="config-modal">
+    <div class="config-content">
+        <h2 class="cfg-title">CONFIGURAÇÕES</h2>
+        
+        <div class="cfg-row">
+            <span class="cfg-label">VOLUME GERAL</span>
+            <input type="range" class="cfg-slider" min="0" max="1" step="0.1" value="1" oninput="window.updateVol('master', this.value)">
         </div>
 
-        <div id="start-screen" class="screen active">
-            <div class="start-bg-layer"></div>
-            <img src="assets/img/logo_buppo.webp" alt="BUPPO LOGO" class="game-logo">
-            <button id="btn-login" onclick="googleLogin()"><span id="btn-text">LOGIN COM GOOGLE</span></button>
-            <p id="login-status" style="color: #888; font-family: 'Montserrat'; font-size: 12px; margin-top:-20px;"></p>
+        <div class="cfg-toggles">
+            <label class="cfg-check-container">
+                <input type="checkbox" id="check-music" checked onchange="window.toggleSoundType('music')">
+                <span class="checkmark"></span>
+                MÚSICA
+            </label>
+            
+            <label class="cfg-check-container">
+                <input type="checkbox" id="check-sfx" checked onchange="window.toggleSoundType('sfx')">
+                <span class="checkmark"></span>
+                EFEITOS
+            </label>
         </div>
+
+        <div id="abandon-area" style="display: none; width: 100%;">
+            <hr class="cfg-hr">
+            <button id="btn-surrender" onclick="window.abandonMatch()">ABANDONAR PARTIDA</button>
+        </div>
+    </div>
+</div>
 
         <div id="lobby-screen" class="screen">
             <div class="lobby-logo-right">
