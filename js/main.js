@@ -1,6 +1,6 @@
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
 import { app, auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, notifyAbandonmentDB } from './firebase_network.js';
-import { stringToSeed, shuffle, generateShuffledDeck, resetUnit, getBestAIMove, checkCardLethality } from './game_logic.js';
+import { stringToSeed, shuffle, generateShuffledDeck, resetUnit, getBestAIMove, checkCardLethality, drawCardLogic } from './game_logic.js';
 import { doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -12,7 +12,7 @@ window.gameAssets = [];
 window.pvpUnsubscribe = null; 
 let searchInterval = null;
 
-// NOVAS VARIÁVEIS DE CONTROLE DE ÁUDIO (INICIAM COM 50%)
+// NOVAS VARIÁVEIS DE CONTROLE DE ÁUDIO
 window.masterVol = 0.5; 
 window.musicEnabled = true;
 window.sfxEnabled = true;
@@ -127,7 +127,7 @@ const MusicController = {
                 }
             }
             this.currentTrackId = trackId;
-        } catch(e) {}
+        } catch(e) { console.warn("MusicController:", e); }
     },
     stopCurrent() {
         if (this.currentTrackId && audios[this.currentTrackId]) { this.fadeOut(audios[this.currentTrackId]); }
@@ -173,6 +173,17 @@ window.playUIHoverSound = function() {
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
+    const configBtn = document.getElementById('btn-config-toggle');
+    const surrenderBtn = document.getElementById('btn-surrender');
+    if(screenId === 'game-screen') {
+        if(surrenderBtn) surrenderBtn.style.display = 'block';
+        if(configBtn) configBtn.style.display = 'flex'; 
+    } else {
+        if(surrenderBtn) surrenderBtn.style.display = 'none';
+        if(configBtn) configBtn.style.display = 'flex'; // Mudança: Agora config aparece no saguão também
+        const panel = document.getElementById('config-overlay');
+        if(panel) { panel.style.display = 'none'; }
+    }
 }
 
 window.openDeckSelector = function() {
@@ -187,7 +198,7 @@ window.openDeckSelector = function() {
     try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
         if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
-    } catch (e) {}
+    } catch (e) { console.log(e); }
     window.showScreen('deck-selection-screen');
 };
 
@@ -246,6 +257,7 @@ window.transitionToGame = function() {
 
 window.transitionToLobby = function(skipAnim = false) {
     cleanupMatchState(); 
+    // CORREÇÃO: Remove temas ao voltar pro lobby
     document.body.classList.remove('force-landscape', 'theme-cavaleiro', 'theme-mago');
     const ds = document.getElementById('deck-selection-screen');
     if(ds) { ds.style.opacity = '0'; ds.style.pointerEvents = 'none'; ds.style.display = 'none'; ds.classList.remove('active'); }
@@ -266,8 +278,9 @@ window.goToLobby = async function(isAutoLogin = false) {
     if(!currentUser) { window.showScreen('start-screen'); MusicController.play('bgm-menu'); return; }
     cleanupMatchState(); isProcessing = false; 
     
+    // CORREÇÃO: Garante fundo do saguão limpo
     document.body.classList.remove('theme-cavaleiro', 'theme-mago'); 
-    
+
     let bg = document.getElementById('game-background'); if(bg) bg.classList.add('lobby-mode');
     MusicController.play('bgm-menu'); createLobbyFlares();
       
@@ -314,7 +327,6 @@ window.goToLobby = async function(isAutoLogin = false) {
         document.getElementById('ranking-content').innerHTML = html;
     });
     window.showScreen('lobby-screen'); document.getElementById('end-screen').classList.remove('visible'); 
-    
     document.getElementById('btn-config-toggle').style.display = 'flex';
 };
 
@@ -655,6 +667,16 @@ window.toggleConfig = function() {
     } 
 };
 
+// FECHAR AO CLICAR FORA DA JANELA
+document.addEventListener('click', function(e) { 
+    const overlay = document.getElementById('config-overlay'); 
+    if (overlay && overlay.style.display === 'flex') {
+        if (e.target === overlay) {
+            window.toggleConfig();
+        }
+    }
+});
+
 function playSound(key) { 
     if (!window.sfxEnabled && !key.startsWith('bgm')) return;
     if(audios[key]) { 
@@ -715,382 +737,6 @@ function triggerBlockEffect(isPlayer) {
 
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
-
-function renderTable(key, slotId, isPlayer = false) { 
-    let el = document.getElementById(slotId); el.innerHTML = ''; 
-    let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`; 
-    let imgUrl = getCardArt(key, isPlayer); card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`; el.appendChild(card); 
-}
-
-function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
-
-function updateUnit(u) {
-    document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
-    document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
-    let hpPct = (Math.max(0,u.hp)/u.maxHp)*100;
-    let hpFill = document.getElementById(u.id+'-hp-fill'); hpFill.style.width = hpPct + '%';
-    if(hpPct > 66) hpFill.style.background = "#4cd137"; else if(hpPct > 33) hpFill.style.background = "#fbc531"; else hpFill.style.background = "#e84118";
-    document.getElementById(u.id+'-deck-count').innerText = u.deck.length;
-    
-    if(u === player) {
-        let deckImgEl = document.getElementById('p-deck-img');
-        if(window.currentDeck === 'mage') deckImgEl.src = MAGE_ASSETS.DECK_IMG; else deckImgEl.src = 'assets/img/deck_verso_cavaleiro.webp';
-        let hc=document.getElementById('player-hand'); hc.innerHTML='';
-        if (isProcessing) hc.style.pointerEvents = 'none'; else hc.style.pointerEvents = 'auto';
-        let moveInDB = null;
-        if (window.gameMode === 'pvp' && window.latestMatchData) { const role = window.myRole; const field = role === 'player1' ? 'p1Move' : 'p2Move'; moveInDB = window.latestMatchData[field]; }
-        u.hand.forEach((k,i)=>{
-            let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`; c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
-            if(u.disabled===k) c.classList.add('disabled-card');
-            const isLocallySelected = (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i);
-            const isDBSelected = (window.gameMode === 'pvp' && moveInDB === k && window.pvpSelectedCardIndex === null);
-            if (isLocallySelected || isDBSelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
-            if(window.isMatchStarting) c.style.opacity = '0'; else c.style.opacity = '1';
-            let lethalType = checkCardLethality(k, player, monster); 
-            let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
-            let imgUrl = getCardArt(k, true); c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
-            c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
-            c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
-            c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active'); isLethalHover = false; };
-            hc.appendChild(c); apply3DTilt(c, true);
-        });
-    }
-    
-    let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
-    u.xp.forEach(k=>{ 
-        let d=document.createElement('div'); d.className='xp-mini'; let imgUrl = getCardArt(k, (u === player)); d.style.backgroundImage = `url('${imgUrl}')`; 
-        d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); }; 
-        d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; xc.appendChild(d); 
-    });
-    let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
-    if(u.bonusAtk>0) addMI(mc, 'ATAQUE', u.bonusAtk, '#e74c3c', u.id); 
-    if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id); 
-}
-
-function bindMasteryTooltip(el, key, value, ownerId) {
-    return {
-        onmouseenter: (e) => {
-            let db=CARDS_DB[key]; document.getElementById('tt-title').innerHTML = key; 
-            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
-            tt.style.display = 'block'; tt.classList.remove('tooltip-anim-up', 'tooltip-anim-down'); void tt.offsetWidth; 
-            let rect = el.getBoundingClientRect();
-            if(ownerId === 'p') { tt.classList.add('tooltip-anim-up'); tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px'; tt.style.top = 'auto'; } 
-            else { tt.classList.add('tooltip-anim-down'); tt.style.top = (rect.bottom + 10) + 'px'; tt.style.bottom = 'auto'; }
-            tt.style.left = (rect.left + rect.width/2) + 'px'; tt.style.transform = "translateX(-50%)"; 
-        }
-    };
-}
-
-function addMI(parent, key, value, col, ownerId){ 
-    let d = document.createElement('div'); d.className = 'mastery-icon'; d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`; d.style.borderColor = col; 
-    let handlers = bindMasteryTooltip(d, key, value, ownerId); d.onmouseenter = handlers.onmouseenter; d.onmouseleave = () => { tt.style.display = 'none'; }; parent.appendChild(d); 
-}
-
-function showFloatingText(eid, txt, col) { 
-    let el = document.createElement('div'); el.className='floating-text'; el.innerText=txt; el.style.color=col; let parent = document.getElementById(eid);
-    if(parent) { let rect = parent.getBoundingClientRect(); el.style.left = (rect.left + rect.width/2) + 'px'; el.style.top = (rect.top) + 'px'; document.body.appendChild(el); } 
-    else { document.body.appendChild(el); }
-    setTimeout(()=>el.remove(), 2000); 
-}
-
-window.openModal = function(t,d,opts,cb) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-desc').innerText=d; let g=document.getElementById('modal-btns'); g.innerHTML=''; opts.forEach(o=>{ let b=document.createElement('button'); b.className='mini-btn'; b.innerText=o; b.onclick=()=>{document.getElementById('modal-overlay').style.display='none'; cb(o)}; g.appendChild(b); }); document.getElementById('modal-overlay').style.display='flex'; }
-window.cancelModal = function() { document.getElementById('modal-overlay').style.display='none'; isProcessing = false; }
-const tt=document.getElementById('tooltip-box');
-
-function bindFixedTooltip(el,k) { 
-    const updatePos = () => { let rect = el.getBoundingClientRect(); tt.style.left = (rect.left + rect.width / 2) + 'px'; }; 
-    return { 
-        onmouseenter: (e) => { 
-            showTT(k); tt.style.bottom = (window.innerWidth < 768 ? '280px' : '420px'); tt.style.top = 'auto'; 
-            tt.classList.remove('tooltip-anim-up', 'tooltip-anim-down'); tt.classList.add('tooltip-anim-up'); updatePos(); el.addEventListener('mousemove', updatePos); 
-        } 
-    }; 
-}
-
-function showTT(k) {
-    let db = CARDS_DB[k]; document.getElementById('tt-title').innerHTML = k; 
-    if (db.customTooltip) {
-        let content = db.customTooltip; let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
-        content = content.replace('{PLAYER_LVL}', currentLvl); let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
-        let reflectDmg = 1 + bonusBlock; content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg); document.getElementById('tt-content').innerHTML = content;
-    } else { document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; }
-    tt.style.display = 'block';
-}
-
-function apply3DTilt(element, isHand = false) { 
-    if(window.innerWidth < 768) return; 
-    element.addEventListener('mousemove', (e) => { 
-        const rect = element.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; 
-        const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; 
-        element.style.setProperty('--rx', xPct); element.style.setProperty('--ry', yPct);
-        let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; 
-        if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; 
-        element.style.transform = `${lift} ${rotate}`; 
-        let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; 
-    }); 
-    element.addEventListener('mouseleave', () => { 
-        element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; 
-        let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; 
-        element.style.setProperty('--rx', 0); element.style.setProperty('--ry', 0);
-    }); 
-}
-
-let matchTimerInterval = null;
-let matchSeconds = 0;
-let myQueueRef = null; 
-let queueListener = null;
-
-window.startPvE = function() { window.gameMode = 'pve'; window.playNavSound(); window.openDeckSelector(); };
-window.startPvPSearch = function() { if (!currentUser) return; window.gameMode = 'pvp'; window.playNavSound(); window.openDeckSelector(); };
-
-async function initiateMatchmaking() {
-    cleanupMatchState();
-    const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'flex';
-    document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE..."; document.querySelector('.mm-title').style.color = "var(--gold)";
-    document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)"; document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite"; document.querySelector('.cancel-btn').style.display = "block";
-    matchSeconds = 0; const timerEl = document.getElementById('mm-timer'); timerEl.innerText = "00:00";
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    matchTimerInterval = setInterval(() => { matchSeconds++; let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0'); let s = (matchSeconds % 60).toString().padStart(2, '0'); timerEl.innerText = `${m}:${s}`; }, 1000);
-
-    try {
-        myQueueRef = doc(collection(db, "queue")); 
-        const myData = { uid: currentUser.uid, name: currentUser.displayName, deck: window.currentDeck, timestamp: Date.now(), matchId: null, cancelled: false, status: 'waiting' };
-        await setDoc(myQueueRef, myData);
-        queueListener = onSnapshot(myQueueRef, (docSnap) => {
-            if (docSnap.exists()) { const data = docSnap.data(); if (data.matchId) enterMatch(data.matchId); }
-        });
-        if (searchInterval) clearInterval(searchInterval);
-        findOpponentInQueue();
-        searchInterval = setInterval(() => {
-            if (document.getElementById('matchmaking-screen').style.display === 'flex' && document.querySelector('.mm-title').innerText !== "PARTIDA ENCONTRADA!") {
-                findOpponentInQueue();
-            } else { clearInterval(searchInterval); }
-        }, 4000);
-    } catch (e) { cancelPvPSearch(); }
-}
-
-async function findOpponentInQueue() {
-    try {
-        const queueRef = collection(db, "queue");
-        const q = query(queueRef, orderBy("timestamp", "desc"), limit(20));
-        const querySnapshot = await getDocs(q);
-        let opponentDoc = null; const now = Date.now();
-        for (const docSnap of querySnapshot.docs) {
-            const data = docSnap.data();
-            if (data.uid === currentUser.uid || data.matchId !== null || data.cancelled === true) continue;
-            if (now - data.timestamp > 120000) continue;
-            opponentDoc = docSnap; break; 
-        }
-        if (opponentDoc) {
-            if (searchInterval) clearInterval(searchInterval);
-            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-            const oppRef = opponentDoc.ref;
-            await updateDoc(oppRef, { matchId: matchId });
-            if (myQueueRef) await updateDoc(myQueueRef, { matchId: matchId });
-            const p1DeckCards = generateShuffledDeck(); const p2DeckCards = generateShuffledDeck();
-            await createMatchDocument(matchId, currentUser.uid, opponentDoc.data().uid, currentUser.displayName, opponentDoc.data().name, window.currentDeck, opponentDoc.data().deck, p1DeckCards, p2DeckCards);
-        }
-    } catch (e) { console.error("Erro ao buscar oponente:", e); }
-}
-
-async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckType, p2DeckType, p1DeckCards, p2DeckCards) {
-    const matchRef = doc(db, "matches", matchId);
-    const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1"; const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
-    const d1Type = p1DeckType || 'knight'; const d2Type = p2DeckType || 'knight';
-    await setDoc(matchRef, {
-        player1: { uid: p1Id, name: cleanName1, deckType: d1Type, hp: 6, status: 'selecting', hand: [], deck: p1DeckCards, xp: [] },
-        player2: { uid: p2Id, name: cleanName2, deckType: d2Type, hp: 6, status: 'selecting', hand: [], deck: p2DeckCards, xp: [] },
-        turn: 1, status: 'playing', createdAt: Date.now()
-    });
-}
-
-window.cancelPvPSearch = async function() {
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    if (searchInterval) clearInterval(searchInterval); 
-    const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'none';
-    if (myQueueRef) { await updateDoc(myQueueRef, { cancelled: true }); myQueueRef = null; }
-    window.transitionToLobby(true);
-};
-
-async function enterMatch(matchId) {
-    if (queueListener) queueListener(); if (matchTimerInterval) clearInterval(matchTimerInterval);
-    const matchRef = doc(db, "matches", matchId); const matchSnap = await getDoc(matchRef);
-    if(matchSnap.exists()) {
-        const data = matchSnap.data(); window.pvpStartData = data; 
-        if(data.player1.uid === currentUser.uid) window.myRole = 'player1'; else window.myRole = 'player2';
-    }
-    document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!"; document.querySelector('.mm-title').style.color = "#2ecc71";
-    document.querySelector('.radar-spinner').style.borderColor = "#2ecc71"; document.querySelector('.radar-spinner').style.animation = "none"; document.querySelector('.cancel-btn').style.display = "none";
-    setTimeout(() => { const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'none'; window.currentMatchId = matchId; window.transitionToGame(); }, 1500);
-}
-
-async function syncLevelUpToDB(u) {
-    if (!window.currentMatchId) return;
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    let updates = {}; let targetKey = ""; let opponentKey = "";
-    if (u === player) { targetKey = (window.myRole === 'player1') ? 'player1' : 'player2'; opponentKey = (window.myRole === 'player1') ? 'player2' : 'player1'; } 
-    else { targetKey = (window.myRole === 'player1') ? 'player2' : 'player1'; }
-    
-    updates[`${targetKey}.xp`] = []; updates[`${targetKey}.deck`] = u.deck; updates[`${targetKey}.lvl`] = u.lvl; updates[`${targetKey}.hp`] = u.hp; updates[`${targetKey}.maxHp`] = u.maxHp; updates[`${targetKey}.bonusAtk`] = u.bonusAtk; updates[`${targetKey}.bonusBlock`] = u.bonusBlock; 
-    if (u === player) updates[`${opponentKey}.hp`] = monster.hp; 
-    try { await updateDoc(matchRef, updates); } catch(e) {}
-}
-
-window.openHistory = async function() {
-    if(!currentUser) return;
-    window.playNavSound(); const screen = document.getElementById('history-screen'); const container = document.getElementById('history-list-container');
-    screen.style.display = 'flex'; container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Consultando arquivos...</div>';
-    try {
-        const historyRef = collection(db, "players", currentUser.uid, "history");
-        const q = query(historyRef, orderBy("timestamp", "desc"), limit(20)); const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) { container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Nenhuma batalha registrada ainda.</div>'; return; }
-        let html = '';
-        querySnapshot.forEach((doc) => {
-            const h = doc.data(); const date = new Date(h.timestamp); const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-            const resultClass = h.result === 'WIN' ? 'win' : 'loss'; const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : 'DERROTA'; const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
-            let vsText = ""; if (h.opponent === 'PVE' || h.mode === 'pve') { vsText = `${resultTxt} PVE`; } else { vsText = `${resultTxt} vs ${h.opponent}`; }
-            html += `<div class="history-item ${resultClass}"><div><div class="h-vs">${vsText}</div><div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div></div><div class="h-score">${scoreTxt} PTS</div></div>`;
-        });
-        container.innerHTML = html;
-    } catch(e) { container.innerHTML = '<div style="color:red; text-align:center;">Erro ao carregar.</div>'; }
-};
-
-window.closeHistory = function() { window.playNavSound(); document.getElementById('history-screen').style.display = 'none'; };
-
-setTimeout(() => {
-    if (assetsLoaded < totalAssets) {
-        updateLoader(); 
-        const loading = document.getElementById('loading-screen'); if(loading) loading.style.display = 'none';
-        if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
-    }
-}, 3000); 
-
-function dealAllInitialCards() {
-    isProcessing = true; playSound('sfx-deal'); 
-    const handEl = document.getElementById('player-hand'); const cards = Array.from(handEl.children);
-    cards.forEach((cardEl, i) => { cardEl.classList.add('intro-anim'); cardEl.style.animationDelay = (i * 0.1) + 's'; cardEl.style.opacity = ''; });
-    window.isMatchStarting = false;
-    if(handEl) handEl.classList.remove('preparing');
-    setTimeout(() => { cards.forEach(c => { c.classList.remove('intro-anim'); c.style.animationDelay = ''; }); isProcessing = false; }, 2000); 
-}
-
-function onCardClick(index) {
-    if(isProcessing) return; if (!player.hand[index]) return;
-    if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
-    playSound('sfx-play'); document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active'); 
-    document.getElementById('tooltip-box').style.display = 'none'; isLethalHover = false; 
-    let cardKey = player.hand[index];
-    if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
-    
-    if(cardKey === 'DESARMAR') { 
-        window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => {
-            if(window.gameMode === 'pvp') lockInPvPMove(index, choice); else playCardFlow(index, choice); 
-        }); 
-    } else { 
-        if(window.gameMode === 'pvp') lockInPvPMove(index, null); else playCardFlow(index, null); 
-    }
-}
-
-async function lockInPvPMove(index, disarmChoice) {
-    if (!window.myRole && window.pvpStartData && currentUser) {
-        if (window.pvpStartData.player1.uid === currentUser.uid) window.myRole = 'player1'; else window.myRole = 'player2';
-    }
-    const handContainer = document.getElementById('player-hand');
-    const cardEl = handContainer.children[index]; if(cardEl) cardEl.classList.add('card-selected');
-    window.pvpSelectedCardIndex = index; isProcessing = true; showPvPStatus("AGUARDANDO OPONENTE...");
-
-    const cardKey = player.hand[index];
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    const updateField = (window.myRole === 'player1') ? 'p1Move' : 'p2Move';
-    const disarmField = (window.myRole === 'player1') ? 'p1Disarm' : 'p2Disarm';
-    
-    try {
-        await updateDoc(matchRef, { [updateField]: cardKey, [disarmField]: disarmChoice || null });
-    } catch (e) {
-        isProcessing = false; window.pvpSelectedCardIndex = null;
-        if(cardEl) cardEl.classList.remove('card-selected');
-        const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
-        showCenterText("ERRO AO ENVIAR", "red");
-    }
-}
-
-async function playCardFlow(index, pDisarmChoice) {
-    isProcessing = true; let cardKey = player.hand.splice(index, 1)[0]; playerHistory.push(cardKey);
-    let aiMove = getBestAIMove(monster, player, playerHistory, turnCount); 
-    let mCardKey = 'ATAQUE'; let mDisarmTarget = null; 
-    if(aiMove) { 
-        mCardKey = aiMove.card; monster.hand.splice(aiMove.index, 1); 
-        if(mCardKey === 'DESARMAR') { 
-            if(player.hp <= (monster.lvl + monster.bonusAtk + 2)) { mDisarmTarget = 'BLOQUEIO'; } 
-            else { 
-                let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1); 
-                let bestTarget = null; for(let k in pCounts) if(pCounts[k] >= 3) bestTarget = k; 
-                if(bestTarget) mDisarmTarget = bestTarget; else mDisarmTarget = 'ATAQUE'; 
-            } 
-        } 
-    } else { 
-        if(monster.hand.length > 0) mCardKey = monster.hand.pop(); 
-        else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } 
-    }
-
-    let handContainer = document.getElementById('player-hand'); let realCardEl = handContainer.children[index]; let startRect = null;
-    if(realCardEl) { 
-        startRect = realCardEl.getBoundingClientRect(); realCardEl.style.transition = 'none';
-        realCardEl.style.setProperty('opacity', '0', 'important'); realCardEl.style.setProperty('visibility', 'hidden', 'important');
-        realCardEl.innerHTML = ''; realCardEl.style.border = 'none'; realCardEl.style.background = 'none'; realCardEl.style.boxShadow = 'none';
-    }
-    
-    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { renderTable(cardKey, 'p-slot', true); updateUI(); }, false, true, true); 
-    const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
-    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { renderTable(mCardKey, 'm-slot', false); setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); }, false, true, false);
-}
-
-async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
-    if (window.isResolvingTurn) return; 
-    window.isResolvingTurn = true; isProcessing = true; 
-    const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
-
-    let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
-    if (window.myRole === 'player1') { myMove = p1Move; enemyMove = p2Move; myDisarmChoice = p1Disarm; enemyDisarmChoice = p2Disarm; } 
-    else { myMove = p2Move; enemyMove = p1Move; myDisarmChoice = p2Disarm; enemyDisarmChoice = p1Disarm; }
-
-    try {
-        if (window.pvpSelectedCardIndex === null || window.pvpSelectedCardIndex === undefined) window.pvpSelectedCardIndex = player.hand.indexOf(myMove);
-        const handContainer = document.getElementById('player-hand'); let myCardEl = null; let startRect = null;
-        if (handContainer) {
-            if (window.pvpSelectedCardIndex > -1 && handContainer.children[window.pvpSelectedCardIndex]) myCardEl = handContainer.children[window.pvpSelectedCardIndex];
-            else { const handCards = Array.from(handContainer.children); if(handCards.length > 0) myCardEl = handCards[0]; }
-        }
-        if (myCardEl) { startRect = myCardEl.getBoundingClientRect(); myCardEl.classList.remove('card-selected'); myCardEl.style.opacity = '0'; }
-        if (window.pvpSelectedCardIndex > -1 && player.hand[window.pvpSelectedCardIndex] === myMove) {
-            player.hand.splice(window.pvpSelectedCardIndex, 1); window.pvpSelectedCardIndex = null;
-        } else {
-            const idx = player.hand.indexOf(myMove); if(idx > -1) player.hand.splice(idx, 1); window.pvpSelectedCardIndex = null; 
-        }
-        playerHistory.push(myMove);
-
-        animateFly(startRect || 'player-hand', 'p-slot', myMove, () => { renderTable(myMove, 'p-slot', true); }, false, true, true);
-        const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 };
-        animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => { renderTable(enemyMove, 'm-slot', false); }, false, true, false);
-    } catch (e) {}
-
-    setTimeout(() => {
-        try {
-            if (window.myRole === 'player1') {
-                setTimeout(() => {
-                    const matchRef = doc(db, "matches", window.currentMatchId);
-                    updateDoc(matchRef, { p1Move: null, p2Move: null, p1Disarm: null, p2Disarm: null, turn: increment(1) }).catch(err => console.error(err));
-                }, 4000); 
-            }
-            resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
-        } catch (error) {
-            updateUI(); window.isResolvingTurn = false; isProcessing = false;
-        } 
-        setTimeout(() => {
-            window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; if (isProcessing) isProcessing = false;
-        }, 4500);
-    }, 600);
-}
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     let pDmg = 0, mDmg = 0;
@@ -1172,5 +818,3 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
     }, 700);
 }
-
-preloadGame();
