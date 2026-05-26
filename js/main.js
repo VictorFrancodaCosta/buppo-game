@@ -676,15 +676,48 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
+// === FUNÇÃO checkLevelUp MODIFICADA ===
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
-        let xpContainer = document.getElementById(u.id + '-xp'); let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
+        window.isProcessing = true; // Bloqueia interações durante a animação
+        
+        // 1. ANIMA AS CARTAS DA EXPERIÊNCIA VOLTANDO PARA O DECK
+        let xpContainer = document.getElementById(u.id + '-xp'); 
+        let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
+        
         minis.forEach(realCard => {
-            let rect = realCard.getBoundingClientRect(); let clone = document.createElement('div'); clone.className = 'xp-anim-clone';
-            clone.style.left = rect.left + 'px'; clone.style.top = rect.top + 'px'; clone.style.width = rect.width + 'px'; clone.style.height = rect.height + 'px'; clone.style.backgroundImage = realCard.style.backgroundImage;
-            if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down'); document.body.appendChild(clone);
+            let rect = realCard.getBoundingClientRect(); 
+            let clone = document.createElement('div'); 
+            clone.className = 'xp-anim-clone';
+            clone.style.left = rect.left + 'px'; 
+            clone.style.top = rect.top + 'px'; 
+            clone.style.width = rect.width + 'px'; 
+            clone.style.height = rect.height + 'px'; 
+            clone.style.backgroundImage = realCard.style.backgroundImage;
+            
+            // Adiciona a classe de animação nova
+            if (u.id === 'p') clone.classList.add('xp-return-to-deck-p-anim'); 
+            else clone.classList.add('xp-return-to-deck-m-anim'); 
+            
+            document.body.appendChild(clone);
         });
+        
+        // Esconde as originais
         minis.forEach(m => m.style.opacity = '0');
+
+        // 2. ANIMA AS CARTAS DA MÃO VOLTANDO PARA O DECK (Se for o jogador)
+        if (u.id === 'p') {
+            const handContainer = document.getElementById('player-hand');
+            if (handContainer) {
+                const handCards = Array.from(handContainer.children);
+                handCards.forEach(cardEl => {
+                    cardEl.classList.add('return-to-deck-p-anim');
+                });
+            }
+        } else {
+             // Anima a mão do monstro (se houver representação visual no DOM, no código original parece não ter, mas se tiver, aplique a classe 'return-to-deck-m-anim')
+        }
+
         setTimeout(() => {
             let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = [];
             for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
@@ -692,18 +725,44 @@ function checkLevelUp(u, doneCb) {
             processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++;
                 lvlEl.classList.add('level-up-anim'); triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
-                u.xp.forEach(x => u.deck.push(x)); u.xp = [];
+                
+                // --- NOVA LÓGICA DE DADOS ---
+                // Junta XP e Mão no Baralho
+                u.deck = u.deck.concat(u.xp, u.hand);
+                u.xp = [];
+                u.hand = []; // Limpa a mão atual
 
+                // Embaralha o Deck
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
-                    let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl; shuffle(u.deck, s);
+                    let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl; 
+                    shuffle(u.deck, s);
                     if (u === player) syncLevelUpToDB(u);
-                } else { shuffle(u.deck); }
-                let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
-                updateUI(); doneCb();
+                } else { 
+                    shuffle(u.deck); 
+                }
+                
+                // Compra 6 novas cartas do topo
+                baseDraw(u, 6);
+
+                // Limpa clones visuais
+                let clones = document.getElementsByClassName('xp-anim-clone'); 
+                while(clones.length > 0) clones[0].remove();
+                
+                updateUI(); 
+                
+                // Se for o jogador, anima a compra das 6 novas cartas
+                if (u.id === 'p') {
+                    dealAllInitialCards(); // Chama a animação de introdução das cartas
+                } else {
+                   window.isProcessing = false; // Libera se for o monstro
+                }
+                
+                doneCb();
             });
-        }, 1000);
+        }, 600); // Tempo sincronizado com a animação CSS (0.6s)
     } else { doneCb(); }
 }
+// === FIM DA FUNÇÃO MODIFICADA ===
 
 function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
