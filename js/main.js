@@ -800,14 +800,7 @@ function updateUnit(u) {
         if (window.gameMode === 'pvp' && window.latestMatchData) { const role = window.myRole; const field = role === 'player1' ? 'p1Move' : 'p2Move'; moveInDB = window.latestMatchData[field]; }
         u.hand.forEach((k,i)=>{
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`; c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
-            
-            // Adiciona classe de animação se puder ou não jogar
-            if(u.disabled===k) {
-                c.classList.add('disabled-card');
-            } else if (u === player) {
-                c.classList.add('card-ready');
-            }
-            
+            if(u.disabled===k) c.classList.add('disabled-card');
             const isLocallySelected = (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i);
             const isDBSelected = (window.gameMode === 'pvp' && moveInDB === k && window.pvpSelectedCardIndex === null);
             if (isLocallySelected || isDBSelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
