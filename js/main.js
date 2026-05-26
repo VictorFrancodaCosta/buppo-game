@@ -1,8 +1,28 @@
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
-import { app, auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, notifyAbandonmentDB } from './firebase_network.js';
-import { stringToSeed, shuffle, generateShuffledDeck, resetUnit, getBestAIMove, checkCardLethality } from './game_logic.js';
-import { doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// --- CONFIGURAÇÃO FIREBASE ---
+const firebaseConfig = {
+    apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
+    authDomain: "buppo-game.firebaseapp.com",
+    projectId: "buppo-game",
+    storageBucket: "buppo-game.firebasestorage.app",
+    messagingSenderId: "950871979140",
+    appId: "1:950871979140:web:f2dba12900500c52053ed1"
+};
+
+let app, auth, db, provider;
+try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    provider = new GoogleAuthProvider();
+    console.log("Firebase Web Iniciado.");
+} catch (e) {
+    console.error("Erro Firebase (Modo Offline):", e);
+}
 
 // --- VARIÁVEIS GLOBAIS ---
 let currentUser = null;
@@ -22,7 +42,6 @@ let mixerInterval = null;
 
 // --- ESTADOS GLOBAIS ---
 window.isMatchStarting = false;
-window.isDealingCards = false; // Controle de animação da mão
 window.currentDeck = 'knight';
 window.myRole = null; 
 window.currentMatchId = null;
@@ -103,6 +122,10 @@ function getCardArt(cardKey, isPlayer) {
     if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) return MAGE_ASSETS[cardKey];
     return CARDS_DB[cardKey].img;
 }
+
+function stringToSeed(str) { let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); return Math.abs(hash); }
+function shuffle(array, seed = null) { let rng = Math.random; if (seed !== null) { let currentSeed = seed; rng = function() { currentSeed = (currentSeed * 9301 + 49297) % 233280; return currentSeed / 233280; } } for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
+function generateShuffledDeck() { let deck = []; for(let k in DECK_TEMPLATE) { for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k); } shuffle(deck); return deck; }
 
 const MusicController = {
     currentTrackId: null, fadeTimer: null,
@@ -353,19 +376,29 @@ function showCenterText(txt, col) { let el = document.createElement('div'); el.c
 
 function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
-function dealCardsAnimated(containerId, cb) {
-    if(window.sfxEnabled) playSound('sfx-deal');
-    const handEl = document.getElementById(containerId);
-    if(!handEl) { if(cb) cb(); return; }
-    const cards = Array.from(handEl.children);
-    if(cards.length === 0) { if(cb) cb(); return; }
-    cards.forEach((cardEl, i) => { cardEl.classList.add('intro-anim'); cardEl.style.animationDelay = (i * 0.1) + 's'; cardEl.style.opacity = '1'; });
-    setTimeout(() => { cards.forEach(c => { c.classList.remove('intro-anim'); c.style.animationDelay = ''; c.style.opacity = '1'; }); if(cb) cb(); }, 500 + cards.length * 100);
-}
-
 function dealAllInitialCards() { 
-    isProcessing = true; window.isMatchStarting = false; window.isDealingCards = true; 
-    dealCardsAnimated('player-hand', () => { window.isDealingCards = false; isProcessing = false; updateUI(); }); 
+    isProcessing = true; 
+    playSound('sfx-deal'); 
+    
+    const handEl = document.getElementById('player-hand'); 
+    const cards = Array.from(handEl.children);
+    
+    cards.forEach((cardEl, i) => {
+        cardEl.classList.add('intro-anim');
+        cardEl.style.animationDelay = (i * 0.1) + 's';
+        cardEl.style.opacity = ''; 
+    });
+
+    window.isMatchStarting = false;
+    if(handEl) handEl.classList.remove('preparing');
+
+    setTimeout(() => {
+        cards.forEach(c => {
+            c.classList.remove('intro-anim');
+            c.style.animationDelay = '';
+        });
+        isProcessing = false;
+    }, 2000); 
 }
 
 function onCardClick(index) {
@@ -472,8 +505,14 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
             
             checkLevelUp(player, (leveledUp) => { 
                 if(!pDead) {
-                    if(!leveledUp) { drawCardLogic(player, 1); }
-                    turnCount++; updateUI(); isProcessing = false; 
+                    turnCount++; 
+                    if(!leveledUp) {
+                        drawCardLogic(player, 1); 
+                        updateUI(); 
+                        isProcessing = false; 
+                    } else {
+                        // Se upou de nivel, o isProcessing será liberado ao terminar a animação de compra nova
+                    }
                 } 
             }); 
         }, false, false, true);
@@ -490,7 +529,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
-// === LÓGICA DE LEVEL UP E ANIMAÇÃO DE COMPRA ===
+// === LÓGICA DE LEVEL UP COM COMPRA ANIMADA CORRETA ===
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         let xpContainer = document.getElementById(u.id + '-xp'); 
@@ -508,7 +547,6 @@ function checkLevelUp(u, doneCb) {
             processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++; lvlEl.classList.add('level-up-anim'); triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
 
-                // 1. ANIMA A MÃO VOANDO PARA O BARALHO
                 let deckContainerId = (u.id === 'p') ? 'p-deck-container' : 'm-deck';
                 if (u.id === 'p') {
                     const handEl = document.getElementById('player-hand');
@@ -517,12 +555,11 @@ function checkLevelUp(u, doneCb) {
                         cardsDOM.forEach((cardEl, i) => {
                             let rect = cardEl.getBoundingClientRect(); let key = u.hand[i];
                             if (key) { animateFly(rect, deckContainerId, key, null, false, false, true); }
-                            cardEl.style.opacity = '0'; // esconde instantâneo
+                            cardEl.style.opacity = '0'; 
                         });
                     }
                 }
 
-                // 2. ESPERA O VOO PARA MUDAR A LÓGICA E COMPRAR CARTAS
                 setTimeout(() => {
                     u.xp.forEach(x => u.deck.push(x)); u.xp = []; 
                     u.hand.forEach(x => u.deck.push(x)); u.hand = [];
@@ -537,13 +574,14 @@ function checkLevelUp(u, doneCb) {
 
                     let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
                     
-                    // 3. RENDERIZA E COMPRA ANIMADO
                     if (u.id === 'p') {
-                        window.isDealingCards = true;
+                        window.isMatchStarting = true; // Essencial para as novas cartas nascerem invisiveis
                         updateUI(); 
-                        dealCardsAnimated('player-hand', () => { window.isDealingCards = false; updateUI(); doneCb(true); });
+                        dealAllInitialCards(); // Esta função mostra as cartas de forma animada e tira isProcessing!
+                        doneCb(true);
                     } else {
-                        updateUI(); doneCb(true);
+                        updateUI(); 
+                        doneCb(true);
                     }
                 }, 400); 
             });
@@ -571,10 +609,7 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
 
 function renderTable(key, slotId, isPlayer = false) { let el = document.getElementById(slotId); el.innerHTML = ''; let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`; let imgUrl = getCardArt(key, isPlayer); card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`; el.appendChild(card); }
 
-function updateUI() { 
-    if(window.isDealingCards) return; // Evita bugar DOM enquanto cartas saltam
-    updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; 
-}
+function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
 
 function updateUnit(u) {
     document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl; document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
@@ -600,7 +635,8 @@ function updateUnit(u) {
             const isDBSelected = (window.gameMode === 'pvp' && moveInDB === k && window.pvpSelectedCardIndex === null);
 
             if (isLocallySelected || isDBSelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
-            if(window.isMatchStarting || window.isDealingCards) { c.style.opacity = '0'; } else { c.style.opacity = '1'; }
+
+            if(window.isMatchStarting) { c.style.opacity = '0'; } else { c.style.opacity = '1'; }
 
             let lethalType = checkCardLethality(k, player, monster); let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             let imgUrl = getCardArt(k, true); c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
