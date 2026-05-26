@@ -56,3 +56,47 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-app); m
 
 #rotate-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 999999; flex-direction: column; justify-content: center; align-items: center; color: var(--gold); font-family: 'Russo One', sans-serif; font-size: 24px; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
 @media (max-width: 900px) and (orientation: portrait) { body.force-landscape #rotate-overlay { display: flex !important; } }
+
+/* --- NOVAS CLASSES DE ANIMAÇÃO DE LEVEL UP --- */
+
+/* Animação das cartas da MÃO retornando ao baralho do jogador (canto inferior esquerdo) */
+.return-to-deck-p-anim {
+    transform: translate(-30vw, 30vh) scale(0.2) !important; 
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out !important;
+    z-index: 100;
+}
+
+/* Animação das cartas da MÃO retornando ao baralho do monstro (canto superior esquerdo) */
+.return-to-deck-m-anim {
+    transform: translate(-30vw, -30vh) scale(0.2) !important; 
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out !important;
+    z-index: 100;
+}
+
+/* Animação das cartas de XP retornando ao baralho do jogador */
+.xp-return-to-deck-p-anim {
+    transform: translate(-45vw, 40vh) scale(0.1) !important;
+    opacity: 0 !important;
+    transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out !important;
+}
+
+/* Animação das cartas de XP retornando ao baralho do monstro */
+.xp-return-to-deck-m-anim {
+    transform: translate(-45vw, -40vh) scale(0.1) !important;
+    opacity: 0 !important;
+    transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out !important;
+}
+
+/* Classe de animação de compra (já deve existir no seu css, mas reforçamos aqui para a nova mão) */
+.intro-anim {
+    animation: slideUpFade 0.5s ease-out forwards;
+    opacity: 0;
+}
+@keyframes slideUpFade {
+    0% { transform: translateY(50px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
