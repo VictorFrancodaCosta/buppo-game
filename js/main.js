@@ -1,28 +1,8 @@
 import { CARDS_DB, DECK_TEMPLATE, ACTION_KEYS } from './data.js';
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, getDocs, collection, query, orderBy, limit, onSnapshot, increment, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-// --- CONFIGURAÇÃO FIREBASE ---
-const firebaseConfig = {
-    apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
-    authDomain: "buppo-game.firebaseapp.com",
-    projectId: "buppo-game",
-    storageBucket: "buppo-game.firebasestorage.app",
-    messagingSenderId: "950871979140",
-    appId: "1:950871979140:web:f2dba12900500c52053ed1"
-};
-
-let app, auth, db, provider;
-try {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    provider = new GoogleAuthProvider();
-    console.log("Firebase Web Iniciado.");
-} catch (e) {
-    console.error("Erro Firebase (Modo Offline):", e);
-}
+import { app, auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, notifyAbandonmentDB } from './firebase_network.js';
+import { stringToSeed, shuffle, generateShuffledDeck, resetUnit, getBestAIMove, checkCardLethality } from './game_logic.js';
+import { doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // --- VARIÁVEIS GLOBAIS ---
 let currentUser = null;
@@ -32,52 +12,7 @@ window.gameAssets = [];
 window.pvpUnsubscribe = null; 
 let searchInterval = null;
 
-// --- ASSETS LOCAIS ---
-const MAGE_ASSETS = {
-    'ATAQUE': 'assets/img/carta_ataque_mago.png',
-    'BLOQUEIO': 'assets/img/carta_bloqueio_mago.png',
-    'DESCANSAR': 'assets/img/carta_descansar_mago.png',
-    'DESARMAR': 'assets/img/carta_desarmar_mago.png',
-    'TREINAR': 'assets/img/carta_treinar_mago.png',
-    'DECK_IMG': 'assets/img/deck_verso_mago.png',
-    'DECK_SELECT': 'assets/img/card_selecao_mago.png'
-};
-
-const ASSETS_TO_LOAD = {
-    images: [
-        'assets/img/logo_buppo.png', 'assets/img/mesa_cavaleiro.png', 'assets/img/mesa_mago.png',
-        'assets/img/bg_saguao.png', 'assets/img/ui_moldura_perfil.png', 'assets/img/ui_placa_selecao.png',
-        'assets/img/card_selecao_cavaleiro.png', 'assets/img/card_selecao_mago.png',
-        'assets/img/deck_verso_cavaleiro.png', 'assets/img/deck_verso_mago.png',
-        'assets/img/card_verso_padrao.png', 'assets/img/ui_mesa_deck.png', 'assets/img/ui_area_xp.png',
-        'assets/img/carta_ataque_cavaleiro.png', 'assets/img/carta_bloqueio_cavaleiro.png',
-        'assets/img/carta_descansar_cavaleiro.png', 'assets/img/carta_desarmar_cavaleiro.png',
-        'assets/img/carta_treinar_cavaleiro.png', 'assets/img/carta_ataque_mago.png',
-        'assets/img/carta_bloqueio_mago.png', 'assets/img/carta_descansar_mago.png',
-        'assets/img/carta_desarmar_mago.png', 'assets/img/carta_treinar_mago.png'
-    ],
-    audio: [
-        { id: 'bgm-menu', src: 'assets/audio/musica_menu.wav', loop: true }, 
-        { id: 'bgm-loop', src: 'assets/audio/musica_batalha.mp3', loop: true },
-        { id: 'sfx-nav', src: 'assets/audio/sfx_click.mp3' }, { id: 'sfx-deal', src: 'assets/audio/sfx_dar_cartas.mp3' }, 
-        { id: 'sfx-play', src: 'assets/audio/sfx_jogar_carta.mp3' }, { id: 'sfx-hit', src: 'assets/audio/sfx_dano_fisico.mp3' }, 
-        { id: 'sfx-hit-mage', src: 'assets/audio/sfx_dano_magico.mp3' }, { id: 'sfx-block', src: 'assets/audio/sfx_bloqueio.mp3' }, 
-        { id: 'sfx-block-mage', src: 'assets/audio/sfx_bloqueio_magico.mp3' }, { id: 'sfx-heal', src: 'assets/audio/sfx_cura.mp3' }, 
-        { id: 'sfx-levelup', src: 'assets/audio/sfx_levelup.mp3' }, { id: 'sfx-train', src: 'assets/audio/sfx_treinar.mp3' }, 
-        { id: 'sfx-disarm', src: 'assets/audio/sfx_desarmar.mp3' }, { id: 'sfx-cine', src: 'assets/audio/ambience_cine.mp3', loop: true }, 
-        { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' }, { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' }, 
-        { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' }, { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' }, 
-        { id: 'sfx-lose', src: 'assets/audio/sfx_derrota.mp3' }, { id: 'sfx-tie', src: 'assets/audio/sfx_empate.mp3' }
-    ]
-};
-
-let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
-
-let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
-let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
-let isProcessing = false; let turnCount = 1; let playerHistory = []; 
-
-// --- CONTROLES DE ÁUDIO CORRIGIDOS ---
+// CONTROLES DE ÁUDIO
 window.masterVol = 0.5; 
 window.musicEnabled = true;
 window.sfxEnabled = true;
@@ -87,7 +22,7 @@ let mixerInterval = null;
 
 // --- ESTADOS GLOBAIS ---
 window.isMatchStarting = false;
-window.isDealingCards = false;
+window.isDealingCards = false; // Controle de animação da mão inicial e reposição
 window.currentDeck = 'knight';
 window.myRole = null; 
 window.currentMatchId = null;
@@ -96,9 +31,65 @@ window.isResolvingTurn = false;
 window.pvpStartData = null; 
 window.latestMatchData = null; 
 
+let isProcessing = false; 
+let turnCount = 1; 
+let playerHistory = []; 
+
+// --- ASSETS LOCAIS ---
+const MAGE_ASSETS = {
+    'ATAQUE': 'assets/img/carta_ataque_mago.webp',
+    'BLOQUEIO': 'assets/img/carta_bloqueio_mago.webp',
+    'DESCANSAR': 'assets/img/carta_descansar_mago.webp',
+    'DESARMAR': 'assets/img/carta_desarmar_mago.webp',
+    'TREINAR': 'assets/img/carta_treinar_mago.webp',
+    'DECK_IMG': 'assets/img/deck_verso_mago.webp',
+    'DECK_SELECT': 'assets/img/card_selecao_mago.webp'
+};
+
+const ASSETS_TO_LOAD = {
+    images: [
+        'assets/img/logo_buppo.webp', 'assets/img/mesa_cavaleiro.webp', 'assets/img/mesa_mago.webp',
+        'assets/img/bg_saguao.webp', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
+        'assets/img/card_selecao_cavaleiro.webp', 'assets/img/card_selecao_mago.webp',
+        'assets/img/deck_verso_cavaleiro.webp', 'assets/img/deck_verso_mago.webp',
+        'assets/img/card_verso_padrao.webp', 'assets/img/ui_mesa_deck.webp', 'assets/img/ui_area_xp.webp',
+        'assets/img/carta_ataque_cavaleiro.webp', 'assets/img/carta_bloqueio_cavaleiro.webp',
+        'assets/img/carta_descansar_cavaleiro.webp', 'assets/img/carta_desarmar_cavaleiro.webp',
+        'assets/img/carta_treinar_cavaleiro.webp', 'assets/img/carta_ataque_mago.webp',
+        'assets/img/carta_bloqueio_mago.webp', 'assets/img/carta_descansar_mago.webp',
+        'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
+        'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp'
+    ],
+    audio: [
+        { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true }, 
+        { id: 'bgm-loop', src: 'assets/audio/musica_batalha.mp3', loop: true },
+        { id: 'sfx-nav', src: 'assets/audio/sfx_click.mp3' }, 
+        { id: 'sfx-deal', src: 'assets/audio/sfx_dar_cartas.mp3' }, 
+        { id: 'sfx-play', src: 'assets/audio/sfx_jogar_carta.mp3' }, 
+        { id: 'sfx-hit', src: 'assets/audio/sfx_dano_fisico.mp3' }, 
+        { id: 'sfx-hit-mage', src: 'assets/audio/sfx_dano_magico.mp3' }, 
+        { id: 'sfx-block', src: 'assets/audio/sfx_bloqueio.mp3' }, 
+        { id: 'sfx-block-mage', src: 'assets/audio/sfx_bloqueio_magico.mp3' }, 
+        { id: 'sfx-heal', src: 'assets/audio/sfx_cura.mp3' }, 
+        { id: 'sfx-levelup', src: 'assets/audio/sfx_levelup.mp3' }, 
+        { id: 'sfx-train', src: 'assets/audio/sfx_treinar.mp3' }, 
+        { id: 'sfx-disarm', src: 'assets/audio/sfx_desarmar.mp3' }, 
+        { id: 'sfx-cine', src: 'assets/audio/ambience_cine.mp3', loop: true }, 
+        { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' }, 
+        { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' }, 
+        { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' }, 
+        { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' }, 
+        { id: 'sfx-lose', src: 'assets/audio/sfx_derrota.mp3' }, 
+        { id: 'sfx-tie', src: 'assets/audio/sfx_empate.mp3' }
+    ]
+};
+
+let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
+let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
+let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
+
 // --- LÓGICA DE LIMPEZA ---
-function cleanupMatchState() {
-    console.log("--- LIMPANDO ESTADO DA PARTIDA ---");
+window.cleanupMatchState = function() {
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     if (searchInterval) { clearInterval(searchInterval); searchInterval = null; }
     window.currentMatchId = null; window.myRole = null; window.pvpStartData = null;
@@ -112,32 +103,19 @@ function getCardArt(cardKey, isPlayer) {
     return CARDS_DB[cardKey].img;
 }
 
-function stringToSeed(str) { let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); return Math.abs(hash); }
-function shuffle(array, seed = null) { let rng = Math.random; if (seed !== null) { let currentSeed = seed; rng = function() { currentSeed = (currentSeed * 9301 + 49297) % 233280; return currentSeed / 233280; } } for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
-function generateShuffledDeck() { let deck = []; for(let k in DECK_TEMPLATE) { for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k); } shuffle(deck); return deck; }
-
 const MusicController = {
-    currentTrackId: null,
-    fadeTimer: null,
+    currentTrackId: null, fadeTimer: null,
     play(trackId) {
         if (!audios[trackId]) return;
         try {
             if (this.currentTrackId === trackId) {
                 if (audios[trackId].paused && window.musicEnabled) {
-                    const audio = audios[trackId];
-                    if (audio.readyState >= 2) audio.currentTime = 0;
-                    audio.volume = 0; audio.play().catch(()=>{});
-                    this.fadeIn(audio, 0.5 * window.masterVol);
-                }
-                return; 
+                    const audio = audios[trackId]; if (audio.readyState >= 2) audio.currentTime = 0; audio.volume = 0; audio.play().catch(()=>{}); this.fadeIn(audio, 0.5 * window.masterVol);
+                } return; 
             } 
             const maxVol = 0.5 * window.masterVol;
             if (this.currentTrackId && audios[this.currentTrackId]) { this.fadeOut(audios[this.currentTrackId]); }
-            if (trackId && audios[trackId]) {
-                const newAudio = audios[trackId];
-                if (newAudio.readyState >= 2) newAudio.currentTime = 0;
-                if (window.musicEnabled) { newAudio.volume = 0; newAudio.play().catch(()=>{}); this.fadeIn(newAudio, maxVol); }
-            }
+            if (trackId && audios[trackId]) { const newAudio = audios[trackId]; if (newAudio.readyState >= 2) newAudio.currentTime = 0; if (window.musicEnabled) { newAudio.volume = 0; newAudio.play().catch(()=>{}); this.fadeIn(newAudio, maxVol); } }
             this.currentTrackId = trackId;
         } catch(e) {}
     },
@@ -149,16 +127,11 @@ const MusicController = {
 window.toggleSoundType = function(type) {
     window.playNavSound();
     if (type === 'music') {
-        const check = document.getElementById('check-music');
-        if(check) window.musicEnabled = check.checked;
-        if (!window.musicEnabled) {
-            if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].pause();
-        } else {
-            if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].play().catch(()=>{});
-        }
+        const check = document.getElementById('check-music'); if(check) window.musicEnabled = check.checked;
+        if (!window.musicEnabled) { if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].pause(); } 
+        else { if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].play().catch(()=>{}); }
     } else if (type === 'sfx') {
-        const check = document.getElementById('check-sfx');
-        if(check) window.sfxEnabled = check.checked;
+        const check = document.getElementById('check-sfx'); if(check) window.sfxEnabled = check.checked;
     }
     if(window.saveAudioSettings) window.saveAudioSettings();
 };
@@ -166,12 +139,7 @@ window.toggleSoundType = function(type) {
 window.playNavSound = function() { if(!window.sfxEnabled) return; let s = audios['sfx-nav']; if(s) { try { if (s.readyState >= 2) s.currentTime = 0; s.play().catch(()=>{}); } catch(e) {} } };
 
 let lastHoverTime = 0;
-window.playUIHoverSound = function() {
-    if(!window.sfxEnabled) return;
-    let now = Date.now(); if (now - lastHoverTime < 50) return; 
-    let base = audios['sfx-ui-hover'];
-    if(base) { try { let s = base.cloneNode(); s.volume = 0.3 * (window.masterVol || 1.0); s.play().catch(()=>{}); lastHoverTime = now; } catch(e){} }
-};
+window.playUIHoverSound = function() { if(!window.sfxEnabled) return; let now = Date.now(); if (now - lastHoverTime < 50) return; let base = audios['sfx-ui-hover']; if(base) { try { let s = base.cloneNode(); s.volume = 0.3 * (window.masterVol || 1.0); s.play().catch(()=>{}); lastHoverTime = now; } catch(e){} } };
 
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -198,8 +166,7 @@ window.toggleConfig = function() {
     const abandonArea = document.getElementById('abandon-area');
 
     if (overlay.style.display === 'flex') {
-        box.classList.remove('config-pop-in');
-        box.classList.add('config-pop-out');
+        box.classList.remove('config-pop-in'); box.classList.add('config-pop-out');
         setTimeout(() => { overlay.style.display = 'none'; box.classList.remove('config-pop-out'); }, 200);
     } else {
         const isGameActive = document.getElementById('game-screen').classList.contains('active');
@@ -211,20 +178,12 @@ window.toggleConfig = function() {
 window.openDeckSelector = function() {
     document.body.classList.add('force-landscape');
     const ds = document.getElementById('deck-selection-screen');
-    if(ds) { ds.style.display = 'flex'; ds.style.opacity = '1'; ds.style.pointerEvents = 'auto'; 
-        const options = document.querySelectorAll('.deck-option'); options.forEach(opt => { opt.style = ""; const img = opt.querySelector('img'); if(img) img.style = ""; });
-    }
-    try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen().catch(() => {}); }
-        if (screen.orientation && screen.orientation.lock) { screen.orientation.lock('landscape').catch(() => {}); }
-    } catch (e) {}
+    if(ds) { ds.style.display = 'flex'; ds.style.opacity = '1'; ds.style.pointerEvents = 'auto'; const options = document.querySelectorAll('.deck-option'); options.forEach(opt => { opt.style = ""; const img = opt.querySelector('img'); if(img) img.style = ""; }); }
+    try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen().catch(() => {}); } if (screen.orientation && screen.orientation.lock) { screen.orientation.lock('landscape').catch(() => {}); } } catch (e) {}
     window.showScreen('deck-selection-screen');
 };
 
-(function createRotateOverlay() {
-    if (!document.getElementById('rotate-overlay')) {
-        const div = document.createElement('div'); div.id = 'rotate-overlay'; div.innerHTML = `<div style="font-size: 50px; margin-bottom: 20px;">↻</div><div>GIRE O CELULAR<br>PARA JOGAR</div>`; document.body.appendChild(div);
-    }
-})();
+(function createRotateOverlay() { if (!document.getElementById('rotate-overlay')) { const div = document.createElement('div'); div.id = 'rotate-overlay'; div.innerHTML = `<div style="font-size: 50px; margin-bottom: 20px;">↻</div><div>GIRE O CELULAR<br>PARA JOGAR</div>`; document.body.appendChild(div); } })();
 
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select'] && window.sfxEnabled) { try { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); } catch(e){} }
@@ -237,23 +196,17 @@ window.selectDeck = function(deckType) {
             opt.style.transition = "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)"; opt.style.transform = "scale(1.15) translateY(-20px)"; opt.style.filter = "brightness(1.3) drop-shadow(0 0 20px var(--gold))"; opt.style.zIndex = "100"; const img = opt.querySelector('img'); if(img) img.style.filter = "grayscale(0%) brightness(1.2)";
         } else { opt.style.transition = "all 0.3s ease"; opt.style.transform = "scale(0.8) translateY(10px)"; opt.style.opacity = "0.2"; opt.style.filter = "grayscale(100%)"; }
     });
-    setTimeout(() => { const selectionScreen = document.getElementById('deck-selection-screen'); selectionScreen.style.transition = "opacity 0.5s"; selectionScreen.style.opacity = "0";
-        setTimeout(() => { selectionScreen.style.display = 'none'; if (window.gameMode === 'pvp') initiateMatchmaking(); else window.transitionToGame(); }, 500);
-    }, 400);
+    setTimeout(() => { const selectionScreen = document.getElementById('deck-selection-screen'); selectionScreen.style.transition = "opacity 0.5s"; selectionScreen.style.opacity = "0"; setTimeout(() => { selectionScreen.style.display = 'none'; if (window.gameMode === 'pvp') initiateMatchmaking(); else window.transitionToGame(); }, 500); }, 400);
 };
 
 window.transitionToGame = function() {
     const transScreen = document.getElementById('transition-overlay'); const transText = transScreen.querySelector('.trans-text');
     if(transText) transText.innerText = "PREPARANDO BATALHA..."; if(transScreen) transScreen.classList.add('active');
-    setTimeout(() => {
-        MusicController.play('bgm-loop'); let bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode'); window.showScreen('game-screen');
-        const handEl = document.getElementById('player-hand'); if(handEl) handEl.innerHTML = '';
-        setTimeout(() => { if(transScreen) transScreen.classList.remove('active'); setTimeout(() => { startGameFlow(); }, 200); }, 1500);
-    }, 500); 
+    setTimeout(() => { MusicController.play('bgm-loop'); let bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode'); window.showScreen('game-screen'); const handEl = document.getElementById('player-hand'); if(handEl) handEl.innerHTML = ''; setTimeout(() => { if(transScreen) transScreen.classList.remove('active'); setTimeout(() => { startGameFlow(); }, 200); }, 1500); }, 500); 
 }
 
 window.transitionToLobby = function(skipAnim = false) {
-    cleanupMatchState(); document.body.classList.remove('force-landscape');
+    window.cleanupMatchState(); document.body.classList.remove('force-landscape');
     const ds = document.getElementById('deck-selection-screen'); if(ds) { ds.style.opacity = '0'; ds.style.pointerEvents = 'none'; ds.style.display = 'none'; ds.classList.remove('active'); }
     if (skipAnim) { window.goToLobby(false); }
     else { const transScreen = document.getElementById('transition-overlay'); const transText = transScreen.querySelector('.trans-text'); if(transText) transText.innerText = "RETORNANDO AO SAGUÃO..."; if(transScreen) transScreen.classList.add('active'); setTimeout(() => { window.goToLobby(false); setTimeout(() => { if(transScreen) transScreen.classList.remove('active'); }, 1000); }, 500); }
@@ -261,39 +214,26 @@ window.transitionToLobby = function(skipAnim = false) {
 
 window.goToLobby = async function(isAutoLogin = false) {
     if(!currentUser) { window.showScreen('start-screen'); document.body.classList.remove('theme-cavaleiro', 'theme-mago'); MusicController.play('bgm-menu'); return; }
-    cleanupMatchState(); isProcessing = false; document.body.classList.remove('theme-cavaleiro', 'theme-mago');
-    let bg = document.getElementById('game-background'); if(bg) bg.classList.add('lobby-mode');
-    MusicController.play('bgm-menu'); createLobbyFlares();
+    window.cleanupMatchState(); document.body.classList.remove('theme-cavaleiro', 'theme-mago');
+    let bg = document.getElementById('game-background'); if(bg) bg.classList.add('lobby-mode'); MusicController.play('bgm-menu'); createLobbyFlares();
       
     const userRef = doc(db, "players", currentUser.uid); const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
         await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0, settings: { vol: 0.5, music: true, sfx: true } });
-        document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`; document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
-        window.updateVol('master', 0.5);
+        document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`; document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`; window.updateVol('master', 0.5);
     } else {
         const d = userSnap.data(); document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`; document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
         if(d.settings) {
-            window.masterVol = d.settings.vol !== undefined ? d.settings.vol : 0.5;
-            window.musicEnabled = d.settings.music !== undefined ? d.settings.music : true;
-            window.sfxEnabled = d.settings.sfx !== undefined ? d.settings.sfx : true;
-
+            window.masterVol = d.settings.vol !== undefined ? d.settings.vol : 0.5; window.musicEnabled = d.settings.music !== undefined ? d.settings.music : true; window.sfxEnabled = d.settings.sfx !== undefined ? d.settings.sfx : true;
             let slider = document.getElementById('vol-slider'); if(slider) slider.value = window.masterVol;
             let chkM = document.getElementById('check-music'); if(chkM) chkM.checked = window.musicEnabled;
             let chkS = document.getElementById('check-sfx'); if(chkS) chkS.checked = window.sfxEnabled;
-
             window.updateVol('master', window.masterVol);
-            if (!window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
-                audios[MusicController.currentTrackId].pause();
-            } else if (window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
-                audios[MusicController.currentTrackId].play().catch(()=>{});
-            }
+            if (!window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) { audios[MusicController.currentTrackId].pause(); } else if (window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) { audios[MusicController.currentTrackId].play().catch(()=>{}); }
         }
     }
     const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
-    onSnapshot(q, (snapshot) => {
-        let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>'; let pos = 1;
-        snapshot.forEach((doc) => { const p = doc.data(); let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : "")); html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`; pos++; }); html += '</tbody></table>'; document.getElementById('ranking-content').innerHTML = html;
-    });
+    onSnapshot(q, (snapshot) => { let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>'; let pos = 1; snapshot.forEach((doc) => { const p = doc.data(); let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : "")); html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`; pos++; }); html += '</tbody></table>'; document.getElementById('ranking-content').innerHTML = html; });
     window.showScreen('lobby-screen'); document.getElementById('end-screen').classList.remove('visible'); 
 };
 
@@ -312,189 +252,77 @@ function startGameFlow() {
     turnCount = 1; playerHistory = [];
     drawCardLogic(monster, 6); drawCardLogic(player, 6); 
     
-    updateUI(); // CRÍTICO: Atualiza a interface ANTES de animar as cartas
+    updateUI(); 
     dealAllInitialCards();
     if(window.gameMode === 'pvp') startPvPListener();
 }
 
 function startPvPListener() {
-    if(!window.currentMatchId) return;
-    if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
-    const matchRef = doc(db, "matches", window.currentMatchId);
-    let namesUpdated = false;
-      
+    if(!window.currentMatchId) return; if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
+    const matchRef = doc(db, "matches", window.currentMatchId); let namesUpdated = false;
     const ensureMyRole = (data) => { if (data.player1 && data.player1.uid === currentUser.uid) window.myRole = 'player1'; else if (data.player2 && data.player2.uid === currentUser.uid) window.myRole = 'player2'; };
 
     window.pvpUnsubscribe = onSnapshot(matchRef, (docSnap) => {
-        if (!docSnap.exists()) return;
-        const matchData = docSnap.data(); window.latestMatchData = matchData;
+        if (!docSnap.exists()) return; const matchData = docSnap.data(); window.latestMatchData = matchData;
         if (matchData.player1.uid !== currentUser.uid && matchData.player2.uid !== currentUser.uid) return;
         ensureMyRole(matchData);
 
         if (matchData.status === 'abandoned') {
             if (matchData.abandonedBy && currentUser && matchData.abandonedBy !== currentUser.uid) {
                 monster.hp = 0; updateUI(); isProcessing = true; MusicController.stopCurrent();
-                setTimeout(() => {
-                    const title = document.getElementById('end-title'); title.innerText = "VITÓRIA"; title.className = "win-theme"; showCenterText("OPONENTE DESISTIU!", "#ffd700"); playSound('sfx-win');
-                    if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
-                    document.getElementById('end-screen').classList.add('visible'); cleanupMatchState();
-                }, 500);
-            }
-            return; 
+                setTimeout(() => { const title = document.getElementById('end-title'); title.innerText = "VITÓRIA"; title.className = "win-theme"; showCenterText("OPONENTE DESISTIU!", "#ffd700"); playSound('sfx-win'); if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp'); document.getElementById('end-screen').classList.add('visible'); window.cleanupMatchState(); }, 500);
+            } return; 
         }
 
         if (!namesUpdated && matchData.player1 && matchData.player2) {
-            let myName, enemyName;
-            if (window.myRole === 'player1') { myName = matchData.player1.name; enemyName = matchData.player2.name; } else { myName = matchData.player2.name; enemyName = matchData.player1.name; }
-            const pNameEl = document.querySelector('#p-stats-cluster .unit-name'); const mNameEl = document.querySelector('#m-stats-cluster .unit-name');
-            if(pNameEl) pNameEl.innerText = myName; if(mNameEl) mNameEl.innerText = enemyName; namesUpdated = true; 
+            let myName, enemyName; if (window.myRole === 'player1') { myName = matchData.player1.name; enemyName = matchData.player2.name; } else { myName = matchData.player2.name; enemyName = matchData.player1.name; }
+            const pNameEl = document.querySelector('#p-stats-cluster .unit-name'); const mNameEl = document.querySelector('#m-stats-cluster .unit-name'); if(pNameEl) pNameEl.innerText = myName; if(mNameEl) mNameEl.innerText = enemyName; namesUpdated = true; 
         }
 
-        const p1Ready = matchData.p1Move && matchData.p1Move.length > 0; const p2Ready = matchData.p2Move && matchData.p2Move.length > 0;
-        updateUI();
-
-        if (p1Ready && p2Ready) {
-            if (!window.isResolvingTurn) {
-                const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
-                resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
-            }
-        } else {
-            if (window.myRole === 'player1' && p1Ready && !p2Ready) showPvPStatus("AGUARDANDO OPONENTE..."); else if (window.myRole === 'player2' && p2Ready && !p1Ready) showPvPStatus("AGUARDANDO OPONENTE...");
-        }
+        const p1Ready = matchData.p1Move && matchData.p1Move.length > 0; const p2Ready = matchData.p2Move && matchData.p2Move.length > 0; updateUI();
+        if (p1Ready && p2Ready) { if (!window.isResolvingTurn) { const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove(); resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm); } } else { if (window.myRole === 'player1' && p1Ready && !p2Ready) showPvPStatus("AGUARDANDO OPONENTE..."); else if (window.myRole === 'player2' && p2Ready && !p1Ready) showPvPStatus("AGUARDANDO OPONENTE..."); }
           
         if (window.gameMode === 'pvp' && window.myRole) {
-            const myServerRole = window.myRole; const enemyServerRole = (window.myRole === 'player1') ? 'player2' : 'player1';
-            const myData = matchData[myServerRole]; const enemyData = matchData[enemyServerRole];
-            
-            if (!window.isResolvingTurn && myData && myData.hp !== undefined) {
-                if (myData.hp < player.hp) {
-                    let dmg = player.hp - myData.hp; player.hp = myData.hp; showFloatingText('p-lvl', `-${dmg}`, "#ff7675"); triggerDamageEffect(true, true); updateUI(); checkEndGame();
-                }
-            }
-            
+            const myServerRole = window.myRole; const enemyServerRole = (window.myRole === 'player1') ? 'player2' : 'player1'; const myData = matchData[myServerRole]; const enemyData = matchData[enemyServerRole];
+            if (!window.isResolvingTurn && myData && myData.hp !== undefined) { if (myData.hp < player.hp) { let dmg = player.hp - myData.hp; player.hp = myData.hp; showFloatingText('p-lvl', `-${dmg}`, "#ff7675"); triggerDamageEffect(true, true); updateUI(); checkEndGame(); } }
             if (enemyData) {
                 if(enemyData.deck) monster.deck = [...enemyData.deck];
                 const serverXP = enemyData.xp || []; const localXP = monster.xp || [];
-
-                if (serverXP.length > localXP.length) {
-                    const diff = serverXP.length - localXP.length; const startIdx = localXP.length;
-                    for (let i = startIdx; i < serverXP.length; i++) {
-                        const newCardKey = serverXP[i]; animateFly('m-deck-container', 'm-xp', newCardKey, () => { triggerXPGlow('m'); }, false, false, false);
-                    }
-                    monster.xp = [...serverXP]; updateUI();
-                } 
+                if (serverXP.length > localXP.length) { const startIdx = localXP.length; for (let i = startIdx; i < serverXP.length; i++) { const newCardKey = serverXP[i]; animateFly('m-deck-container', 'm-xp', newCardKey, () => { triggerXPGlow('m'); }, false, false, false); } monster.xp = [...serverXP]; updateUI(); } 
                 else if (serverXP.length < localXP.length) {
                     monster.xp = [...serverXP];
                     if (enemyData.lvl && enemyData.lvl > monster.lvl) { triggerLevelUpVisuals('m'); playSound('sfx-levelup'); }
-                    if(enemyData.lvl) monster.lvl = enemyData.lvl; if(enemyData.maxHp) monster.maxHp = enemyData.maxHp; if(enemyData.bonusAtk !== undefined) monster.bonusAtk = enemyData.bonusAtk; if(enemyData.bonusBlock !== undefined) monster.bonusBlock = enemyData.bonusBlock; if(enemyData.hp !== undefined) monster.hp = enemyData.hp; 
-                    if(enemyData.hand !== undefined) monster.hand = [...enemyData.hand]; 
-                    updateUI();
+                    if(enemyData.lvl) monster.lvl = enemyData.lvl; if(enemyData.maxHp) monster.maxHp = enemyData.maxHp; if(enemyData.bonusAtk !== undefined) monster.bonusAtk = enemyData.bonusAtk; if(enemyData.bonusBlock !== undefined) monster.bonusBlock = enemyData.bonusBlock; if(enemyData.hp !== undefined) monster.hp = enemyData.hp; if(enemyData.hand !== undefined) monster.hand = [...enemyData.hand]; updateUI();
                 }
             }
         }
     });
 }
 
-function showPvPStatus(msg) {
-    let el = document.getElementById('pvp-status-bar');
-    if (!el) { el = document.createElement('div'); el.id = 'pvp-status-bar'; el.style.position = 'fixed'; el.style.top = '15%'; el.style.left = '50%'; el.style.transform = 'translateX(-50%)'; el.style.background = 'rgba(0,0,0,0.7)'; el.style.color = '#ffd700'; el.style.padding = '10px 20px'; el.style.borderRadius = '20px'; el.style.zIndex = '9999'; el.style.fontSize = '14px'; el.style.border = '1px solid #ffd700'; el.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)'; document.body.appendChild(el); }
-    el.innerText = msg;
-}
+function showPvPStatus(msg) { let el = document.getElementById('pvp-status-bar'); if (!el) { el = document.createElement('div'); el.id = 'pvp-status-bar'; el.style.position = 'fixed'; el.style.top = '15%'; el.style.left = '50%'; el.style.transform = 'translateX(-50%)'; el.style.background = 'rgba(0,0,0,0.7)'; el.style.color = '#ffd700'; el.style.padding = '10px 20px'; el.style.borderRadius = '20px'; el.style.zIndex = '9999'; el.style.fontSize = '14px'; el.style.border = '1px solid #ffd700'; el.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)'; document.body.appendChild(el); } el.innerText = msg; }
+function checkEndGame(){ if(player.hp<=0 || monster.hp<=0) { isProcessing = true; isLethalHover = false; MusicController.stopCurrent(); const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove(); setTimeout(()=>{ let title = document.getElementById('end-title'); let isWin = player.hp > 0; let isTie = player.hp <= 0 && monster.hp <= 0; if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); } else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); } else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); } if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp'); } else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(window.gameMode); } document.getElementById('end-screen').classList.add('visible'); }, 1000); } else { isProcessing = false; } }
 
-function checkEndGame(){ 
-    if(player.hp<=0 || monster.hp<=0) { 
-        isProcessing = true; isLethalHover = false; MusicController.stopCurrent();
-        const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
-        setTimeout(()=>{ 
-            let title = document.getElementById('end-title'); let isWin = player.hp > 0; let isTie = player.hp <= 0 && monster.hp <= 0;
-            if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); } else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); } else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); } 
-            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp'); } else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(window.gameMode); }
-            document.getElementById('end-screen').classList.add('visible'); 
-        }, 1000); 
-    } else { isProcessing = false; } 
-}
-
-onAuthStateChanged(auth, (user) => {
-    if (user) { currentUser = user; window.goToLobby(true); } else { currentUser = null; window.showScreen('start-screen'); const bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode'); const btnTxt = document.getElementById('btn-text'); if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE"; MusicController.play('bgm-menu'); }
-});
-
-window.googleLogin = async function() {
-    window.playNavSound(); const btnText = document.getElementById('btn-text'); btnText.innerText = "CONECTANDO...";
-    try { await signInWithPopup(auth, provider); } catch (error) { btnText.innerText = "ERRO - TENTE NOVAMENTE"; setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000); }
-};
-
-window.handleLogout = function() { window.playNavSound(); signOut(auth).then(() => { location.reload(); }); };
+onAuthStateChanged(auth, (user) => { if (user) { currentUser = user; window.goToLobby(true); } else { currentUser = null; window.showScreen('start-screen'); const bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode'); const btnTxt = document.getElementById('btn-text'); if(btnTxt) btnTxt.innerText = "LOGIN COM GOOGLE"; MusicController.play('bgm-menu'); } });
+window.googleLogin = async function() { window.playNavSound(); const btnText = document.getElementById('btn-text'); btnText.innerText = "CONECTANDO..."; try { await loginWithGoogle(); } catch (error) { btnText.innerText = "ERRO - TENTE NOVAMENTE"; setTimeout(() => btnText.innerText = "LOGIN COM GOOGLE", 3000); } };
+window.handleLogout = function() { window.playNavSound(); logoutGoogle().then(() => { location.reload(); }); };
 
 async function saveMatchHistory(result, pointsChange) {
     if (!currentUser) return;
-    try {
-        let enemyName = "PVE"; 
-        if (window.gameMode === 'pvp') {
-            if (window.pvpStartData) { enemyName = (window.myRole === 'player1') ? window.pvpStartData.player2.name : window.pvpStartData.player1.name; }
-            if (!enemyName || enemyName === "PVE") { const domName = document.querySelector('#m-stats-cluster .unit-name'); if (domName && domName.innerText !== 'Monstro') enemyName = domName.innerText; }
-            if(enemyName) enemyName = enemyName.split(' ')[0].toUpperCase();
-        }
-        const historyRef = collection(db, "players", currentUser.uid, "history");
-        await addDoc(historyRef, { result: result, opponent: enemyName, mode: window.gameMode || 'pve', deck: window.currentDeck, points: pointsChange, timestamp: Date.now() });
-    } catch (e) { console.error("Erro ao salvar histórico:", e); }
+    try { let enemyName = "PVE"; if (window.gameMode === 'pvp') { if (window.pvpStartData) { enemyName = (window.myRole === 'player1') ? window.pvpStartData.player2.name : window.pvpStartData.player1.name; } if (!enemyName || enemyName === "PVE") { const domName = document.querySelector('#m-stats-cluster .unit-name'); if (domName && domName.innerText !== 'Monstro') enemyName = domName.innerText; } if(enemyName) enemyName = enemyName.split(' ')[0].toUpperCase(); } await saveMatchHistoryDB(currentUser, enemyName, window.gameMode || 'pve', window.currentDeck, pointsChange); } catch (e) {}
 }
 
-window.registrarVitoriaOnline = async function(modo = 'pve') {
-    if(!currentUser) return;
-    try {
-        const userRef = doc(db, "players", currentUser.uid); const userSnap = await getDoc(userRef);
-        if(userSnap.exists()) {
-            const data = userSnap.data(); let modoAtual = window.gameMode || 'pve'; if (modo === 'pvp') modoAtual = 'pvp'; let pontosGanhos = (modoAtual === 'pvp') ? 8 : 1; 
-            await updateDoc(userRef, { totalWins: (data.totalWins || 0) + 1, score: (data.score || 0) + pontosGanhos }); await saveMatchHistory('WIN', pontosGanhos);
-        }
-    } catch(e) {}
-};
-
-window.registrarDerrotaOnline = async function(modo = 'pve') {
-    if(!currentUser) return;
-    try {
-        const userRef = doc(db, "players", currentUser.uid); const userSnap = await getDoc(userRef);
-        if(userSnap.exists()) {
-            const data = userSnap.data(); let modoAtual = window.gameMode || 'pve'; if (modo === 'pvp') modoAtual = 'pvp'; let pontosPerdidos = (modoAtual === 'pvp') ? 8 : 3; let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
-            await updateDoc(userRef, { score: novoScore }); await saveMatchHistory('LOSS', -pontosPerdidos);
-        }
-    } catch(e) {}
-};
+window.registrarVitoriaOnline = async function(modo = 'pve') { if(!currentUser) return; try { let modoAtual = window.gameMode || 'pve'; if (modo === 'pvp') modoAtual = 'pvp'; let pontosGanhos = await registrarVitoriaDB(currentUser, modoAtual); if(pontosGanhos > 0) await saveMatchHistory('WIN', pontosGanhos); } catch(e) {} };
+window.registrarDerrotaOnline = async function(modo = 'pve') { if(!currentUser) return; try { let modoAtual = window.gameMode || 'pve'; if (modo === 'pvp') modoAtual = 'pvp'; let pontosPerdidos = await registrarDerrotaDB(currentUser, modoAtual); if(pontosPerdidos !== 0) await saveMatchHistory('LOSS', pontosPerdidos); } catch(e) {} };
 
 window.restartMatch = function() { document.getElementById('end-screen').classList.remove('visible'); setTimeout(startGameFlow, 50); MusicController.play('bgm-loop'); }
-async function notifyAbandonment() { if (!window.currentMatchId || !currentUser) return; const matchRef = doc(db, "matches", window.currentMatchId); try { await updateDoc(matchRef, { status: 'abandoned', abandonedBy: currentUser.uid }); } catch (e) {} }
-window.abandonMatch = function() {
-    if(document.getElementById('game-screen').classList.contains('active')) {
-        window.toggleConfig(); 
-        window.openModal("ABANDONAR?", "Sair da partida contará como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], async (choice) => { 
-                if (choice === "SAIR") { if (window.gameMode === 'pvp') { await notifyAbandonment(); } window.registrarDerrotaOnline(window.gameMode); window.transitionToLobby(); }
-            });
-    }
-}
+async function notifyAbandonment() { if (!window.currentMatchId || !currentUser) return; await notifyAbandonmentDB(window.currentMatchId, currentUser.uid); }
+window.abandonMatch = function() { if(document.getElementById('game-screen').classList.contains('active')) { window.toggleConfig(); window.openModal("ABANDONAR?", "Sair da partida contará como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], async (choice) => { if (choice === "SAIR") { if (window.gameMode === 'pvp') { await notifyAbandonment(); } window.registrarDerrotaOnline(window.gameMode); window.transitionToLobby(); } }); } }
 
-function preloadGame() {
-    ASSETS_TO_LOAD.images.forEach(src => { let img = new Image(); img.src = src; window.gameAssets.push(img); img.onload = () => updateLoader(); img.onerror = () => updateLoader(); });
-    ASSETS_TO_LOAD.audio.forEach(a => { let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; audios[a.id] = s; window.gameAssets.push(s); s.onloadedmetadata = () => updateLoader(); s.onerror = () => updateLoader(); setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); });
-}
-
-function updateLoader() {
-    assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); const fill = document.getElementById('loader-fill'); if(fill) fill.style.width = pct + '%';
-    if(assetsLoaded >= totalAssets) {
-        if(window.updateVol) window.updateVol('master', window.masterVol || 0.5);
-        setTimeout(() => {
-            const loading = document.getElementById('loading-screen'); if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
-            if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
-        }, 800); 
-        document.body.addEventListener('click', () => { if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused && window.musicEnabled)) { MusicController.play('bgm-menu'); } }, { once: true });
-    }
-}
-
+function preloadGame() { ASSETS_TO_LOAD.images.forEach(src => { let img = new Image(); img.src = src; window.gameAssets.push(img); img.onload = () => updateLoader(); img.onerror = () => updateLoader(); }); ASSETS_TO_LOAD.audio.forEach(a => { let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; audios[a.id] = s; window.gameAssets.push(s); s.onloadedmetadata = () => updateLoader(); s.onerror = () => updateLoader(); setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000); }); }
+function updateLoader() { assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); const fill = document.getElementById('loader-fill'); if(fill) fill.style.width = pct + '%'; if(assetsLoaded >= totalAssets) { if(window.updateVol) window.updateVol('master', window.masterVol || 0.5); setTimeout(() => { const loading = document.getElementById('loading-screen'); if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); } if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; } }, 800); document.body.addEventListener('click', () => { if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused && window.musicEnabled)) { MusicController.play('bgm-menu'); } }, { once: true }); } }
 function initGlobalHoverLogic() { let lastTarget = null; document.body.addEventListener('mouseover', (e) => { const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn'; const target = e.target.closest(selector); if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } else if (!target) { lastTarget = null; } }); }
 
-window.onload = function() {
-    const deckScreen = document.getElementById('deck-selection-screen'); if (deckScreen) { let backBtn = deckScreen.querySelector('.btn-back'); if (!backBtn) backBtn = deckScreen.querySelector('.circle-btn'); if (!backBtn) backBtn = deckScreen.querySelector('button'); if (backBtn) { backBtn.style.zIndex = "9999"; backBtn.style.pointerEvents = "all"; backBtn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); window.playNavSound(); window.transitionToLobby(true); }; } }
-};
-
+window.onload = function() { const deckScreen = document.getElementById('deck-selection-screen'); if (deckScreen) { let backBtn = deckScreen.querySelector('.btn-back'); if (!backBtn) backBtn = deckScreen.querySelector('.circle-btn'); if (!backBtn) backBtn = deckScreen.querySelector('button'); if (backBtn) { backBtn.style.zIndex = "9999"; backBtn.style.pointerEvents = "all"; backBtn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); window.playNavSound(); window.transitionToLobby(true); }; } } };
 window.addEventListener('beforeunload', () => { if (window.gameMode === 'pvp' && window.currentMatchId && !document.getElementById('end-screen').classList.contains('visible')) { notifyAbandonment(); } });
 window.toggleFullScreen = function() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } else { if (document.exitFullscreen) { document.exitFullscreen(); } } }
 
@@ -511,14 +339,7 @@ window.updateVol = function(type, val) {
 }
 function playSound(key) { if (!window.sfxEnabled && !key.startsWith('bgm')) return; if(audios[key]) { try { if (key === 'sfx-levelup') { audios[key].volume = 1.0 * (window.masterVol || 1.0); if (audios[key].readyState >= 2) audios[key].currentTime = 0; audios[key].play().catch(e => console.log(e)); let clone = audios[key].cloneNode(); clone.volume = audios[key].volume; clone.play().catch(()=>{}); } else { if (audios[key].readyState >= 2) audios[key].currentTime = 0; audios[key].play().catch(e => console.log(e)); } } catch(e){} } }
 
-window.saveAudioSettings = async function() {
-    if (!currentUser) return;
-    try {
-        const userRef = doc(db, "players", currentUser.uid);
-        await updateDoc(userRef, { settings: { vol: window.masterVol, music: window.musicEnabled, sfx: window.sfxEnabled } });
-    } catch(e) { console.error("Erro ao salvar config", e); }
-}
-
+window.saveAudioSettings = async function() { if (!currentUser) return; try { const userRef = doc(db, "players", currentUser.uid); await updateDoc(userRef, { settings: { vol: window.masterVol, music: window.musicEnabled, sfx: window.sfxEnabled } }); } catch(e) {} }
 function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } } initAmbientParticles();
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
@@ -529,36 +350,18 @@ function triggerBlockEffect(isPlayer) { try { if(isPlayer && window.currentDeck 
 function triggerXPGlow(unitId) { let xpArea = document.getElementById(unitId + '-xp'); if(xpArea) { xpArea.classList.add('xp-glow'); setTimeout(() => xpArea.classList.remove('xp-glow'), 600); } }
 function showCenterText(txt, col) { let el = document.createElement('div'); el.className = 'center-text'; el.innerText = txt; if(col) el.style.color = col; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
 
-function resetUnit(u, predefinedDeck = null, role = null) { 
-    u.hp = 6; u.maxHp = 6; u.lvl = 1; u.xp = []; u.hand = []; u.originalRole = role || 'pve'; 
-    if (predefinedDeck) { u.deck = [...predefinedDeck]; } else { u.deck = []; for(let k in DECK_TEMPLATE) { for(let i=0; i<DECK_TEMPLATE[k]; i++) u.deck.push(k); } shuffle(u.deck); }
-    u.disabled = null; u.bonusBlock = 0; u.bonusAtk = 0; 
-}
+function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
-// === NOVO GERENCIADOR DE ANIMAÇÃO DE COMPRA DE CARTAS ===
 function dealCardsAnimated(containerId, cb) {
     if(window.sfxEnabled) playSound('sfx-deal');
     const handEl = document.getElementById(containerId);
     if(!handEl) { if(cb) cb(); return; }
     const cards = Array.from(handEl.children);
-    cards.forEach((cardEl, i) => {
-        cardEl.classList.add('intro-anim');
-        cardEl.style.animationDelay = (i * 0.1) + 's';
-        cardEl.style.opacity = ''; 
-    });
-    setTimeout(() => {
-        cards.forEach(c => { c.classList.remove('intro-anim'); c.style.animationDelay = ''; });
-        if(cb) cb();
-    }, 500 + cards.length * 100);
+    cards.forEach((cardEl, i) => { cardEl.classList.add('intro-anim'); cardEl.style.animationDelay = (i * 0.1) + 's'; cardEl.style.opacity = '1'; });
+    setTimeout(() => { cards.forEach(c => { c.classList.remove('intro-anim'); c.style.animationDelay = ''; }); if(cb) cb(); }, 500 + cards.length * 100);
 }
 
-function dealAllInitialCards() {
-    isProcessing = true; 
-    window.isMatchStarting = false;
-    dealCardsAnimated('player-hand', () => { isProcessing = false; });
-}
-
-function checkCardLethality(cardKey) { if(cardKey === 'ATAQUE') { let damage = player.lvl; return damage >= monster.hp ? 'red' : false; } if(cardKey === 'BLOQUEIO') { let reflect = 1 + player.bonusBlock; return reflect >= monster.hp ? 'blue' : false; } return false; }
+function dealAllInitialCards() { isProcessing = true; window.isMatchStarting = false; dealCardsAnimated('player-hand', () => { isProcessing = false; }); }
 
 function onCardClick(index) {
     if(isProcessing) return; if (!player.hand[index]) return;
@@ -581,17 +384,9 @@ async function lockInPvPMove(index, disarmChoice) {
     catch (e) { isProcessing = false; window.pvpSelectedCardIndex = null; if(cardEl) cardEl.classList.remove('card-selected'); const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove(); showCenterText("ERRO AO ENVIAR", "red"); }
 }
 
-function getBestAIMove() {
-    let moves = []; monster.hand.forEach((card, index) => { if(card !== monster.disabled) { moves.push({ card: card, index: index, score: 0 }); } }); if(moves.length === 0) return null;
-    let recentHistory = playerHistory.slice(-5); let attackCount = recentHistory.filter(c => c === 'ATAQUE').length; let playerAggro = recentHistory.length > 0 ? (attackCount / recentHistory.length) : 0.5;
-    let threatLvl = player.lvl + player.bonusAtk; let amIDying = monster.hp <= threatLvl; let myDmg = monster.lvl + monster.bonusAtk; let canKill = player.hp <= myDmg;
-    moves.forEach(m => { let score = 50; if (m.card === 'ATAQUE') { if (canKill) score += 500; if (playerAggro < 0.4) score += 40; if (amIDying) score -= 30; } else if (m.card === 'BLOQUEIO') { if (amIDying) score += 100; if (playerAggro > 0.6) score += 60; if (threatLvl >= 3) score += 40; } else if (m.card === 'DESCANSAR') { if (monster.hp === monster.maxHp) score -= 100; else if (monster.hp <= 3) score += 50; if (playerAggro > 0.7) score -= 40; } else if (m.card === 'DESARMAR') { if (amIDying) score += 120; if (playerAggro > 0.8) score += 50; } else if (m.card === 'TREINAR') { if (turnCount < 5) score += 30; if (amIDying || monster.hp <= 3) score -= 200; } m.score = score + Math.random() * 15; });
-    moves.sort((a, b) => b.score - a.score); return moves[0];
-}
-
 async function playCardFlow(index, pDisarmChoice) {
     isProcessing = true; let cardKey = player.hand.splice(index, 1)[0]; playerHistory.push(cardKey);
-    let aiMove = getBestAIMove(); let mCardKey = 'ATAQUE'; let mDisarmTarget = null; 
+    let aiMove = getBestAIMove(monster, player, playerHistory, turnCount); let mCardKey = 'ATAQUE'; let mDisarmTarget = null; 
     if(aiMove) { mCardKey = aiMove.card; monster.hand.splice(aiMove.index, 1); if(mCardKey === 'DESARMAR') { if(player.hp <= (monster.lvl + monster.bonusAtk + 2)) { mDisarmTarget = 'BLOQUEIO'; } else { let pCounts = {}; player.xp.forEach(x => pCounts[x] = (pCounts[x]||0)+1); let bestTarget = null; for(let k in pCounts) if(pCounts[k] >= 3) bestTarget = k; if(bestTarget) mDisarmTarget = bestTarget; else mDisarmTarget = 'ATAQUE'; } } } 
     else { if(monster.hand.length > 0) mCardKey = monster.hand.pop(); else { drawCardLogic(monster, 1); if(monster.hand.length > 0) mCardKey = monster.hand.pop(); } }
 
@@ -690,7 +485,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     }, 700);
 }
 
-// === LÓGICA REFEITA DE LEVEL UP E ANIMAÇÃO DE COMPRA ===
+// === LÓGICA DE LEVEL UP E ANIMAÇÃO DE COMPRA ===
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         let xpContainer = document.getElementById(u.id + '-xp'); 
@@ -722,7 +517,7 @@ function checkLevelUp(u, doneCb) {
                     }
                 }
 
-                // 2. ESPERA O VOO PARA MUDAR A LÓGICA
+                // 2. ESPERA O VOO PARA MUDAR A LÓGICA E COMPRAR CARTAS
                 setTimeout(() => {
                     u.xp.forEach(x => u.deck.push(x)); u.xp = []; 
                     u.hand.forEach(x => u.deck.push(x)); u.hand = [];
@@ -745,7 +540,7 @@ function checkLevelUp(u, doneCb) {
                     } else {
                         updateUI(); doneCb(true);
                     }
-                }, 400); // tempo das cartas chegarem ao deck
+                }, 400); 
             });
         }, 1000); 
     } else { doneCb(false); }
@@ -754,7 +549,6 @@ function checkLevelUp(u, doneCb) {
 function triggerLevelUpVisuals(unitId) { let clusterId = (unitId === 'p') ? 'p-stats-cluster' : 'm-stats-cluster'; let cluster = document.getElementById(clusterId); if(!cluster) return; const text = document.createElement('div'); text.innerText = "LEVEL UP!"; text.className = 'levelup-text'; if (unitId === 'p') { text.classList.add('lvl-anim-up'); } else { text.classList.add('lvl-anim-down'); } cluster.appendChild(text); setTimeout(() => { text.remove(); }, 2000); }
 function processMasteries(u, triggers, cb) { if(triggers.length === 0) { cb(); return; } let type = triggers.shift(); if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); } else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else if(type === 'TREINAR' && u.id === 'm') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR' && x !== 'DESCANSAR'))]; if(opts.length > 0) { let choice = opts[0]; if(u.hp <= 4 && opts.includes('DESCANSAR')) choice = 'DESCANSAR'; else if(opts.includes('ATAQUE')) choice = 'ATAQUE'; else if(opts.includes('BLOQUEIO')) choice = 'BLOQUEIO'; if(choice === 'DESARMAR') { let target = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE'; player.disabled = target; showFloatingText('p-lvl', "BLOQUEADO!", "#fab1a0"); } else { applyMastery(u, choice); } } processMasteries(u, triggers, cb); } else if(type === 'DESARMAR' && u.id === 'm') { let target = (player.hp <= 4) ? 'BLOQUEIO' : 'ATAQUE'; player.disabled = target; showFloatingText('p-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); } else { applyMastery(u, type); processMasteries(u, triggers, cb); } }
 function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
-function drawCardLogic(u, qty) { for(let i=0; i<qty; i++) if(u.deck.length > 0) u.hand.push(u.deck.pop()); u.hand.sort(); }
 
 function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false, isPlayer = false) {
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
@@ -782,7 +576,7 @@ function updateUnit(u) {
     
     if(u === player) {
         let deckImgEl = document.getElementById('p-deck-img');
-        if(window.currentDeck === 'mage') { deckImgEl.src = MAGE_ASSETS.DECK_IMG; } else { deckImgEl.src = 'https://i.ibb.co/wh3J5mTT/DECK-CAVALEIRO.png'; }
+        if(window.currentDeck === 'mage') { deckImgEl.src = MAGE_ASSETS.DECK_IMG; } else { deckImgEl.src = 'assets/img/deck_verso_cavaleiro.webp'; }
     }
 
     if(u===player) {
@@ -801,7 +595,7 @@ function updateUnit(u) {
 
             if(window.isMatchStarting || window.isDealingCards) { c.style.opacity = '0'; } else { c.style.opacity = '1'; }
 
-            let lethalType = checkCardLethality(k); let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
+            let lethalType = checkCardLethality(k, player, monster); let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             let imgUrl = getCardArt(k, true); c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
             c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k); 
             c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
@@ -830,33 +624,31 @@ function bindFixedTooltip(el,k) { const updatePos = () => { let rect = el.getBou
 function showTT(k) { let db = CARDS_DB[k]; document.getElementById('tt-title').innerHTML = k; if (db.customTooltip) { let content = db.customTooltip; let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1; content = content.replace('{PLAYER_LVL}', currentLvl); let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0; let reflectDmg = 1 + bonusBlock; content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg); document.getElementById('tt-content').innerHTML = content; } else { document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; } tt.style.display = 'block'; }
 function apply3DTilt(element, isHand = false) { if(window.innerWidth < 768) return; element.addEventListener('mousemove', (e) => { const rect = element.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5; element.style.setProperty('--rx', xPct); element.style.setProperty('--ry', yPct); let lift = isHand ? 'translateY(-140px) scale(2.3)' : 'scale(1.1)'; let rotate = `rotateX(${yPct * -40}deg) rotateY(${xPct * 40}deg)`; if(element.classList.contains('disabled-card')) rotate = `rotateX(${yPct * -10}deg) rotateY(${xPct * 10}deg)`; element.style.transform = `${lift} ${rotate}`; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = `${50 + (xPct * 20)}% ${50 + (yPct * 20)}%`; }); element.addEventListener('mouseleave', () => { element.style.transform = isHand ? 'translateY(0) scale(1)' : 'scale(1)'; let art = element.querySelector('.card-art'); if(art) art.style.backgroundPosition = 'center'; element.style.setProperty('--rx', 0); element.style.setProperty('--ry', 0); }); }
 
-let matchTimerInterval = null; let matchSeconds = 0; let myQueueRef = null; let queueListener = null;
 window.startPvE = function() { window.gameMode = 'pve'; window.playNavSound(); window.openDeckSelector(); };
 window.startPvPSearch = function() { if (!currentUser) return; window.gameMode = 'pvp'; window.playNavSound(); window.openDeckSelector(); };
 
 async function initiateMatchmaking() {
-    cleanupMatchState();
+    window.cleanupMatchState();
     const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'flex';
     document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE..."; document.querySelector('.mm-title').style.color = "var(--gold)"; document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)"; document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite"; document.querySelector('.cancel-btn').style.display = "block";
-    matchSeconds = 0; const timerEl = document.getElementById('mm-timer'); timerEl.innerText = "00:00";
-    if (matchTimerInterval) clearInterval(matchTimerInterval);
-    matchTimerInterval = setInterval(() => { matchSeconds++; let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0'); let s = (matchSeconds % 60).toString().padStart(2, '0'); timerEl.innerText = `${m}:${s}`; }, 1000);
+    let matchSeconds = 0; const timerEl = document.getElementById('mm-timer'); timerEl.innerText = "00:00";
+    let matchTimerInterval = setInterval(() => { matchSeconds++; let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0'); let s = (matchSeconds % 60).toString().padStart(2, '0'); timerEl.innerText = `${m}:${s}`; }, 1000);
     try {
-        myQueueRef = doc(collection(db, "queue")); 
+        let myQueueRef = doc(collection(db, "queue")); 
         const myData = { uid: currentUser.uid, name: currentUser.displayName, deck: window.currentDeck, timestamp: Date.now(), matchId: null, cancelled: false, status: 'waiting' };
         await setDoc(myQueueRef, myData);
-        queueListener = onSnapshot(myQueueRef, (docSnap) => { if (docSnap.exists()) { const data = docSnap.data(); if (data.matchId) { enterMatch(data.matchId); } } });
+        let queueListener = onSnapshot(myQueueRef, (docSnap) => { if (docSnap.exists()) { const data = docSnap.data(); if (data.matchId) { clearInterval(matchTimerInterval); queueListener(); enterMatch(data.matchId); } } });
         if (searchInterval) clearInterval(searchInterval);
-        findOpponentInQueue();
-        searchInterval = setInterval(() => { if (document.getElementById('matchmaking-screen').style.display === 'flex' && document.querySelector('.mm-title').innerText !== "PARTIDA ENCONTRADA!") { findOpponentInQueue(); } else { clearInterval(searchInterval); } }, 4000);
-    } catch (e) { cancelPvPSearch(); }
+        findOpponentInQueue(myQueueRef);
+        searchInterval = setInterval(() => { if (document.getElementById('matchmaking-screen').style.display === 'flex' && document.querySelector('.mm-title').innerText !== "PARTIDA ENCONTRADA!") { findOpponentInQueue(myQueueRef); } else { clearInterval(searchInterval); } }, 4000);
+    } catch (e) { window.cancelPvPSearch(); }
 }
 
-async function findOpponentInQueue() {
+async function findOpponentInQueue(myQueueRef) {
     try {
         const queueRef = collection(db, "queue"); const q = query(queueRef, orderBy("timestamp", "desc"), limit(20)); const querySnapshot = await getDocs(q);
         let opponentDoc = null; const now = Date.now();
-        for (const docSnap of querySnapshot.docs) { const data = docSnap.data(); const docId = docSnap.id; if (data.uid === currentUser.uid) continue; if (data.matchId !== null) continue; if (data.cancelled === true) continue; if (now - data.timestamp > 120000) { continue; } opponentDoc = docSnap; break; }
+        for (const docSnap of querySnapshot.docs) { const data = docSnap.data(); if (data.uid === currentUser.uid) continue; if (data.matchId !== null) continue; if (data.cancelled === true) continue; if (now - data.timestamp > 120000) { continue; } opponentDoc = docSnap; break; }
         if (opponentDoc) {
             if (searchInterval) clearInterval(searchInterval);
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9); const oppRef = opponentDoc.ref;
@@ -872,8 +664,8 @@ async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckTy
     await setDoc(matchRef, { player1: { uid: p1Id, name: cleanName1, deckType: d1Type, hp: 6, status: 'selecting', hand: [], deck: p1DeckCards, xp: [] }, player2: { uid: p2Id, name: cleanName2, deckType: d2Type, hp: 6, status: 'selecting', hand: [], deck: p2DeckCards, xp: [] }, turn: 1, status: 'playing', createdAt: Date.now() });
 }
 
-window.cancelPvPSearch = async function() { if (matchTimerInterval) clearInterval(matchTimerInterval); if (searchInterval) clearInterval(searchInterval); const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'none'; if (myQueueRef) { await updateDoc(myQueueRef, { cancelled: true }); myQueueRef = null; } window.transitionToLobby(true); };
-async function enterMatch(matchId) { if (queueListener) queueListener(); if (matchTimerInterval) clearInterval(matchTimerInterval); const matchRef = doc(db, "matches", matchId); const matchSnap = await getDoc(matchRef); if(matchSnap.exists()) { const data = matchSnap.data(); window.pvpStartData = data; if(data.player1.uid === currentUser.uid) window.myRole = 'player1'; else window.myRole = 'player2'; } document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!"; document.querySelector('.mm-title').style.color = "#2ecc71"; document.querySelector('.radar-spinner').style.borderColor = "#2ecc71"; document.querySelector('.radar-spinner').style.animation = "none"; document.querySelector('.cancel-btn').style.display = "none"; setTimeout(() => { const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'none'; window.currentMatchId = matchId; window.transitionToGame(); }, 1500); }
+window.cancelPvPSearch = async function() { window.transitionToLobby(true); };
+async function enterMatch(matchId) { const matchRef = doc(db, "matches", matchId); const matchSnap = await getDoc(matchRef); if(matchSnap.exists()) { const data = matchSnap.data(); window.pvpStartData = data; if(data.player1.uid === currentUser.uid) window.myRole = 'player1'; else window.myRole = 'player2'; } document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!"; document.querySelector('.mm-title').style.color = "#2ecc71"; document.querySelector('.radar-spinner').style.borderColor = "#2ecc71"; document.querySelector('.radar-spinner').style.animation = "none"; document.querySelector('.cancel-btn').style.display = "none"; setTimeout(() => { const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'none'; window.currentMatchId = matchId; window.transitionToGame(); }, 1500); }
 
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return; const matchRef = doc(db, "matches", window.currentMatchId); let updates = {}; let targetKey = ""; let opponentKey = ""; 
