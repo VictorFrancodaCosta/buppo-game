@@ -85,9 +85,7 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 /* SISTEMA DE CARTAS DA MÃO */
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 #player-hand.preparing .card { opacity: 0 !important; visibility: hidden !important; }
-
-/* AJUSTADO: Curva Bézier elástica e rápida */
-.card { --rx: 0; --ry: 0; transition: margin 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.1s, opacity 0.5s ease; pointer-events: auto; width: 140px; height: 196px; border-radius: 10px; color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; transform-style: preserve-3d; background-color: #111; opacity: 1; visibility: visible; }
+.card { --rx: 0; --ry: 0; transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; transform-style: preserve-3d; background-color: #111; opacity: 1; visibility: visible; }
 .card::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 10px; pointer-events: none; z-index: 15; opacity: 0; transition: opacity 0.2s ease; background: linear-gradient(115deg, transparent 25%, rgba(255, 215, 0, 0.15) 35%, rgba(255, 0, 150, 0.15) 45%, rgba(0, 255, 255, 0.15) 55%, rgba(255, 255, 255, 0.25) 70%, transparent 80%); background-size: 300% 300%; background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%)); mix-blend-mode: color-dodge; }
 .card:hover::after { opacity: 0.8; }
 .card-art { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; pointer-events: none; z-index: 2; background-size: cover; background-position: center; }
@@ -99,29 +97,11 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 .fs-1 { width: 3px; height: 3px; animation-delay: 0s; left: -70px; top: -90px; } .fs-2 { width: 4px; height: 4px; animation-delay: 0.1s; left: 70px; top: -100px; } .fs-3 { width: 2px; height: 2px; animation-delay: 0.2s; left: -80px; top: 60px; } .fs-4 { width: 3px; height: 3px; animation-delay: 0.3s; left: 60px; top: 70px; } .fs-5 { width: 5px; height: 5px; animation-delay: 0.4s; left: 0px; top: -120px; } .fs-6 { width: 2px; height: 2px; animation-delay: 0.15s; left: -50px; top: 50px; } .fs-7 { width: 4px; height: 4px; animation-delay: 0.05s; left: 20px; top: 40px; } .fs-8 { width: 2px; height: 2px; animation-delay: 0.25s; left: -20px; top: -40px; } .fs-9 { width: 5px; height: 5px; animation-delay: 0.1s; left: 40px; top: 0px; } .fs-10 { width: 3px; height: 3px; animation-delay: 0.35s; left: -40px; top: 80px; } .fs-11 { width: 4px; height: 4px; animation-delay: 0.45s; left: 80px; top: -20px; } .fs-12 { width: 2px; height: 2px; animation-delay: 0.5s; left: -80px; top: -10px; } .fs-13 { width: 3px; height: 3px; animation-delay: 0.55s; left: 0px; top: 90px; } .fs-14 { width: 5px; height: 5px; animation-delay: 0.6s; left: 50px; top: -60px; } .fs-15 { width: 2px; height: 2px; animation-delay: 0.0s; left: -60px; top: -60px; } .fs-16 { width: 4px; height: 4px; animation-delay: 0.2s; left: 30px; top: 100px; } .fs-17 { width: 3px; height: 3px; animation-delay: 0.4s; left: -30px; top: 110px; } .fs-18 { width: 2px; height: 2px; animation-delay: 0.1s; left: 10px; top: -110px; } .fs-19 { width: 5px; height: 5px; animation-delay: 0.3s; left: -10px; top: -130px; } .fs-20 { width: 3px; height: 3px; animation-delay: 0.5s; left: 90px; top: 50px; } .fs-21 { width: 2px; height: 2px; animation-delay: 0.15s; left: -90px; top: 20px; } .fs-22 { width: 4px; height: 4px; animation-delay: 0.35s; left: 5px; top: 5px; } .fs-23 { width: 3px; height: 3px; animation-delay: 0.55s; left: -15px; top: -15px; } .fs-24 { width: 2px; height: 2px; animation-delay: 0.05s; left: 65px; top: 85px; } .fs-25 { width: 5px; height: 5px; animation-delay: 0.25s; left: -65px; top: -85px; }
 @keyframes sparklePop { 0% { transform: scale(0); opacity: 0; } 50% { opacity: 1; } 100% { transform: scale(1.5) translateY(-20px); opacity: 0; } }
 
-/* AJUSTADO: Hover dramático e flutuante */
-.hand-card:not(.disabled-card):hover { 
-    z-index: 10000 !important; 
-    margin: 0 30px; 
-    box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 40px rgba(255, 215, 0, 0.4) !important; 
-    transform: translateY(-50px) scale(1.2) rotate(-2deg) !important; 
-    filter: none !important; 
-}
+.hand-card:not(.disabled-card):hover { z-index: 10000 !important; margin: 0 30px; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), 0 50px 100px rgba(0,0,0,1); filter: none !important; }
 .disabled-card { filter: grayscale(100%) brightness(0.5) !important; cursor: not-allowed; border-color: #555; }
 .disabled-card:hover { margin: 0 30px; }
 .flying-card { position: fixed; z-index: 99999; pointer-events: none; transform-origin: center center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 10px; border: 2px solid #111; background-color: #111; transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 .flying-landed { transform: scale(1.0); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-
-/* AJUSTADO: Slam mais rápido e começando menor */
-@keyframes cardSlam {
-    0% { transform: scale(1.15); box-shadow: 0 20px 40px rgba(0,0,0,0.6); opacity: 0.8; }
-    50% { transform: scale(0.95) translateY(5px); box-shadow: 0 2px 5px rgba(0,0,0,0.8); opacity: 1; }
-    100% { transform: scale(1) translateY(0); box-shadow: 0 10px 20px rgba(0,0,0,0.6); }
-}
-.card-slam-anim {
-    animation: cardSlam 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-
 .card-bounce { animation: cardPlayBounce 0.3s ease-out; }
 @keyframes cardPlayBounce { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 .card-selected { border: 3px solid var(--accent-blue) !important; box-shadow: 0 0 25px var(--accent-blue), 0 0 50px rgba(0, 206, 201, 0.4) !important; transform: translateY(-40px) scale(1.15) !important; z-index: 100 !important; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; }
@@ -141,17 +121,20 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 .highlight-card { font-weight: 900; font-family: 'Russo One', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
 .hc-red { color: #ff4757; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 .hc-blue { color: #00cec9; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
-.hc-green { color: #2ed573; text-shadow: -1px -1px 0 #000, 1pxAjustei o CSS para retornar ao tamanho original e elástico das cartas, removi o brilho azul e corrigi o bug do "flash" no JavaScript, sincronizando as animações.
+.hc-green { color: #2ed573; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.hc-yellow { color: #ffa502; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.hc-purple { color: #a29bfe; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
 
-### 1. Tamanho das Cartas (`css/game.css`)
+.levelup-text { position: absolute; left: 50%; transform: translateX(-50%); font-family: 'Bangers', cursive; font-size: 48px; color: #fac32d; -webkit-text-stroke: 2px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000; white-space: nowrap; z-index: 500; pointer-events: none; opacity: 0; }
+.lvl-anim-up { top: -20px; animation: floatLvlUp 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+@keyframes floatLvlUp { 0% { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.5) rotate(-5deg); } 20% { opacity: 1; transform: translateX(-50%) translateY(-30px) scale(1.2) rotate(0deg); } 100% { opacity: 0; transform: translateX(-50%) translateY(-120px) scale(1.0); } }
+.lvl-anim-down { bottom: -20px; animation: floatLvlDown 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+@keyframes floatLvlDown { 0% { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.5) rotate(5deg); } 20% { opacity: 1; transform: translateX(-50%) translateY(30px) scale(1.2) rotate(0deg); } 100% { opacity: 0; transform: translateX(-50%) translateY(120px) scale(1.0); } }
+@keyframes introBounce { 0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 60% { transform: translateY(-40px) scale(1.1); opacity: 1; } 80% { transform: translateY(10px) scale(0.95); } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+.intro-anim { animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; pointer-events: none; }
 
-Restaurei o CSS original da mão para que as cartas voltem a ter as dimensões corretas e a transição elástica Bézier.
-
-```css
-/* AJUSTADO: Tamanho original e curva elástica */
-.card {
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    width: 140px; 
-    height: 196px;
-    margin: 0 -8px; 
-}
+/* CINEMATIC FOCUS STATES */
+body.cinematic-active #game-background, body.cinematic-active .middle-area, body.cinematic-active .avatar-cluster, body.cinematic-active .deck-area, body.cinematic-active #p-deck-container, body.cinematic-active .xp-area { filter: blur(8px); }
+body.tension-active #game-background, body.tension-active .middle-area, body.tension-active .avatar-cluster, body.tension-active .deck-area, body.tension-active #p-deck-container, body.tension-active .xp-area { filter: blur(8px) grayscale(100%) brightness(0.2); }
+body.focus-hand .hand-wrapper .card:not(:hover) { transform: scale(0.95); filter: brightness(0.8); }
+body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-area, body.focus-xp #p-deck-container, body.focus-xp .hand-wrapper { filter: blur(5px) brightness(0.5); opacity: 0.6; }
