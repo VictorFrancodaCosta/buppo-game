@@ -76,13 +76,18 @@ let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let isProcessing = false; let turnCount = 1; let playerHistory = []; 
-window.masterVol = 1.0; 
+
+// --- CONTROLES DE ÁUDIO CORRIGIDOS ---
+window.masterVol = 0.5; 
+window.musicEnabled = true;
+window.sfxEnabled = true;
+
 let isLethalHover = false; 
 let mixerInterval = null;
 
 // --- ESTADOS GLOBAIS ---
 window.isMatchStarting = false;
-window.isDealingCards = false; // Flag para esconder cartas enquanto lida
+window.isDealingCards = false;
 window.currentDeck = 'knight';
 window.myRole = null; 
 window.currentMatchId = null;
@@ -96,11 +101,9 @@ function cleanupMatchState() {
     console.log("--- LIMPANDO ESTADO DA PARTIDA ---");
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     if (searchInterval) { clearInterval(searchInterval); searchInterval = null; }
-    
     window.currentMatchId = null; window.myRole = null; window.pvpStartData = null;
     window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; window.latestMatchData = null;
     isProcessing = false;
-    
     const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
 }
 
@@ -110,13 +113,7 @@ function getCardArt(cardKey, isPlayer) {
 }
 
 function stringToSeed(str) { let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); return Math.abs(hash); }
-
-function shuffle(array, seed = null) {
-    let rng = Math.random; 
-    if (seed !== null) { let currentSeed = seed; rng = function() { currentSeed = (currentSeed * 9301 + 49297) % 233280; return currentSeed / 233280; } }
-    for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; }
-}
-
+function shuffle(array, seed = null) { let rng = Math.random; if (seed !== null) { let currentSeed = seed; rng = function() { currentSeed = (currentSeed * 9301 + 49297) % 233280; return currentSeed / 233280; } } for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 function generateShuffledDeck() { let deck = []; for(let k in DECK_TEMPLATE) { for(let i=0; i<DECK_TEMPLATE[k]; i++) deck.push(k); } shuffle(deck); return deck; }
 
 const MusicController = {
@@ -126,7 +123,7 @@ const MusicController = {
         if (!audios[trackId]) return;
         try {
             if (this.currentTrackId === trackId) {
-                if (audios[trackId].paused && !window.isMuted) {
+                if (audios[trackId].paused && window.musicEnabled) {
                     const audio = audios[trackId];
                     if (audio.readyState >= 2) audio.currentTime = 0;
                     audio.volume = 0; audio.play().catch(()=>{});
@@ -139,46 +136,41 @@ const MusicController = {
             if (trackId && audios[trackId]) {
                 const newAudio = audios[trackId];
                 if (newAudio.readyState >= 2) newAudio.currentTime = 0;
-                if (!window.isMuted) { newAudio.volume = 0; newAudio.play().catch(()=>{}); this.fadeIn(newAudio, maxVol); }
+                if (window.musicEnabled) { newAudio.volume = 0; newAudio.play().catch(()=>{}); this.fadeIn(newAudio, maxVol); }
             }
             this.currentTrackId = trackId;
-        } catch(e) { console.warn("MusicController:", e); }
+        } catch(e) {}
     },
     stopCurrent() { if (this.currentTrackId && audios[this.currentTrackId]) { this.fadeOut(audios[this.currentTrackId]); } this.currentTrackId = null; },
-    fadeOut(audio) {
-        if(!audio) return; let vol = audio.volume;
-        const fadeOutInt = setInterval(() => {
-            if (vol > 0.05) { vol -= 0.05; try { audio.volume = vol; } catch(e){ clearInterval(fadeOutInt); } } 
-            else { try { audio.volume = 0; audio.pause(); } catch(e){} clearInterval(fadeOutInt); }
-        }, 50);
-    },
-    fadeIn(audio, targetVol) {
-        if(!audio) return; let vol = 0; audio.volume = 0;
-        const fadeInInt = setInterval(() => {
-            if (vol < targetVol - 0.05) { vol += 0.05; try { audio.volume = vol; } catch(e){ clearInterval(fadeInInt); } } 
-            else { try { audio.volume = targetVol; } catch(e){} clearInterval(fadeInInt); }
-        }, 50);
-    }
+    fadeOut(audio) { if(!audio) return; let vol = audio.volume; const fadeOutInt = setInterval(() => { if (vol > 0.05) { vol -= 0.05; try { audio.volume = vol; } catch(e){ clearInterval(fadeOutInt); } } else { try { audio.volume = 0; audio.pause(); } catch(e){} clearInterval(fadeOutInt); } }, 50); },
+    fadeIn(audio, targetVol) { if(!audio) return; let vol = 0; audio.volume = 0; const fadeInInt = setInterval(() => { if (vol < targetVol - 0.05) { vol += 0.05; try { audio.volume = vol; } catch(e){ clearInterval(fadeInInt); } } else { try { audio.volume = targetVol; } catch(e){} clearInterval(fadeInInt); } }, 50); }
 };
 
-window.isMuted = false;
-window.toggleMute = function() {
-    window.isMuted = !window.isMuted;
-    const btn = document.getElementById('btn-sound');
-    const iconOn = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M3,9v6h4l5,5V4L7,9H3z M16.5,12c0-1.77-1.02-3.29-2.5-4.03v8.05C15.48,15.29,16.5,13.77,16.5,12z M14,3.23v2.06 c2.89,0.86,5,3.54,5,6.71s-2.11,5.85-5,6.71v2.06c4.01-0.91,7-4.49,7-8.77S18.01,4.14,14,3.23z"/></svg>`;
-    const iconOff = `<svg viewBox="0 0 24 24" style="width:100%; height:100%; fill:#eee;"><path d="M16.5,12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45,2.45C16.42,12.5,16.5,12.26,16.5,12z M19,12c0,0.94-0.2,1.82-0.54,2.64l1.51,1.51C20.63,14.91,21,13.5,21,12c0-4.28-2.99-7.86-7-8.77v2.06C16.89,6.15,19,8.83,19,12z M4.27,3L3,4.27l4.56,4.56C7.39,8.91,7.2,8.96,7,9H3v6h4l5,5v-6.73l4.25,4.25c-0.67,0.52-1.42,0.93-2.25,1.18v2.06c1.38-0.31,2.63-0.95,3.69-1.81L19.73,21L21,19.73L9,7.73V4L4.27,3z M12,4L9.91,6.09L12,8.18V4z"/></svg>`;
-    if(btn) btn.innerHTML = window.isMuted ? iconOff : iconOn;
-    Object.values(audios).forEach(audio => { if(audio) audio.muted = window.isMuted; });
-    if(!window.isMuted && MusicController.currentTrackId) { const audio = audios[MusicController.currentTrackId]; if(audio && audio.paused) audio.play().catch(()=>{}); }
-}
+window.toggleSoundType = function(type) {
+    window.playNavSound();
+    if (type === 'music') {
+        const check = document.getElementById('check-music');
+        if(check) window.musicEnabled = check.checked;
+        if (!window.musicEnabled) {
+            if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].pause();
+        } else {
+            if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].play().catch(()=>{});
+        }
+    } else if (type === 'sfx') {
+        const check = document.getElementById('check-sfx');
+        if(check) window.sfxEnabled = check.checked;
+    }
+    if(window.saveAudioSettings) window.saveAudioSettings();
+};
 
-window.playNavSound = function() { let s = audios['sfx-nav']; if(s) { try { if (s.readyState >= 2) s.currentTime = 0; s.play().catch(()=>{}); } catch(e) {} } };
+window.playNavSound = function() { if(!window.sfxEnabled) return; let s = audios['sfx-nav']; if(s) { try { if (s.readyState >= 2) s.currentTime = 0; s.play().catch(()=>{}); } catch(e) {} } };
 
 let lastHoverTime = 0;
 window.playUIHoverSound = function() {
+    if(!window.sfxEnabled) return;
     let now = Date.now(); if (now - lastHoverTime < 50) return; 
     let base = audios['sfx-ui-hover'];
-    if(base && !window.isMuted) { try { let s = base.cloneNode(); s.volume = 0.3 * (window.masterVol || 1.0); s.play().catch(()=>{}); lastHoverTime = now; } catch(e){} }
+    if(base) { try { let s = base.cloneNode(); s.volume = 0.3 * (window.masterVol || 1.0); s.play().catch(()=>{}); lastHoverTime = now; } catch(e){} }
 };
 
 window.showScreen = function(screenId) {
@@ -192,9 +184,7 @@ window.showScreen = function(screenId) {
         if(configBtn) configBtn.style.display = 'flex'; 
     } else {
         if(surrenderBtn) surrenderBtn.style.display = 'none';
-        // Config fica visível em todo canto MENOS na tela de start inicial
         if(configBtn) configBtn.style.display = (screenId === 'start-screen') ? 'none' : 'flex';
-        
         const overlay = document.getElementById('config-overlay');
         if(overlay) overlay.style.display = 'none';
     }
@@ -237,7 +227,7 @@ window.openDeckSelector = function() {
 })();
 
 window.selectDeck = function(deckType) {
-    if(audios['sfx-deck-select']) { try { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); } catch(e){} }
+    if(audios['sfx-deck-select'] && window.sfxEnabled) { try { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); } catch(e){} }
     window.currentDeck = deckType; 
     document.body.classList.remove('theme-cavaleiro', 'theme-mago'); 
     if (deckType === 'mage') document.body.classList.add('theme-mago'); else document.body.classList.add('theme-cavaleiro');
@@ -277,10 +267,27 @@ window.goToLobby = async function(isAutoLogin = false) {
       
     const userRef = doc(db, "players", currentUser.uid); const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
-        await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0 });
+        await setDoc(userRef, { name: currentUser.displayName, score: 0, totalWins: 0, settings: { vol: 0.5, music: true, sfx: true } });
         document.getElementById('lobby-username').innerText = `OLÁ, ${currentUser.displayName.split(' ')[0].toUpperCase()}`; document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
+        window.updateVol('master', 0.5);
     } else {
         const d = userSnap.data(); document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`; document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+        if(d.settings) {
+            window.masterVol = d.settings.vol !== undefined ? d.settings.vol : 0.5;
+            window.musicEnabled = d.settings.music !== undefined ? d.settings.music : true;
+            window.sfxEnabled = d.settings.sfx !== undefined ? d.settings.sfx : true;
+
+            let slider = document.getElementById('vol-slider'); if(slider) slider.value = window.masterVol;
+            let chkM = document.getElementById('check-music'); if(chkM) chkM.checked = window.musicEnabled;
+            let chkS = document.getElementById('check-sfx'); if(chkS) chkS.checked = window.sfxEnabled;
+
+            window.updateVol('master', window.masterVol);
+            if (!window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
+                audios[MusicController.currentTrackId].pause();
+            } else if (window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
+                audios[MusicController.currentTrackId].play().catch(()=>{});
+            }
+        }
     }
     const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
     onSnapshot(q, (snapshot) => {
@@ -304,6 +311,8 @@ function startGameFlow() {
     
     turnCount = 1; playerHistory = [];
     drawCardLogic(monster, 6); drawCardLogic(player, 6); 
+    
+    updateUI(); // CRÍTICO: Atualiza a interface ANTES de animar as cartas
     dealAllInitialCards();
     if(window.gameMode === 'pvp') startPvPListener();
 }
@@ -471,19 +480,18 @@ function preloadGame() {
 function updateLoader() {
     assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100); const fill = document.getElementById('loader-fill'); if(fill) fill.style.width = pct + '%';
     if(assetsLoaded >= totalAssets) {
-        if(window.updateVol) window.updateVol('master', window.masterVol || 1.0);
+        if(window.updateVol) window.updateVol('master', window.masterVol || 0.5);
         setTimeout(() => {
             const loading = document.getElementById('loading-screen'); if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
             if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
         }, 800); 
-        document.body.addEventListener('click', () => { if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused)) { MusicController.play('bgm-menu'); } }, { once: true });
+        document.body.addEventListener('click', () => { if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused && window.musicEnabled)) { MusicController.play('bgm-menu'); } }, { once: true });
     }
 }
 
 function initGlobalHoverLogic() { let lastTarget = null; document.body.addEventListener('mouseover', (e) => { const selector = 'button, .circle-btn, #btn-fullscreen, .deck-option, .mini-btn'; const target = e.target.closest(selector); if (target && target !== lastTarget) { lastTarget = target; window.playUIHoverSound(); } else if (!target) { lastTarget = null; } }); }
 
 window.onload = function() {
-    const btnSound = document.getElementById('btn-sound'); if (btnSound) { btnSound.onclick = null; btnSound.addEventListener('click', (e) => { e.stopPropagation(); window.toggleMute(); }); }
     const deckScreen = document.getElementById('deck-selection-screen'); if (deckScreen) { let backBtn = deckScreen.querySelector('.btn-back'); if (!backBtn) backBtn = deckScreen.querySelector('.circle-btn'); if (!backBtn) backBtn = deckScreen.querySelector('button'); if (backBtn) { backBtn.style.zIndex = "9999"; backBtn.style.pointerEvents = "all"; backBtn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); window.playNavSound(); window.transitionToLobby(true); }; } }
 };
 
@@ -492,15 +500,24 @@ window.toggleFullScreen = function() { if (!document.fullscreenElement) { docume
 
 function createLobbyFlares() { const container = document.getElementById('lobby-particles'); if(!container) return; container.innerHTML = ''; for(let i=0; i < 70; i++) { let flare = document.createElement('div'); flare.className = 'lobby-flare'; flare.style.left = Math.random() * 100 + '%'; flare.style.top = Math.random() * 100 + '%'; let size = 4 + Math.random() * 18; flare.style.width = size + 'px'; flare.style.height = size + 'px'; flare.style.animationDuration = (3 + Math.random() * 5) + 's'; flare.style.animationDelay = (Math.random() * 4) + 's'; container.appendChild(flare); } }
 function startCinematicLoop() { const c = audios['sfx-cine']; if(c) {try { c.volume = 0; c.play().catch(()=>{}); } catch(e){} if(mixerInterval) clearInterval(mixerInterval); mixerInterval = setInterval(updateAudioMixer, 30); }}
-function updateAudioMixer() { const cineAudio = audios['sfx-cine']; if(!cineAudio) return; const mVol = window.masterVol || 1.0; const maxCine = 0.6 * mVol; let targetCine = isLethalHover ? maxCine : 0; if(window.isMuted) { try { cineAudio.volume = 0; } catch(e){} return; } try { if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); } catch(e){} }
+function updateAudioMixer() { const cineAudio = audios['sfx-cine']; if(!cineAudio) return; const mVol = window.masterVol || 1.0; const maxCine = 0.6 * mVol; let targetCine = isLethalHover ? maxCine : 0; if(!window.sfxEnabled) { try { cineAudio.volume = 0; } catch(e){} return; } try { if(cineAudio.volume < targetCine) cineAudio.volume = Math.min(targetCine, cineAudio.volume + 0.05); else if(cineAudio.volume > targetCine) cineAudio.volume = Math.max(targetCine, cineAudio.volume - 0.05); } catch(e){} }
 
 window.updateVol = function(type, val) { 
     if(type==='master') window.masterVol = parseFloat(val); 
     ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-deck-select', 'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'sfx-nav'].forEach(k => { 
         if(audios[k]) { let vol = window.masterVol || 1.0; try { if(k === 'sfx-ui-hover') { audios[k].volume = 0.3 * vol; } else if (k === 'sfx-levelup') { audios[k].volume = 1.0 * vol; } else if (k === 'sfx-train') { audios[k].volume = 0.5 * vol; } else { audios[k].volume = 0.8 * vol; } } catch(e){} }
     }); 
+    if(window.saveAudioSettings && type==='master') window.saveAudioSettings();
 }
-function playSound(key) { if(audios[key]) { try { if (key === 'sfx-levelup') { audios[key].volume = 1.0 * (window.masterVol || 1.0); if (audios[key].readyState >= 2) audios[key].currentTime = 0; audios[key].play().catch(e => console.log(e)); let clone = audios[key].cloneNode(); clone.volume = audios[key].volume; clone.play().catch(()=>{}); } else { if (audios[key].readyState >= 2) audios[key].currentTime = 0; audios[key].play().catch(e => console.log(e)); } } catch(e){} } }
+function playSound(key) { if (!window.sfxEnabled && !key.startsWith('bgm')) return; if(audios[key]) { try { if (key === 'sfx-levelup') { audios[key].volume = 1.0 * (window.masterVol || 1.0); if (audios[key].readyState >= 2) audios[key].currentTime = 0; audios[key].play().catch(e => console.log(e)); let clone = audios[key].cloneNode(); clone.volume = audios[key].volume; clone.play().catch(()=>{}); } else { if (audios[key].readyState >= 2) audios[key].currentTime = 0; audios[key].play().catch(e => console.log(e)); } } catch(e){} } }
+
+window.saveAudioSettings = async function() {
+    if (!currentUser) return;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        await updateDoc(userRef, { settings: { vol: window.masterVol, music: window.musicEnabled, sfx: window.sfxEnabled } });
+    } catch(e) { console.error("Erro ao salvar config", e); }
+}
 
 function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (5 + Math.random() * 5) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 50 + 'px'); container.appendChild(d); } } initAmbientParticles();
 function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
@@ -520,7 +537,7 @@ function resetUnit(u, predefinedDeck = null, role = null) {
 
 // === NOVO GERENCIADOR DE ANIMAÇÃO DE COMPRA DE CARTAS ===
 function dealCardsAnimated(containerId, cb) {
-    playSound('sfx-deal');
+    if(window.sfxEnabled) playSound('sfx-deal');
     const handEl = document.getElementById(containerId);
     if(!handEl) { if(cb) cb(); return; }
     const cards = Array.from(handEl.children);
@@ -655,9 +672,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
             
             checkLevelUp(player, (leveledUp) => { 
                 if(!pDead) {
-                    if(!leveledUp) {
-                        drawCardLogic(player, 1); 
-                    }
+                    if(!leveledUp) { drawCardLogic(player, 1); }
                     turnCount++; updateUI(); isProcessing = false; 
                 } 
             }); 
@@ -784,12 +799,7 @@ function updateUnit(u) {
 
             if (isLocallySelected || isDBSelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
 
-            // LÓGICA DE OCULTAÇÃO CORRIGIDA AQUI
-            if(window.isMatchStarting || window.isDealingCards) {
-                c.style.opacity = '0';
-            } else {
-                c.style.opacity = '1';
-            }
+            if(window.isMatchStarting || window.isDealingCards) { c.style.opacity = '0'; } else { c.style.opacity = '1'; }
 
             let lethalType = checkCardLethality(k); let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             let imgUrl = getCardArt(k, true); c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
