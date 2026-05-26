@@ -157,3 +157,19 @@
 @keyframes flashBlue { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes shockwaveExpand { 0% { width: 0vw; height: 0vw; border-width: 40px; opacity: 1; } 100% { width: 150vw; height: 150vw; border-width: 0px; opacity: 0; } }
 @keyframes floatUpSparkle { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 30% { opacity: 0.8; transform: translateY(60vh) scale(1); } 100% { transform: translateY(20vh) scale(0); opacity: 0; } }
+
+/* =========================================
+   4. IMPACTO DE DANO NO AVATAR
+========================================= */
+@keyframes hitFlinch {
+    0% { transform: translateX(0); filter: brightness(1) drop-shadow(0 0 0 red); }
+    20% { transform: translateX(-15px) rotate(-5deg); filter: brightness(2) drop-shadow(0 0 20px red); }
+    40% { transform: translateX(10px) rotate(3deg); }
+    60% { transform: translateX(-5px) rotate(-2deg); }
+    80% { transform: translateX(2px) rotate(1deg); }
+    100% { transform: translateX(0); filter: brightness(1) drop-shadow(0 0 0 red); }
+}
+
+.avatar-hit-anim {
+    animation: hitFlinch 0.4s ease-out forwards;
+}
