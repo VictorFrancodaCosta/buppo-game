@@ -22,7 +22,7 @@ let mixerInterval = null;
 
 // --- ESTADOS GLOBAIS ---
 window.isMatchStarting = false;
-window.isDealingCards = false; // Controle de animação da mão inicial e reposição
+window.isDealingCards = false; // Controle de animação da mão
 window.currentDeck = 'knight';
 window.myRole = null; 
 window.currentMatchId = null;
@@ -34,6 +34,9 @@ window.latestMatchData = null;
 let isProcessing = false; 
 let turnCount = 1; 
 let playerHistory = []; 
+
+let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
+let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 
 // --- ASSETS LOCAIS ---
 const MAGE_ASSETS = {
@@ -85,8 +88,6 @@ const ASSETS_TO_LOAD = {
 };
 
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
-let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
-let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 
 // --- LÓGICA DE LIMPEZA ---
 window.cleanupMatchState = function() {
@@ -357,11 +358,15 @@ function dealCardsAnimated(containerId, cb) {
     const handEl = document.getElementById(containerId);
     if(!handEl) { if(cb) cb(); return; }
     const cards = Array.from(handEl.children);
+    if(cards.length === 0) { if(cb) cb(); return; }
     cards.forEach((cardEl, i) => { cardEl.classList.add('intro-anim'); cardEl.style.animationDelay = (i * 0.1) + 's'; cardEl.style.opacity = '1'; });
-    setTimeout(() => { cards.forEach(c => { c.classList.remove('intro-anim'); c.style.animationDelay = ''; }); if(cb) cb(); }, 500 + cards.length * 100);
+    setTimeout(() => { cards.forEach(c => { c.classList.remove('intro-anim'); c.style.animationDelay = ''; c.style.opacity = '1'; }); if(cb) cb(); }, 500 + cards.length * 100);
 }
 
-function dealAllInitialCards() { isProcessing = true; window.isMatchStarting = false; dealCardsAnimated('player-hand', () => { isProcessing = false; }); }
+function dealAllInitialCards() { 
+    isProcessing = true; window.isMatchStarting = false; window.isDealingCards = true; 
+    dealCardsAnimated('player-hand', () => { window.isDealingCards = false; isProcessing = false; updateUI(); }); 
+}
 
 function onCardClick(index) {
     if(isProcessing) return; if (!player.hand[index]) return;
@@ -536,7 +541,7 @@ function checkLevelUp(u, doneCb) {
                     if (u.id === 'p') {
                         window.isDealingCards = true;
                         updateUI(); 
-                        dealCardsAnimated('player-hand', () => { window.isDealingCards = false; doneCb(true); });
+                        dealCardsAnimated('player-hand', () => { window.isDealingCards = false; updateUI(); doneCb(true); });
                     } else {
                         updateUI(); doneCb(true);
                     }
@@ -566,7 +571,10 @@ function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable 
 
 function renderTable(key, slotId, isPlayer = false) { let el = document.getElementById(slotId); el.innerHTML = ''; let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`; let imgUrl = getCardArt(key, isPlayer); card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`; el.appendChild(card); }
 
-function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
+function updateUI() { 
+    if(window.isDealingCards) return; // Evita bugar DOM enquanto cartas saltam
+    updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; 
+}
 
 function updateUnit(u) {
     document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl; document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
@@ -592,7 +600,6 @@ function updateUnit(u) {
             const isDBSelected = (window.gameMode === 'pvp' && moveInDB === k && window.pvpSelectedCardIndex === null);
 
             if (isLocallySelected || isDBSelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
-
             if(window.isMatchStarting || window.isDealingCards) { c.style.opacity = '0'; } else { c.style.opacity = '1'; }
 
             let lethalType = checkCardLethality(k, player, monster); let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
