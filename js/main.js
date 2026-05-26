@@ -531,9 +531,18 @@ async function playCardFlow(index, pDisarmChoice) {
         realCardEl.innerHTML = ''; realCardEl.style.border = 'none'; realCardEl.style.background = 'none'; realCardEl.style.boxShadow = 'none';
     }
 
-    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { renderTable(cardKey, 'p-slot', true); updateUI(); }, false, true, true);
+    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
+        renderTable(cardKey, 'p-slot', true); 
+        let sc = document.querySelector('#p-slot .card'); if(sc) sc.classList.add('card-slam-anim');
+        updateUI(); 
+    }, false, true, true);
+    
     const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
-    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { renderTable(mCardKey, 'm-slot', false); setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); }, false, true, false);
+    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { 
+        renderTable(mCardKey, 'm-slot', false); 
+        let sc = document.querySelector('#m-slot .card'); if(sc) sc.classList.add('card-slam-anim');
+        setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); 
+    }, false, true, false);
 }
 
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
@@ -560,9 +569,16 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         }
         playerHistory.push(myMove);
 
-        animateFly(startRect || 'player-hand', 'p-slot', myMove, () => { renderTable(myMove, 'p-slot', true); }, false, true, true);
+        animateFly(startRect || 'player-hand', 'p-slot', myMove, () => { 
+            renderTable(myMove, 'p-slot', true); 
+            let sc = document.querySelector('#p-slot .card'); if(sc) sc.classList.add('card-slam-anim');
+        }, false, true, true);
+        
         const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 };
-        animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => { renderTable(enemyMove, 'm-slot', false); }, false, true, false);
+        animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => { 
+            renderTable(enemyMove, 'm-slot', false); 
+            let sc = document.querySelector('#m-slot .card'); if(sc) sc.classList.add('card-slam-anim');
+        }, false, true, false);
     } catch (e) {}
 
     setTimeout(() => {
