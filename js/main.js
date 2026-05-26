@@ -289,8 +289,6 @@ function startPvPListener() {
                 if (myData.hp < player.hp) {
                     let dmg = player.hp - myData.hp; player.hp = myData.hp;
                     showFloatingText('p-lvl', `-${dmg}`, "#ff7675"); triggerDamageEffect(true, true);
-                    let avatar = document.getElementById('p-stats-cluster');
-                    if(avatar) { avatar.classList.remove('avatar-hit-anim'); void avatar.offsetWidth; avatar.classList.add('avatar-hit-anim'); }
                     updateUI(); checkEndGame();
                 }
             }
@@ -533,18 +531,9 @@ async function playCardFlow(index, pDisarmChoice) {
         realCardEl.innerHTML = ''; realCardEl.style.border = 'none'; realCardEl.style.background = 'none'; realCardEl.style.boxShadow = 'none';
     }
 
-    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { 
-        renderTable(cardKey, 'p-slot', true); 
-        let sc = document.querySelector('#p-slot .card'); if(sc) sc.classList.add('card-slam-anim');
-        updateUI(); 
-    }, false, true, true);
-    
+    animateFly(startRect || 'player-hand', 'p-slot', cardKey, () => { renderTable(cardKey, 'p-slot', true); updateUI(); }, false, true, true);
     const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 - (window.innerWidth < 768 ? 42 : 52.5) };
-    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { 
-        renderTable(mCardKey, 'm-slot', false); 
-        let sc = document.querySelector('#m-slot .card'); if(sc) sc.classList.add('card-slam-anim');
-        setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); 
-    }, false, true, false);
+    animateFly(opponentHandOrigin, 'm-slot', mCardKey, () => { renderTable(mCardKey, 'm-slot', false); setTimeout(() => resolveTurn(cardKey, mCardKey, pDisarmChoice, mDisarmTarget), 500); }, false, true, false);
 }
 
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
@@ -571,16 +560,9 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
         }
         playerHistory.push(myMove);
 
-        animateFly(startRect || 'player-hand', 'p-slot', myMove, () => { 
-            renderTable(myMove, 'p-slot', true); 
-            let sc = document.querySelector('#p-slot .card'); if(sc) sc.classList.add('card-slam-anim');
-        }, false, true, true);
-        
+        animateFly(startRect || 'player-hand', 'p-slot', myMove, () => { renderTable(myMove, 'p-slot', true); }, false, true, true);
         const opponentHandOrigin = { top: -160, left: window.innerWidth / 2 };
-        animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => { 
-            renderTable(enemyMove, 'm-slot', false); 
-            let sc = document.querySelector('#m-slot .card'); if(sc) sc.classList.add('card-slam-anim');
-        }, false, true, false);
+        animateFly(opponentHandOrigin, 'm-slot', enemyMove, () => { renderTable(enemyMove, 'm-slot', false); }, false, true, false);
     } catch (e) {}
 
     setTimeout(() => {
@@ -638,14 +620,10 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
         player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675");
         let soundOn = !(clash && mAct === 'BLOQUEIO');
         if (!mBlocks) { triggerDamageEffect(true, soundOn); }
-        let avatar = document.getElementById('p-stats-cluster');
-        if(avatar) { avatar.classList.remove('avatar-hit-anim'); void avatar.offsetWidth; avatar.classList.add('avatar-hit-anim'); }
     }
     if(mDmg > 0) {
         monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675");
         let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn);
-        let avatar = document.getElementById('m-stats-cluster');
-        if(avatar) { avatar.classList.remove('avatar-hit-anim'); void avatar.offsetWidth; avatar.classList.add('avatar-hit-anim'); }
     }
 
     updateUI(); let pDead = player.hp <= 0, mDead = monster.hp <= 0;
