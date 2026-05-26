@@ -138,3 +138,13 @@ body.cinematic-active #game-background, body.cinematic-active .middle-area, body
 body.tension-active #game-background, body.tension-active .middle-area, body.tension-active .avatar-cluster, body.tension-active .deck-area, body.tension-active #p-deck-container, body.tension-active .xp-area { filter: blur(8px) grayscale(100%) brightness(0.2); }
 body.focus-hand .hand-wrapper .card:not(:hover) { transform: scale(0.95); filter: brightness(0.8); }
 body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-area, body.focus-xp #p-deck-container, body.focus-xp .hand-wrapper { filter: blur(5px) brightness(0.5); opacity: 0.6; }
+
+/* ANIMAÇÃO DE IMPACTO NA MESA (SLAM) */
+@keyframes cardSlam {
+    0% { transform: scale(1.15); box-shadow: 0 20px 40px rgba(0,0,0,0.6); opacity: 0.8; }
+    50% { transform: scale(0.95) translateY(5px); box-shadow: 0 2px 5px rgba(0,0,0,0.8); opacity: 1; }
+    100% { transform: scale(1) translateY(0); box-shadow: 0 10px 20px rgba(0,0,0,0.6); }
+}
+.card-slam-anim {
+    animation: cardSlam 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
