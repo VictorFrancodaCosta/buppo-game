@@ -26,6 +26,8 @@ window.myRole = null;
 window.currentMatchId = null;
 window.pvpSelectedCardIndex = null;
 window.isResolvingTurn = false;
+window.pvpWaitingForTurnReset = false;
+window.pvpLocalResolutionComplete = false;
 window.pvpStartData = null;
 window.latestMatchData = null;
 
@@ -73,7 +75,7 @@ let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], 
 window.cleanupMatchState = function() {
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     window.currentMatchId = null; window.myRole = null; window.pvpStartData = null;
-    window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; window.latestMatchData = null;
+    window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.latestMatchData = null;
     window.isProcessing = false;
     const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
     
@@ -217,6 +219,7 @@ window.goToLobby = async function(isAutoLogin = false) {
 function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     window.isProcessing = false; window.isResolvingTurn = false; window.pvpSelectedCardIndex = null;
+    window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false;
     startCinematicLoop(); window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand'); if (handEl) { handEl.innerHTML = ''; handEl.classList.add('preparing'); }
     if (window.gameMode === 'pvp' && window.pvpStartData) {
@@ -288,9 +291,10 @@ function startPvPListener() {
         } else {
             const myReady = window.myRole === 'player1' ? p1Ready : p2Ready;
             const opponentReady = window.myRole === 'player1' ? p2Ready : p1Ready;
+            if (finishPvPTurnResetIfReady(matchData)) return;
             if (myReady && !opponentReady) showPvPStatus("AGUARDANDO OPONENTE...");
             else if (!myReady && opponentReady) showPvPStatus("OPONENTE PRONTO");
-            else { const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove(); }
+            else if (!window.pvpWaitingForTurnReset) { const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove(); }
         }
 
         if (window.gameMode === 'pvp' && window.myRole) {
@@ -353,6 +357,22 @@ function resetHandCardVisualState() {
     });
 }
 
+function finishPvPTurnResetIfReady(matchData = window.latestMatchData) {
+    if (!window.pvpWaitingForTurnReset || !window.pvpLocalResolutionComplete || !matchData) return false;
+    const p1Ready = matchData.p1Move && matchData.p1Move.length > 0;
+    const p2Ready = matchData.p2Move && matchData.p2Move.length > 0;
+    if (p1Ready || p2Ready) return false;
+    window.pvpWaitingForTurnReset = false;
+    window.pvpLocalResolutionComplete = false;
+    window.pvpSelectedCardIndex = null;
+    window.isResolvingTurn = false;
+    window.isProcessing = false;
+    resetHandCardVisualState();
+    updateUI();
+    const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
+    return true;
+}
+
 function checkEndGame(){
     if(player.hp<=0 || monster.hp<=0) {
         window.isProcessing = true; window.isLethalHover = false; MusicController.stopCurrent();
@@ -367,7 +387,7 @@ function checkEndGame(){
             else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(window.gameMode); }
             document.getElementById('end-screen').classList.add('visible');
         }, 1000);
-    } else { window.isProcessing = false; }
+    } else if (window.gameMode !== 'pvp' || !window.pvpWaitingForTurnReset) { window.isProcessing = false; }
 }
 
 onAuthStateChanged(auth, (user) => {
@@ -493,6 +513,7 @@ function dealAllInitialCards() {
 
 function onCardClick(index) {
     if(window.isProcessing) return; if (!player.hand[index]) return;
+    if (window.gameMode === 'pvp' && (window.isResolvingTurn || window.pvpWaitingForTurnReset)) return;
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
     playSound('sfx-play'); document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active');
     document.getElementById('tooltip-box').style.display = 'none'; window.isLethalHover = false;
@@ -573,7 +594,7 @@ async function playCardFlow(index, pDisarmChoice) {
 
 async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     if (window.isResolvingTurn) return;
-    window.isResolvingTurn = true; window.isProcessing = true;
+    window.isResolvingTurn = true; window.isProcessing = true; window.pvpWaitingForTurnReset = true; window.pvpLocalResolutionComplete = false;
     const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
     resetHandCardVisualState();
 
@@ -610,19 +631,21 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
 
     setTimeout(() => {
         try {
-            if (window.myRole === 'player1') {
-                setTimeout(() => {
+            resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice, () => {
+                window.pvpLocalResolutionComplete = true;
+                if (window.myRole === 'player1') {
                     const matchRef = doc(db, "matches", window.currentMatchId);
-                    updateDoc(matchRef, { p1Move: null, p2Move: null, p1Disarm: null, p2Disarm: null, turn: increment(1) }).catch(err => console.error(err));
-                }, 4000);
-            }
-            resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice);
+                    updateDoc(matchRef, { p1Move: null, p2Move: null, p1Disarm: null, p2Disarm: null, turn: increment(1) }).catch(err => {
+                        console.error(err);
+                        window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.isResolvingTurn = false; window.isProcessing = false;
+                    });
+                } else {
+                    finishPvPTurnResetIfReady();
+                }
+            });
         } catch (error) {
-            updateUI(); window.isResolvingTurn = false; window.isProcessing = false;
+            updateUI(); window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.isResolvingTurn = false; window.isProcessing = false;
         }
-        setTimeout(() => {
-            window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; window.isProcessing = false;
-        }, 4500);
     }, 600);
 }
 
@@ -638,7 +661,7 @@ async function commitTurnToDB(pAct, extraCard = null) {
     } catch (e) { console.error("Erro ao commitar turno ao DB:", e); }
 }
 
-function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
+function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null) {
     let pDmg = 0, mDmg = 0;
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
@@ -716,6 +739,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
                 window.pendingLevelUpSync = null;
             }
             checkEndGame();
+            if(onComplete) onComplete();
         };
 
         animateFly('p-slot', 'p-xp', pAct, () => {
@@ -723,7 +747,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
                 player.xp.push(pAct); triggerXPGlow('p'); updateUI();
                 if (window.gameMode === 'pvp') commitTurnToDB(pAct);
             }
-            checkLevelUp(player, () => { if(player.hp > 0) { baseDraw(player, 1); turnCount++; updateUI(); window.isProcessing = false; } finishLevelChecks(); });
+            checkLevelUp(player, () => { if(player.hp > 0) { baseDraw(player, 1); turnCount++; updateUI(); if(window.gameMode !== 'pvp') window.isProcessing = false; } finishLevelChecks(); });
         }, false, false, true);
 
         animateFly('m-slot', 'm-xp', mAct, () => {
