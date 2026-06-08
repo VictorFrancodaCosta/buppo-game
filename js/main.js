@@ -286,8 +286,11 @@ function startPvPListener() {
                 resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
             }
         } else {
-            if (window.myRole === 'player1' && p1Ready && !p2Ready) showPvPStatus("AGUARDANDO OPONENTE...");
-            else if (window.myRole === 'player2' && p2Ready && !p1Ready) showPvPStatus("AGUARDANDO OPONENTE...");
+            const myReady = window.myRole === 'player1' ? p1Ready : p2Ready;
+            const opponentReady = window.myRole === 'player1' ? p2Ready : p1Ready;
+            if (myReady && !opponentReady) showPvPStatus("AGUARDANDO OPONENTE...");
+            else if (!myReady && opponentReady) showPvPStatus("OPONENTE PRONTO");
+            else { const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove(); }
         }
 
         if (window.gameMode === 'pvp' && window.myRole) {
@@ -334,6 +337,20 @@ function showPvPStatus(msg) {
         document.body.appendChild(el);
     }
     el.innerText = msg;
+}
+
+function resetHandCardVisualState() {
+    document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active');
+    window.isLethalHover = false;
+    const tooltip = document.getElementById('tooltip-box'); if(tooltip) tooltip.style.display = 'none';
+    const handContainer = document.getElementById('player-hand');
+    if (!handContainer) return;
+    Array.from(handContainer.children).forEach(card => {
+        card.classList.remove('card-selected');
+        card.style.transform = '';
+        card.style.zIndex = '';
+        card.style.filter = '';
+    });
 }
 
 function checkEndGame(){
@@ -558,6 +575,7 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
     if (window.isResolvingTurn) return;
     window.isResolvingTurn = true; window.isProcessing = true;
     const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
+    resetHandCardVisualState();
 
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
     if (window.myRole === 'player1') { myMove = p1Move; enemyMove = p2Move; myDisarmChoice = p1Disarm; enemyDisarmChoice = p2Disarm; }
@@ -570,7 +588,7 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
             if (window.pvpSelectedCardIndex > -1 && handContainer.children[window.pvpSelectedCardIndex]) myCardEl = handContainer.children[window.pvpSelectedCardIndex];
             else { const handCards = Array.from(handContainer.children); if(handCards.length > 0) myCardEl = handCards[0]; }
         }
-        if (myCardEl) { startRect = myCardEl.getBoundingClientRect(); myCardEl.classList.remove('card-selected'); myCardEl.style.opacity = '0'; }
+        if (myCardEl) { startRect = myCardEl.getBoundingClientRect(); myCardEl.classList.remove('card-selected'); myCardEl.style.opacity = '0'; myCardEl.style.transform = ''; }
         if (window.pvpSelectedCardIndex > -1 && player.hand[window.pvpSelectedCardIndex] === myMove) {
             player.hand.splice(window.pvpSelectedCardIndex, 1); window.pvpSelectedCardIndex = null;
         } else {
@@ -837,14 +855,11 @@ function updateUnit(u) {
         if(window.currentDeck === 'mage') deckImgEl.src = MAGE_ASSETS.DECK_IMG; else deckImgEl.src = 'assets/img/deck_verso_cavaleiro.webp';
         let hc=document.getElementById('player-hand'); hc.innerHTML='';
         if (window.isProcessing) hc.style.pointerEvents = 'none'; else hc.style.pointerEvents = 'auto';
-        let moveInDB = null;
-        if (window.gameMode === 'pvp' && window.latestMatchData) { const role = window.myRole; const field = role === 'player1' ? 'p1Move' : 'p2Move'; moveInDB = window.latestMatchData[field]; }
         u.hand.forEach((k,i)=>{
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`; c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
             const isLocallySelected = (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i);
-            const isDBSelected = (window.gameMode === 'pvp' && moveInDB === k && window.pvpSelectedCardIndex === null);
-            if (isLocallySelected || isDBSelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
+            if (isLocallySelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
             if(window.isMatchStarting) c.style.opacity = '0'; else c.style.opacity = '1';
             let lethalType = checkCardLethality(k, player, monster);
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
