@@ -291,10 +291,12 @@ function startPvPListener() {
         } else {
             const myReady = window.myRole === 'player1' ? p1Ready : p2Ready;
             const opponentReady = window.myRole === 'player1' ? p2Ready : p1Ready;
-            if (finishPvPTurnResetIfReady(matchData)) return;
-            if (myReady && !opponentReady) showPvPStatus("AGUARDANDO OPONENTE...");
-            else if (!myReady && opponentReady) showPvPStatus("OPONENTE PRONTO");
-            else if (!window.pvpWaitingForTurnReset) { const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove(); }
+            const didFinishTurnReset = finishPvPTurnResetIfReady(matchData);
+            if (!didFinishTurnReset) {
+                if (myReady && !opponentReady) showPvPStatus("AGUARDANDO OPONENTE...");
+                else if (!myReady && opponentReady) showPvPStatus("OPONENTE PRONTO");
+                else if (!window.pvpWaitingForTurnReset) { const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove(); }
+            }
         }
 
         if (window.gameMode === 'pvp' && window.myRole) {
