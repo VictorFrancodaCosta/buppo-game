@@ -728,6 +728,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         window.deferMasteryEndCheck = true;
         window.pendingRestMasteryHeals = [];
         window.pendingLevelUpSync = null;
+        const enemyXpBeforeTurn = monster.xp.length;
         let levelChecksDone = 0;
         const finishLevelChecks = () => {
             levelChecksDone++;
@@ -751,7 +752,13 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         }, false, false, true);
 
         animateFly('m-slot', 'm-xp', mAct, () => {
-            if (window.gameMode !== 'pvp' && !mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); }
+            if(!mDead) {
+                if (window.gameMode !== 'pvp') {
+                    monster.xp.push(mAct); triggerXPGlow('m'); updateUI();
+                } else if (monster.xp.length === enemyXpBeforeTurn) {
+                    monster.xp.push(mAct); triggerXPGlow('m'); updateUI();
+                }
+            }
             checkLevelUp(monster, () => { if(monster.hp > 0) baseDraw(monster, 1); finishLevelChecks(); });
         }, false, false, false);
 
