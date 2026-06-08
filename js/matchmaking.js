@@ -14,6 +14,7 @@ window.startPvPSearch = function() { if (!window.currentUser) return; window.gam
 
 export async function initiateMatchmaking() {
     if(window.cleanupMatchState) window.cleanupMatchState();
+    if(window.applyDeckTheme) window.applyDeckTheme(window.currentDeck);
     const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'flex';
     document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE..."; document.querySelector('.mm-title').style.color = "var(--gold)";
     document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)"; document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite"; document.querySelector('.cancel-btn').style.display = "block";
@@ -87,6 +88,8 @@ async function enterMatch(matchId) {
     if(matchSnap.exists()) {
         const data = matchSnap.data(); window.pvpStartData = data;
         if(data.player1.uid === window.currentUser.uid) window.myRole = 'player1'; else window.myRole = 'player2';
+        const myDeckType = window.myRole === 'player1' ? data.player1.deckType : data.player2.deckType;
+        if(window.applyDeckTheme) window.applyDeckTheme(myDeckType);
     }
     document.querySelector('.mm-title').innerText = "PARTIDA ENCONTRADA!"; document.querySelector('.mm-title').style.color = "#2ecc71";
     document.querySelector('.radar-spinner').style.borderColor = "#2ecc71"; document.querySelector('.radar-spinner').style.animation = "none"; document.querySelector('.cancel-btn').style.display = "none";

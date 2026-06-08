@@ -81,13 +81,18 @@ window.cleanupMatchState = function() {
     document.body.classList.remove('theme-cavaleiro', 'theme-mago');
 }
 
+window.applyDeckTheme = function(deckType = window.currentDeck) {
+    window.currentDeck = deckType || 'knight';
+    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
+    if (window.currentDeck === 'mage') document.body.classList.add('theme-mago');
+    else document.body.classList.add('theme-cavaleiro');
+}
+
 window.selectDeck = function(deckType) {
     if(audios['sfx-deck-select'] && window.sfxEnabled) { try { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); } catch(e){} }
-    window.currentDeck = deckType;
     
     // Aplica a nova mesa escolhida
-    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
-    if (deckType === 'mage') document.body.classList.add('theme-mago'); else document.body.classList.add('theme-cavaleiro');
+    window.applyDeckTheme(deckType);
     
     document.querySelectorAll('.deck-option').forEach(opt => {
         if(opt.getAttribute('onclick').includes(`'${deckType}'`)) {
@@ -119,6 +124,7 @@ window.transitionToGame = function() {
     if(transScreen) transScreen.classList.add('active');
     setTimeout(() => {
         MusicController.play('bgm-loop');
+        if (window.gameMode === 'pvp' || window.gameMode === 'pve') window.applyDeckTheme(window.currentDeck);
         let bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode');
         window.showScreen('game-screen');
         const handEl = document.getElementById('player-hand'); if(handEl) handEl.innerHTML = '';
@@ -215,11 +221,14 @@ function startGameFlow() {
     const handEl = document.getElementById('player-hand'); if (handEl) { handEl.innerHTML = ''; handEl.classList.add('preparing'); }
     if (window.gameMode === 'pvp' && window.pvpStartData) {
         if (window.myRole === 'player1') {
+            window.applyDeckTheme(window.pvpStartData.player1.deckType);
             resetUnit(player, window.pvpStartData.player1.deck, 'player1'); resetUnit(monster, window.pvpStartData.player2.deck, 'player2');
         } else {
+            window.applyDeckTheme(window.pvpStartData.player2.deckType);
             resetUnit(player, window.pvpStartData.player2.deck, 'player2'); resetUnit(monster, window.pvpStartData.player1.deck, 'player1');
         }
     } else {
+        window.applyDeckTheme(window.currentDeck);
         resetUnit(player, null, 'pve'); resetUnit(monster, null, 'pve');
     }
     turnCount = 1; playerHistory = [];
