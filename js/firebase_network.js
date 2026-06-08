@@ -31,12 +31,12 @@ export async function logoutGoogle() {
     await signOut(auth);
 }
 
-export async function saveMatchHistoryDB(currentUser, enemyName, gameMode, currentDeck, pointsChange) {
+export async function saveMatchHistoryDB(currentUser, enemyName, gameMode, currentDeck, pointsChange, result = null) {
     if (!currentUser) return;
     try {
         const historyRef = collection(db, "players", currentUser.uid, "history");
         await addDoc(historyRef, {
-            result: pointsChange > 0 ? 'WIN' : 'LOSS',
+            result: result || (pointsChange < 0 ? 'LOSS' : (pointsChange === 1 ? 'TIE' : 'WIN')),
             opponent: enemyName,
             mode: gameMode || 'pve',
             deck: currentDeck,
@@ -54,7 +54,7 @@ export async function registrarVitoriaDB(currentUser, gameMode) {
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
-        let pontosGanhos = (gameMode === 'pvp') ? 8 : 1;
+        let pontosGanhos = (gameMode === 'pvp') ? 8 : 3;
         if(userSnap.exists()) {
             const data = userSnap.data();
             await updateDoc(userRef, {
@@ -74,7 +74,7 @@ export async function registrarDerrotaDB(currentUser, gameMode) {
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
-        let pontosPerdidos = (gameMode === 'pvp') ? 8 : 3;
+        let pontosPerdidos = 3;
         if(userSnap.exists()) {
             const data = userSnap.data();
             let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
@@ -84,6 +84,23 @@ export async function registrarDerrotaDB(currentUser, gameMode) {
     } catch(e) { 
         console.error("Erro ao registrar derrota:", e); 
         return 0; 
+    }
+}
+
+export async function registrarEmpateDB(currentUser, gameMode) {
+    if(!currentUser) return 0;
+    try {
+        const userRef = doc(db, "players", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        const pontosGanhos = 1;
+        if(userSnap.exists()) {
+            const data = userSnap.data();
+            await updateDoc(userRef, { score: (data.score || 0) + pontosGanhos });
+        }
+        return pontosGanhos;
+    } catch(e) {
+        console.error("Erro ao registrar empate:", e);
+        return 0;
     }
 }
 

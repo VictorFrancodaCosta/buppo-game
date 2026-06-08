@@ -33,6 +33,7 @@
         #history-list-container { width: 100%; flex: 1; overflow-y: auto; margin: 10px 0; border-top: 1px solid #333; border-bottom: 1px solid #333; padding-right: 5px; }
         .history-item { background: #1a1a1a; margin: 8px 0; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #555; font-size: 14px; color: #eee; }
         .history-item.win { border-left-color: #2ecc71; background: linear-gradient(90deg, rgba(46, 204, 113, 0.1), transparent); }
+        .history-item.tie { border-left-color: #f1c40f; background: linear-gradient(90deg, rgba(241, 196, 15, 0.1), transparent); }
         .history-item.loss { border-left-color: #e74c3c; background: linear-gradient(90deg, rgba(231, 76, 60, 0.1), transparent); }
         .h-vs { font-weight: bold; font-size: 1.1em; } .h-date { font-size: 0.8em; color: #aaa; margin-top: 2px; } .h-score { font-weight: bold; font-family: monospace; font-size: 1.2em; } .win .h-score { color: #2ecc71; } .loss .h-score { color: #e74c3c; }
     </style>
@@ -87,7 +88,7 @@
                     <div class="ranking-scroll" id="ranking-content"></div>
                     <div class="lobby-btn-row">
                         <button id="btn-play-pvp" onclick="startPvPSearch()"><span class="btn-title">JOGAR PvP</span><span class="btn-sub">RANKEADO (+8 PTS)</span></button>
-                        <button id="btn-play-pve" onclick="startPvE()"><span class="btn-title">JOGAR PvE</span><span class="btn-sub">TREINO (+1 PT)</span></button>
+                        <button id="btn-play-pve" onclick="startPvE()"><span class="btn-title">JOGAR PvE</span><span class="btn-sub">TREINO (+3 PTS)</span></button>
                     </div>
                     <button id="btn-history" onclick="window.openHistory()">📜 HISTÓRICO DE PARTIDAS</button>
                     <button id="btn-logout" onclick="handleLogout()">TROCAR DE CONTA</button>

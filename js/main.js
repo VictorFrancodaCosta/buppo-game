@@ -1,6 +1,6 @@
 // ARQUIVO: js/main.js
 import { CARDS_DB, ACTION_KEYS } from './data.js';
-import { auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, notifyAbandonmentDB } from './firebase_network.js';
+import { auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, registrarEmpateDB, notifyAbandonmentDB } from './firebase_network.js';
 import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIMove, checkCardLethality } from './game_logic.js';
 import { doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -440,7 +440,8 @@ function checkEndGame(){
             else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); }
             else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); }
 
-            if(isWin && !isTie) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp'); }
+            if(isTie) { if(window.registrarEmpateOnline) window.registrarEmpateOnline(window.gameMode); }
+            else if(isWin) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(window.gameMode); }
             else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(window.gameMode); }
             document.getElementById('end-screen').classList.add('visible');
         }, 1000);
@@ -478,7 +479,7 @@ async function saveMatchHistory(result, pointsChange) {
         }
         if(enemyName) enemyName = enemyName.split(' ')[0].toUpperCase();
     }
-    await saveMatchHistoryDB(window.currentUser, enemyName, window.gameMode, window.currentDeck, pointsChange);
+    await saveMatchHistoryDB(window.currentUser, enemyName, window.gameMode, window.currentDeck, pointsChange, result);
 }
 
 window.registrarVitoriaOnline = async function(modo = 'pve') {
@@ -493,6 +494,13 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
     const pts = await registrarDerrotaDB(window.currentUser, modoAtual);
     if(pts !== 0) await saveMatchHistory('LOSS', pts);
+};
+
+window.registrarEmpateOnline = async function(modo = 'pve') {
+    if(!window.currentUser) return;
+    let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
+    const pts = await registrarEmpateDB(window.currentUser, modoAtual);
+    if(pts > 0) await saveMatchHistory('TIE', pts);
 };
 
 window.restartMatch = function() { document.getElementById('end-screen').classList.remove('visible'); setTimeout(startGameFlow, 50); MusicController.play('bgm-loop'); }
@@ -920,7 +928,7 @@ window.openHistory = async function() {
         let html = '';
         querySnapshot.forEach((doc) => {
             const h = doc.data(); const date = new Date(h.timestamp); const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-            const resultClass = h.result === 'WIN' ? 'win' : 'loss'; const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : 'DERROTA'; const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
+            const resultClass = h.result === 'WIN' ? 'win' : (h.result === 'TIE' ? 'tie' : 'loss'); const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : (h.result === 'TIE' ? 'EMPATE' : 'DERROTA'); const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
             let vsText = ""; if (h.opponent === 'PVE' || h.mode === 'pve') { vsText = `${resultTxt} PVE`; } else { vsText = `${resultTxt} vs ${h.opponent}`; }
             html += `<div class="history-item ${resultClass}"><div><div class="h-vs">${vsText}</div><div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div></div><div class="h-score">${scoreTxt} PTS</div></div>`;
         });
