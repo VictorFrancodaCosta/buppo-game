@@ -309,7 +309,7 @@ function startPvPListener() {
                 }
             }
 
-            if (enemyData) {
+            if (enemyData && !window.isResolvingTurn) {
                 if(enemyData.deck) monster.deck = [...enemyData.deck];
                 const serverXP = enemyData.xp || []; const localXP = monster.xp || [];
                 if (serverXP.length > localXP.length) {
@@ -768,6 +768,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
 
 function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
+        const xpForLevelUp = [...u.xp];
         let xpContainer = document.getElementById(u.id + '-xp'); let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
         minis.forEach(realCard => {
             let rect = realCard.getBoundingClientRect(); let clone = document.createElement('div'); clone.className = 'xp-anim-clone';
@@ -776,13 +777,13 @@ function checkLevelUp(u, doneCb) {
         });
         minis.forEach(m => m.style.opacity = '0');
         setTimeout(() => {
-            let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = [];
+            let counts = {}; xpForLevelUp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = [];
             for(let k in counts) if(counts[k] >= 3) triggers.push(k);
 
             processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++;
                 lvlEl.classList.add('level-up-anim'); triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
-                u.xp.forEach(x => u.deck.push(x)); u.xp = [];
+                xpForLevelUp.forEach(x => u.deck.push(x)); u.xp = [];
 
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl; shuffle(u.deck, s);
