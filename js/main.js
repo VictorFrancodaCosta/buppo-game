@@ -286,7 +286,7 @@ function startPvPListener() {
         if (p1Ready && p2Ready) {
             if (!window.isResolvingTurn) {
                 const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
-                resolvePvPTurn(matchData.p1Move, matchData.p2Move, matchData.p1Disarm, matchData.p2Disarm);
+                resolvePvPTurn(matchData);
             }
         } else {
             const myReady = window.myRole === 'player1' ? p1Ready : p2Ready;
@@ -301,17 +301,13 @@ function startPvPListener() {
             const myServerRole = window.myRole; const enemyServerRole = (window.myRole === 'player1') ? 'player2' : 'player1';
             const myData = matchData[myServerRole]; const enemyData = matchData[enemyServerRole];
 
-            if (!window.isResolvingTurn && myData && myData.hp !== undefined) {
-                if (myData.hp < player.hp) {
-                    let dmg = player.hp - myData.hp; player.hp = myData.hp;
-                    showFloatingText('p-lvl', `-${dmg}`, "#ff7675"); triggerDamageEffect(true, true);
-                    updateUI(); checkEndGame();
-                }
+            if (!window.isResolvingTurn && myData) {
+                syncUnitFromServer(player, myData, true);
             }
 
             if (enemyData && !window.isResolvingTurn) {
-                if(enemyData.deck) monster.deck = [...enemyData.deck];
                 const serverXP = enemyData.xp || []; const localXP = monster.xp || [];
+                syncUnitFromServer(monster, enemyData, false, false);
                 if (serverXP.length > localXP.length) {
                     const startIdx = localXP.length;
                     for (let i = startIdx; i < serverXP.length; i++) {
@@ -321,10 +317,7 @@ function startPvPListener() {
                 } else if (serverXP.length < localXP.length) {
                     monster.xp = [...serverXP];
                     if (enemyData.lvl && enemyData.lvl > monster.lvl) { triggerLevelUpVisuals('m'); playSound('sfx-levelup'); }
-                    if(enemyData.lvl) monster.lvl = enemyData.lvl; if(enemyData.maxHp) monster.maxHp = enemyData.maxHp;
-                    if(enemyData.bonusAtk !== undefined) monster.bonusAtk = enemyData.bonusAtk;
-                    if(enemyData.bonusBlock !== undefined) monster.bonusBlock = enemyData.bonusBlock;
-                    if(enemyData.hp !== undefined) monster.hp = enemyData.hp; updateUI();
+                    updateUI();
                 }
             }
         }
@@ -371,6 +364,68 @@ function finishPvPTurnResetIfReady(matchData = window.latestMatchData) {
     updateUI();
     const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
     return true;
+}
+
+function syncUnitFromServer(u, data, showPlayerDamage = false, syncXp = true) {
+    if (!data) return;
+    if (data.hp !== undefined && data.hp !== u.hp) {
+        const oldHp = u.hp;
+        u.hp = data.hp;
+        if (showPlayerDamage && data.hp < oldHp) {
+            showFloatingText('p-lvl', `-${oldHp - data.hp}`, "#ff7675");
+            triggerDamageEffect(true, true);
+        }
+    }
+    if(data.deck) u.deck = [...data.deck];
+    if(syncXp && data.xp) u.xp = [...data.xp];
+    if(data.lvl) u.lvl = data.lvl;
+    if(data.maxHp) u.maxHp = data.maxHp;
+    if(data.bonusAtk !== undefined) u.bonusAtk = data.bonusAtk;
+    if(data.bonusBlock !== undefined) u.bonusBlock = data.bonusBlock;
+    if(data.disabled !== undefined) u.disabled = data.disabled;
+    updateUI();
+    if (showPlayerDamage) checkEndGame();
+}
+
+function serializeUnitState(u) {
+    return {
+        hp: u.hp,
+        maxHp: u.maxHp,
+        lvl: u.lvl,
+        deck: [...u.deck],
+        xp: [...u.xp],
+        disabled: u.disabled || null,
+        bonusAtk: u.bonusAtk || 0,
+        bonusBlock: u.bonusBlock || 0
+    };
+}
+
+function hydratePvPResolutionState(matchData) {
+    if (!matchData || !window.myRole) return;
+    const myData = matchData[window.myRole];
+    const enemyRole = window.myRole === 'player1' ? 'player2' : 'player1';
+    const enemyData = matchData[enemyRole];
+    syncUnitFromServer(player, myData, false);
+    syncUnitFromServer(monster, enemyData, false);
+}
+
+async function publishResolvedPvPTurn() {
+    if (!window.currentMatchId || window.myRole !== 'player1') return;
+    const matchRef = doc(db, "matches", window.currentMatchId);
+    const updates = {
+        p1Move: null,
+        p2Move: null,
+        p1Disarm: null,
+        p2Disarm: null,
+        turn: increment(1)
+    };
+    if (window.myRole === 'player1') {
+        Object.assign(updates, {
+            player1: { ...window.latestMatchData.player1, ...serializeUnitState(player) },
+            player2: { ...window.latestMatchData.player2, ...serializeUnitState(monster) }
+        });
+    }
+    await updateDoc(matchRef, updates);
 }
 
 function checkEndGame(){
@@ -592,13 +647,15 @@ async function playCardFlow(index, pDisarmChoice) {
     }, false, true, false);
 }
 
-async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
+async function resolvePvPTurn(matchData) {
     if (window.isResolvingTurn) return;
     window.isResolvingTurn = true; window.isProcessing = true; window.pvpWaitingForTurnReset = true; window.pvpLocalResolutionComplete = false;
     const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
     resetHandCardVisualState();
+    hydratePvPResolutionState(matchData);
 
     let myMove, enemyMove, myDisarmChoice, enemyDisarmChoice;
+    const p1Move = matchData.p1Move, p2Move = matchData.p2Move, p1Disarm = matchData.p1Disarm, p2Disarm = matchData.p2Disarm;
     if (window.myRole === 'player1') { myMove = p1Move; enemyMove = p2Move; myDisarmChoice = p1Disarm; enemyDisarmChoice = p2Disarm; }
     else { myMove = p2Move; enemyMove = p1Move; myDisarmChoice = p2Disarm; enemyDisarmChoice = p1Disarm; }
 
@@ -634,8 +691,7 @@ async function resolvePvPTurn(p1Move, p2Move, p1Disarm, p2Disarm) {
             resolveTurn(myMove, enemyMove, myDisarmChoice, enemyDisarmChoice, () => {
                 window.pvpLocalResolutionComplete = true;
                 if (window.myRole === 'player1') {
-                    const matchRef = doc(db, "matches", window.currentMatchId);
-                    updateDoc(matchRef, { p1Move: null, p2Move: null, p1Disarm: null, p2Disarm: null, turn: increment(1) }).catch(err => {
+                    publishResolvedPvPTurn().catch(err => {
                         console.error(err);
                         window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.isResolvingTurn = false; window.isProcessing = false;
                     });
