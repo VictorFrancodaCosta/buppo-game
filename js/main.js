@@ -675,17 +675,33 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget) {
     if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
 
     setTimeout(() => {
+        window.deferMasteryEndCheck = true;
+        window.pendingRestMasteryHeals = [];
+        window.pendingLevelUpSync = null;
+        let levelChecksDone = 0;
+        const finishLevelChecks = () => {
+            levelChecksDone++;
+            if(levelChecksDone < 2) return;
+            flushRestMasteryHeals();
+            window.deferMasteryEndCheck = false;
+            if(window.pendingLevelUpSync) {
+                syncLevelUpToDB(window.pendingLevelUpSync);
+                window.pendingLevelUpSync = null;
+            }
+            checkEndGame();
+        };
+
         animateFly('p-slot', 'p-xp', pAct, () => {
             if(!pDead) {
                 player.xp.push(pAct); triggerXPGlow('p'); updateUI();
                 if (window.gameMode === 'pvp') commitTurnToDB(pAct);
             }
-            checkLevelUp(player, () => { if(!pDead) { baseDraw(player, 1); turnCount++; updateUI(); window.isProcessing = false; } });
+            checkLevelUp(player, () => { if(player.hp > 0) { baseDraw(player, 1); turnCount++; updateUI(); window.isProcessing = false; } finishLevelChecks(); });
         }, false, false, true);
 
         animateFly('m-slot', 'm-xp', mAct, () => {
             if (window.gameMode !== 'pvp' && !mDead) { monster.xp.push(mAct); triggerXPGlow('m'); updateUI(); }
-            checkLevelUp(monster, () => { if(!mDead) baseDraw(monster, 1); checkEndGame(); });
+            checkLevelUp(monster, () => { if(monster.hp > 0) baseDraw(monster, 1); finishLevelChecks(); });
         }, false, false, false);
 
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
@@ -703,7 +719,7 @@ function checkLevelUp(u, doneCb) {
         minis.forEach(m => m.style.opacity = '0');
         setTimeout(() => {
             let counts = {}; u.xp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = [];
-            for(let k in counts) if(counts[k] >= 3 && k !== 'DESCANSAR') triggers.push(k);
+            for(let k in counts) if(counts[k] >= 3) triggers.push(k);
 
             processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++;
@@ -712,7 +728,10 @@ function checkLevelUp(u, doneCb) {
 
                 if (window.gameMode === 'pvp' && window.currentMatchId) {
                     let s = stringToSeed(window.currentMatchId + u.originalRole) + u.lvl; shuffle(u.deck, s);
-                    if (u === player) syncLevelUpToDB(u);
+                    if (u === player) {
+                        if(window.deferMasteryEndCheck) window.pendingLevelUpSync = u;
+                        else syncLevelUpToDB(u);
+                    }
                 } else { shuffle(u.deck); }
                 let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
                 updateUI(); doneCb();
@@ -726,7 +745,7 @@ function processMasteries(u, triggers, cb) {
     if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
     else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
     else if(type === 'TREINAR' && u.id === 'm') {
-        let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR' && x !== 'DESCANSAR'))];
+        let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))];
         if(opts.length > 0) {
             let choice = opts[0];
             if(u.hp <= 4 && opts.includes('DESCANSAR')) choice = 'DESCANSAR';
@@ -740,7 +759,26 @@ function processMasteries(u, triggers, cb) {
     else { applyMastery(u, type); processMasteries(u, triggers, cb); }
 }
 
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') { u.maxHp++; showFloatingText(u.id+'-hp-txt', "+1 MAX", "#55efc4"); } updateUI(); }
+function queueRestMasteryHeal(u) {
+    if(!window.pendingRestMasteryHeals) window.pendingRestMasteryHeals = [];
+    if(!window.pendingRestMasteryHeals.includes(u)) window.pendingRestMasteryHeals.push(u);
+}
+
+function flushRestMasteryHeals() {
+    if(!window.pendingRestMasteryHeals) return;
+    const heals = [...window.pendingRestMasteryHeals];
+    window.pendingRestMasteryHeals = [];
+    heals.forEach(u => {
+        if(u.hp <= 0) return;
+        u.hp = u.maxHp;
+        showFloatingText(u.id+'-hp-txt', "CURA TOTAL", "#55efc4");
+        triggerHealEffect(u === player);
+        playSound('sfx-heal');
+    });
+    updateUI();
+}
+
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') u.bonusBlock++; if(k === 'DESCANSAR') queueRestMasteryHeal(u); updateUI(); }
 
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;

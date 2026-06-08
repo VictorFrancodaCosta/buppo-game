@@ -52,10 +52,12 @@ export const CARDS_DB = {
             <div class="tt-desc">No final do turno, restaure <span class="highlight-val">2</span> pontos de vida.</div>
             <div class="tt-cartoon-title cartoon-orange">BÔNUS - REVITALIZAR</div>
             <div class="tt-text">Se você não receber dano durante o combate deste turno, esta ação restaura <span class="highlight-val">1</span> ponto de vida a mais.</div>
+            <div class="tt-cartoon-title cartoon-purple">MAESTRIA EM DESCANSAR</div>
+            <div class="tt-text">Restaure todos os seus pontos de vida depois das demais maestrias de dano.</div>
         `,
         base: 'Cura 2 HP (3 se não sofrer dano)',
         bonus: 'Nenhum',
-        mastery: '+1 HP Máximo Permanente'
+        mastery: 'Restaura todo HP'
     },
     'DESARMAR': {
         img: 'assets/img/carta_desarmar_cavaleiro.webp',
