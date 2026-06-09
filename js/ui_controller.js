@@ -180,11 +180,6 @@ export function triggerTableActionPulse(cardKey) {
     setTimeout(() => wash.remove(), 850);
 }
 
-export function triggerTableCenterSpark() {
-    const spark = createCombatFxElement('table-center-spark');
-    setTimeout(() => spark.remove(), 480);
-}
-
 export function triggerDeckDrawGlow(unitId) {
     const deckId = unitId === 'm' ? 'm-deck' : `${unitId}-deck-container`;
     const deckEl = document.getElementById(deckId);
