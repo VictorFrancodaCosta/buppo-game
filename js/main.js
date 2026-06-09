@@ -301,6 +301,7 @@ function startPvPListener() {
             const didFinishTurnReset = finishPvPTurnResetIfReady(matchData);
             if (!didFinishTurnReset) {
                 if (myReady && !opponentReady) showPvPStatus("AGUARDANDO OPONENTE...");
+                else if (!myReady && opponentReady) showPvPStatus("OPONENTE PRONTO");
                 else if (!window.pvpWaitingForTurnReset) { const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove(); }
             }
         }
