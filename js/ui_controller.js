@@ -327,18 +327,24 @@ export function apply3DTilt(element, isHand = false) {
 
 export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false, isPlayer = false) {
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
-    let e = { top: 0, left: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
+    let e = { top: 0, left: 0, width: 0, height: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
     const fly = document.createElement('div'); fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
     let imgUrl = getCardArt(cardKey, isPlayer); fly.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
-    if (isToTable) fly.classList.add('card-bounce');
-    if(typeof startId !== 'string' && s.width > 0) { fly.style.width = s.width + 'px'; fly.style.height = s.height + 'px'; }
-    else { let w = window.innerWidth < 768 ? '84px' : '105px'; let h = window.innerWidth < 768 ? '120px' : '150px'; fly.style.width=w; fly.style.height=h; }
-    let tableW = window.innerWidth < 768 ? '110px' : '180px'; let tableH = window.innerWidth < 768 ? '170px' : '260px';
+    let startW, startH;
+    if(typeof startId !== 'string' && s.width > 0) { startW = s.width; startH = s.height; }
+    else { startW = window.innerWidth < 768 ? 84 : 105; startH = window.innerWidth < 768 ? 120 : 150; }
+    fly.style.width = startW + 'px'; fly.style.height = startH + 'px';
+    let tableW = window.innerWidth < 768 ? 110 : 180; let tableH = window.innerWidth < 768 ? 170 : 260;
+    const endW = isToTable ? tableW : startW;
+    const endH = isToTable ? tableH : startH;
+    const endLeft = e.left + (e.width / 2) - (endW / 2);
+    const endTop = e.top + (e.height / 2) - (endH / 2);
     fly.style.top=s.top+'px'; fly.style.left=s.left+'px';
-    const finalTransform = endId.includes('xp') ? 'scale(0.3)' : 'scale(1)';
+    const finalTransform = 'scale(1)';
     fly.style.transform = 'translateY(0) rotate(-4deg) scale(1)';
+    fly.style.transition = 'top 0.46s cubic-bezier(0.22, 0.9, 0.24, 1), left 0.46s cubic-bezier(0.22, 0.9, 0.24, 1), width 0.46s cubic-bezier(0.22, 0.9, 0.24, 1), height 0.46s cubic-bezier(0.22, 0.9, 0.24, 1), box-shadow 0.46s ease';
     document.body.appendChild(fly); fly.offsetHeight;
-    if(isToTable) { fly.style.width=tableW; fly.style.height=tableH; }
+    if(isToTable) { fly.style.width=tableW+'px'; fly.style.height=tableH+'px'; }
     try {
         fly.animate([
             { transform: 'translateY(0) rotate(-5deg) scale(1)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' },
@@ -346,7 +352,7 @@ export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isT
             { transform: finalTransform, boxShadow: isToTable ? '0 16px 34px rgba(0,0,0,0.82)' : '0 8px 20px rgba(0,0,0,0.55)' }
         ], { duration: 460, easing: 'cubic-bezier(0.22, 0.9, 0.24, 1)', fill: 'forwards' });
     } catch(e) {}
-    fly.style.top=e.top+'px'; fly.style.left=e.left+'px';
+    fly.style.top=endTop+'px'; fly.style.left=endLeft+'px';
     setTimeout(() => {
         if(isToTable) playSound('sfx-play');
         fly.remove();
