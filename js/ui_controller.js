@@ -174,12 +174,6 @@ export function triggerActionCue(cardKey, isPlayer = true) {
     setTimeout(() => burst.remove(), 850);
 }
 
-export function triggerTableActionPulse(cardKey) {
-    const meta = ACTION_META[cardKey] || { cls: 'neutral' };
-    const wash = createCombatFxElement(`table-action-wash ${meta.cls}`);
-    setTimeout(() => wash.remove(), 850);
-}
-
 export function triggerDeckDrawGlow(unitId) {
     const deckId = unitId === 'm' ? 'm-deck' : `${unitId}-deck-container`;
     const deckEl = document.getElementById(deckId);
