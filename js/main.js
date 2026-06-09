@@ -7,7 +7,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 
 // IMPORTANDO OS NOVOS MÓDULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerCardClashVisual, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, showCombatCue, showMasteryBanner, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerCardClashVisual, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, showCombatCue, showMasteryBanner, highlightMasteryXP, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js';
 import { initiateMatchmaking } from './matchmaking.js';
 
 // --- VARIÁVEIS GLOBAIS DE ESTADO ---
@@ -729,12 +729,6 @@ async function commitTurnToDB(pAct, extraCard = null) {
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null) {
     let pDmg = 0, mDmg = 0;
-    showCombatCue("IMPACTO", "gold");
-    triggerCardClashVisual();
-    if(pAct === 'ATAQUE') triggerAttackSlash(false);
-    if(mAct === 'ATAQUE') triggerAttackSlash(true);
-    if(pAct === 'TREINAR') triggerTrainDeckGlow(true);
-    if(mAct === 'TREINAR') triggerTrainDeckGlow(false);
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
 
@@ -744,40 +738,15 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
     if(mAct === 'BLOQUEIO') { mDmg = 0; if(pAct === 'ATAQUE') pDmg += (1 + monster.bonusBlock); }
 
     let clash = false; let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
-    if(pBlocks) { clash = true; triggerBlockShield(true); triggerBlockEffect(true); } else if(mBlocks) { clash = true; triggerBlockShield(false); triggerBlockEffect(false); }
+    if(pBlocks || mBlocks) clash = true;
 
     let nextPlayerDisabled = null; let nextMonsterDisabled = null;
-    if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; triggerDisarmSeal(true, nextPlayerDisabled); }
-    if(pAct === 'DESARMAR') { nextMonsterDisabled = pDisarmChoice; triggerDisarmSeal(false, nextMonsterDisabled); }
-    if(pAct === 'DESARMAR' && mAct === 'DESARMAR') { nextPlayerDisabled = null; nextMonsterDisabled = null; showCenterText("ANULADO", "#aaa"); }
+    if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
+    if(pAct === 'DESARMAR') { nextMonsterDisabled = pDisarmChoice; }
+    const disarmClash = (pAct === 'DESARMAR' && mAct === 'DESARMAR');
+    if(disarmClash) { nextPlayerDisabled = null; nextMonsterDisabled = null; }
 
     player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
-    if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
-
-    if(pDmg > 0) {
-        player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675");
-        let soundOn = !(clash && mAct === 'BLOQUEIO');
-        if (!mBlocks) { triggerDamageEffect(true, soundOn); }
-        triggerHpImpact(true);
-    }
-    if(mDmg > 0) {
-        monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675");
-        let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn);
-        triggerHpImpact(false);
-    }
-
-    updateUI(); let pDead = player.hp <= 0, mDead = monster.hp <= 0;
-
-    if(!pDead && pAct === 'DESCANSAR') {
-        let healAmount = (pDmg === 0) ? 3 : 2;
-        player.hp = Math.min(player.maxHp, player.hp + healAmount);
-        showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerRestAura(true); triggerHealEffect(true); triggerHealPulse(true); playSound('sfx-heal');
-    }
-    if(!mDead && mAct === 'DESCANSAR') {
-        let healAmount = (mDmg === 0) ? 3 : 2;
-        monster.hp = Math.min(monster.maxHp, monster.hp + healAmount);
-        triggerRestAura(false); triggerHealEffect(false); triggerHealPulse(false); playSound('sfx-heal');
-    }
 
     function handleExtraXP(u) {
         if (window.gameMode === 'pvp' && window.currentMatchId) {
@@ -793,12 +762,70 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         }
     }
 
-    if(!pDead && pAct === 'TREINAR') handleExtraXP(player);
-    if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
-    if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player);
-    if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
+    const phaseReveal = () => {
+        triggerCardClashVisual();
+        setTimeout(phaseResult, 180);
+    };
 
-    setTimeout(() => {
+    const phaseResult = () => {
+        if(pAct === 'ATAQUE') triggerAttackSlash(false);
+        if(mAct === 'ATAQUE') triggerAttackSlash(true);
+        if(pAct === 'TREINAR') triggerTrainDeckGlow(true);
+        if(mAct === 'TREINAR') triggerTrainDeckGlow(false);
+        if(pBlocks) { triggerBlockShield(true); triggerBlockEffect(true); }
+        else if(mBlocks) { triggerBlockShield(false); triggerBlockEffect(false); }
+        if(disarmClash) showCenterText("ANULADO", "#aaa");
+        else {
+            if(mAct === 'DESARMAR') triggerDisarmSeal(true, nextPlayerDisabled);
+            if(pAct === 'DESARMAR') triggerDisarmSeal(false, nextMonsterDisabled);
+        }
+        const weightPause = (pDmg >= 4 || mDmg >= 4) ? 220 : 120;
+        if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
+        setTimeout(phaseDamage, weightPause);
+    };
+
+    const phaseDamage = () => {
+        if(pDmg > 0) {
+            player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675");
+            let soundOn = !(clash && mAct === 'BLOQUEIO');
+            if (!mBlocks) { triggerDamageEffect(true, soundOn); }
+            triggerHpImpact(true);
+        }
+        if(mDmg > 0) {
+            monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675");
+            let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn);
+            triggerHpImpact(false);
+        }
+
+        updateUI();
+        setTimeout(phaseRecovery, (pDmg >= 4 || mDmg >= 4) ? 180 : 80);
+    };
+
+    const phaseRecovery = () => {
+        let pDead = player.hp <= 0, mDead = monster.hp <= 0;
+
+        if(!pDead && pAct === 'DESCANSAR') {
+            let healAmount = (pDmg === 0) ? 3 : 2;
+            player.hp = Math.min(player.maxHp, player.hp + healAmount);
+            showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerRestAura(true); triggerHealEffect(true); triggerHealPulse(true); playSound('sfx-heal');
+        }
+        if(!mDead && mAct === 'DESCANSAR') {
+            let healAmount = (mDmg === 0) ? 3 : 2;
+            monster.hp = Math.min(monster.maxHp, monster.hp + healAmount);
+            triggerRestAura(false); triggerHealEffect(false); triggerHealPulse(false); playSound('sfx-heal');
+        }
+
+        updateUI();
+
+        if(!pDead && pAct === 'TREINAR') handleExtraXP(player);
+        if(!mDead && mAct === 'TREINAR') handleExtraXP(monster);
+        if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player);
+        if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
+
+        setTimeout(() => phaseXP(pDead, mDead), 520);
+    };
+
+    const phaseXP = (pDead, mDead) => {
         window.deferMasteryEndCheck = true;
         window.pendingRestMasteryHeals = [];
         window.pendingLevelUpSync = null;
@@ -837,7 +864,9 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         }, false, false, false);
 
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
-    }, 700);
+    };
+
+    phaseReveal();
 }
 
 function checkLevelUp(u, doneCb) {
@@ -853,9 +882,12 @@ function checkLevelUp(u, doneCb) {
         setTimeout(() => {
             let counts = {}; xpForLevelUp.forEach(x => counts[x] = (counts[x]||0)+1); let triggers = [];
             for(let k in counts) if(counts[k] >= 3) triggers.push(k);
-            triggers.forEach((type, idx) => setTimeout(() => showMasteryBanner(type, u === player), idx * 700));
+            triggers.forEach((type, idx) => setTimeout(() => {
+                highlightMasteryXP(u.id, type);
+                showMasteryBanner(type, u === player);
+            }, idx * 700));
 
-            processMasteries(u, triggers, () => {
+            setTimeout(() => processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++;
                 lvlEl.classList.add('level-up-anim'); triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
                 xpForLevelUp.forEach(x => u.deck.push(x)); u.xp = [];
@@ -869,7 +901,7 @@ function checkLevelUp(u, doneCb) {
                 } else { shuffle(u.deck); }
                 let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
                 updateUI(); doneCb();
-            });
+            }), triggers.length > 0 ? 850 : 0);
         }, 1000);
     } else { doneCb(); }
 }
@@ -981,7 +1013,7 @@ function updateUnit(u) {
 
     let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
     u.xp.forEach(k=>{
-        let d=document.createElement('div'); d.className='xp-mini'; let imgUrl = getCardArt(k, (u === player)); d.style.backgroundImage = `url('${imgUrl}')`;
+        let d=document.createElement('div'); d.className='xp-mini'; d.dataset.cardKey = k; let imgUrl = getCardArt(k, (u === player)); d.style.backgroundImage = `url('${imgUrl}')`;
         d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); };
         d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; xc.appendChild(d);
     });

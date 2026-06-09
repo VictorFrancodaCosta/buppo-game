@@ -203,11 +203,17 @@ export function triggerAttackSlash(targetIsPlayer) {
 export function triggerBlockShield(blockerIsPlayer) {
     const p = centerOfElement('p-slot');
     const m = centerOfElement('m-slot');
+    const midX = (p.x + m.x) / 2;
+    const midY = (p.y + m.y) / 2;
     const shield = createCombatFxElement('block-shield-fx');
-    shield.style.left = ((p.x + m.x) / 2) + 'px';
-    shield.style.top = ((p.y + m.y) / 2) + 'px';
+    shield.style.left = midX + 'px';
+    shield.style.top = midY + 'px';
     shield.classList.add(blockerIsPlayer ? 'player-block' : 'enemy-block');
+    const ripple = createCombatFxElement('block-ripple-fx');
+    ripple.style.left = midX + 'px';
+    ripple.style.top = midY + 'px';
     setTimeout(() => shield.remove(), 720);
+    setTimeout(() => ripple.remove(), 620);
 }
 
 export function triggerRestAura(isPlayer) {
@@ -281,9 +287,28 @@ export function triggerHealPulse(isPlayer) {
 
 export function showMasteryBanner(type, isPlayer = true) {
     const meta = ACTION_META[type] || { label: type, cls: 'neutral' };
+    document.body.classList.add('mastery-focus-active');
     const banner = createCombatFxElement(`mastery-banner ${meta.cls}`, `MAESTRIA EM ${meta.label}`);
     banner.classList.add(isPlayer ? 'from-player' : 'from-enemy');
-    setTimeout(() => banner.remove(), 1350);
+    setTimeout(() => {
+        banner.remove();
+        document.body.classList.remove('mastery-focus-active');
+    }, 1350);
+}
+
+export function highlightMasteryXP(unitId, type) {
+    const xpArea = document.getElementById(unitId + '-xp');
+    if(!xpArea) return;
+    const cards = Array.from(xpArea.querySelectorAll('.xp-mini'));
+    let highlighted = 0;
+    cards.forEach(card => {
+        if(highlighted >= 3) return;
+        if(card.dataset.cardKey === type || card.getAttribute('data-card-key') === type) {
+            highlighted++;
+            card.classList.add('mastery-xp-highlight');
+            setTimeout(() => card.classList.remove('mastery-xp-highlight'), 1400);
+        }
+    });
 }
 
 export function apply3DTilt(element, isHand = false) {
