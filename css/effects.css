@@ -510,29 +510,21 @@ body.mastery-focus-active .xp-area {
 }
 
 .pvp-ready-glow {
-    filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 18px #ffd700) drop-shadow(0 0 8px rgba(255,255,255,0.45)) brightness(1.12) !important;
+    filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 10px rgba(255, 215, 0, 0.72)) brightness(1.06) !important;
 }
 .pvp-ready-glow::after {
     content: "";
     position: absolute;
-    inset: 8px 18px;
+    inset: 10px 20px;
     border-radius: 22px;
     pointer-events: none;
-    border: 2px solid rgba(255,215,0,0.55);
-    box-shadow: 0 0 18px rgba(255,215,0,0.5), inset 0 0 18px rgba(255,215,0,0.18);
-    animation: pvpReadyGlowPulse 1.25s ease-in-out infinite;
+    border: 1px solid rgba(255,215,0,0.38);
+    box-shadow: 0 0 10px rgba(255,215,0,0.28), inset 0 0 10px rgba(255,215,0,0.12);
+    animation: pvpReadyGlowPulse 1.45s ease-in-out infinite;
 }
 @keyframes pvpReadyGlowPulse {
-    0%, 100% { opacity: 0.45; transform: scale(0.98); }
-    50% { opacity: 1; transform: scale(1.01); }
-}
-.opponent-ready-pulse {
-    animation: opponentReadyPulse 0.85s ease-out;
-}
-@keyframes opponentReadyPulse {
-    0% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); }
-    20% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 22px #ffd700) brightness(1.25); }
-    100% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); }
+    0%, 100% { opacity: 0.32; transform: scale(0.99); }
+    50% { opacity: 0.68; transform: scale(1.005); }
 }
 
 #end-points {

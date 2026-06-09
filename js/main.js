@@ -28,7 +28,6 @@ window.pvpSelectedCardIndex = null;
 window.isResolvingTurn = false;
 window.pvpWaitingForTurnReset = false;
 window.pvpLocalResolutionComplete = false;
-window.pvpLastOpponentReady = false;
 window.pvpStartData = null;
 window.latestMatchData = null;
 
@@ -78,7 +77,6 @@ window.cleanupMatchState = function() {
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     window.currentMatchId = null; window.myRole = null; window.pvpStartData = null;
     window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.latestMatchData = null;
-    window.pvpLastOpponentReady = false;
     window.isProcessing = false;
     const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
     updatePvPReadyIndicator(false, false);
@@ -300,12 +298,9 @@ function startPvPListener() {
             const myReady = window.myRole === 'player1' ? p1Ready : p2Ready;
             const opponentReady = window.myRole === 'player1' ? p2Ready : p1Ready;
             updatePvPReadyIndicator(myReady, opponentReady);
-            if(opponentReady && !window.pvpLastOpponentReady) pulseOpponentReadyHud();
-            window.pvpLastOpponentReady = !!opponentReady;
             const didFinishTurnReset = finishPvPTurnResetIfReady(matchData);
             if (!didFinishTurnReset) {
                 if (myReady && !opponentReady) showPvPStatus("AGUARDANDO OPONENTE...");
-                else if (!myReady && opponentReady) showPvPStatus("OPONENTE PRONTO");
                 else if (!window.pvpWaitingForTurnReset) { const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove(); }
             }
         }
@@ -357,15 +352,6 @@ function updatePvPReadyIndicator(myReady, opponentReady) {
     if(enemyHud) enemyHud.classList.toggle('pvp-ready-glow', !!opponentReady);
 }
 
-function pulseOpponentReadyHud() {
-    const hud = document.getElementById('m-stats-cluster');
-    if(!hud) return;
-    hud.classList.remove('opponent-ready-pulse');
-    void hud.offsetWidth;
-    hud.classList.add('opponent-ready-pulse');
-    setTimeout(() => hud.classList.remove('opponent-ready-pulse'), 900);
-}
-
 function resetHandCardVisualState() {
     document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active');
     window.isLethalHover = false;
@@ -387,7 +373,6 @@ function finishPvPTurnResetIfReady(matchData = window.latestMatchData) {
     if (p1Ready || p2Ready) return false;
     window.pvpWaitingForTurnReset = false;
     window.pvpLocalResolutionComplete = false;
-    window.pvpLastOpponentReady = false;
     window.pvpSelectedCardIndex = null;
     window.isResolvingTurn = false;
     window.isProcessing = false;

@@ -335,21 +335,25 @@ export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isT
     else { startW = window.innerWidth < 768 ? 84 : 105; startH = window.innerWidth < 768 ? 120 : 150; }
     fly.style.width = startW + 'px'; fly.style.height = startH + 'px';
     let tableW = window.innerWidth < 768 ? 110 : 180; let tableH = window.innerWidth < 768 ? 170 : 260;
-    const endW = isToTable ? tableW : startW;
-    const endH = isToTable ? tableH : startH;
+    const isToXP = typeof endId === 'string' && endId.endsWith('-xp');
+    const xpW = 38;
+    const xpH = 53;
+    const endW = isToTable ? tableW : (isToXP ? xpW : startW);
+    const endH = isToTable ? tableH : (isToXP ? xpH : startH);
     const endLeft = e.left + (e.width / 2) - (endW / 2);
     const endTop = e.top + (e.height / 2) - (endH / 2);
     fly.style.top=s.top+'px'; fly.style.left=s.left+'px';
-    const finalTransform = 'scale(1)';
+    const finalTransform = isToXP ? 'translateY(0) rotate(0deg) scale(1)' : 'scale(1)';
     fly.style.transform = 'translateY(0) rotate(-4deg) scale(1)';
     fly.style.transition = 'top 0.46s cubic-bezier(0.22, 0.9, 0.24, 1), left 0.46s cubic-bezier(0.22, 0.9, 0.24, 1), width 0.46s cubic-bezier(0.22, 0.9, 0.24, 1), height 0.46s cubic-bezier(0.22, 0.9, 0.24, 1), box-shadow 0.46s ease';
     document.body.appendChild(fly); fly.offsetHeight;
     if(isToTable) { fly.style.width=tableW+'px'; fly.style.height=tableH+'px'; }
+    else if(isToXP) { fly.style.width=xpW+'px'; fly.style.height=xpH+'px'; }
     try {
         fly.animate([
             { transform: 'translateY(0) rotate(-5deg) scale(1)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' },
-            { transform: `translateY(-${window.innerWidth < 768 ? 34 : 58}px) rotate(5deg) scale(${isToTable ? 1.05 : 0.9})`, boxShadow: '0 28px 56px rgba(0,0,0,0.75)', offset: 0.55 },
-            { transform: finalTransform, boxShadow: isToTable ? '0 16px 34px rgba(0,0,0,0.82)' : '0 8px 20px rgba(0,0,0,0.55)' }
+            { transform: `translateY(-${window.innerWidth < 768 ? 34 : 58}px) rotate(5deg) scale(${isToTable ? 1.05 : (isToXP ? 0.78 : 0.9)})`, boxShadow: '0 28px 56px rgba(0,0,0,0.75)', offset: 0.55 },
+            { transform: finalTransform, boxShadow: isToTable ? '0 16px 34px rgba(0,0,0,0.82)' : (isToXP ? '0 4px 10px rgba(0,0,0,0.5)' : '0 8px 20px rgba(0,0,0,0.55)') }
         ], { duration: 460, easing: 'cubic-bezier(0.22, 0.9, 0.24, 1)', fill: 'forwards' });
     } catch(e) {}
     fly.style.top=endTop+'px'; fly.style.left=endLeft+'px';
