@@ -7,7 +7,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 
 // IMPORTANDO OS NOVOS MÓDULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerActionCue, triggerCardClashVisual, triggerHpImpact, triggerHealPulse, showCombatCue, showMasteryBanner, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerCardClashVisual, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, showCombatCue, showMasteryBanner, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js';
 import { initiateMatchmaking } from './matchmaking.js';
 
 // --- VARIÁVEIS GLOBAIS DE ESTADO ---
@@ -731,8 +731,10 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
     let pDmg = 0, mDmg = 0;
     showCombatCue("IMPACTO", "gold");
     triggerCardClashVisual();
-    triggerActionCue(pAct, true);
-    triggerActionCue(mAct, false);
+    if(pAct === 'ATAQUE') triggerAttackSlash(false);
+    if(mAct === 'ATAQUE') triggerAttackSlash(true);
+    if(pAct === 'TREINAR') triggerTrainDeckGlow(true);
+    if(mAct === 'TREINAR') triggerTrainDeckGlow(false);
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
 
@@ -742,11 +744,11 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
     if(mAct === 'BLOQUEIO') { mDmg = 0; if(pAct === 'ATAQUE') pDmg += (1 + monster.bonusBlock); }
 
     let clash = false; let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
-    if(pBlocks) { clash = true; triggerBlockEffect(true); } else if(mBlocks) { clash = true; triggerBlockEffect(false); }
+    if(pBlocks) { clash = true; triggerBlockShield(true); triggerBlockEffect(true); } else if(mBlocks) { clash = true; triggerBlockShield(false); triggerBlockEffect(false); }
 
     let nextPlayerDisabled = null; let nextMonsterDisabled = null;
-    if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
-    if(pAct === 'DESARMAR') { nextMonsterDisabled = pDisarmChoice; }
+    if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; triggerDisarmSeal(true, nextPlayerDisabled); }
+    if(pAct === 'DESARMAR') { nextMonsterDisabled = pDisarmChoice; triggerDisarmSeal(false, nextMonsterDisabled); }
     if(pAct === 'DESARMAR' && mAct === 'DESARMAR') { nextPlayerDisabled = null; nextMonsterDisabled = null; showCenterText("ANULADO", "#aaa"); }
 
     player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
@@ -769,12 +771,12 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
     if(!pDead && pAct === 'DESCANSAR') {
         let healAmount = (pDmg === 0) ? 3 : 2;
         player.hp = Math.min(player.maxHp, player.hp + healAmount);
-        showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); triggerHealPulse(true); playSound('sfx-heal');
+        showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerRestAura(true); triggerHealEffect(true); triggerHealPulse(true); playSound('sfx-heal');
     }
     if(!mDead && mAct === 'DESCANSAR') {
         let healAmount = (mDmg === 0) ? 3 : 2;
         monster.hp = Math.min(monster.maxHp, monster.hp + healAmount);
-        triggerHealEffect(false); triggerHealPulse(false); playSound('sfx-heal');
+        triggerRestAura(false); triggerHealEffect(false); triggerHealPulse(false); playSound('sfx-heal');
     }
 
     function handleExtraXP(u) {
@@ -911,7 +913,7 @@ function flushRestMasteryHeals() {
     updateUI();
 }
 
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; triggerActionCue('BLOQUEIO', u === player); } if(k === 'DESCANSAR') { queueRestMasteryHeal(u); triggerActionCue('DESCANSAR', u === player); } updateUI(); }
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerAttackSlash(target === player); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; triggerBlockShield(u === player); } if(k === 'DESCANSAR') { queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
 
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;

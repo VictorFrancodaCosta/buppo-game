@@ -179,6 +179,79 @@ export function triggerCardClashVisual() {
     setTimeout(() => clash.remove(), 600);
 }
 
+function centerOfElement(id) {
+    const el = document.getElementById(id);
+    if(!el) return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const rect = el.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, rect };
+}
+
+export function triggerAttackSlash(targetIsPlayer) {
+    const target = centerOfElement(targetIsPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+    const slash = createCombatFxElement('attack-slash-fx');
+    slash.style.left = target.x + 'px';
+    slash.style.top = target.y + 'px';
+
+    const spark = createCombatFxElement('impact-spark-fx');
+    spark.style.left = target.x + 'px';
+    spark.style.top = target.y + 'px';
+
+    setTimeout(() => slash.remove(), 520);
+    setTimeout(() => spark.remove(), 520);
+}
+
+export function triggerBlockShield(blockerIsPlayer) {
+    const p = centerOfElement('p-slot');
+    const m = centerOfElement('m-slot');
+    const shield = createCombatFxElement('block-shield-fx');
+    shield.style.left = ((p.x + m.x) / 2) + 'px';
+    shield.style.top = ((p.y + m.y) / 2) + 'px';
+    shield.classList.add(blockerIsPlayer ? 'player-block' : 'enemy-block');
+    setTimeout(() => shield.remove(), 720);
+}
+
+export function triggerRestAura(isPlayer) {
+    const target = centerOfElement(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+    const aura = createCombatFxElement('rest-aura-fx');
+    aura.style.left = target.x + 'px';
+    aura.style.top = target.y + 'px';
+
+    for(let i = 0; i < 18; i++) {
+        const mote = document.createElement('span');
+        mote.style.left = (target.x + (Math.random() - 0.5) * 190) + 'px';
+        mote.style.top = (target.y + 35 + Math.random() * 45) + 'px';
+        mote.style.setProperty('--rise', `${70 + Math.random() * 65}px`);
+        document.body.appendChild(mote);
+        mote.className = 'rest-mote-fx';
+        setTimeout(() => mote.remove(), 1000);
+    }
+    setTimeout(() => aura.remove(), 1000);
+}
+
+export function triggerTrainDeckGlow(isPlayer) {
+    const deckId = isPlayer ? 'p-deck-container' : 'm-deck';
+    const target = centerOfElement(deckId);
+    const deckEl = document.getElementById(deckId);
+    if(deckEl) {
+        deckEl.classList.remove('deck-train-glow');
+        void deckEl.offsetWidth;
+        deckEl.classList.add('deck-train-glow');
+        setTimeout(() => deckEl.classList.remove('deck-train-glow'), 850);
+    }
+    const rune = createCombatFxElement('train-rune-fx', '*');
+    rune.style.left = target.x + 'px';
+    rune.style.top = target.y + 'px';
+    setTimeout(() => rune.remove(), 900);
+}
+
+export function triggerDisarmSeal(targetIsPlayer, label = '') {
+    const target = centerOfElement(targetIsPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+    const seal = createCombatFxElement('disarm-seal-fx', label || '!');
+    seal.style.left = target.x + 'px';
+    seal.style.top = target.y + 'px';
+    setTimeout(() => seal.remove(), 1050);
+}
+
 export function triggerHpImpact(isPlayer) {
     const cluster = document.getElementById(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
     const hpFill = document.getElementById(isPlayer ? 'p-hp-fill' : 'm-hp-fill');
