@@ -137,6 +137,82 @@ export function triggerLevelUpVisuals(unitId) {
     cluster.appendChild(text); setTimeout(() => { text.remove(); }, 2000);
 }
 
+const ACTION_META = {
+    ATAQUE: { label: 'ATAQUE', icon: 'X', cls: 'attack' },
+    BLOQUEIO: { label: 'BLOQUEIO', icon: 'O', cls: 'block' },
+    DESCANSAR: { label: 'DESCANSAR', icon: '+', cls: 'rest' },
+    TREINAR: { label: 'TREINAR', icon: '*', cls: 'train' },
+    DESARMAR: { label: 'DESARMAR', icon: '!', cls: 'disarm' }
+};
+
+function createCombatFxElement(className, text = '') {
+    const el = document.createElement('div');
+    el.className = className;
+    el.innerText = text;
+    document.body.appendChild(el);
+    return el;
+}
+
+export function showCombatCue(text, tone = 'gold', duration = 900) {
+    const cue = createCombatFxElement(`combat-cue ${tone}`, text);
+    setTimeout(() => cue.remove(), duration);
+}
+
+export function triggerActionCue(cardKey, isPlayer = true) {
+    const meta = ACTION_META[cardKey] || { label: cardKey, icon: '?', cls: 'neutral' };
+    const slot = document.getElementById(isPlayer ? 'p-slot' : 'm-slot');
+    const rect = slot ? slot.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
+    const burst = createCombatFxElement(`action-burst ${meta.cls}`, meta.icon);
+    burst.style.left = (rect.left + rect.width / 2) + 'px';
+    burst.style.top = (rect.top + rect.height / 2) + 'px';
+    for(let i = 0; i < 14; i++) {
+        const spark = document.createElement('span');
+        spark.style.setProperty('--a', `${(360 / 14) * i}deg`);
+        spark.style.setProperty('--d', `${50 + Math.random() * 42}px`);
+        burst.appendChild(spark);
+    }
+    setTimeout(() => burst.remove(), 850);
+}
+
+export function triggerCardClashVisual() {
+    const clash = createCombatFxElement('card-clash-flash');
+    setTimeout(() => clash.remove(), 600);
+}
+
+export function triggerHpImpact(isPlayer) {
+    const cluster = document.getElementById(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+    const hpFill = document.getElementById(isPlayer ? 'p-hp-fill' : 'm-hp-fill');
+    if(cluster) {
+        cluster.classList.remove('avatar-hit-anim');
+        void cluster.offsetWidth;
+        cluster.classList.add('avatar-hit-anim');
+        setTimeout(() => cluster.classList.remove('avatar-hit-anim'), 450);
+    }
+    if(hpFill) {
+        hpFill.classList.remove('hp-hit-flash');
+        void hpFill.offsetWidth;
+        hpFill.classList.add('hp-hit-flash');
+        setTimeout(() => hpFill.classList.remove('hp-hit-flash'), 500);
+    }
+}
+
+export function triggerHealPulse(isPlayer) {
+    const hpFill = document.getElementById(isPlayer ? 'p-hp-fill' : 'm-hp-fill');
+    if(hpFill) {
+        hpFill.classList.remove('hp-heal-flash');
+        void hpFill.offsetWidth;
+        hpFill.classList.add('hp-heal-flash');
+        setTimeout(() => hpFill.classList.remove('hp-heal-flash'), 600);
+    }
+}
+
+export function showMasteryBanner(type, isPlayer = true) {
+    const meta = ACTION_META[type] || { label: type, cls: 'neutral' };
+    const banner = createCombatFxElement(`mastery-banner ${meta.cls}`, `MAESTRIA EM ${meta.label}`);
+    banner.classList.add(isPlayer ? 'from-player' : 'from-enemy');
+    setTimeout(() => banner.remove(), 1350);
+}
+
 export function apply3DTilt(element, isHand = false) {
     if(window.innerWidth < 768) return;
     element.addEventListener('mousemove', (e) => {
