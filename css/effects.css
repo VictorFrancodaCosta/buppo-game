@@ -502,11 +502,30 @@ body.mastery-focus-active .xp-area {
     z-index: 12600;
 }
 
+.mastery-xp-spot {
+    position: fixed;
+    z-index: 12620;
+    pointer-events: none;
+    border: 1px solid #ffd700;
+    border-radius: 4px;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 0 26px #ffd700, 0 0 12px #fff;
+    animation: masteryXpSpotPulse 1.35s ease-out forwards;
+}
+
 @keyframes masteryXpPulse {
     0% { transform: scale(1); box-shadow: 0 4px 8px rgba(0,0,0,0.6); }
     18% { transform: scale(1.45) translateY(-8px); box-shadow: 0 0 26px #ffd700, 0 0 12px #fff; }
     72% { transform: scale(1.32) translateY(-6px); box-shadow: 0 0 22px #ffd700, 0 0 10px #fff; }
     100% { transform: scale(1); box-shadow: 0 4px 8px rgba(0,0,0,0.6); }
+}
+
+@keyframes masteryXpSpotPulse {
+    0% { opacity: 0; transform: scale(0.95); filter: brightness(1); }
+    18% { opacity: 1; transform: scale(1.45) translateY(-8px); filter: brightness(1.45); }
+    72% { opacity: 1; transform: scale(1.32) translateY(-6px); filter: brightness(1.25); }
+    100% { opacity: 0; transform: scale(1.05); filter: brightness(1); }
 }
 
 .pvp-ready-glow {

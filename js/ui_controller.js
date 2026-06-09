@@ -303,6 +303,19 @@ export function highlightMasteryXP(unitId, type) {
             highlighted++;
             card.classList.add('mastery-xp-highlight');
             setTimeout(() => card.classList.remove('mastery-xp-highlight'), 1400);
+
+            const rect = card.getBoundingClientRect();
+            if(rect.width > 0 && rect.height > 0) {
+                const glowCard = document.createElement('div');
+                glowCard.className = 'mastery-xp-spot';
+                glowCard.style.left = rect.left + 'px';
+                glowCard.style.top = rect.top + 'px';
+                glowCard.style.width = rect.width + 'px';
+                glowCard.style.height = rect.height + 'px';
+                glowCard.style.backgroundImage = card.style.backgroundImage;
+                document.body.appendChild(glowCard);
+                setTimeout(() => glowCard.remove(), 1400);
+            }
         }
     });
 }
