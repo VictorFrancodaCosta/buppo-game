@@ -1,9 +1,17 @@
 /* ARQUIVO: css/game.css */
 /* BACKGROUNDS E MESAS */
 #game-background { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-image: var(--bg-image-url); background-size: cover; background-position: center; background-repeat: no-repeat; z-index: -5; transition: filter 0.5s ease, background-image 0.5s ease-in-out; }
+#game-background::after { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: 0; mix-blend-mode: screen; transition: opacity 0.6s ease, background 0.6s ease; }
+body.theme-cavaleiro #game-background::after { opacity: 0.26; background: radial-gradient(circle at 50% 49%, rgba(255, 215, 0, 0.18), transparent 28%), linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.07) 48%, transparent 60%); }
+body.theme-mago #game-background::after { opacity: 0.3; background: radial-gradient(circle at 50% 48%, rgba(162, 155, 254, 0.22), transparent 30%), radial-gradient(circle at 58% 36%, rgba(0,206,201,0.14), transparent 22%); }
 body.theme-mago #game-background, #game-background.theme-mago { background-image: var(--table-mago) !important; }
 body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { background-image: var(--table-cavaleiro) !important; }
 #game-background.lobby-mode { background-image: var(--lobby-bg-url) !important; filter: blur(3px); }
+
+#ambient-particles { position: fixed; inset: 0; z-index: -2; pointer-events: none; overflow: hidden; }
+.ember { position: absolute; bottom: -20px; width: 3px; height: 3px; border-radius: 50%; background: rgba(255,215,0,0.55); box-shadow: 0 0 10px rgba(255,215,0,0.55); opacity: 0; animation: tableDustFloat linear infinite; }
+body.theme-mago .ember { background: rgba(162,155,254,0.55); box-shadow: 0 0 12px rgba(162,155,254,0.7); }
+@keyframes tableDustFloat { 0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.5); } 15% { opacity: 0.55; } 80% { opacity: 0.35; } 100% { opacity: 0; transform: translate3d(var(--mx), -105vh, 0) scale(1.2); } }
 
 /* TELA DE FIM (VITÓRIA/DERROTA) */
 #end-screen { position: fixed; top: 0; left: calc(50% - 50vw); width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 90000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; backdrop-filter: blur(5px); }

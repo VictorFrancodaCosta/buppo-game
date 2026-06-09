@@ -174,11 +174,6 @@ export function triggerActionCue(cardKey, isPlayer = true) {
     setTimeout(() => burst.remove(), 850);
 }
 
-export function triggerCardClashVisual() {
-    const clash = createCombatFxElement('card-clash-flash');
-    setTimeout(() => clash.remove(), 600);
-}
-
 function centerOfElement(id) {
     const el = document.getElementById(id);
     if(!el) return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
@@ -288,6 +283,7 @@ export function triggerHealPulse(isPlayer) {
 export function showMasteryBanner(type, isPlayer = true) {
     const meta = ACTION_META[type] || { label: type, cls: 'neutral' };
     document.body.classList.add('mastery-focus-active');
+    playSound('sfx-mastery');
     const banner = createCombatFxElement(`mastery-banner ${meta.cls}`, `MAESTRIA EM ${meta.label}`);
     banner.classList.add(isPlayer ? 'from-player' : 'from-enemy');
     setTimeout(() => {
@@ -339,11 +335,23 @@ export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isT
     else { let w = window.innerWidth < 768 ? '84px' : '105px'; let h = window.innerWidth < 768 ? '120px' : '150px'; fly.style.width=w; fly.style.height=h; }
     let tableW = window.innerWidth < 768 ? '110px' : '180px'; let tableH = window.innerWidth < 768 ? '170px' : '260px';
     fly.style.top=s.top+'px'; fly.style.left=s.left+'px';
-    if(endId.includes('xp')) fly.style.transform='scale(0.3)';
+    const finalTransform = endId.includes('xp') ? 'scale(0.3)' : 'scale(1)';
+    fly.style.transform = 'translateY(0) rotate(-4deg) scale(1)';
     document.body.appendChild(fly); fly.offsetHeight;
     if(isToTable) { fly.style.width=tableW; fly.style.height=tableH; }
+    try {
+        fly.animate([
+            { transform: 'translateY(0) rotate(-5deg) scale(1)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' },
+            { transform: `translateY(-${window.innerWidth < 768 ? 34 : 58}px) rotate(5deg) scale(${isToTable ? 1.05 : 0.9})`, boxShadow: '0 28px 56px rgba(0,0,0,0.75)', offset: 0.55 },
+            { transform: finalTransform, boxShadow: isToTable ? '0 16px 34px rgba(0,0,0,0.82)' : '0 8px 20px rgba(0,0,0,0.55)' }
+        ], { duration: 460, easing: 'cubic-bezier(0.22, 0.9, 0.24, 1)', fill: 'forwards' });
+    } catch(e) {}
     fly.style.top=e.top+'px'; fly.style.left=e.left+'px';
-    setTimeout(() => { fly.remove(); if(cb) cb(); }, 250);
+    setTimeout(() => {
+        if(isToTable) playSound('sfx-play');
+        fly.remove();
+        if(cb) cb();
+    }, 460);
 }
 
 export function renderTable(key, slotId, isPlayer = false) {

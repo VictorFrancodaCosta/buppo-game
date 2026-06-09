@@ -211,7 +211,7 @@
     border-radius: 50%;
     z-index: 11000;
     pointer-events: none;
-    display: flex;
+    align-items: center;
     align-items: center;
     justify-content: center;
     font-family: 'Russo One', sans-serif;
@@ -246,28 +246,6 @@
     0% { opacity: 0; transform: rotate(var(--a)) translateY(-8px) scaleY(0.2); }
     20% { opacity: 1; }
     100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--d) * -1)) scaleY(1); }
-}
-
-.card-clash-flash {
-    position: fixed;
-    left: 50%;
-    top: 46%;
-    width: 20vw;
-    height: 20vw;
-    min-width: 160px;
-    min-height: 160px;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    z-index: 9500;
-    pointer-events: none;
-    background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(255,215,0,0.35) 28%, rgba(255,71,87,0.14) 45%, transparent 70%);
-    mix-blend-mode: screen;
-    animation: clashFlash 0.6s ease-out forwards;
-}
-@keyframes clashFlash {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
-    20% { opacity: 1; }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
 }
 
 .mastery-banner {
@@ -529,4 +507,99 @@ body.mastery-focus-active .xp-area {
     18% { transform: scale(1.45) translateY(-8px); box-shadow: 0 0 26px #ffd700, 0 0 12px #fff; }
     72% { transform: scale(1.32) translateY(-6px); box-shadow: 0 0 22px #ffd700, 0 0 10px #fff; }
     100% { transform: scale(1); box-shadow: 0 4px 8px rgba(0,0,0,0.6); }
+}
+
+#pvp-ready-indicator {
+    position: fixed;
+    left: 50%;
+    top: 18px;
+    transform: translateX(-50%) translateY(-12px);
+    z-index: 12000;
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+#pvp-ready-indicator.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.ready-badge {
+    min-width: 82px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 9px;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 20px;
+    background: rgba(0,0,0,0.58);
+    color: rgba(255,255,255,0.45);
+    font-family: 'Russo One', sans-serif;
+    font-size: 10px;
+    text-shadow: 0 2px 0 #000;
+}
+.ready-badge.ready {
+    color: #ffd700;
+    border-color: rgba(255,215,0,0.75);
+    box-shadow: 0 0 14px rgba(255,215,0,0.28);
+}
+.ready-crest {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid currentColor;
+    font-size: 10px;
+}
+.opponent-ready-pulse {
+    animation: opponentReadyPulse 0.85s ease-out;
+}
+@keyframes opponentReadyPulse {
+    0% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); }
+    20% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 22px #ffd700) brightness(1.25); }
+    100% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); }
+}
+
+#end-points {
+    margin: -14px 0 28px;
+    font-family: 'Russo One', sans-serif;
+    font-size: 34px;
+    letter-spacing: 2px;
+    text-shadow: 0 3px 0 #000, 0 0 22px currentColor;
+}
+#end-points.points-win { color: #2ecc71; }
+#end-points.points-loss { color: #ff7675; }
+#end-points.points-tie { color: #ffd700; }
+
+body.end-win-active #end-screen {
+    background: radial-gradient(circle at 50% 42%, rgba(255,215,0,0.18), rgba(0,0,0,0.88) 58%);
+}
+body.end-loss-active #end-screen {
+    background: radial-gradient(circle at 50% 42%, rgba(255,71,87,0.18), rgba(0,0,0,0.92) 60%);
+}
+body.end-tie-active #end-screen {
+    background: radial-gradient(circle at 50% 42%, rgba(255,255,255,0.14), rgba(255,215,0,0.1) 30%, rgba(0,0,0,0.88) 62%);
+}
+.victory-confetti {
+    position: fixed;
+    top: -24px;
+    width: 8px;
+    height: 14px;
+    z-index: 91000;
+    pointer-events: none;
+    background: #ffd700;
+    box-shadow: 0 0 8px rgba(255,215,0,0.8);
+    animation: victoryConfettiFall 2.35s ease-in forwards;
+}
+.victory-confetti:nth-child(3n) { background: #fff2a8; }
+.victory-confetti:nth-child(4n) { background: #2ecc71; }
+@keyframes victoryConfettiFall {
+    0% { opacity: 0; transform: translateX(0) translateY(0) rotate(0deg); }
+    10% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(var(--drift)) translateY(110vh) rotate(620deg); }
 }
