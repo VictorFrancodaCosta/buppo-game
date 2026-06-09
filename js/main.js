@@ -81,7 +81,7 @@ window.cleanupMatchState = function() {
     window.pvpLastOpponentReady = false;
     window.isProcessing = false;
     const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
-    const ready = document.getElementById('pvp-ready-indicator'); if(ready) ready.remove();
+    updatePvPReadyIndicator(false, false);
     
     // LIMPEZA DA MESA (GARANTE QUE O TEMA DO DECK SEJA REMOVIDO)
     document.body.classList.remove('theme-cavaleiro', 'theme-mago');
@@ -341,7 +341,7 @@ function showPvPStatus(msg) {
     let el = document.getElementById('pvp-status-bar');
     if (!el) {
         el = document.createElement('div'); el.id = 'pvp-status-bar';
-        el.style.position = 'fixed'; el.style.top = '15%'; el.style.left = '50%'; el.style.transform = 'translateX(-50%)';
+        el.style.position = 'fixed'; el.style.top = '46%'; el.style.left = '50%'; el.style.transform = 'translate(-50%, -50%)';
         el.style.background = 'rgba(0,0,0,0.7)'; el.style.color = '#ffd700'; el.style.padding = '10px 20px';
         el.style.borderRadius = '20px'; el.style.zIndex = '9999'; el.style.fontSize = '14px'; el.style.border = '1px solid #ffd700';
         document.body.appendChild(el);
@@ -351,18 +351,10 @@ function showPvPStatus(msg) {
 
 function updatePvPReadyIndicator(myReady, opponentReady) {
     if(window.gameMode !== 'pvp') return;
-    let el = document.getElementById('pvp-ready-indicator');
-    if(!el) {
-        el = document.createElement('div');
-        el.id = 'pvp-ready-indicator';
-        el.innerHTML = `<div class="ready-badge" data-side="you"><span class="ready-crest">V</span><small>VOCE</small></div><div class="ready-badge" data-side="opponent"><span class="ready-crest">O</span><small>OPONENTE</small></div>`;
-        document.body.appendChild(el);
-    }
-    const you = el.querySelector('[data-side="you"]');
-    const opp = el.querySelector('[data-side="opponent"]');
-    if(you) you.classList.toggle('ready', !!myReady);
-    if(opp) opp.classList.toggle('ready', !!opponentReady);
-    el.classList.toggle('visible', !!(myReady || opponentReady));
+    const playerHud = document.getElementById('p-stats-cluster');
+    const enemyHud = document.getElementById('m-stats-cluster');
+    if(playerHud) playerHud.classList.toggle('pvp-ready-glow', !!myReady);
+    if(enemyHud) enemyHud.classList.toggle('pvp-ready-glow', !!opponentReady);
 }
 
 function pulseOpponentReadyHud() {
