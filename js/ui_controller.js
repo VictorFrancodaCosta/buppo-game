@@ -174,6 +174,27 @@ export function triggerActionCue(cardKey, isPlayer = true) {
     setTimeout(() => burst.remove(), 850);
 }
 
+export function triggerTableActionPulse(cardKey) {
+    const meta = ACTION_META[cardKey] || { cls: 'neutral' };
+    const wash = createCombatFxElement(`table-action-wash ${meta.cls}`);
+    setTimeout(() => wash.remove(), 850);
+}
+
+export function triggerTableCenterSpark() {
+    const spark = createCombatFxElement('table-center-spark');
+    setTimeout(() => spark.remove(), 480);
+}
+
+export function triggerDeckDrawGlow(unitId) {
+    const deckId = unitId === 'm' ? 'm-deck' : `${unitId}-deck-container`;
+    const deckEl = document.getElementById(deckId);
+    if(!deckEl) return;
+    deckEl.classList.remove('deck-draw-glow');
+    void deckEl.offsetWidth;
+    deckEl.classList.add('deck-draw-glow');
+    setTimeout(() => deckEl.classList.remove('deck-draw-glow'), 600);
+}
+
 function centerOfElement(id) {
     const el = document.getElementById(id);
     if(!el) return { x: window.innerWidth / 2, y: window.innerHeight / 2 };

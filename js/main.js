@@ -7,7 +7,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 
 // IMPORTANDO OS NOVOS MÓDULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, showCombatCue, showMasteryBanner, highlightMasteryXP, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerTableActionPulse, triggerTableCenterSpark, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js';
 import { initiateMatchmaking } from './matchmaking.js';
 
 // --- VARIÁVEIS GLOBAIS DE ESTADO ---
@@ -78,7 +78,7 @@ window.cleanupMatchState = function() {
     window.currentMatchId = null; window.myRole = null; window.pvpStartData = null;
     window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.latestMatchData = null;
     window.isProcessing = false;
-    const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
+    clearPvPStatus();
     updatePvPReadyIndicator(false, false);
     
     // LIMPEZA DA MESA (GARANTE QUE O TEMA DO DECK SEJA REMOVIDO)
@@ -291,7 +291,7 @@ function startPvPListener() {
         if (p1Ready && p2Ready) {
             updatePvPReadyIndicator(true, true);
             if (!window.isResolvingTurn) {
-                const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
+                clearPvPStatus();
                 resolvePvPTurn(matchData);
             }
         } else {
@@ -302,7 +302,7 @@ function startPvPListener() {
             if (!didFinishTurnReset) {
                 if (myReady && !opponentReady) showPvPStatus("AGUARDANDO OPONENTE...");
                 else if (!myReady && opponentReady) showPvPStatus("OPONENTE PRONTO");
-                else if (!window.pvpWaitingForTurnReset) { const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove(); }
+                else if (!window.pvpWaitingForTurnReset) clearPvPStatus();
             }
         }
 
@@ -334,6 +334,7 @@ function startPvPListener() {
 }
 
 function showPvPStatus(msg) {
+    document.body.classList.add('pvp-waiting-table');
     let el = document.getElementById('pvp-status-bar');
     if (!el) {
         el = document.createElement('div'); el.id = 'pvp-status-bar';
@@ -343,6 +344,12 @@ function showPvPStatus(msg) {
         document.body.appendChild(el);
     }
     el.innerText = msg;
+}
+
+function clearPvPStatus() {
+    const sb = document.getElementById('pvp-status-bar');
+    if(sb) sb.remove();
+    document.body.classList.remove('pvp-waiting-table');
 }
 
 function updatePvPReadyIndicator(myReady, opponentReady) {
@@ -379,7 +386,7 @@ function finishPvPTurnResetIfReady(matchData = window.latestMatchData) {
     window.isProcessing = false;
     resetHandCardVisualState();
     updateUI();
-    const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
+    clearPvPStatus();
     updatePvPReadyIndicator(false, false);
     return true;
 }
@@ -449,7 +456,7 @@ async function publishResolvedPvPTurn() {
 function checkEndGame(){
     if(player.hp<=0 || monster.hp<=0) {
         window.isProcessing = true; window.isLethalHover = false; MusicController.stopCurrent();
-        const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
+        clearPvPStatus();
         setTimeout(()=>{
             let title = document.getElementById('end-title'); let isWin = player.hp > 0; let isTie = player.hp <= 0 && monster.hp <= 0;
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
@@ -610,7 +617,21 @@ document.addEventListener('click', function(e) {
 
 window.addEventListener('beforeunload', () => { if (window.gameMode === 'pvp' && window.currentMatchId && !document.getElementById('end-screen').classList.contains('visible')) notifyAbandonment(); });
 
-function initAmbientParticles() { const container = document.getElementById('ambient-particles'); if(!container) return; for(let i=0; i<50; i++) { let d = document.createElement('div'); d.className = 'ember'; d.style.left = Math.random() * 100 + '%'; d.style.animationDuration = (7 + Math.random() * 7) + 's'; d.style.animationDelay = (Math.random() * 8) + 's'; d.style.setProperty('--mx', (Math.random() - 0.5) * 70 + 'px'); container.appendChild(d); } }
+function initAmbientParticles() {
+    const container = document.getElementById('ambient-particles');
+    if(!container) return;
+    container.innerHTML = '';
+    for(let i=0; i<64; i++) {
+        let d = document.createElement('div');
+        const sizeClass = i % 9 === 0 ? 'large' : (i % 3 === 0 ? 'tiny' : '');
+        d.className = `ember ${sizeClass}`.trim();
+        d.style.left = Math.random() * 100 + '%';
+        d.style.animationDuration = (7 + Math.random() * 9) + 's';
+        d.style.animationDelay = (Math.random() * 10) + 's';
+        d.style.setProperty('--mx', (Math.random() - 0.5) * 95 + 'px');
+        container.appendChild(d);
+    }
+}
 initAmbientParticles();
 
 function dealAllInitialCards() {
@@ -658,7 +679,7 @@ async function lockInPvPMove(index, disarmChoice) {
     } catch (e) {
         window.isProcessing = false; window.pvpSelectedCardIndex = null;
         if(cardEl) cardEl.classList.remove('card-selected');
-        const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
+        clearPvPStatus();
         showCenterText("ERRO AO ENVIAR", "red");
     }
 }
@@ -706,7 +727,7 @@ async function playCardFlow(index, pDisarmChoice) {
 async function resolvePvPTurn(matchData) {
     if (window.isResolvingTurn) return;
     window.isResolvingTurn = true; window.isProcessing = true; window.pvpWaitingForTurnReset = true; window.pvpLocalResolutionComplete = false;
-    const sb = document.getElementById('pvp-status-bar'); if(sb) sb.remove();
+    clearPvPStatus();
     resetHandCardVisualState();
     hydratePvPResolutionState(matchData);
 
@@ -795,24 +816,30 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
     player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
 
     function handleExtraXP(u) {
+        const deckId = (u.id === 'm') ? 'm-deck' : u.id+'-deck-container';
         if (window.gameMode === 'pvp' && window.currentMatchId) {
              if (u === player && u.deck.length > 0) {
                  let card = u.deck.pop();
-                 animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }, false, false, true);
+                 triggerDeckDrawGlow(u.id);
+                 animateFly(deckId, u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }, false, false, true);
              }
         } else {
             if(u.deck.length > 0) {
                 let card = u.deck.pop();
-                animateFly(u.id+'-deck-container', u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }, false, false, (u.id === 'p'));
+                triggerDeckDrawGlow(u.id);
+                animateFly(deckId, u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }, false, false, (u.id === 'p'));
             }
         }
     }
 
     const phaseReveal = () => {
+        triggerTableCenterSpark();
         setTimeout(phaseResult, 180);
     };
 
     const phaseResult = () => {
+        triggerTableActionPulse(pAct);
+        setTimeout(() => triggerTableActionPulse(mAct), 120);
         if(pAct === 'ATAQUE') triggerAttackSlash(false);
         if(mAct === 'ATAQUE') triggerAttackSlash(true);
         if(pAct === 'TREINAR') triggerTrainDeckGlow(true);
@@ -894,7 +921,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
                 player.xp.push(pAct); triggerXPGlow('p'); updateUI();
                 if (window.gameMode === 'pvp') commitTurnToDB(pAct);
             }
-            checkLevelUp(player, () => { if(player.hp > 0) { baseDraw(player, 1); turnCount++; updateUI(); showCombatCue("TURNO " + turnCount, "gold"); if(window.gameMode !== 'pvp') window.isProcessing = false; } finishLevelChecks(); });
+            checkLevelUp(player, () => { if(player.hp > 0) { triggerDeckDrawGlow('p'); baseDraw(player, 1); turnCount++; updateUI(); showCombatCue("TURNO " + turnCount, "gold"); if(window.gameMode !== 'pvp') window.isProcessing = false; } finishLevelChecks(); });
         }, false, false, true);
 
         animateFly('m-slot', 'm-xp', mAct, () => {
@@ -905,7 +932,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
                     monster.xp.push(mAct); triggerXPGlow('m'); updateUI();
                 }
             }
-            checkLevelUp(monster, () => { if(monster.hp > 0) baseDraw(monster, 1); finishLevelChecks(); });
+            checkLevelUp(monster, () => { if(monster.hp > 0) { triggerDeckDrawGlow('m'); baseDraw(monster, 1); } finishLevelChecks(); });
         }, false, false, false);
 
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
