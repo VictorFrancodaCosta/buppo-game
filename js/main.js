@@ -124,6 +124,7 @@ window.selectDeck = function(deckType) {
 };
 
 window.transitionToGame = function() {
+    if (window.gameMode === 'pvp' || window.gameMode === 'pve') document.body.classList.add('force-landscape');
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
     if(transText) transText.innerText = "PREPARANDO BATALHA...";
@@ -1169,6 +1170,7 @@ function updateUnit(u) {
         if(window.currentDeck === 'mage') deckImgEl.src = MAGE_ASSETS.DECK_IMG; else deckImgEl.src = 'assets/img/deck_verso_cavaleiro.webp';
         let hc=document.getElementById('player-hand'); hc.innerHTML='';
         if (window.isProcessing) hc.style.pointerEvents = 'none'; else hc.style.pointerEvents = 'auto';
+        const touchLayout = isTouchLayout();
         u.hand.forEach((k,i)=>{
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`; c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
             if(u.disabled===k) c.classList.add('disabled-card');
@@ -1178,9 +1180,12 @@ function updateUnit(u) {
             let lethalType = checkCardLethality(k, player, monster);
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             let imgUrl = getCardArt(k, true); c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
-            c.onclick=()=>onCardClick(i); bindFixedTooltip(c,k);
-            c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { window.isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
-            c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active'); window.isLethalHover = false; };
+            c.onclick=()=>onCardClick(i);
+            if(!touchLayout) {
+                bindFixedTooltip(c,k);
+                c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { window.isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
+                c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active'); window.isLethalHover = false; };
+            }
             hc.appendChild(c); apply3DTilt(c, true);
         });
     }
@@ -1188,12 +1193,19 @@ function updateUnit(u) {
     let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
     u.xp.forEach(k=>{
         let d=document.createElement('div'); d.className='xp-mini'; d.dataset.cardKey = k; let imgUrl = getCardArt(k, (u === player)); d.style.backgroundImage = `url('${imgUrl}')`;
-        d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); };
-        d.onmouseleave = () => { document.body.classList.remove('focus-xp'); }; xc.appendChild(d);
+        if(!isTouchLayout()) {
+            d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); };
+            d.onmouseleave = () => { document.body.classList.remove('focus-xp'); };
+        }
+        xc.appendChild(d);
     });
     let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
     if(u.bonusAtk>0) addMI(mc, 'ATAQUE', u.bonusAtk, '#e74c3c', u.id);
     if(u.bonusBlock>0) addMI(mc, 'BLOQUEIO', u.bonusBlock, '#00cec9', u.id);
+}
+
+function isTouchLayout() {
+    return window.matchMedia('(hover: none), (pointer: coarse)').matches;
 }
 
 function bindMasteryTooltip(el, key, value, ownerId) {

@@ -331,7 +331,7 @@ export function highlightMasteryXP(unitId, type) {
 }
 
 export function apply3DTilt(element, isHand = false) {
-    if(window.innerWidth < 768) return;
+    if(window.innerWidth < 768 || window.matchMedia('(hover: none), (pointer: coarse)').matches) return;
     element.addEventListener('mousemove', (e) => {
         const rect = element.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top;
         const xPct = (x / rect.width) - 0.5; const yPct = (y / rect.height) - 0.5;
