@@ -133,6 +133,7 @@ window.selectDeck = function(deckType) {
 
 window.transitionToGame = function() {
     if (window.gameMode === 'pvp' || window.gameMode === 'pve') document.body.classList.add('force-landscape');
+    updatePresence();
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
     if(transText) transText.innerText = "PREPARANDO BATALHA...";
@@ -260,29 +261,48 @@ function isFriendOnline(lastSeen) {
     return Number.isFinite(lastSeen) && (Date.now() - lastSeen) < 90000;
 }
 
-function renderFriendsList(friends = []) {
+function getPresenceState(friend) {
+    const lastSeen = Number(friend.lastSeen || 0);
+    const age = Date.now() - lastSeen;
+    if(!Number.isFinite(lastSeen) || lastSeen <= 0 || age > 300000) return { status: 'offline', label: 'OFFLINE', clickable: false };
+    if(age > 90000) return { status: 'away', label: 'AUSENTE', clickable: false };
+    if(friend.activityStatus === 'in_match') return { status: 'busy', label: 'EM PARTIDA', clickable: false };
+    if(friend.activityStatus === 'queue') return { status: 'busy', label: 'OCUPADO', clickable: false };
+    return { status: 'online', label: 'ONLINE', clickable: true };
+}
+
+function renderFriendsList(friends = [], requests = []) {
     const list = document.getElementById('friends-list');
     if(!list) return;
-    if(friends.length === 0) {
+    if(friends.length === 0 && requests.length === 0) {
         list.innerHTML = '<div class="friends-empty">Nenhum amigo ainda</div>';
         return;
     }
-    list.innerHTML = friends.map(friend => {
-        const online = isFriendOnline(friend.lastSeen);
-        const busy = online && friend.activityStatus === 'in_match';
-        const status = busy ? 'busy' : (online ? 'online' : 'offline');
-        const label = busy ? 'EM PARTIDA' : (online ? 'ONLINE' : 'OFFLINE');
-        const safeName = escapeHTML(getPlayerFirstName(friend.name));
-        const safeId = escapeHTML(friend.gameId || '----');
-        return `<div class="friend-row ${online && !busy ? 'online' : ''}" data-friend-uid="${escapeHTML(friend.uid)}" data-friend-name="${safeName}">
-            <span class="friend-status-dot ${status}"></span>
-            <div class="friend-main">
-                <div class="friend-name">${safeName}</div>
-                <div class="friend-meta">#${safeId} - ${label}</div>
+    const requestsHtml = requests.length ? `<div class="friend-section-title">SOLICITACOES</div>${requests.map(req => {
+        const safeName = escapeHTML(getPlayerFirstName(req.fromName));
+        const safeId = escapeHTML(req.fromGameId || '----');
+        return `<div class="friend-request-row">
+            <div class="friend-request-name">${safeName} <span class="friend-meta">#${safeId}</span></div>
+            <div class="friend-request-actions">
+                <button class="accept" onclick="window.acceptFriendRequest('${escapeHTML(req.id)}')">ACEITAR</button>
+                <button class="decline" onclick="window.declineFriendRequest('${escapeHTML(req.id)}')">RECUSAR</button>
             </div>
         </div>`;
-    }).join('');
-    list.querySelectorAll('.friend-row.online').forEach(row => {
+    }).join('')}` : '';
+    const friendsHtml = friends.length ? `<div class="friend-section-title">AMIGOS</div>${friends.map(friend => {
+        const presence = getPresenceState(friend);
+        const safeName = escapeHTML(getPlayerFirstName(friend.name));
+        const safeId = escapeHTML(friend.gameId || '----');
+        return `<div class="friend-row ${presence.clickable ? 'online' : ''}" data-friend-uid="${escapeHTML(friend.uid)}" data-friend-name="${safeName}" data-can-invite="${presence.clickable ? '1' : '0'}">
+            <span class="friend-status-dot ${presence.status}"></span>
+            <div class="friend-main">
+                <div class="friend-name">${safeName}</div>
+                <div class="friend-meta">#${safeId} - ${presence.label}</div>
+            </div>
+        </div>`;
+    }).join('')}` : '';
+    list.innerHTML = requestsHtml + friendsHtml;
+    list.querySelectorAll('.friend-row').forEach(row => {
         row.addEventListener('click', (e) => {
             e.stopPropagation();
             showFriendActionPopover(row);
@@ -306,7 +326,14 @@ async function refreshFriendsList() {
             if(!snap.exists()) return null;
             return { uid, ...snap.data() };
         }));
-        renderFriendsList(friends.filter(Boolean).sort((a, b) => Number(isFriendOnline(b.lastSeen)) - Number(isFriendOnline(a.lastSeen)) || getPlayerFirstName(a.name).localeCompare(getPlayerFirstName(b.name))));
+        const reqQuery = query(collection(db, "friendRequests"), where("toUid", "==", window.currentUser.uid), where("status", "==", "pending"));
+        const reqSnap = await getDocs(reqQuery);
+        const requests = reqSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(req => req.fromUid !== window.currentUser.uid);
+        const presenceRank = { online: 0, busy: 1, away: 2, offline: 3 };
+        renderFriendsList(
+            friends.filter(Boolean).sort((a, b) => (presenceRank[getPresenceState(a).status] - presenceRank[getPresenceState(b).status]) || getPlayerFirstName(a.name).localeCompare(getPlayerFirstName(b.name))),
+            requests
+        );
     } catch(e) {
         if(list) list.innerHTML = '<div class="friends-empty">Erro ao carregar amigos</div>';
     }
@@ -316,22 +343,26 @@ function startFriendsPanel() {
     refreshFriendsList();
     listenForFriendInvites();
     if(window.friendsRefreshInterval) clearInterval(window.friendsRefreshInterval);
-    window.friendsRefreshInterval = setInterval(refreshFriendsList, 30000);
+    window.friendsRefreshInterval = setInterval(refreshFriendsList, 12000);
 }
 
 function startPresenceHeartbeat() {
     updatePresence();
     if(window.presenceInterval) clearInterval(window.presenceInterval);
-    window.presenceInterval = setInterval(updatePresence, 30000);
+    window.presenceInterval = setInterval(updatePresence, 10000);
 }
 
 async function updatePresence() {
     if(!window.currentUser) return;
     try {
-        const activeGame = document.getElementById('game-screen') && document.getElementById('game-screen').classList.contains('active') && !document.getElementById('end-screen').classList.contains('visible');
-        await setDoc(doc(db, "players", window.currentUser.uid), { lastSeen: Date.now(), activityStatus: activeGame ? 'in_match' : 'online' }, { merge: true });
+        const gameActive = document.getElementById('game-screen') && document.getElementById('game-screen').classList.contains('active') && !document.getElementById('end-screen').classList.contains('visible');
+        const queueActive = document.getElementById('matchmaking-screen') && document.getElementById('matchmaking-screen').style.display === 'flex';
+        const deckActive = document.getElementById('deck-selection-screen') && document.getElementById('deck-selection-screen').classList.contains('active');
+        const activityStatus = gameActive ? 'in_match' : ((queueActive || deckActive) ? 'queue' : 'online');
+        await setDoc(doc(db, "players", window.currentUser.uid), { lastSeen: Date.now(), activityStatus }, { merge: true });
     } catch(e) {}
 }
+window.updatePresence = updatePresence;
 
 function setFriendAddStatus(message, type = '') {
     const status = document.getElementById('friend-add-status');
@@ -350,6 +381,8 @@ function showFriendActionPopover(row) {
     const popover = document.getElementById('friend-action-popover');
     if(!popover) return;
     window.selectedFriendUid = row.dataset.friendUid;
+    const inviteButton = document.getElementById('friend-invite-action');
+    if(inviteButton) inviteButton.disabled = row.dataset.canInvite !== '1';
     const rect = row.getBoundingClientRect();
     popover.style.left = Math.max(8, rect.left - 8) + 'px';
     popover.style.top = (rect.bottom + 8) + 'px';
@@ -393,6 +426,26 @@ window.inviteSelectedFriend = async function() {
         });
     } catch(e) {
         showCenterText("ERRO AO CONVIDAR", "#ff7675");
+    }
+};
+
+window.removeSelectedFriend = async function() {
+    if(!window.currentUser || !window.selectedFriendUid) return;
+    const friendUid = window.selectedFriendUid;
+    hideFriendActionPopover();
+    try {
+        const myRef = doc(db, "players", window.currentUser.uid);
+        const friendRef = doc(db, "players", friendUid);
+        const mySnap = await getDoc(myRef);
+        const friendSnap = await getDoc(friendRef);
+        const myFriends = mySnap.exists() && Array.isArray(mySnap.data().friends) ? mySnap.data().friends : [];
+        const friendFriends = friendSnap.exists() && Array.isArray(friendSnap.data().friends) ? friendSnap.data().friends : [];
+        await updateDoc(myRef, { friends: myFriends.filter(uid => uid !== friendUid) });
+        if(friendSnap.exists()) await updateDoc(friendRef, { friends: friendFriends.filter(uid => uid !== window.currentUser.uid) });
+        showCenterText("AMIZADE DESFEITA", "#ffd700");
+        refreshFriendsList();
+    } catch(e) {
+        showCenterText("ERRO AO REMOVER", "#ff7675");
     }
 };
 
@@ -514,13 +567,58 @@ window.addFriendByGameId = async function() {
         const userSnap = await getDoc(userRef);
         const currentFriends = userSnap.exists() && Array.isArray(userSnap.data().friends) ? userSnap.data().friends : [];
         if(currentFriends.includes(friendUid)) { setFriendAddStatus('Esse jogador ja esta na sua lista.', 'error'); return; }
-        await updateDoc(userRef, { friends: [...currentFriends, friendUid] });
-        setFriendAddStatus(`${getPlayerFirstName(friendSnap.data().name)} adicionado!`, 'success');
-        await refreshFriendsList();
+        const outgoing = await getDocs(query(collection(db, "friendRequests"), where("fromUid", "==", window.currentUser.uid), where("toUid", "==", friendUid), where("status", "==", "pending")));
+        const incoming = await getDocs(query(collection(db, "friendRequests"), where("fromUid", "==", friendUid), where("toUid", "==", window.currentUser.uid), where("status", "==", "pending")));
+        if(!outgoing.empty) { setFriendAddStatus('Solicitacao ja enviada.', 'error'); return; }
+        if(!incoming.empty) { setFriendAddStatus('Esse jogador ja te enviou uma solicitacao.', 'error'); return; }
+        await setDoc(doc(collection(db, "friendRequests")), {
+            fromUid: window.currentUser.uid,
+            fromName: getPlayerFirstName(window.currentUser.displayName),
+            fromGameId: window.currentPlayerGameId || null,
+            toUid: friendUid,
+            toName: getPlayerFirstName(friendSnap.data().name),
+            toGameId: friendSnap.data().gameId || null,
+            status: 'pending',
+            createdAt: Date.now()
+        });
+        setFriendAddStatus('Solicitacao enviada!', 'success');
         setTimeout(() => window.closeAddFriendModal(), 700);
     } catch(e) {
         setFriendAddStatus('Nao foi possivel adicionar agora.', 'error');
     }
+};
+
+window.acceptFriendRequest = async function(requestId) {
+    if(!window.currentUser || !requestId) return;
+    try {
+        const reqRef = doc(db, "friendRequests", requestId);
+        const reqSnap = await getDoc(reqRef);
+        if(!reqSnap.exists()) return;
+        const req = reqSnap.data();
+        if(req.toUid !== window.currentUser.uid || req.status !== 'pending') return;
+        const myRef = doc(db, "players", window.currentUser.uid);
+        const otherRef = doc(db, "players", req.fromUid);
+        const mySnap = await getDoc(myRef);
+        const otherSnap = await getDoc(otherRef);
+        const myFriends = mySnap.exists() && Array.isArray(mySnap.data().friends) ? mySnap.data().friends : [];
+        const otherFriends = otherSnap.exists() && Array.isArray(otherSnap.data().friends) ? otherSnap.data().friends : [];
+        await updateDoc(myRef, { friends: [...new Set([...myFriends, req.fromUid])] });
+        await updateDoc(otherRef, { friends: [...new Set([...otherFriends, window.currentUser.uid])] });
+        await updateDoc(reqRef, { status: 'accepted', acceptedAt: Date.now() });
+        refreshFriendsList();
+    } catch(e) {}
+};
+
+window.declineFriendRequest = async function(requestId) {
+    if(!window.currentUser || !requestId) return;
+    try {
+        const reqRef = doc(db, "friendRequests", requestId);
+        const reqSnap = await getDoc(reqRef);
+        if(reqSnap.exists() && reqSnap.data().toUid === window.currentUser.uid) {
+            await updateDoc(reqRef, { status: 'declined', declinedAt: Date.now() });
+        }
+        refreshFriendsList();
+    } catch(e) {}
 };
 
 function buildGameIdCandidate(uid, attempt = 0) {
@@ -1092,6 +1190,7 @@ document.addEventListener('click', function(e) {
 });
 
 window.addEventListener('beforeunload', () => { if (window.gameMode === 'pvp' && window.currentMatchId && !document.getElementById('end-screen').classList.contains('visible')) notifyAbandonment(); });
+document.addEventListener('visibilitychange', () => { if(!document.hidden && window.updatePresence) window.updatePresence(); });
 
 function initAmbientParticles() {
     const container = document.getElementById('ambient-particles');

@@ -133,7 +133,8 @@
         </div>
 
         <div id="friend-action-popover" class="friend-action-popover">
-            <button onclick="window.inviteSelectedFriend()">CONVIDAR PARA PARTIDA</button>
+            <button id="friend-invite-action" onclick="window.inviteSelectedFriend()">CONVIDAR PARA PARTIDA</button>
+            <button class="danger" onclick="window.removeSelectedFriend()">DESFAZER AMIZADE</button>
         </div>
 
         <div id="friend-invite-screen" class="modal-overlay">

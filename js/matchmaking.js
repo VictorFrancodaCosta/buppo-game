@@ -16,6 +16,7 @@ export async function initiateMatchmaking() {
     if(window.cleanupMatchState) window.cleanupMatchState();
     if(window.applyDeckTheme) window.applyDeckTheme(window.currentDeck);
     const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'flex';
+    if(window.updatePresence) window.updatePresence();
     document.querySelector('.mm-title').innerText = "PROCURANDO OPONENTE..."; document.querySelector('.mm-title').style.color = "var(--gold)";
     document.querySelector('.radar-spinner').style.borderColor = "rgba(255, 215, 0, 0.3)"; document.querySelector('.radar-spinner').style.animation = "spin 1s linear infinite"; document.querySelector('.cancel-btn').style.display = "block";
     matchSeconds = 0; const timerEl = document.getElementById('mm-timer'); timerEl.innerText = "00:00";
@@ -84,6 +85,7 @@ window.cancelPvPSearch = async function() {
     if (matchTimerInterval) clearInterval(matchTimerInterval);
     if (searchInterval) clearInterval(searchInterval);
     const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'none';
+    if(window.updatePresence) window.updatePresence();
     if (myQueueRef) { await updateDoc(myQueueRef, { cancelled: true }); myQueueRef = null; }
     if(window.transitionToLobby) window.transitionToLobby(true);
 };
