@@ -25,6 +25,19 @@ safeLobbyEnhancement('failsafe do carregamento', () => {
     else document.addEventListener('DOMContentLoaded', start, { once: true });
 });
 
+safeLobbyEnhancement('ajustes visuais estaticos', () => {
+    const style = document.createElement('style');
+    style.textContent = `
+        .lobby-logo-right::after,
+        #transition-overlay::before {
+            content: none !important;
+            display: none !important;
+            animation: none !important;
+        }
+    `;
+    document.head.appendChild(style);
+});
+
 // 1. EFEITO DE CURA
 window.triggerHealEffect = function() {
     const body = document.body;
