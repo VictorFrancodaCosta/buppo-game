@@ -44,7 +44,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_bloqueio_mago.webp', 'assets/img/carta_descansar_mago.webp',
         'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
-        'assets/img/ui_selo_pronto.png'
+        'assets/img/ui_selo_pronto.png', 'assets/img/fx_ataque_espada.png'
     ],
     audio: [
         { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true },
@@ -859,8 +859,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
     };
 
     const phaseResult = () => {
-        if(pAct === 'ATAQUE') triggerAttackSlash(false);
-        if(mAct === 'ATAQUE') triggerAttackSlash(true);
         if(pAct === 'TREINAR') triggerTrainDeckGlow(true);
         if(mAct === 'TREINAR') triggerTrainDeckGlow(false);
         if(pBlocks) { triggerBlockShield(true); triggerBlockEffect(true); }
@@ -879,11 +877,13 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         if(pDmg > 0) {
             player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675");
             let soundOn = !(clash && mAct === 'BLOQUEIO');
+            if(mAct === 'ATAQUE') triggerAttackSlash(true);
             if (!mBlocks) { triggerDamageEffect(true, soundOn); }
             triggerHpImpact(true);
         }
         if(mDmg > 0) {
             monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675");
+            if(pAct === 'ATAQUE') triggerAttackSlash(false);
             let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn);
             triggerHpImpact(false);
         }
@@ -1036,7 +1036,7 @@ function flushRestMasteryHeals() {
     updateUI();
 }
 
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerAttackSlash(target === player); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; triggerBlockShield(u === player); } if(k === 'DESCANSAR') { queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; triggerBlockShield(u === player); } if(k === 'DESCANSAR') { queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
 
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;

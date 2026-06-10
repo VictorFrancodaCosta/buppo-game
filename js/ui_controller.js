@@ -193,15 +193,16 @@ function centerOfElement(id) {
 
 export function triggerAttackSlash(targetIsPlayer) {
     const target = centerOfElement(targetIsPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
-    const slash = createCombatFxElement('attack-slash-fx');
+    const slash = createCombatFxElement('sword-slash-asset-fx');
     slash.style.left = target.x + 'px';
     slash.style.top = target.y + 'px';
+    slash.classList.add(targetIsPlayer ? 'hit-player' : 'hit-enemy');
 
     const spark = createCombatFxElement('impact-spark-fx');
     spark.style.left = target.x + 'px';
     spark.style.top = target.y + 'px';
 
-    setTimeout(() => slash.remove(), 520);
+    setTimeout(() => slash.remove(), 560);
     setTimeout(() => spark.remove(), 520);
 }
 

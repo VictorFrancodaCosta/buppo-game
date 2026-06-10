@@ -310,6 +310,40 @@
     clip-path: polygon(0 45%, 88% 0, 100% 50%, 12% 100%);
     animation: attackSlashCut 0.5s ease-out forwards;
 }
+
+.sword-slash-asset-fx {
+    position: fixed;
+    width: 250px;
+    height: 208px;
+    transform: translate(-50%, -50%) scale(0.35) rotate(-22deg);
+    transform-origin: center center;
+    z-index: 12500;
+    pointer-events: none;
+    background-image: url('../assets/img/fx_ataque_espada.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 14px 0 rgba(0,0,0,0.28)) drop-shadow(0 0 18px rgba(255, 71, 87, 0.35));
+    animation: swordSlashAssetCut 0.54s cubic-bezier(0.2, 0.95, 0.22, 1) forwards;
+}
+.sword-slash-asset-fx.hit-player {
+    animation-name: swordSlashAssetCutPlayer;
+}
+.sword-slash-asset-fx.hit-enemy {
+    animation-name: swordSlashAssetCutEnemy;
+}
+@keyframes swordSlashAssetCutEnemy {
+    0% { opacity: 0; transform: translate(-42%, -65%) scale(0.32) rotate(-38deg); filter: drop-shadow(0 8px 0 rgba(0,0,0,0.22)) drop-shadow(0 0 0 rgba(255,71,87,0)); }
+    18% { opacity: 1; transform: translate(-53%, -52%) scale(0.72) rotate(-18deg); filter: drop-shadow(0 14px 0 rgba(0,0,0,0.28)) drop-shadow(0 0 18px rgba(255,71,87,0.38)); }
+    58% { opacity: 1; transform: translate(-50%, -50%) scale(0.84) rotate(-11deg); }
+    100% { opacity: 0; transform: translate(-61%, -38%) scale(0.9) rotate(-4deg); filter: drop-shadow(0 4px 0 rgba(0,0,0,0.1)) drop-shadow(0 0 4px rgba(255,71,87,0.12)); }
+}
+@keyframes swordSlashAssetCutPlayer {
+    0% { opacity: 0; transform: translate(-58%, -35%) scale(0.32) rotate(142deg); filter: drop-shadow(0 8px 0 rgba(0,0,0,0.22)) drop-shadow(0 0 0 rgba(255,71,87,0)); }
+    18% { opacity: 1; transform: translate(-48%, -48%) scale(0.72) rotate(160deg); filter: drop-shadow(0 14px 0 rgba(0,0,0,0.28)) drop-shadow(0 0 18px rgba(255,71,87,0.38)); }
+    58% { opacity: 1; transform: translate(-50%, -50%) scale(0.84) rotate(168deg); }
+    100% { opacity: 0; transform: translate(-38%, -62%) scale(0.9) rotate(176deg); filter: drop-shadow(0 4px 0 rgba(0,0,0,0.1)) drop-shadow(0 0 4px rgba(255,71,87,0.12)); }
+}
 .impact-spark-fx {
     position: fixed;
     width: 28px;
