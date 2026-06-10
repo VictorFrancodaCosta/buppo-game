@@ -164,8 +164,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 }
 
 /* MOBILE LANDSCAPE */
-@media (orientation: landscape) and (max-height: 620px),
-       (orientation: landscape) and (hover: none) and (pointer: coarse) {
+@media (max-width: 980px) and (orientation: landscape) {
     #game-container {
         max-width: none;
         padding: 0;
@@ -202,20 +201,20 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     #p-stats-cluster {
         left: 6px;
         bottom: 2px;
-        transform: scale(0.5);
+        transform: scale(0.56);
         transform-origin: bottom left;
     }
 
     #m-stats-cluster {
         right: 6px;
         top: 2px;
-        transform: scale(0.5);
+        transform: scale(0.56);
         transform-origin: top right;
     }
 
     .xp-area {
-        width: clamp(178px, 20vw, 220px);
-        height: clamp(57px, 6.4vw, 71px);
+        width: 230px;
+        height: 74px;
         padding-bottom: 5px;
         animation: none;
         z-index: 80;
@@ -226,12 +225,12 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     #p-xp {
-        bottom: clamp(52px, 12dvh, 68px);
+        bottom: 72px;
     }
 
     .xp-mini {
-        width: clamp(20px, 2.25vw, 25px);
-        height: clamp(28px, 3.15vw, 35px);
+        width: 26px;
+        height: 36px;
         margin: 0 1px;
         border-radius: 2px;
     }
@@ -242,14 +241,14 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     .middle-area {
-        gap: clamp(22px, 3vw, 34px);
-        padding-bottom: clamp(4px, 2dvh, 14px);
+        gap: 34px;
+        padding-bottom: 18px;
         align-items: center;
     }
 
     .slot {
-        width: clamp(66px, 7.4vw, 82px);
-        height: clamp(98px, 10.9vw, 121px);
+        width: 86px;
+        height: 126px;
         transform: rotateX(18deg);
     }
 
@@ -267,15 +266,15 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
     .hand-wrapper {
         bottom: -6px;
-        height: clamp(78px, 19dvh, 98px);
+        height: 104px;
         align-items: flex-end;
         z-index: 520;
     }
 
     .card {
-        width: clamp(48px, 5.45vw, 60px);
-        height: clamp(68px, 7.7vw, 85px);
-        margin: 0 clamp(-5px, -0.45vw, -3px);
+        width: 64px;
+        height: 90px;
+        margin: 0 -5px;
         border-radius: 7px;
         border-width: 1px;
         box-shadow: 0 6px 16px rgba(0,0,0,0.72);
@@ -287,7 +286,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
     .hand-card:not(.disabled-card):hover,
     .disabled-card:hover {
-        margin: 0 clamp(-5px, -0.45vw, -3px);
+        margin: 0 -5px;
         box-shadow: 0 6px 16px rgba(0,0,0,0.72);
         transform: none;
     }
@@ -298,7 +297,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
     .card-selected,
     .card-selected:hover {
-        transform: translateY(-15px) scale(1.07) !important;
+        transform: translateY(-18px) scale(1.08) !important;
         box-shadow: 0 0 18px var(--accent-blue), 0 16px 30px rgba(0,0,0,0.72) !important;
         z-index: 900 !important;
     }
@@ -309,8 +308,8 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     #p-deck-container {
-        right: clamp(58px, 8vw, 92px);
-        bottom: 8px;
+        right: 82px;
+        bottom: 10px;
         z-index: 420;
     }
 
@@ -325,8 +324,8 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     .deck-area {
-        width: clamp(48px, 5.4vw, 60px);
-        height: clamp(68px, 7.7vw, 85px);
+        width: 64px;
+        height: 92px;
     }
 
     .deck-count {
@@ -384,28 +383,28 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 }
 
-@media (orientation: landscape) and (max-height: 430px) {
+@media (max-width: 980px) and (orientation: landscape) and (max-height: 430px) {
     #p-stats-cluster,
     #m-stats-cluster {
-        transform: scale(0.44);
+        transform: scale(0.5);
     }
 
     #p-xp {
-        bottom: 54px;
+        bottom: 62px;
     }
 
     .hand-wrapper {
-        height: 82px;
+        height: 92px;
     }
 
     .card {
-        width: 50px;
-        height: 71px;
-        margin: 0 -4px;
+        width: 58px;
+        height: 82px;
+        margin: 0 -5px;
     }
 
     .slot {
-        width: 68px;
-        height: 100px;
+        width: 78px;
+        height: 114px;
     }
 }

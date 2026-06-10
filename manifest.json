@@ -1,27 +1,21 @@
 {
   "name": "BUPPO - Card Game",
   "short_name": "BUPPO",
-  "id": "./",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "fullscreen",
   "background_color": "#000000",
-  "theme_color": "#000000",
-  "orientation": "landscape-primary",
-  "description": "BUPPO - um card game tatico para jogar em landscape.",
-  "categories": ["games"],
+  "theme_color": "#ffd700",
+  "orientation": "landscape",
   "icons": [
     {
-      "src": "assets/icons/buppo-icon-192.png",
+      "src": "assets/img/logo_buppo.webp",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/webp"
     },
     {
-      "src": "assets/icons/buppo-icon-512.png",
+      "src": "assets/img/logo_buppo.webp",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/webp"
     }
   ]
 }

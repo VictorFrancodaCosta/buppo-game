@@ -18,7 +18,6 @@ export function getCardArt(cardKey, isPlayer) {
 }
 
 window.showScreen = function(screenId) {
-    document.body.classList.add('force-landscape');
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
     const configBtn = document.getElementById('btn-config-toggle');
@@ -48,20 +47,6 @@ window.openDeckSelector = function() {
         if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
     } catch (e) { console.log(e); }
     window.showScreen('deck-selection-screen');
-};
-
-window.requestLandscapeMode = async function() {
-    document.body.classList.add('force-landscape');
-    try {
-        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-            await document.documentElement.requestFullscreen();
-        }
-    } catch(e) {}
-    try {
-        if (screen.orientation && screen.orientation.lock) {
-            await screen.orientation.lock('landscape');
-        }
-    } catch(e) {}
 };
 
 (function createRotateOverlay() {
