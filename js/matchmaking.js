@@ -55,10 +55,10 @@ async function findOpponentInQueue() {
             if (searchInterval) clearInterval(searchInterval);
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
             const oppRef = opponentDoc.ref;
-            await updateDoc(oppRef, { matchId: matchId });
-            if (myQueueRef) await updateDoc(myQueueRef, { matchId: matchId });
             const p1DeckCards = generateShuffledDeck(); const p2DeckCards = generateShuffledDeck();
             await createMatchDocument(matchId, window.currentUser.uid, opponentDoc.data().uid, window.currentUser.displayName, opponentDoc.data().name, window.currentDeck, opponentDoc.data().deck, p1DeckCards, p2DeckCards);
+            await updateDoc(oppRef, { matchId: matchId });
+            if (myQueueRef) await updateDoc(myQueueRef, { matchId: matchId });
         }
     } catch (e) { console.error("Erro ao buscar oponente:", e); }
 }
@@ -67,9 +67,15 @@ async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1DeckTy
     const matchRef = doc(db, "matches", matchId);
     const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1"; const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
     const d1Type = p1DeckType || 'knight'; const d2Type = p2DeckType || 'knight';
+    const p1Hand = []; const p2Hand = [];
+    for(let i = 0; i < 6; i++) {
+        if(p1DeckCards.length > 0) p1Hand.push(p1DeckCards.pop());
+        if(p2DeckCards.length > 0) p2Hand.push(p2DeckCards.pop());
+    }
+    p1Hand.sort(); p2Hand.sort();
     await setDoc(matchRef, {
-        player1: { uid: p1Id, name: cleanName1, deckType: d1Type, hp: 6, status: 'selecting', hand: [], deck: p1DeckCards, xp: [] },
-        player2: { uid: p2Id, name: cleanName2, deckType: d2Type, hp: 6, status: 'selecting', hand: [], deck: p2DeckCards, xp: [] },
+        player1: { uid: p1Id, name: cleanName1, deckType: d1Type, hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
+        player2: { uid: p2Id, name: cleanName2, deckType: d2Type, hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
         turn: 1, status: 'playing', createdAt: Date.now()
     });
 }

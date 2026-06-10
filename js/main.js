@@ -79,6 +79,7 @@ window.cleanupMatchState = function() {
     window.currentMatchId = null; window.myRole = null; window.pvpStartData = null;
     window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.latestMatchData = null;
     window.isProcessing = false;
+    clearHoverFocusState(true);
     clearPvPStatus();
     updatePvPReadyIndicator(false, false);
     
@@ -231,18 +232,31 @@ function startGameFlow() {
         if (window.myRole === 'player1') {
             window.applyDeckTheme(window.pvpStartData.player1.deckType);
             resetUnit(player, window.pvpStartData.player1.deck, 'player1'); resetUnit(monster, window.pvpStartData.player2.deck, 'player2');
+            hydrateInitialPvPHand(player, window.pvpStartData.player1);
+            hydrateInitialPvPHand(monster, window.pvpStartData.player2);
         } else {
             window.applyDeckTheme(window.pvpStartData.player2.deckType);
             resetUnit(player, window.pvpStartData.player2.deck, 'player2'); resetUnit(monster, window.pvpStartData.player1.deck, 'player1');
+            hydrateInitialPvPHand(player, window.pvpStartData.player2);
+            hydrateInitialPvPHand(monster, window.pvpStartData.player1);
         }
     } else {
         window.applyDeckTheme(window.currentDeck);
         resetUnit(player, null, 'pve'); resetUnit(monster, null, 'pve');
+        baseDraw(monster, 6); baseDraw(player, 6);
     }
     turnCount = 1; playerHistory = [];
-    baseDraw(monster, 6); baseDraw(player, 6);
     updateUI(); dealAllInitialCards();
     if(window.gameMode === 'pvp') startPvPListener();
+}
+
+function hydrateInitialPvPHand(unit, serverData) {
+    if(serverData && Array.isArray(serverData.hand) && serverData.hand.length > 0) {
+        unit.hand = [...serverData.hand];
+        unit.hand.sort();
+    } else {
+        baseDraw(unit, 6);
+    }
 }
 
 function startPvPListener() {
@@ -362,9 +376,7 @@ function updatePvPReadyIndicator(myReady, opponentReady) {
 }
 
 function resetHandCardVisualState() {
-    document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active');
-    window.isLethalHover = false;
-    const tooltip = document.getElementById('tooltip-box'); if(tooltip) tooltip.style.display = 'none';
+    clearHoverFocusState(true);
     const handContainer = document.getElementById('player-hand');
     if (!handContainer) return;
     Array.from(handContainer.children).forEach(card => {
@@ -373,6 +385,16 @@ function resetHandCardVisualState() {
         card.style.zIndex = '';
         card.style.filter = '';
     });
+}
+
+function clearHoverFocusState(force = false) {
+    const activeHover = document.querySelector('.hand-card:hover, .xp-mini:hover');
+    if(force || !activeHover) {
+        document.body.classList.remove('focus-hand', 'focus-xp', 'cinematic-active', 'tension-active');
+        window.isLethalHover = false;
+        const tooltip = document.getElementById('tooltip-box');
+        if(tooltip) tooltip.style.display = 'none';
+    }
 }
 
 function finishPvPTurnResetIfReady(matchData = window.latestMatchData) {
@@ -648,8 +670,7 @@ function onCardClick(index) {
     if(window.isProcessing) return; if (!player.hand[index]) return;
     if (window.gameMode === 'pvp' && (window.isResolvingTurn || window.pvpWaitingForTurnReset)) return;
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
-    playSound('sfx-play'); document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active');
-    document.getElementById('tooltip-box').style.display = 'none'; window.isLethalHover = false;
+    playSound('sfx-play'); clearHoverFocusState(true);
     let cardKey = player.hand[index];
     if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
 
@@ -1050,7 +1071,12 @@ window.openHistory = async function() {
 
 window.closeHistory = function() { window.playNavSound(); document.getElementById('history-screen').style.display = 'none'; };
 
-function updateUI() { updateUnit(player); updateUnit(monster); document.getElementById('turn-txt').innerText = "TURNO " + turnCount; }
+function updateUI() {
+    updateUnit(player);
+    updateUnit(monster);
+    document.getElementById('turn-txt').innerText = "TURNO " + turnCount;
+    setTimeout(() => clearHoverFocusState(false), 0);
+}
 
 function updateUnit(u) {
     document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
