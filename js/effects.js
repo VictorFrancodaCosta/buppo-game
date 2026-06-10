@@ -8,34 +8,6 @@ function safeLobbyEnhancement(name, callback) {
     }
 }
 
-safeLobbyEnhancement('normalizador de texto', () => {
-    const fixTextNode = (node) => {
-        if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('SAGUAO')) {
-            node.nodeValue = node.nodeValue.replace(/SAGUAO/g, 'SAGU\u00c3O');
-        }
-    };
-    const scan = (root) => {
-        if (!root) return;
-        if (root.nodeType === Node.TEXT_NODE) {
-            fixTextNode(root);
-            return;
-        }
-        root.childNodes.forEach(scan);
-    };
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            mutation.addedNodes.forEach(scan);
-            if (mutation.type === 'characterData') fixTextNode(mutation.target);
-        });
-    });
-    const start = () => {
-        scan(document.body);
-        observer.observe(document.body, { childList: true, characterData: true, subtree: true });
-    };
-    if (document.body) start();
-    else document.addEventListener('DOMContentLoaded', start, { once: true });
-});
-
 safeLobbyEnhancement('failsafe do carregamento', () => {
     const start = () => {
         setTimeout(() => {
@@ -47,57 +19,6 @@ safeLobbyEnhancement('failsafe do carregamento', () => {
                 if (loading.style.display !== 'none') loading.style.display = 'none';
             }, 450);
         }, 5000);
-    };
-
-    if (document.body) start();
-    else document.addEventListener('DOMContentLoaded', start, { once: true });
-});
-
-safeLobbyEnhancement('identidade do sagu\u00e3o', () => {
-    const titles = [
-        { min: 800, label: 'LENDA DO SAGU\u00c3O' },
-        { min: 400, label: 'MESTRE DE RUNAS' },
-        { min: 180, label: 'CAMPE\u00c3O DA T\u00c1BUA' },
-        { min: 60, label: 'DUELISTA ARCANO' },
-        { min: 0, label: 'APRENDIZ DE RUNAS' }
-    ];
-
-    const getScore = (statsText) => {
-        const match = String(statsText || '').match(/PONTOS:\s*(\d+)/i);
-        return match ? Number(match[1]) : 0;
-    };
-
-    let lastSignature = '';
-    const update = () => {
-        const nameEl = document.getElementById('lobby-username');
-        const statsEl = document.getElementById('lobby-stats');
-        const avatar = document.getElementById('lobby-avatar');
-        const title = document.getElementById('lobby-rank-title');
-        const fill = document.getElementById('lobby-xp-fill');
-        if (!nameEl || !statsEl || !avatar || !title || !fill) return;
-
-        const cleanName = nameEl.textContent.replace(/^OL\S*,\s*/i, '').replace(/#.*$/, '').trim();
-        avatar.textContent = (cleanName[0] || 'B').toUpperCase();
-
-        const score = getScore(statsEl.textContent);
-        const signature = `${cleanName}|${score}`;
-        if (signature === lastSignature) return;
-        lastSignature = signature;
-
-        const rank = titles.find((item) => score >= item.min) || titles[titles.length - 1];
-        title.textContent = rank.label;
-        fill.style.width = `${Math.max(8, Math.min(100, score % 100))}%`;
-
-        statsEl.classList.remove('stats-pulse');
-        void statsEl.offsetWidth;
-        statsEl.classList.add('stats-pulse');
-    };
-
-    const start = () => {
-        safeLobbyEnhancement('atualiza\u00e7\u00e3o da identidade', update);
-        const target = document.getElementById('lobby-screen');
-        if (!target) return;
-        new MutationObserver(() => safeLobbyEnhancement('atualiza\u00e7\u00e3o da identidade', update)).observe(target, { childList: true, characterData: true, subtree: true });
     };
 
     if (document.body) start();
