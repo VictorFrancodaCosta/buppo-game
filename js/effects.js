@@ -1,9 +1,17 @@
 // ARQUIVO: js/effects.js
 
-(function normalizeLobbyText() {
+function safeLobbyEnhancement(name, callback) {
+    try {
+        callback();
+    } catch (error) {
+        console.warn(`[BUPPO] ${name} desativado para manter o jogo aberto.`, error);
+    }
+}
+
+safeLobbyEnhancement('normalizador de texto', () => {
     const fixTextNode = (node) => {
         if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('SAGUAO')) {
-            node.nodeValue = node.nodeValue.replace(/SAGUAO/g, 'SAGUÃO');
+            node.nodeValue = node.nodeValue.replace(/SAGUAO/g, 'SAGU\u00c3O');
         }
     };
     const scan = (root) => {
@@ -26,13 +34,30 @@
     };
     if (document.body) start();
     else document.addEventListener('DOMContentLoaded', start, { once: true });
-})();
+});
 
-(function enhanceLobbyIdentity() {
+safeLobbyEnhancement('failsafe do carregamento', () => {
+    const start = () => {
+        setTimeout(() => {
+            const loading = document.getElementById('loading-screen');
+            if (!loading || loading.style.display === 'none') return;
+
+            loading.style.opacity = '0';
+            setTimeout(() => {
+                if (loading.style.display !== 'none') loading.style.display = 'none';
+            }, 450);
+        }, 5000);
+    };
+
+    if (document.body) start();
+    else document.addEventListener('DOMContentLoaded', start, { once: true });
+});
+
+safeLobbyEnhancement('identidade do sagu\u00e3o', () => {
     const titles = [
-        { min: 800, label: 'LENDA DO SAGUÃO' },
+        { min: 800, label: 'LENDA DO SAGU\u00c3O' },
         { min: 400, label: 'MESTRE DE RUNAS' },
-        { min: 180, label: 'CAMPEÃO DA TÁBUA' },
+        { min: 180, label: 'CAMPE\u00c3O DA T\u00c1BUA' },
         { min: 60, label: 'DUELISTA ARCANO' },
         { min: 0, label: 'APRENDIZ DE RUNAS' }
     ];
@@ -69,15 +94,15 @@
     };
 
     const start = () => {
-        update();
+        safeLobbyEnhancement('atualiza\u00e7\u00e3o da identidade', update);
         const target = document.getElementById('lobby-screen');
         if (!target) return;
-        new MutationObserver(update).observe(target, { childList: true, characterData: true, subtree: true });
+        new MutationObserver(() => safeLobbyEnhancement('atualiza\u00e7\u00e3o da identidade', update)).observe(target, { childList: true, characterData: true, subtree: true });
     };
 
     if (document.body) start();
     else document.addEventListener('DOMContentLoaded', start, { once: true });
-})();
+});
 
 // 1. EFEITO DE CURA
 window.triggerHealEffect = function() {
