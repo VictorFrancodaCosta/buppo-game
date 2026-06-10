@@ -44,7 +44,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_bloqueio_mago.webp', 'assets/img/carta_descansar_mago.webp',
         'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
-        'assets/img/ui_selo_pronto.png', 'assets/img/fx_ataque_espada.png'
+        'assets/img/ui_selo_pronto.png', 'assets/img/fx_ataque_espada_anim_sheet.png'
     ],
     audio: [
         { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true },
