@@ -9,9 +9,9 @@
 #btn-login:hover { transform: scale(1.05); box-shadow: 0 0 30px #9b59b6; background: #9b59b6; }
 
 /* LOBBY SCREEN */
-#lobby-screen { justify-content: flex-start !important; align-items: flex-start !important; padding-left: calc(50% - 50vw + 70px); padding-top: 8vh; box-sizing: border-box; z-index: 10000; position: relative; }
+#lobby-screen { --lobby-side-gap: 70px; justify-content: flex-start !important; align-items: flex-start !important; padding-left: calc(50% - 50vw + var(--lobby-side-gap)); padding-top: 8vh; box-sizing: border-box; z-index: 10000; position: relative; }
 .lobby-logo-right { position: fixed; left: 50%; top: 8vh; transform: translateX(-50%); max-width: 430px; width: 28vw; height: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9)); z-index: 6; pointer-events: none; }
-.lobby-frame-container { position: relative; z-index: 5; width: auto; height: 82vh; max-height: 860px; display: flex; justify-content: center; align-items: center; animation: frameFloat 4s ease-in-out infinite; }
+.lobby-frame-container { position: fixed; top: 8vh; left: calc(50% - 50vw + var(--lobby-side-gap)); z-index: 5; width: auto; height: 82vh; max-height: 860px; margin-left: 0; display: flex; justify-content: center; align-items: center; animation: frameFloat 4s ease-in-out infinite; }
 @keyframes frameFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 .lobby-frame-img { height: 100%; width: auto; filter: drop-shadow(0 20px 50px rgba(0,0,0,0.8)); display: block; }
 .lobby-ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; padding: 22% 14% 14% 14%; box-sizing: border-box; text-align: center; color: #fff; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
@@ -40,7 +40,7 @@
 @keyframes flareFloat { 0% { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); } 10% { opacity: 0.8; } 80% { opacity: 0.6; } 100% { opacity: 0; transform: translateY(-150px) scale(0) rotate(45deg); } }
 
 /* FRIENDS PANEL */
-.friends-panel { position: fixed; top: 8vh; right: calc(50% - 50vw + 70px); width: 330px; min-height: 238px; max-height: 50vh; z-index: 12000; display: flex; flex-direction: column; padding: 16px; box-sizing: border-box; color: #fff; background: linear-gradient(180deg, rgba(93, 64, 55, 0.96), rgba(38, 24, 20, 0.94)); border: 3px solid var(--gold); border-radius: 18px; box-shadow: 0 16px 35px rgba(0,0,0,0.72), inset 0 0 0 2px rgba(255,255,255,0.12), inset 0 -18px 28px rgba(0,0,0,0.28); font-family: 'Montserrat', sans-serif; text-shadow: 2px 2px 0 #000; }
+.friends-panel { position: fixed; top: 8vh; right: calc(50% - 50vw + var(--lobby-side-gap, 70px)); width: 330px; min-height: 238px; max-height: 50vh; z-index: 12000; display: flex; flex-direction: column; padding: 16px; box-sizing: border-box; color: #fff; background: linear-gradient(180deg, rgba(93, 64, 55, 0.96), rgba(38, 24, 20, 0.94)); border: 3px solid var(--gold); border-radius: 18px; box-shadow: 0 16px 35px rgba(0,0,0,0.72), inset 0 0 0 2px rgba(255,255,255,0.12), inset 0 -18px 28px rgba(0,0,0,0.28); font-family: 'Montserrat', sans-serif; text-shadow: 2px 2px 0 #000; }
 .friends-panel::before { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(255,255,255,0.18); border-radius: 13px; pointer-events: none; }
 .friends-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 2px solid rgba(255,215,0,0.35); position: relative; z-index: 1; }
 .friends-title { font-family: 'Russo One', sans-serif; color: var(--gold); font-size: 18px; letter-spacing: 1px; }
@@ -107,7 +107,7 @@
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* MEDIA QUERIES LOBBY */
-@media (max-width: 768px) { #lobby-screen { align-items: center !important; justify-content: center !important; padding-left: 0 !important; overflow: hidden; } .lobby-frame-container { width: 95vw; max-width: 550px; height: auto; max-height: 80vh; margin-top: 80px; display: flex; justify-content: center; align-items: center; } .lobby-frame-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; } .lobby-ui-overlay { padding: 28% 14% 12% 14%; } .user-welcome { font-size: 22px; margin-bottom: 5px; } .user-stats { font-size: 13px; margin-bottom: 12px; } #ranking-table { font-size: 13px; } #ranking-table th, #ranking-table td { padding: 6px 4px; } .ranking-scroll { margin-bottom: 15px; max-height: 180px; } #btn-play-match { font-size: 20px; padding: 12px 0; width: 90%; margin-bottom: 8px; } #btn-logout { font-size: 11px; padding: 6px 18px; } .lobby-logo-right { left: 50%; top: 5%; transform: translate(-50%, 0); width: 410px; position: absolute; z-index: 20; } #btn-play-pvp .btn-title { font-size: 18px; } #btn-play-pve .btn-title { font-size: 14px; } .lobby-btn-row { gap: 8px; } }
+@media (max-width: 768px) { #lobby-screen { align-items: center !important; justify-content: center !important; padding-left: 0 !important; overflow: hidden; } .lobby-frame-container { position: relative; top: auto; left: auto; width: 95vw; max-width: 550px; height: auto; max-height: 80vh; margin-left: 0; margin-top: 80px; display: flex; justify-content: center; align-items: center; } .lobby-frame-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; } .lobby-ui-overlay { padding: 28% 14% 12% 14%; } .user-welcome { font-size: 22px; margin-bottom: 5px; } .user-stats { font-size: 13px; margin-bottom: 12px; } #ranking-table { font-size: 13px; } #ranking-table th, #ranking-table td { padding: 6px 4px; } .ranking-scroll { margin-bottom: 15px; max-height: 180px; } #btn-play-match { font-size: 20px; padding: 12px 0; width: 90%; margin-bottom: 8px; } #btn-logout { font-size: 11px; padding: 6px 18px; } .lobby-logo-right { left: 50%; top: 5%; transform: translate(-50%, 0); width: 410px; position: absolute; z-index: 20; } #btn-play-pvp .btn-title { font-size: 18px; } #btn-play-pve .btn-title { font-size: 14px; } .lobby-btn-row { gap: 8px; } }
 @media (max-height: 800px) { .deck-option { width: 300px; } .img-titulo-placa { max-width: 450px; } #deck-selection-screen { gap: 15px; } }
 
 @media (max-width: 980px) and (orientation: landscape) {
@@ -129,8 +129,12 @@
     }
 
     .lobby-frame-container {
+        position: relative;
+        top: auto;
+        left: auto;
         height: calc(100dvh - 16px);
         max-height: 420px;
+        margin-left: 0;
         margin-top: 0;
         transform: none;
     }
