@@ -178,13 +178,17 @@ window.goToLobby = async function(isAutoLogin = false) {
     const userRef = doc(db, "players", window.currentUser.uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
-        await setDoc(userRef, { name: window.currentUser.displayName, score: 0, totalWins: 0, settings: { vol: 0.5, music: true, sfx: true } });
-        document.getElementById('lobby-username').innerText = `OLÁ, ${window.currentUser.displayName.split(' ')[0].toUpperCase()}`;
+        const gameId = await generateUniqueGameId(window.currentUser.uid);
+        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, settings: { vol: 0.5, music: true, sfx: true } });
+        window.currentPlayerGameId = gameId;
+        renderLobbyIdentity(window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
         window.updateVol('master', 0.5);
     } else {
         const d = userSnap.data();
-        document.getElementById('lobby-username').innerText = `OLÁ, ${d.name.split(' ')[0].toUpperCase()}`;
+        const gameId = await ensurePlayerGameId(userRef, d);
+        window.currentPlayerGameId = gameId;
+        renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
 
         if(d.settings) {
@@ -220,6 +224,63 @@ window.goToLobby = async function(isAutoLogin = false) {
     window.showScreen('lobby-screen'); document.getElementById('end-screen').classList.remove('visible');
     document.getElementById('btn-config-toggle').style.display = 'flex';
 };
+
+function getPlayerFirstName(name = "JOGADOR") {
+    return String(name || "JOGADOR").split(' ')[0].toUpperCase();
+}
+
+function escapeHTML(value = "") {
+    return String(value).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+function renderLobbyIdentity(name, gameId) {
+    const el = document.getElementById('lobby-username');
+    if(!el) return;
+    const safeName = escapeHTML(getPlayerFirstName(name));
+    const safeId = escapeHTML(gameId || "----");
+    el.innerHTML = `OLÁ, ${safeName} <span class="player-game-id">#${safeId}</span>`;
+}
+
+function buildGameIdCandidate(uid, attempt = 0) {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let hash = 2166136261;
+    const input = `${uid}:${attempt}`;
+    for(let i = 0; i < input.length; i++) {
+        hash ^= input.charCodeAt(i);
+        hash = Math.imul(hash, 16777619) >>> 0;
+    }
+    let id = "";
+    for(let i = 0; i < 4; i++) {
+        hash = (Math.imul(hash, 1664525) + 1013904223) >>> 0;
+        id += alphabet[hash % alphabet.length];
+    }
+    return id;
+}
+
+async function generateUniqueGameId(uid) {
+    for(let attempt = 0; attempt < 120; attempt++) {
+        const candidate = buildGameIdCandidate(uid, attempt);
+        const idRef = doc(db, "playerIds", candidate);
+        const idSnap = await getDoc(idRef);
+        if(!idSnap.exists() || idSnap.data().uid === uid) {
+            await setDoc(idRef, { uid, updatedAt: Date.now() }, { merge: true });
+            return candidate;
+        }
+    }
+    return buildGameIdCandidate(uid, Date.now());
+}
+
+async function ensurePlayerGameId(userRef, playerData) {
+    if(playerData && playerData.gameId) {
+        try {
+            await setDoc(doc(db, "playerIds", playerData.gameId), { uid: window.currentUser.uid, updatedAt: Date.now() }, { merge: true });
+        } catch(e) {}
+        return playerData.gameId;
+    }
+    const gameId = await generateUniqueGameId(window.currentUser.uid);
+    await updateDoc(userRef, { gameId });
+    return gameId;
+}
 
 function startGameFlow() {
     document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
