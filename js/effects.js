@@ -1,9 +1,17 @@
 // ARQUIVO: js/effects.js
 
-(function normalizeLobbyText() {
+function safeLobbyEnhancement(name, callback) {
+    try {
+        callback();
+    } catch (error) {
+        console.warn(`[BUPPO] ${name} desativado para manter o jogo aberto.`, error);
+    }
+}
+
+safeLobbyEnhancement('normalizador de texto', () => {
     const fixTextNode = (node) => {
         if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('SAGUAO')) {
-            node.nodeValue = node.nodeValue.replace(/SAGUAO/g, 'SAGUÃO');
+            node.nodeValue = node.nodeValue.replace(/SAGUAO/g, 'SAGU\u00c3O');
         }
     };
     const scan = (root) => {
@@ -26,13 +34,30 @@
     };
     if (document.body) start();
     else document.addEventListener('DOMContentLoaded', start, { once: true });
-})();
+});
 
-(function enhanceLobbyIdentity() {
+safeLobbyEnhancement('failsafe do carregamento', () => {
+    const start = () => {
+        setTimeout(() => {
+            const loading = document.getElementById('loading-screen');
+            if (!loading || loading.style.display === 'none') return;
+
+            loading.style.opacity = '0';
+            setTimeout(() => {
+                if (loading.style.display !== 'none') loading.style.display = 'none';
+            }, 450);
+        }, 5000);
+    };
+
+    if (document.body) start();
+    else document.addEventListener('DOMContentLoaded', start, { once: true });
+});
+
+safeLobbyEnhancement('identidade do sagu\u00e3o', () => {
     const titles = [
-        { min: 800, label: 'LENDA DO SAGUÃO' },
+        { min: 800, label: 'LENDA DO SAGU\u00c3O' },
         { min: 400, label: 'MESTRE DE RUNAS' },
-        { min: 180, label: 'CAMPEÃO DA TÁBUA' },
+        { min: 180, label: 'CAMPE\u00c3O DA T\u00c1BUA' },
         { min: 60, label: 'DUELISTA ARCANO' },
         { min: 0, label: 'APRENDIZ DE RUNAS' }
     ];
@@ -69,15 +94,15 @@
     };
 
     const start = () => {
-        update();
+        safeLobbyEnhancement('atualiza\u00e7\u00e3o da identidade', update);
         const target = document.getElementById('lobby-screen');
         if (!target) return;
-        new MutationObserver(update).observe(target, { childList: true, characterData: true, subtree: true });
+        new MutationObserver(() => safeLobbyEnhancement('atualiza\u00e7\u00e3o da identidade', update)).observe(target, { childList: true, characterData: true, subtree: true });
     };
 
     if (document.body) start();
     else document.addEventListener('DOMContentLoaded', start, { once: true });
-})();
+});
 
 // 1. EFEITO DE CURA
 window.triggerHealEffect = function() {
@@ -86,8 +111,8 @@ window.triggerHealEffect = function() {
     const light = document.getElementById('holy-light');
     const particlesContainer = document.getElementById('particles-container');
 
-    // Som (Se existir no main.js, isso toca lá, mas podemos garantir aqui se quiser)
-    // Por enquanto, só visual:
+    // Som (Se existir no main.js, isso toca l\u00e1, mas podemos garantir aqui se quiser)
+    // Por enquanto, s\u00f3 visual:
 
     // 1. Respiro
     body.classList.remove('screen-breathe');
@@ -101,7 +126,7 @@ window.triggerHealEffect = function() {
     overlay.classList.add('active');
     light.classList.add('active');
 
-    // 3. Partículas
+    // 3. Part\u00edculas
     if (particlesContainer) {
         particlesContainer.innerHTML = '';
         for (let i = 0; i < 20; i++) {
@@ -114,7 +139,7 @@ window.triggerHealEffect = function() {
                 particle.style.fontSize = size + 'rem';
             } else {
                 particle.classList.add('sparkle-particle');
-                // Partícula branca/verde
+                // Part\u00edcula branca/verde
             }
             particle.style.left = Math.random() * 100 + 'vw';
             const duration = Math.random() * 1 + 1.5;
@@ -138,7 +163,7 @@ window.triggerHealEffect = function() {
 window.triggerDamageEffect = function() {
     const body = document.body;
     const bloodContainer = document.getElementById('blood-container');
-    // const cutLine = document.getElementById('cut-line'); // Removido referência ao corte
+    // const cutLine = document.getElementById('cut-line'); // Removido refer\u00eancia ao corte
 
     // 1. Tremor (Mantido)
     body.classList.remove('shake-screen-hard');
@@ -218,9 +243,9 @@ window.triggerBlockEffect = function() {
     blockText.style.position = 'fixed';
     blockText.style.top = '45%'; // Um pouco acima do centro exato
     blockText.style.left = '50%';
-    blockText.style.transform = 'translate(-50%, -50%) scale(0.5)'; // Começa pequeno
+    blockText.style.transform = 'translate(-50%, -50%) scale(0.5)'; // Come\u00e7a pequeno
     blockText.style.fontFamily = "'Bangers', cursive";
-    blockText.style.fontSize = '5rem'; // Tamanho médio
+    blockText.style.fontSize = '5rem'; // Tamanho m\u00e9dio
     blockText.style.color = '#3498db'; // Azul do bloqueio
     blockText.style.webkitTextStroke = '2px black'; // Outline preto
     blockText.style.textShadow = '0 0 10px rgba(52, 152, 219, 0.8)';
@@ -231,7 +256,7 @@ window.triggerBlockEffect = function() {
 
     document.body.appendChild(blockText);
 
-    // Animação de Entrada (Pop)
+    // Anima\u00e7\u00e3o de Entrada (Pop)
     requestAnimationFrame(() => {
         blockText.style.opacity = '1';
         blockText.style.transform = 'translate(-50%, -50%) scale(1)';
@@ -239,7 +264,7 @@ window.triggerBlockEffect = function() {
 
     // Limpeza Geral
     setTimeout(() => {
-        // Saída do texto
+        // Sa\u00edda do texto
         blockText.style.opacity = '0';
         blockText.style.transform = 'translate(-50%, -0%) scale(1.5)'; // Sobe e cresce sumindo
         
