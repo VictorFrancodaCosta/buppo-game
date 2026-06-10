@@ -1,8 +1,8 @@
 // ARQUIVO: js/main.js
 import { CARDS_DB, ACTION_KEYS } from './data.js';
 import { auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, registrarEmpateDB, notifyAbandonmentDB } from './firebase_network.js';
-import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIMove, checkCardLethality } from './game_logic.js';
-import { doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIMove, checkCardLethality, generateShuffledDeck } from './game_logic.js';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MÓDULOS
@@ -32,6 +32,12 @@ window.pvpStartData = null;
 window.latestMatchData = null;
 window.friendsRefreshInterval = null;
 window.presenceInterval = null;
+window.friendInviteUnsubscribe = null;
+window.outgoingInviteUnsubscribe = null;
+window.selectedFriendUid = null;
+window.pendingFriendInvite = null;
+window.friendlyRematchRound = 0;
+window.suppressFriendlyAbandon = false;
 
 const ASSETS_TO_LOAD = {
     images: [
@@ -145,6 +151,10 @@ window.transitionToGame = function() {
 }
 
 window.transitionToLobby = function(skipAnim = false) {
+    if (isFriendlyMatch() && window.currentMatchId && window.currentUser && !window.suppressFriendlyAbandon) {
+        updateDoc(doc(db, "matches", window.currentMatchId), { status: 'abandoned', abandonedBy: window.currentUser.uid }).catch(() => {});
+    }
+    window.suppressFriendlyAbandon = false;
     window.cleanupMatchState();
     document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
     document.body.classList.remove('force-landscape');
@@ -259,17 +269,25 @@ function renderFriendsList(friends = []) {
     }
     list.innerHTML = friends.map(friend => {
         const online = isFriendOnline(friend.lastSeen);
-        const status = online ? 'online' : 'offline';
+        const busy = online && friend.activityStatus === 'in_match';
+        const status = busy ? 'busy' : (online ? 'online' : 'offline');
+        const label = busy ? 'EM PARTIDA' : (online ? 'ONLINE' : 'OFFLINE');
         const safeName = escapeHTML(getPlayerFirstName(friend.name));
         const safeId = escapeHTML(friend.gameId || '----');
-        return `<div class="friend-row">
+        return `<div class="friend-row ${online && !busy ? 'online' : ''}" data-friend-uid="${escapeHTML(friend.uid)}" data-friend-name="${safeName}">
             <span class="friend-status-dot ${status}"></span>
             <div class="friend-main">
                 <div class="friend-name">${safeName}</div>
-                <div class="friend-meta">#${safeId} - ${online ? 'ONLINE' : 'OFFLINE'}</div>
+                <div class="friend-meta">#${safeId} - ${label}</div>
             </div>
         </div>`;
     }).join('');
+    list.querySelectorAll('.friend-row.online').forEach(row => {
+        row.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showFriendActionPopover(row);
+        });
+    });
 }
 
 async function refreshFriendsList() {
@@ -296,6 +314,7 @@ async function refreshFriendsList() {
 
 function startFriendsPanel() {
     refreshFriendsList();
+    listenForFriendInvites();
     if(window.friendsRefreshInterval) clearInterval(window.friendsRefreshInterval);
     window.friendsRefreshInterval = setInterval(refreshFriendsList, 30000);
 }
@@ -309,7 +328,8 @@ function startPresenceHeartbeat() {
 async function updatePresence() {
     if(!window.currentUser) return;
     try {
-        await setDoc(doc(db, "players", window.currentUser.uid), { lastSeen: Date.now() }, { merge: true });
+        const activeGame = document.getElementById('game-screen') && document.getElementById('game-screen').classList.contains('active') && !document.getElementById('end-screen').classList.contains('visible');
+        await setDoc(doc(db, "players", window.currentUser.uid), { lastSeen: Date.now(), activityStatus: activeGame ? 'in_match' : 'online' }, { merge: true });
     } catch(e) {}
 }
 
@@ -319,6 +339,146 @@ function setFriendAddStatus(message, type = '') {
     status.className = `friend-add-status ${type}`.trim();
     status.innerText = message || '';
 }
+
+function hideFriendActionPopover() {
+    const popover = document.getElementById('friend-action-popover');
+    if(popover) popover.style.display = 'none';
+    window.selectedFriendUid = null;
+}
+
+function showFriendActionPopover(row) {
+    const popover = document.getElementById('friend-action-popover');
+    if(!popover) return;
+    window.selectedFriendUid = row.dataset.friendUid;
+    const rect = row.getBoundingClientRect();
+    popover.style.left = Math.max(8, rect.left - 8) + 'px';
+    popover.style.top = (rect.bottom + 8) + 'px';
+    popover.style.display = 'block';
+}
+
+document.addEventListener('click', (e) => {
+    const popover = document.getElementById('friend-action-popover');
+    if(popover && popover.style.display === 'block' && !popover.contains(e.target) && !e.target.closest('.friend-row')) {
+        hideFriendActionPopover();
+    }
+});
+
+window.inviteSelectedFriend = async function() {
+    if(!window.currentUser || !window.selectedFriendUid) return;
+    const toUid = window.selectedFriendUid;
+    hideFriendActionPopover();
+    try {
+        const inviteRef = doc(collection(db, "friendInvites"));
+        await setDoc(inviteRef, {
+            fromUid: window.currentUser.uid,
+            fromName: getPlayerFirstName(window.currentUser.displayName),
+            fromGameId: window.currentPlayerGameId || null,
+            fromDeckType: window.currentDeck || 'knight',
+            toUid,
+            status: 'pending',
+            createdAt: Date.now()
+        });
+        showPvPStatus("CONVITE ENVIADO");
+        setTimeout(clearPvPStatus, 1400);
+        if(window.outgoingInviteUnsubscribe) window.outgoingInviteUnsubscribe();
+        window.outgoingInviteUnsubscribe = onSnapshot(inviteRef, (snap) => {
+            if(!snap.exists()) return;
+            const data = snap.data();
+            if(data.status === 'accepted' && data.matchId) enterFriendlyMatch(data.matchId);
+            if(data.status === 'declined') {
+                clearPvPStatus();
+                showCenterText("CONVITE RECUSADO", "#ff7675");
+                if(window.outgoingInviteUnsubscribe) window.outgoingInviteUnsubscribe();
+            }
+        });
+    } catch(e) {
+        showCenterText("ERRO AO CONVIDAR", "#ff7675");
+    }
+};
+
+function listenForFriendInvites() {
+    if(!window.currentUser || window.friendInviteUnsubscribe) return;
+    const q = query(collection(db, "friendInvites"), where("toUid", "==", window.currentUser.uid), where("status", "==", "pending"));
+    window.friendInviteUnsubscribe = onSnapshot(q, (snapshot) => {
+        snapshot.docChanges().forEach(change => {
+            if(change.type !== 'added') return;
+            const data = change.doc.data();
+            if(Date.now() - (data.createdAt || 0) > 120000) return;
+            window.pendingFriendInvite = { id: change.doc.id, ...data };
+            const text = document.getElementById('friend-invite-text');
+            if(text) text.innerText = `${data.fromName || 'Jogador'} esta te convidando para uma partida.`;
+            const screen = document.getElementById('friend-invite-screen');
+            if(screen) screen.style.display = 'flex';
+            playSound('sfx-nav');
+        });
+    });
+}
+
+async function createFriendlyMatch(invite) {
+    const matchId = "friend_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+    const p1DeckCards = generateShuffledDeck();
+    const p2DeckCards = generateShuffledDeck();
+    const p1Hand = [];
+    const p2Hand = [];
+    for(let i = 0; i < 6; i++) {
+        if(p1DeckCards.length > 0) p1Hand.push(p1DeckCards.pop());
+        if(p2DeckCards.length > 0) p2Hand.push(p2DeckCards.pop());
+    }
+    p1Hand.sort();
+    p2Hand.sort();
+    await setDoc(doc(db, "matches", matchId), {
+        friendly: true,
+        rematchRound: 0,
+        player1Rematch: false,
+        player2Rematch: false,
+        player1: { uid: invite.fromUid, name: invite.fromName || "JOGADOR 1", gameId: invite.fromGameId || null, deckType: invite.fromDeckType || 'knight', hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
+        player2: { uid: window.currentUser.uid, name: getPlayerFirstName(window.currentUser.displayName), gameId: window.currentPlayerGameId || null, deckType: window.currentDeck || 'knight', hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
+        turn: 1,
+        status: 'playing',
+        createdAt: Date.now()
+    });
+    return matchId;
+}
+
+async function enterFriendlyMatch(matchId) {
+    const snap = await getDoc(doc(db, "matches", matchId));
+    if(!snap.exists()) return;
+    const data = snap.data();
+    window.gameMode = 'pvp';
+    window.currentMatchId = matchId;
+    window.pvpStartData = data;
+    window.friendlyRematchRound = data.rematchRound || 0;
+    window.myRole = data.player1.uid === window.currentUser.uid ? 'player1' : 'player2';
+    const myDeckType = window.myRole === 'player1' ? data.player1.deckType : data.player2.deckType;
+    window.applyDeckTheme(myDeckType);
+    const inviteScreen = document.getElementById('friend-invite-screen');
+    if(inviteScreen) inviteScreen.style.display = 'none';
+    if(window.outgoingInviteUnsubscribe) window.outgoingInviteUnsubscribe();
+    window.transitionToGame();
+}
+
+window.acceptFriendInvite = async function() {
+    if(!window.pendingFriendInvite) return;
+    const invite = window.pendingFriendInvite;
+    try {
+        const matchId = await createFriendlyMatch(invite);
+        await updateDoc(doc(db, "friendInvites", invite.id), { status: 'accepted', matchId, acceptedAt: Date.now(), toDeckType: window.currentDeck || 'knight' });
+        window.pendingFriendInvite = null;
+        enterFriendlyMatch(matchId);
+    } catch(e) {
+        showCenterText("ERRO AO ACEITAR", "#ff7675");
+    }
+};
+
+window.declineFriendInvite = async function() {
+    if(!window.pendingFriendInvite) return;
+    try {
+        await updateDoc(doc(db, "friendInvites", window.pendingFriendInvite.id), { status: 'declined', declinedAt: Date.now() });
+    } catch(e) {}
+    window.pendingFriendInvite = null;
+    const screen = document.getElementById('friend-invite-screen');
+    if(screen) screen.style.display = 'none';
+};
 
 window.openAddFriendModal = function() {
     window.playNavSound();
@@ -431,6 +591,7 @@ function startGameFlow() {
     turnCount = 1; playerHistory = [];
     updateUI(); dealAllInitialCards();
     if(window.gameMode === 'pvp') startPvPListener();
+    updatePresence();
 }
 
 function hydrateInitialPvPHand(unit, serverData) {
@@ -460,6 +621,14 @@ function startPvPListener() {
         ensureMyRole(matchData);
 
         if (matchData.status === 'abandoned') {
+            if (matchData.friendly) {
+                if (matchData.abandonedBy && window.currentUser && matchData.abandonedBy !== window.currentUser.uid) {
+                    showCenterText("JOGADOR SAIU", "#ffd700");
+                    window.suppressFriendlyAbandon = true;
+                    setTimeout(() => window.transitionToLobby(true), 700);
+                }
+                return;
+            }
             if (matchData.abandonedBy && window.currentUser && matchData.abandonedBy !== window.currentUser.uid) {
                 monster.hp = 0; updateUI(); window.isProcessing = true; MusicController.stopCurrent();
                 setTimeout(() => {
@@ -470,6 +639,29 @@ function startPvPListener() {
                     document.getElementById('end-screen').classList.add('visible'); window.cleanupMatchState();
                 }, 500);
             }
+            return;
+        }
+
+        if (matchData.friendly && matchData.status === 'playing' && (matchData.rematchRound || 0) > window.friendlyRematchRound) {
+            window.friendlyRematchRound = matchData.rematchRound || 0;
+            window.pvpStartData = matchData;
+            clearPvPStatus();
+            const endScreen = document.getElementById('end-screen');
+            if(endScreen) endScreen.classList.remove('visible');
+            const pts = document.getElementById('end-points');
+            if(pts) pts.remove();
+            window.transitionToGame();
+            return;
+        }
+
+        if (matchData.friendly && matchData.status === 'finished') {
+            const myRematch = window.myRole === 'player1' ? matchData.player1Rematch : matchData.player2Rematch;
+            const otherRematch = window.myRole === 'player1' ? matchData.player2Rematch : matchData.player1Rematch;
+            if(matchData.player1Rematch && matchData.player2Rematch && window.myRole === 'player1') {
+                resetFriendlyMatchForRematch(matchData).catch(() => {});
+                return;
+            }
+            if(myRematch && !otherRematch) showPvPStatus("AGUARDANDO JOGADOR");
             return;
         }
 
@@ -631,6 +823,37 @@ function serializeUnitState(u) {
     };
 }
 
+function isFriendlyMatch() {
+    return !!((window.latestMatchData && window.latestMatchData.friendly) || (window.pvpStartData && window.pvpStartData.friendly));
+}
+
+async function resetFriendlyMatchForRematch(matchData) {
+    if(!window.currentMatchId || !matchData) return;
+    const p1DeckCards = generateShuffledDeck();
+    const p2DeckCards = generateShuffledDeck();
+    const p1Hand = [];
+    const p2Hand = [];
+    for(let i = 0; i < 6; i++) {
+        if(p1DeckCards.length > 0) p1Hand.push(p1DeckCards.pop());
+        if(p2DeckCards.length > 0) p2Hand.push(p2DeckCards.pop());
+    }
+    p1Hand.sort();
+    p2Hand.sort();
+    await updateDoc(doc(db, "matches", window.currentMatchId), {
+        player1: { ...matchData.player1, hp: 6, maxHp: 6, lvl: 1, hand: p1Hand, deck: p1DeckCards, xp: [], disabled: null, bonusAtk: 0, bonusBlock: 0 },
+        player2: { ...matchData.player2, hp: 6, maxHp: 6, lvl: 1, hand: p2Hand, deck: p2DeckCards, xp: [], disabled: null, bonusAtk: 0, bonusBlock: 0 },
+        p1Move: null,
+        p2Move: null,
+        p1Disarm: null,
+        p2Disarm: null,
+        player1Rematch: false,
+        player2Rematch: false,
+        turn: 1,
+        status: 'playing',
+        rematchRound: increment(1)
+    });
+}
+
 function hydratePvPResolutionState(matchData) {
     if (!matchData || !window.myRole) return;
     const myData = matchData[window.myRole];
@@ -665,6 +888,23 @@ function checkEndGame(){
         clearPvPStatus();
         setTimeout(()=>{
             let title = document.getElementById('end-title'); let isWin = player.hp > 0; let isTie = player.hp <= 0 && monster.hp <= 0;
+            if(isFriendlyMatch()) {
+                const existingPoints = document.getElementById('end-points');
+                if(existingPoints) existingPoints.remove();
+                if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); }
+                else if(isWin) { title.innerText = "VITORIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
+                else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); }
+                const secondaryBtn = document.querySelector('#end-screen .secondary-btn');
+                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUAO";
+                if(window.currentMatchId && window.myRole === 'player1') {
+                    updateDoc(doc(db, "matches", window.currentMatchId), { status: 'finished', player1Rematch: false, player2Rematch: false }).catch(() => {});
+                }
+                document.getElementById('end-screen').classList.add('visible');
+                updatePresence();
+                return;
+            }
+            const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
+            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUAO";
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
             else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
             else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
@@ -763,6 +1003,19 @@ window.registrarEmpateOnline = async function(modo = 'pve') {
 };
 
 window.restartMatch = function() {
+    if(isFriendlyMatch() && window.currentMatchId && window.myRole) {
+        const rematchField = window.myRole === 'player1' ? 'player1Rematch' : 'player2Rematch';
+        updateDoc(doc(db, "matches", window.currentMatchId), { [rematchField]: true }).then(async () => {
+            showPvPStatus("AGUARDANDO JOGADOR");
+            const snap = await getDoc(doc(db, "matches", window.currentMatchId));
+            if(!snap.exists()) return;
+            const data = snap.data();
+            if(data.player1Rematch && data.player2Rematch && window.myRole === 'player1') {
+                await resetFriendlyMatchForRematch(data);
+            }
+        }).catch(() => {});
+        return;
+    }
     document.getElementById('end-screen').classList.remove('visible');
     const pts = document.getElementById('end-points');
     if(pts) pts.remove();
@@ -792,7 +1045,7 @@ window.abandonMatch = function() {
         window.openModal("ABANDONAR?", "Sair da partida contará como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], async (choice) => {
                 if (choice === "SAIR") {
                     if (window.gameMode === 'pvp') await notifyAbandonment();
-                    window.registrarDerrotaOnline(window.gameMode);
+                    if (!isFriendlyMatch()) window.registrarDerrotaOnline(window.gameMode);
                     window.transitionToLobby();
                 }
             }

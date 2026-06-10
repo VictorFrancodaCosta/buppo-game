@@ -132,6 +132,21 @@
             </div>
         </div>
 
+        <div id="friend-action-popover" class="friend-action-popover">
+            <button onclick="window.inviteSelectedFriend()">CONVIDAR PARA PARTIDA</button>
+        </div>
+
+        <div id="friend-invite-screen" class="modal-overlay">
+            <div class="modal-box add-friend-box">
+                <h2 class="cfg-title">CONVITE</h2>
+                <p id="friend-invite-text" class="add-friend-copy">Jogador está te convidando para uma partida.</p>
+                <div class="modal-btns">
+                    <button class="mini-btn" onclick="window.acceptFriendInvite()">ACEITAR</button>
+                    <button class="mini-btn cancel-btn" onclick="window.declineFriendInvite()">RECUSAR</button>
+                </div>
+            </div>
+        </div>
+
         <div id="deck-selection-screen" class="screen">
            <img src="assets/img/ui_placa_selecao.webp" alt="Selecione seu Deck" class="img-titulo-placa">
             <div class="deck-options-container">
