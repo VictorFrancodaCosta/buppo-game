@@ -9,7 +9,7 @@
 #btn-login:hover { transform: scale(1.05); box-shadow: 0 0 30px #9b59b6; background: #9b59b6; }
 
 /* LOBBY SCREEN */
-#lobby-screen { justify-content: flex-start !important; align-items: flex-start !important; padding-left: calc(50% - 50vw + 28px); padding-top: 8vh; box-sizing: border-box; z-index: 10000; position: relative; }
+#lobby-screen { justify-content: flex-start !important; align-items: flex-start !important; padding-left: calc(50% - 50vw + 70px); padding-top: 8vh; box-sizing: border-box; z-index: 10000; position: relative; }
 .lobby-logo-right { position: fixed; left: 50%; top: 8vh; transform: translateX(-50%); max-width: 430px; width: 28vw; height: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9)); z-index: 6; pointer-events: none; }
 .lobby-frame-container { position: relative; z-index: 5; width: auto; height: 82vh; max-height: 860px; display: flex; justify-content: center; align-items: center; animation: frameFloat 4s ease-in-out infinite; }
 @keyframes frameFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
