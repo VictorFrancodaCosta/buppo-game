@@ -34,6 +34,40 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: none !important;
             animation: none !important;
         }
+
+        .lobby-player-card {
+            display: none !important;
+        }
+
+        .lobby-logo-right {
+            transform-origin: center center !important;
+            animation: lobbyLogoEntranceJuice 0.98s cubic-bezier(0.12, 1.22, 0.2, 1) both,
+                       lobbyLogoBreathe 4.2s ease-in-out 0.98s infinite !important;
+        }
+
+        @keyframes lobbyLogoEntranceJuice {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(28px) scale(0.48, 1.55) rotate(-5deg);
+                filter: drop-shadow(0 0 0 rgba(0,0,0,0));
+            }
+            34% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(-18px) scale(1.24, 0.74) rotate(3deg);
+                filter: drop-shadow(0 18px 34px rgba(0,0,0,0.95)) drop-shadow(0 0 28px rgba(255,215,0,0.55));
+            }
+            56% {
+                transform: translateX(-50%) translateY(8px) scale(0.88, 1.16) rotate(-2deg);
+            }
+            75% {
+                transform: translateX(-50%) translateY(-5px) scale(1.08, 0.94) rotate(1deg);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1) rotate(0deg);
+                filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9));
+            }
+        }
     `;
     document.head.appendChild(style);
 });
