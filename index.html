@@ -79,6 +79,13 @@
         </div>
 
         <div id="lobby-screen" class="screen">
+            <div id="lobby-particles"></div>
+            <div class="lobby-ambient-layer" aria-hidden="true">
+                <span class="lobby-candle-spark s1"></span>
+                <span class="lobby-candle-spark s2"></span>
+                <span class="lobby-candle-spark s3"></span>
+                <span class="lobby-book-glow"></span>
+            </div>
             <div class="lobby-logo-right"><img src="assets/img/logo_buppo.webp" style="width:100%; height:auto;"></div>
             <aside id="friends-panel" class="friends-panel">
                 <div class="friends-header">
@@ -86,7 +93,7 @@
                         <div class="friends-title">AMIGOS</div>
                         <div class="friends-subtitle">COMPANHEIROS ONLINE</div>
                     </div>
-                    <button class="friends-add-icon" onclick="window.openAddFriendModal()" title="Adicionar amigo">+</button>
+                    <button class="friends-add-icon" onclick="window.openAddFriendModal()" title="Adicionar amigo" data-tip="Adicionar companheiro">+</button>
                 </div>
                 <div id="friends-list" class="friends-list">
                     <div class="friends-empty">Nenhum amigo ainda</div>
@@ -95,15 +102,22 @@
             <div class="lobby-frame-container">
                 <img src="assets/img/ui_moldura_perfil.webp" class="lobby-frame-img">
                 <div class="lobby-ui-overlay">
+                    <div class="lobby-player-card" data-tip="Sua identidade no BUPPO">
+                        <div class="lobby-avatar" id="lobby-avatar">B</div>
+                        <div class="lobby-identity-main">
+                            <div class="lobby-rank-title" id="lobby-rank-title">APRENDIZ DE RUNAS</div>
+                            <div class="lobby-xp-track"><span id="lobby-xp-fill"></span></div>
+                        </div>
+                    </div>
                     <div class="user-welcome" id="lobby-username">OLÁ, JOGADOR</div>
                     <div class="user-stats" id="lobby-stats">VITÓRIAS: 0 | PONTOS: 0</div>
-                    <div class="ranking-scroll" id="ranking-content"></div>
+                    <div class="ranking-scroll" id="ranking-content" data-tip="Ranking dos melhores jogadores"></div>
                     <div class="lobby-btn-row">
-                        <button id="btn-play-pvp" onclick="startPvPSearch()"><span class="btn-title">JOGAR PvP</span><span class="btn-sub">RANKEADO (+8 PTS)</span></button>
-                        <button id="btn-play-pve" onclick="startPvE()"><span class="btn-title">JOGAR PvE</span><span class="btn-sub">TREINO (+3 PTS)</span></button>
+                        <button id="btn-play-pvp" onclick="startPvPSearch()" data-tip="Entrar em uma partida ranqueada"><span class="btn-title">JOGAR PvP</span><span class="btn-sub">RANKEADO (+8 PTS)</span></button>
+                        <button id="btn-play-pve" onclick="startPvE()" data-tip="Treinar contra o jogo"><span class="btn-title">JOGAR PvE</span><span class="btn-sub">TREINO (+3 PTS)</span></button>
                     </div>
                     <button id="btn-history" onclick="window.openHistory()">📜 HISTÓRICO DE PARTIDAS</button>
-                    <button id="btn-logout" onclick="handleLogout()">TROCAR DE CONTA</button>
+                    <button id="btn-logout" onclick="handleLogout()" data-tip="Sair desta conta">TROCAR DE CONTA</button>
                 </div>
             </div>
         </div>

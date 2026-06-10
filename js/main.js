@@ -993,7 +993,7 @@ function checkEndGame(){
                 else if(isWin) { title.innerText = "VITORIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
                 else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); }
                 const secondaryBtn = document.querySelector('#end-screen .secondary-btn');
-                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUAO";
+                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUÃO";
                 if(window.currentMatchId && window.myRole === 'player1') {
                     updateDoc(doc(db, "matches", window.currentMatchId), { status: 'finished', player1Rematch: false, player2Rematch: false }).catch(() => {});
                 }
@@ -1002,7 +1002,7 @@ function checkEndGame(){
                 return;
             }
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
-            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUAO";
+            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃO";
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
             else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
             else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
