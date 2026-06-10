@@ -556,6 +556,35 @@ body.mastery-focus-active .xp-area {
     z-index: 0;
 }
 
+#p-stats-cluster.pvp-ready-glow::after,
+#m-stats-cluster.pvp-ready-glow::after {
+    content: "";
+    position: absolute;
+    width: 168px;
+    height: 63px;
+    pointer-events: none;
+    background-image: url('../assets/img/ui_selo_pronto.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 6px 0 rgba(0,0,0,0.36)) drop-shadow(0 0 10px rgba(255,215,0,0.34));
+    animation: readyBadgeJuice 1.15s ease-in-out infinite;
+    z-index: 4;
+    transform: rotate(var(--ready-badge-rot)) scale(1);
+}
+
+#p-stats-cluster.pvp-ready-glow::after {
+    --ready-badge-rot: -7deg;
+    right: -54px;
+    top: -30px;
+}
+
+#m-stats-cluster.pvp-ready-glow::after {
+    --ready-badge-rot: 7deg;
+    left: -54px;
+    bottom: -28px;
+}
+
 #p-stats-cluster.pvp-ready-glow .lvl-circle,
 #p-stats-cluster.pvp-ready-glow .unit-name,
 #p-stats-cluster.pvp-ready-glow .hp-tube,
@@ -570,6 +599,11 @@ body.mastery-focus-active .xp-area {
 @keyframes pvpReadyClusterGlow {
     0%, 100% { opacity: 0.28; filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.48)) brightness(1.12); }
     50% { opacity: 0.58; filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.78)) brightness(1.28); }
+}
+
+@keyframes readyBadgeJuice {
+    0%, 100% { transform: rotate(var(--ready-badge-rot)) scale(1); filter: drop-shadow(0 6px 0 rgba(0,0,0,0.36)) drop-shadow(0 0 8px rgba(255,215,0,0.26)); }
+    50% { transform: rotate(var(--ready-badge-rot)) scale(1.07); filter: drop-shadow(0 8px 0 rgba(0,0,0,0.32)) drop-shadow(0 0 16px rgba(255,215,0,0.48)); }
 }
 
 #end-points {
