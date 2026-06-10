@@ -579,7 +579,24 @@ window.registrarEmpateOnline = async function(modo = 'pve') {
     if(pts > 0) await saveMatchHistory('TIE', pts);
 };
 
-window.restartMatch = function() { document.getElementById('end-screen').classList.remove('visible'); const pts = document.getElementById('end-points'); if(pts) pts.remove(); setTimeout(startGameFlow, 50); MusicController.play('bgm-loop'); }
+window.restartMatch = function() {
+    document.getElementById('end-screen').classList.remove('visible');
+    const pts = document.getElementById('end-points');
+    if(pts) pts.remove();
+    document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
+
+    if(window.gameMode === 'pvp') {
+        const selectedDeck = window.currentDeck || 'knight';
+        window.cleanupMatchState();
+        window.gameMode = 'pvp';
+        window.applyDeckTheme(selectedDeck);
+        initiateMatchmaking();
+        return;
+    }
+
+    setTimeout(startGameFlow, 50);
+    MusicController.play('bgm-loop');
+}
 
 async function notifyAbandonment() {
     if (!window.currentMatchId || !window.currentUser) return;
