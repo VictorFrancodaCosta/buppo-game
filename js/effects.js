@@ -1,5 +1,33 @@
 // ARQUIVO: js/effects.js
 
+(function normalizeLobbyText() {
+    const fixTextNode = (node) => {
+        if (node.nodeType === Node.TEXT_NODE && node.nodeValue.includes('SAGUAO')) {
+            node.nodeValue = node.nodeValue.replace(/SAGUAO/g, 'SAGUÃO');
+        }
+    };
+    const scan = (root) => {
+        if (!root) return;
+        if (root.nodeType === Node.TEXT_NODE) {
+            fixTextNode(root);
+            return;
+        }
+        root.childNodes.forEach(scan);
+    };
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach(scan);
+            if (mutation.type === 'characterData') fixTextNode(mutation.target);
+        });
+    });
+    const start = () => {
+        scan(document.body);
+        observer.observe(document.body, { childList: true, characterData: true, subtree: true });
+    };
+    if (document.body) start();
+    else document.addEventListener('DOMContentLoaded', start, { once: true });
+})();
+
 // 1. EFEITO DE CURA
 window.triggerHealEffect = function() {
     const body = document.body;
