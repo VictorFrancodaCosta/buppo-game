@@ -80,6 +80,19 @@
 
         <div id="lobby-screen" class="screen">
             <div class="lobby-logo-right"><img src="assets/img/logo_buppo.webp" style="width:100%; height:auto;"></div>
+            <aside id="friends-panel" class="friends-panel">
+                <div class="friends-header">
+                    <div>
+                        <div class="friends-title">AMIGOS</div>
+                        <div class="friends-subtitle">COMPANHEIROS ONLINE</div>
+                    </div>
+                    <button class="friends-add-icon" onclick="window.openAddFriendModal()" title="Adicionar amigo">+</button>
+                </div>
+                <div id="friends-list" class="friends-list">
+                    <div class="friends-empty">Nenhum amigo ainda</div>
+                </div>
+                <button id="btn-add-friend" onclick="window.openAddFriendModal()">ADICIONAR AMIGO</button>
+            </aside>
             <div class="lobby-frame-container">
                 <img src="assets/img/ui_moldura_perfil.webp" class="lobby-frame-img">
                 <div class="lobby-ui-overlay">
@@ -103,6 +116,19 @@
                 <div class="mm-desc">Buscando jogadores com nível próximo ao seu</div>
                 <div class="mm-timer" id="mm-timer">00:00</div>
                 <button class="mini-btn cancel-btn" onclick="cancelPvPSearch()">CANCELAR BUSCA</button>
+            </div>
+        </div>
+
+        <div id="add-friend-screen" class="modal-overlay">
+            <div class="modal-box add-friend-box">
+                <h2 class="cfg-title">ADICIONAR AMIGO</h2>
+                <p class="add-friend-copy">Digite o ID do jogador</p>
+                <input id="friend-id-input" class="friend-id-input" maxlength="8" placeholder="#ABCD">
+                <div id="friend-add-status" class="friend-add-status"></div>
+                <div class="modal-btns">
+                    <button class="mini-btn" onclick="window.addFriendByGameId()">ADICIONAR</button>
+                    <button class="mini-btn cancel-btn" onclick="window.closeAddFriendModal()">FECHAR</button>
+                </div>
             </div>
         </div>
 

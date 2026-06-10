@@ -30,6 +30,8 @@ window.pvpWaitingForTurnReset = false;
 window.pvpLocalResolutionComplete = false;
 window.pvpStartData = null;
 window.latestMatchData = null;
+window.friendsRefreshInterval = null;
+window.presenceInterval = null;
 
 const ASSETS_TO_LOAD = {
     images: [
@@ -180,7 +182,7 @@ window.goToLobby = async function(isAutoLogin = false) {
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
         const gameId = await generateUniqueGameId(window.currentUser.uid);
-        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, settings: { vol: 0.5, music: true, sfx: true } });
+        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, friends: [], lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true } });
         window.currentPlayerGameId = gameId;
         renderLobbyIdentity(window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
@@ -209,6 +211,8 @@ window.goToLobby = async function(isAutoLogin = false) {
             }
         }
     }
+    startPresenceHeartbeat();
+    startFriendsPanel();
     const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
     onSnapshot(q, (snapshot) => {
         let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
@@ -241,6 +245,123 @@ function renderLobbyIdentity(name, gameId) {
     const safeId = escapeHTML(gameId || "----");
     el.innerHTML = `OLÁ, ${safeName} <span class="player-game-id">#${safeId}</span>`;
 }
+
+function isFriendOnline(lastSeen) {
+    return Number.isFinite(lastSeen) && (Date.now() - lastSeen) < 90000;
+}
+
+function renderFriendsList(friends = []) {
+    const list = document.getElementById('friends-list');
+    if(!list) return;
+    if(friends.length === 0) {
+        list.innerHTML = '<div class="friends-empty">Nenhum amigo ainda</div>';
+        return;
+    }
+    list.innerHTML = friends.map(friend => {
+        const online = isFriendOnline(friend.lastSeen);
+        const status = online ? 'online' : 'offline';
+        const safeName = escapeHTML(getPlayerFirstName(friend.name));
+        const safeId = escapeHTML(friend.gameId || '----');
+        return `<div class="friend-row">
+            <span class="friend-status-dot ${status}"></span>
+            <div class="friend-main">
+                <div class="friend-name">${safeName}</div>
+                <div class="friend-meta">#${safeId} - ${online ? 'ONLINE' : 'OFFLINE'}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function refreshFriendsList() {
+    if(!window.currentUser) return;
+    const list = document.getElementById('friends-list');
+    if(list) list.innerHTML = '<div class="friends-empty">Carregando amigos...</div>';
+    try {
+        const userRef = doc(db, "players", window.currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if(!userSnap.exists()) { renderFriendsList([]); return; }
+        const friendIds = Array.isArray(userSnap.data().friends) ? userSnap.data().friends : [];
+        const uniqueIds = [...new Set(friendIds)].filter(uid => uid && uid !== window.currentUser.uid);
+        if(uniqueIds.length !== friendIds.length) await updateDoc(userRef, { friends: uniqueIds });
+        const friends = await Promise.all(uniqueIds.map(async uid => {
+            const snap = await getDoc(doc(db, "players", uid));
+            if(!snap.exists()) return null;
+            return { uid, ...snap.data() };
+        }));
+        renderFriendsList(friends.filter(Boolean).sort((a, b) => Number(isFriendOnline(b.lastSeen)) - Number(isFriendOnline(a.lastSeen)) || getPlayerFirstName(a.name).localeCompare(getPlayerFirstName(b.name))));
+    } catch(e) {
+        if(list) list.innerHTML = '<div class="friends-empty">Erro ao carregar amigos</div>';
+    }
+}
+
+function startFriendsPanel() {
+    refreshFriendsList();
+    if(window.friendsRefreshInterval) clearInterval(window.friendsRefreshInterval);
+    window.friendsRefreshInterval = setInterval(refreshFriendsList, 30000);
+}
+
+function startPresenceHeartbeat() {
+    updatePresence();
+    if(window.presenceInterval) clearInterval(window.presenceInterval);
+    window.presenceInterval = setInterval(updatePresence, 30000);
+}
+
+async function updatePresence() {
+    if(!window.currentUser) return;
+    try {
+        await setDoc(doc(db, "players", window.currentUser.uid), { lastSeen: Date.now() }, { merge: true });
+    } catch(e) {}
+}
+
+function setFriendAddStatus(message, type = '') {
+    const status = document.getElementById('friend-add-status');
+    if(!status) return;
+    status.className = `friend-add-status ${type}`.trim();
+    status.innerText = message || '';
+}
+
+window.openAddFriendModal = function() {
+    window.playNavSound();
+    const screen = document.getElementById('add-friend-screen');
+    const input = document.getElementById('friend-id-input');
+    if(input) input.value = '';
+    setFriendAddStatus('');
+    if(screen) screen.style.display = 'flex';
+    setTimeout(() => { if(input) input.focus(); }, 80);
+};
+
+window.closeAddFriendModal = function() {
+    window.playNavSound();
+    const screen = document.getElementById('add-friend-screen');
+    if(screen) screen.style.display = 'none';
+};
+
+window.addFriendByGameId = async function() {
+    if(!window.currentUser) return;
+    const input = document.getElementById('friend-id-input');
+    const rawId = input ? input.value : '';
+    const gameId = rawId.replace('#', '').trim().toUpperCase();
+    if(!gameId) { setFriendAddStatus('Digite um ID valido.', 'error'); return; }
+    setFriendAddStatus('Procurando jogador...');
+    try {
+        const idSnap = await getDoc(doc(db, "playerIds", gameId));
+        if(!idSnap.exists()) { setFriendAddStatus('Jogador nao encontrado.', 'error'); return; }
+        const friendUid = idSnap.data().uid;
+        if(!friendUid || friendUid === window.currentUser.uid) { setFriendAddStatus('Esse ID pertence a voce.', 'error'); return; }
+        const friendSnap = await getDoc(doc(db, "players", friendUid));
+        if(!friendSnap.exists()) { setFriendAddStatus('Jogador nao encontrado.', 'error'); return; }
+        const userRef = doc(db, "players", window.currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        const currentFriends = userSnap.exists() && Array.isArray(userSnap.data().friends) ? userSnap.data().friends : [];
+        if(currentFriends.includes(friendUid)) { setFriendAddStatus('Esse jogador ja esta na sua lista.', 'error'); return; }
+        await updateDoc(userRef, { friends: [...currentFriends, friendUid] });
+        setFriendAddStatus(`${getPlayerFirstName(friendSnap.data().name)} adicionado!`, 'success');
+        await refreshFriendsList();
+        setTimeout(() => window.closeAddFriendModal(), 700);
+    } catch(e) {
+        setFriendAddStatus('Nao foi possivel adicionar agora.', 'error');
+    }
+};
 
 function buildGameIdCandidate(uid, attempt = 0) {
     const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
