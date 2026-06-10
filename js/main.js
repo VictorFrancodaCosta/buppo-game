@@ -145,7 +145,7 @@ window.transitionToGame = function() {
 window.transitionToLobby = function(skipAnim = false) {
     window.cleanupMatchState();
     document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
-    document.body.classList.remove('force-landscape');
+    document.body.classList.add('force-landscape');
     const ds = document.getElementById('deck-selection-screen');
     if(ds) { ds.style.opacity = '0'; ds.style.pointerEvents = 'none'; ds.style.display = 'none'; ds.classList.remove('active'); }
     if (skipAnim) { window.goToLobby(false); }
@@ -163,6 +163,7 @@ window.transitionToLobby = function(skipAnim = false) {
 
 window.goToLobby = async function(isAutoLogin = false) {
     if(!window.currentUser) { 
+        document.body.classList.add('force-landscape');
         window.showScreen('start-screen'); 
         document.body.classList.remove('theme-cavaleiro', 'theme-mago');
         MusicController.play('bgm-menu'); 
@@ -702,6 +703,8 @@ function updateLoader() {
 }
 
 window.onload = function() {
+    document.body.classList.add('force-landscape');
+    if(window.requestLandscapeMode) window.requestLandscapeMode();
     const deckScreen = document.getElementById('deck-selection-screen');
     if (deckScreen) {
         let backBtn = deckScreen.querySelector('.btn-back') || deckScreen.querySelector('.circle-btn') || deckScreen.querySelector('button');

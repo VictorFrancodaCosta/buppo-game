@@ -1,8 +1,8 @@
 /* ARQUIVO: css/style.css */
 * { -webkit-tap-highlight-color: transparent; outline: none; -webkit-touch-callout: none; }
 :root { --bg-app: #050505; --txt-primary: #ecf0f1; --txt-secondary: #d7ccc8; --accent-blue: #00cec9; --accent-red: #ff7675; --gold: #ffd700; --wood-dark: #3e2723; --wood-light: #5d4037; --beige-dark: #3e3223; --purple-btn: #8e44ad; --cardback-url: url('../assets/img/deck_verso_cavaleiro.webp'); --lobby-bg-url: url('../assets/img/bg_saguao.webp'); --table-saguao: url('../assets/img/bg_saguao.webp'); --table-cavaleiro: url('../assets/img/mesa_cavaleiro.webp'); --table-mago: url('../assets/img/mesa_mago.webp'); --bg-image-url: var(--table-saguao); }
-body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-app); margin: 0; padding: 0; height: 100vh; overflow: hidden; user-select: none; }
-#game-container { max-width: 1600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; opacity: 1 !important; }
+body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-app); margin: 0; padding: 0; height: 100vh; height: 100dvh; overflow: hidden; user-select: none; }
+#game-container { max-width: 1600px; margin: 0 auto; height: 100vh; height: 100dvh; display: flex; flex-direction: column; padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; opacity: 1 !important; }
 .screen { display: none; height: 100%; width: 100%; flex-direction: column; justify-content: space-between; }
 .screen.active { display: flex !important; }
 
@@ -54,5 +54,5 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-app); m
 .mini-btn { padding: 15px 35px; background: var(--wood-dark); color: var(--gold); border: 2px solid var(--gold); cursor: pointer; border-radius: 50px; font-family: 'Russo One', sans-serif; text-transform: uppercase; transition: 0.2s; }
 .mini-btn:hover { background: var(--gold); color: var(--wood-dark); transform: translateY(-3px);}
 
-#rotate-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 999999; flex-direction: column; justify-content: center; align-items: center; color: var(--gold); font-family: 'Russo One', sans-serif; font-size: 24px; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+#rotate-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; background-color: #000; z-index: 999999; flex-direction: column; justify-content: center; align-items: center; color: var(--gold); font-family: 'Russo One', sans-serif; font-size: 24px; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
 @media (max-width: 900px) and (orientation: portrait) { body.force-landscape #rotate-overlay { display: flex !important; } }

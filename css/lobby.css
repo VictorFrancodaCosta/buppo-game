@@ -201,3 +201,71 @@
         padding: 24px;
     }
 }
+
+@media (max-width: 760px) and (orientation: landscape) {
+    .lobby-logo-right {
+        left: 75%;
+        width: 20vw;
+        max-width: 180px;
+    }
+
+    .lobby-frame-container {
+        height: 94dvh;
+        max-height: 340px;
+        transform: translateX(-16vw);
+    }
+
+    .lobby-ui-overlay {
+        padding: 21% 14% 9% 14%;
+    }
+
+    .user-welcome {
+        font-size: 15px;
+    }
+
+    .user-stats {
+        font-size: 10px;
+        margin-bottom: 5px;
+    }
+
+    .ranking-scroll {
+        max-height: 82px;
+        margin-bottom: 6px;
+    }
+
+    #ranking-table {
+        font-size: 9px;
+    }
+
+    #ranking-table th,
+    #ranking-table td {
+        padding: 3px 2px;
+    }
+
+    #btn-play-pvp {
+        padding: 6px 0;
+    }
+
+    #btn-play-pvp .btn-title {
+        font-size: 13px;
+    }
+
+    #btn-play-pve {
+        padding: 5px 0;
+    }
+
+    #btn-play-pve .btn-title {
+        font-size: 10px;
+    }
+
+    #btn-history {
+        padding: 6px 10px !important;
+        font-size: 9px !important;
+        margin-bottom: 3px !important;
+    }
+
+    #btn-logout {
+        font-size: 8px;
+        padding: 4px 10px;
+    }
+}

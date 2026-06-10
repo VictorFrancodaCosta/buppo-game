@@ -19,6 +19,7 @@
 
     <meta name="theme-color" content="#000000">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="screen-orientation" content="landscape">
 
     <link rel="apple-touch-icon" href="assets/img/logo_buppo.webp">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -197,5 +198,14 @@
 
     <script src="js/effects.js"></script> 
     <script type="module" src="js/main.js"></script> 
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./service-worker.js').catch(function(err) {
+                    console.warn('Service worker nao registrado:', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>

@@ -9,8 +9,20 @@ export let myQueueRef = null;
 export let queueListener = null;
 export let searchInterval = null;
 
-window.startPvE = function() { window.gameMode = 'pve'; window.playNavSound(); window.openDeckSelector(); };
-window.startPvPSearch = function() { if (!window.currentUser) return; window.gameMode = 'pvp'; window.playNavSound(); window.openDeckSelector(); };
+window.startPvE = function() {
+    window.gameMode = 'pve';
+    window.playNavSound();
+    if(window.requestLandscapeMode) window.requestLandscapeMode();
+    window.openDeckSelector();
+};
+
+window.startPvPSearch = function() {
+    if (!window.currentUser) return;
+    window.gameMode = 'pvp';
+    window.playNavSound();
+    if(window.requestLandscapeMode) window.requestLandscapeMode();
+    window.openDeckSelector();
+};
 
 export async function initiateMatchmaking() {
     if(window.cleanupMatchState) window.cleanupMatchState();

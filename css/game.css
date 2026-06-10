@@ -201,20 +201,20 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     #p-stats-cluster {
         left: 6px;
         bottom: 2px;
-        transform: scale(0.56);
+        transform: scale(0.5);
         transform-origin: bottom left;
     }
 
     #m-stats-cluster {
         right: 6px;
         top: 2px;
-        transform: scale(0.56);
+        transform: scale(0.5);
         transform-origin: top right;
     }
 
     .xp-area {
-        width: 230px;
-        height: 74px;
+        width: 205px;
+        height: 66px;
         padding-bottom: 5px;
         animation: none;
         z-index: 80;
@@ -225,12 +225,12 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     #p-xp {
-        bottom: 72px;
+        bottom: 62px;
     }
 
     .xp-mini {
-        width: 26px;
-        height: 36px;
+        width: 23px;
+        height: 32px;
         margin: 0 1px;
         border-radius: 2px;
     }
@@ -241,14 +241,14 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     .middle-area {
-        gap: 34px;
-        padding-bottom: 18px;
+        gap: 28px;
+        padding-bottom: 10px;
         align-items: center;
     }
 
     .slot {
-        width: 86px;
-        height: 126px;
+        width: 76px;
+        height: 112px;
         transform: rotateX(18deg);
     }
 
@@ -266,15 +266,15 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
     .hand-wrapper {
         bottom: -6px;
-        height: 104px;
+        height: 92px;
         align-items: flex-end;
         z-index: 520;
     }
 
     .card {
-        width: 64px;
-        height: 90px;
-        margin: 0 -5px;
+        width: 56px;
+        height: 79px;
+        margin: 0 -4px;
         border-radius: 7px;
         border-width: 1px;
         box-shadow: 0 6px 16px rgba(0,0,0,0.72);
@@ -286,7 +286,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
     .hand-card:not(.disabled-card):hover,
     .disabled-card:hover {
-        margin: 0 -5px;
+        margin: 0 -4px;
         box-shadow: 0 6px 16px rgba(0,0,0,0.72);
         transform: none;
     }
@@ -297,7 +297,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
     .card-selected,
     .card-selected:hover {
-        transform: translateY(-18px) scale(1.08) !important;
+        transform: translateY(-15px) scale(1.07) !important;
         box-shadow: 0 0 18px var(--accent-blue), 0 16px 30px rgba(0,0,0,0.72) !important;
         z-index: 900 !important;
     }
@@ -308,8 +308,8 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     #p-deck-container {
-        right: 82px;
-        bottom: 10px;
+        right: 70px;
+        bottom: 8px;
         z-index: 420;
     }
 
@@ -324,8 +324,8 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     .deck-area {
-        width: 64px;
-        height: 92px;
+        width: 56px;
+        height: 80px;
     }
 
     .deck-count {
@@ -386,25 +386,25 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 @media (max-width: 980px) and (orientation: landscape) and (max-height: 430px) {
     #p-stats-cluster,
     #m-stats-cluster {
-        transform: scale(0.5);
+        transform: scale(0.44);
     }
 
     #p-xp {
-        bottom: 62px;
+        bottom: 54px;
     }
 
     .hand-wrapper {
-        height: 92px;
+        height: 82px;
     }
 
     .card {
-        width: 58px;
-        height: 82px;
-        margin: 0 -5px;
+        width: 50px;
+        height: 71px;
+        margin: 0 -4px;
     }
 
     .slot {
-        width: 78px;
-        height: 114px;
+        width: 68px;
+        height: 100px;
     }
 }
