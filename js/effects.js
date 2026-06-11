@@ -46,16 +46,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-btn-row {
-            gap: 14px !important;
+            gap: 8px !important;
         }
 
         #btn-play-pvp,
         #btn-play-pve {
-            width: 100% !important;
-            min-height: 96px !important;
-            padding: 0 26px 10px !important;
+            width: 88% !important;
+            aspect-ratio: 900 / 240 !important;
+            min-height: 0 !important;
+            height: auto !important;
+            padding: 0 30px 8px !important;
             border: 0 !important;
             border-radius: 0 !important;
+            outline: 0 !important;
             background-color: transparent !important;
             background-position: center !important;
             background-repeat: no-repeat !important;
@@ -67,8 +70,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             justify-content: center !important;
             gap: 1px !important;
             position: relative !important;
-            overflow: visible !important;
+            overflow: hidden !important;
             isolation: isolate !important;
+            animation: none !important;
+            appearance: none !important;
+            -webkit-tap-highlight-color: transparent !important;
             transition: transform 0.13s cubic-bezier(0.22, 1, 0.36, 1),
                         filter 0.13s ease,
                         box-shadow 0.13s ease !important;
@@ -84,11 +90,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             filter: drop-shadow(0 7px 12px rgba(0, 0, 0, 0.34)) !important;
         }
 
+        #btn-play-pvp::after,
+        #btn-play-pve::after {
+            content: none !important;
+            display: none !important;
+            animation: none !important;
+        }
+
         #btn-play-pvp::before,
         #btn-play-pve::before {
             content: '' !important;
             position: absolute !important;
-            inset: 7px 26px 34px !important;
+            inset: 7px 42px 36px !important;
             border-radius: 999px !important;
             background: linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0) 58%) !important;
             mix-blend-mode: screen !important;
@@ -100,7 +113,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pvp:hover,
         #btn-play-pve:hover {
-            transform: translateY(-4px) scale(1.03) !important;
+            transform: translateY(-3px) scale(1.025) !important;
         }
 
         #btn-play-pvp:hover {
@@ -114,6 +127,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #btn-play-pvp:active,
         #btn-play-pve:active {
             transform: translateY(3px) scale(0.985) !important;
+        }
+
+        #btn-play-pvp:focus-visible,
+        #btn-play-pve:focus-visible {
+            transform: translateY(-2px) scale(1.015) !important;
         }
 
         #btn-play-pvp:active::before,
@@ -168,13 +186,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         @media (max-width: 768px) {
             #btn-play-pvp,
             #btn-play-pve {
-                min-height: 84px !important;
-                padding: 0 20px 8px !important;
+                width: 86% !important;
+                min-height: 0 !important;
+                padding: 0 22px 7px !important;
             }
 
             #btn-play-pvp::before,
             #btn-play-pve::before {
-                inset: 6px 20px 28px !important;
+                inset: 6px 30px 30px !important;
             }
 
             #btn-play-pvp .btn-title {
