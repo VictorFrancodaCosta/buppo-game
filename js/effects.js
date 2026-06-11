@@ -39,6 +39,50 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: none !important;
         }
 
+        .lobby-ui-overlay {
+            padding: 18% 14% 12% 14% !important;
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            grid-template-rows: auto auto minmax(0, 1fr) auto auto auto !important;
+            align-content: stretch !important;
+            justify-items: center !important;
+            row-gap: 8px !important;
+        }
+
+        .user-welcome {
+            font-size: 22px !important;
+            margin-bottom: 0 !important;
+        }
+
+        .user-stats {
+            font-size: 13px !important;
+            margin-bottom: 0 !important;
+        }
+
+        .ranking-scroll {
+            width: 100% !important;
+            min-height: 182px !important;
+            max-height: none !important;
+            height: 100% !important;
+            margin-bottom: 0 !important;
+        }
+
+        #ranking-table {
+            font-size: 13px !important;
+        }
+
+        #ranking-table th {
+            padding: 4px 5px !important;
+        }
+
+        #ranking-table td {
+            padding: 6px 5px !important;
+        }
+
+        .rank-1 {
+            font-size: 15px !important;
+        }
+
         .lobby-logo-right {
             transform-origin: center center !important;
             animation: lobbyLogoEntranceJuice 0.82s cubic-bezier(0.12, 1.22, 0.2, 1) both,
@@ -46,18 +90,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-btn-row {
-            gap: 12px !important;
-            width: 104% !important;
-            margin-bottom: 12px !important;
+            gap: 9px !important;
+            width: 100% !important;
+            margin: 2px 0 0 !important;
+            align-self: end !important;
         }
 
         #btn-play-pvp,
         #btn-play-pve {
-            width: 98% !important;
-            aspect-ratio: 2048 / 820 !important;
+            width: 91% !important;
+            aspect-ratio: 2048 / 690 !important;
             min-height: 0 !important;
             height: auto !important;
-            padding: 9px 56px 18px !important;
+            padding: 6px 52px 14px !important;
             border: 0 !important;
             border-radius: 0 !important;
             outline: 0 !important;
@@ -70,7 +115,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 4px !important;
+            gap: 3px !important;
             position: relative !important;
             overflow: hidden !important;
             isolation: isolate !important;
@@ -103,7 +148,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #btn-play-pve::before {
             content: '' !important;
             position: absolute !important;
-            inset: 7px 42px 36px !important;
+            inset: 8px 44px 31px !important;
             border-radius: 999px !important;
             background: linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0) 58%) !important;
             mix-blend-mode: screen !important;
@@ -151,12 +196,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             text-align: center !important;
             text-transform: uppercase !important;
             pointer-events: none !important;
-            transform: translateY(4px) !important;
+            transform: translateY(3px) !important;
         }
 
         #btn-play-pvp .btn-title {
             font-family: 'Russo One', sans-serif !important;
-            font-size: 23px !important;
+            font-size: 21px !important;
             color: #fff4c8 !important;
             -webkit-text-stroke: 1px #361000 !important;
             text-shadow: 0 2px 0 #8b3400, 0 4px 8px rgba(28, 7, 0, 0.78), 0 0 10px rgba(255, 225, 116, 0.42) !important;
@@ -164,9 +209,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pvp .btn-sub {
             font-family: 'Montserrat', sans-serif !important;
-            font-size: 9px !important;
+            font-size: 8px !important;
             font-weight: 900 !important;
-            letter-spacing: 0.04em !important;
+            letter-spacing: 0.02em !important;
             color: #ffe78a !important;
             -webkit-text-stroke: 0.45px #3b1300 !important;
             text-shadow: 0 2px 0 rgba(92, 31, 0, 0.85), 0 3px 8px rgba(20, 5, 0, 0.75) !important;
@@ -174,7 +219,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pve .btn-title {
             font-family: 'Russo One', sans-serif !important;
-            font-size: 21px !important;
+            font-size: 20px !important;
             color: #fff8ff !important;
             -webkit-text-stroke: 1px #250730 !important;
             text-shadow: 0 2px 0 #6b267f, 0 4px 10px rgba(18, 3, 29, 0.78), 0 0 12px rgba(221, 166, 255, 0.38) !important;
@@ -182,21 +227,46 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pve .btn-sub {
             font-family: 'Montserrat', sans-serif !important;
-            font-size: 9px !important;
+            font-size: 8px !important;
             font-weight: 800 !important;
-            letter-spacing: 0.05em !important;
+            letter-spacing: 0.03em !important;
             color: #ffe7ff !important;
             -webkit-text-stroke: 0.45px #2b0a38 !important;
             text-shadow: 0 2px 0 rgba(65, 20, 82, 0.86), 0 3px 8px rgba(17, 3, 25, 0.76) !important;
         }
 
+        #btn-history {
+            width: 84% !important;
+            max-width: 286px !important;
+            margin-top: 2px !important;
+            margin-bottom: 0 !important;
+            padding: 10px 14px !important;
+            font-size: 12px !important;
+            border-radius: 7px !important;
+        }
+
+        #btn-logout {
+            margin-top: 2px !important;
+            padding: 6px 18px !important;
+            font-size: 10px !important;
+        }
+
         @media (max-width: 768px) {
+            .lobby-ui-overlay {
+                padding: 26% 14% 11% 14% !important;
+                row-gap: 6px !important;
+            }
+
+            .ranking-scroll {
+                min-height: 144px !important;
+            }
+
             #btn-play-pvp,
             #btn-play-pve {
-                width: 94% !important;
-                aspect-ratio: 2048 / 850 !important;
+                width: 89% !important;
+                aspect-ratio: 2048 / 720 !important;
                 min-height: 0 !important;
-                padding: 8px 46px 16px !important;
+                padding: 5px 38px 11px !important;
             }
 
             #btn-play-pvp::before,
@@ -205,11 +275,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             #btn-play-pvp .btn-title {
-                font-size: 20px !important;
+                font-size: 18px !important;
             }
 
             #btn-play-pve .btn-title {
-                font-size: 18px !important;
+                font-size: 17px !important;
             }
 
             #btn-play-pvp .btn-sub,
