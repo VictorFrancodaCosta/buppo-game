@@ -39,8 +39,26 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: none !important;
         }
 
+        .lobby-play-center {
+            position: fixed !important;
+            left: 50% !important;
+            top: clamp(260px, 33vh, 360px) !important;
+            transform: translateX(-50%) !important;
+            z-index: 8 !important;
+            width: clamp(340px, 30vw, 500px) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 16px !important;
+            pointer-events: none !important;
+        }
+
+        .lobby-play-center > * {
+            pointer-events: auto !important;
+        }
+
         .lobby-ui-overlay {
-            padding: 18% 14% 12% 14% !important;
+            padding: 17% 10.5% 9.5% 10.5% !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
@@ -51,37 +69,39 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .user-welcome {
             font-size: 22px !important;
-            margin-bottom: 2px !important;
+            margin-bottom: 4px !important;
         }
 
         .user-stats {
             font-size: 13px !important;
-            margin-bottom: 8px !important;
+            margin-bottom: 10px !important;
         }
 
         .ranking-scroll {
             width: 100% !important;
             flex: 1 1 auto !important;
-            min-height: 176px !important;
-            max-height: 232px !important;
+            min-height: 0 !important;
+            max-height: none !important;
             height: auto !important;
+            margin-top: 10px !important;
             margin-bottom: 0 !important;
+            padding-bottom: 18px !important;
         }
 
         #ranking-table {
-            font-size: 13px !important;
+            font-size: 15px !important;
         }
 
         #ranking-table th {
-            padding: 4px 5px !important;
+            padding: 6px !important;
         }
 
         #ranking-table td {
-            padding: 6px 5px !important;
+            padding: 8px 6px !important;
         }
 
         .rank-1 {
-            font-size: 15px !important;
+            font-size: 16px !important;
         }
 
         .lobby-logo-right {
@@ -91,21 +111,21 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-btn-row {
-            gap: 8px !important;
+            gap: 16px !important;
             width: 100% !important;
-            margin: 0 0 8px !important;
-            margin-top: auto !important;
-            padding-top: 10px !important;
+            margin: 0 !important;
+            padding-top: 0 !important;
             align-self: stretch !important;
+            align-items: stretch !important;
         }
 
         #btn-play-pvp,
         #btn-play-pve {
-            width: 96% !important;
-            aspect-ratio: 2048 / 630 !important;
+            width: 100% !important;
+            aspect-ratio: 2048 / 768 !important;
             min-height: 0 !important;
             height: auto !important;
-            padding: 5px 46px 11px !important;
+            padding: 14px 64px 20px !important;
             border: 0 !important;
             border-radius: 0 !important;
             outline: 0 !important;
@@ -118,12 +138,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 1px !important;
+            gap: 4px !important;
             position: relative !important;
             overflow: hidden !important;
             isolation: isolate !important;
             animation: none !important;
             appearance: none !important;
+            cursor: pointer !important;
             -webkit-tap-highlight-color: transparent !important;
             transition: transform 0.13s cubic-bezier(0.22, 1, 0.36, 1),
                         filter 0.13s ease,
@@ -149,16 +170,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pvp::before,
         #btn-play-pve::before {
-            content: '' !important;
-            position: absolute !important;
-            inset: 8px 42px 27px !important;
-            border-radius: 999px !important;
-            background: linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0) 58%) !important;
-            mix-blend-mode: screen !important;
-            opacity: 0.82 !important;
-            pointer-events: none !important;
-            z-index: 0 !important;
-            transition: opacity 0.13s ease !important;
+            content: none !important;
+            display: none !important;
         }
 
         #btn-play-pvp:hover,
@@ -204,7 +217,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pvp .btn-title {
             font-family: 'Russo One', sans-serif !important;
-            font-size: 22px !important;
+            font-size: 34px !important;
             color: #fff4c8 !important;
             -webkit-text-stroke: 1px #361000 !important;
             text-shadow: 0 2px 0 #8b3400, 0 4px 8px rgba(28, 7, 0, 0.78), 0 0 10px rgba(255, 225, 116, 0.42) !important;
@@ -212,7 +225,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pvp .btn-sub {
             font-family: 'Montserrat', sans-serif !important;
-            font-size: 8px !important;
+            font-size: 12px !important;
             font-weight: 900 !important;
             letter-spacing: 0.02em !important;
             color: #ffe78a !important;
@@ -222,7 +235,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pve .btn-title {
             font-family: 'Russo One', sans-serif !important;
-            font-size: 21px !important;
+            font-size: 33px !important;
             color: #fff8ff !important;
             -webkit-text-stroke: 1px #250730 !important;
             text-shadow: 0 2px 0 #6b267f, 0 4px 10px rgba(18, 3, 29, 0.78), 0 0 12px rgba(221, 166, 255, 0.38) !important;
@@ -230,7 +243,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pve .btn-sub {
             font-family: 'Montserrat', sans-serif !important;
-            font-size: 8px !important;
+            font-size: 12px !important;
             font-weight: 800 !important;
             letter-spacing: 0.03em !important;
             color: #ffe7ff !important;
@@ -239,55 +252,90 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         #btn-history {
-            width: 86% !important;
-            max-width: 292px !important;
-            margin-top: 2px !important;
+            width: 100% !important;
+            max-width: none !important;
+            min-height: 54px !important;
+            margin-top: 0 !important;
             margin-bottom: 0 !important;
-            padding: 10px 14px !important;
-            font-size: 12px !important;
-            border-radius: 7px !important;
+            padding: 14px 20px !important;
+            font-size: 15px !important;
+            border-radius: 8px !important;
+            background: linear-gradient(180deg, rgba(94, 66, 15, 0.96), rgba(42, 26, 7, 0.98)) !important;
+            border: 2px solid rgba(255, 215, 0, 0.88) !important;
+            color: #ffe082 !important;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+            text-shadow: 0 2px 0 rgba(50, 26, 0, 0.92), 0 4px 8px rgba(0, 0, 0, 0.65) !important;
+            transition: transform 0.13s cubic-bezier(0.22, 1, 0.36, 1),
+                        filter 0.13s ease,
+                        box-shadow 0.13s ease !important;
+        }
+
+        #btn-history::after {
+            content: none !important;
+            display: none !important;
+        }
+
+        #btn-history:hover {
+            transform: translateY(-2px) scale(1.01) !important;
+            filter: brightness(1.05) !important;
+            box-shadow: 0 14px 24px rgba(0, 0, 0, 0.42), 0 0 16px rgba(255, 215, 0, 0.18) !important;
+        }
+
+        #btn-history:active {
+            transform: translateY(2px) scale(0.985) !important;
         }
 
         #btn-logout {
-            margin-top: 2px !important;
+            position: absolute !important;
+            left: 50% !important;
+            bottom: 5.5% !important;
+            transform: translateX(-50%) !important;
+            margin: 0 !important;
             padding: 6px 18px !important;
             font-size: 10px !important;
+            min-width: 162px !important;
+            z-index: 2 !important;
         }
 
         @media (max-width: 768px) {
+            .lobby-play-center {
+                top: clamp(250px, 41vh, 390px) !important;
+                width: min(86vw, 420px) !important;
+                gap: 12px !important;
+            }
+
             .lobby-ui-overlay {
-                padding: 26% 14% 11% 14% !important;
+                padding: 24% 11% 10% 11% !important;
             }
 
             .ranking-scroll {
-                min-height: 144px !important;
-                max-height: 188px !important;
+                padding-bottom: 14px !important;
             }
 
             #btn-play-pvp,
             #btn-play-pve {
-                width: 94% !important;
-                aspect-ratio: 2048 / 650 !important;
+                width: 100% !important;
+                aspect-ratio: 2048 / 760 !important;
                 min-height: 0 !important;
-                padding: 5px 34px 10px !important;
-            }
-
-            #btn-play-pvp::before,
-            #btn-play-pve::before {
-                inset: 6px 30px 30px !important;
+                padding: 10px 44px 16px !important;
             }
 
             #btn-play-pvp .btn-title {
-                font-size: 18px !important;
+                font-size: 29px !important;
             }
 
             #btn-play-pve .btn-title {
-                font-size: 17px !important;
+                font-size: 28px !important;
             }
 
             #btn-play-pvp .btn-sub,
             #btn-play-pve .btn-sub {
-                font-size: 8px !important;
+                font-size: 10px !important;
+            }
+
+            #btn-history {
+                font-size: 13px !important;
+                min-height: 48px !important;
             }
         }
 
@@ -316,6 +364,93 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
     `;
     document.head.appendChild(style);
+
+    const lobbyScreen = document.getElementById('lobby-screen');
+    const overlay = lobbyScreen?.querySelector('.lobby-ui-overlay') || null;
+    let existingRow = document.querySelector('.lobby-btn-row');
+    let historyButton = document.getElementById('btn-history');
+    if (lobbyScreen) {
+        let playCenter = document.querySelector('.lobby-play-center');
+        if (!playCenter) {
+            playCenter = document.createElement('div');
+            playCenter.className = 'lobby-play-center';
+            lobbyScreen.appendChild(playCenter);
+        }
+
+        const ensurePlayButton = (id, title, subtitle, tooltip, handlerName) => {
+            let button = document.getElementById(id);
+            if (!button) {
+                button = document.createElement('button');
+                button.id = id;
+                button.type = 'button';
+            }
+
+            button.setAttribute('data-tip', tooltip);
+            button.onclick = () => {
+                if (typeof window[handlerName] === 'function') {
+                    window[handlerName]();
+                }
+            };
+
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'btn-title';
+            titleSpan.textContent = title;
+
+            const subSpan = document.createElement('span');
+            subSpan.className = 'btn-sub';
+            subSpan.textContent = subtitle;
+
+            button.replaceChildren(titleSpan, subSpan);
+            return button;
+        };
+
+        if (!existingRow) {
+            existingRow = document.createElement('div');
+            existingRow.className = 'lobby-btn-row';
+        }
+
+        const pvpButton = ensurePlayButton(
+            'btn-play-pvp',
+            'JOGAR PVP',
+            'RANQUEADO (+8 PTS)',
+            'Entre na fila ranqueada',
+            'startPvPSearch'
+        );
+        const pveButton = ensurePlayButton(
+            'btn-play-pve',
+            'JOGAR PVE',
+            'TREINO (+3 PTS)',
+            'Treine contra a CPU',
+            'startPvE'
+        );
+
+        if (pvpButton.parentElement !== existingRow) {
+            existingRow.appendChild(pvpButton);
+        }
+
+        if (pveButton.parentElement !== existingRow) {
+            existingRow.appendChild(pveButton);
+        }
+
+        if (existingRow.parentElement !== playCenter) {
+            playCenter.appendChild(existingRow);
+        }
+
+        if (!historyButton && overlay) {
+            historyButton = document.createElement('button');
+            historyButton.id = 'btn-history';
+            historyButton.type = 'button';
+            historyButton.onclick = () => window.openHistory?.();
+            overlay.appendChild(historyButton);
+        }
+
+        if (historyButton) {
+            historyButton.textContent = 'HIST\u00d3RICO DE PARTIDAS';
+            if (historyButton.parentElement !== playCenter) {
+                playCenter.appendChild(historyButton);
+            }
+        }
+    }
 });
 
 // 1. EFEITO DE CURA
