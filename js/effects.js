@@ -46,16 +46,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-btn-row {
-            gap: 8px !important;
+            gap: 12px !important;
+            width: 104% !important;
+            margin-bottom: 12px !important;
         }
 
         #btn-play-pvp,
         #btn-play-pve {
-            width: 92% !important;
-            aspect-ratio: 2048 / 768 !important;
+            width: 98% !important;
+            aspect-ratio: 2048 / 820 !important;
             min-height: 0 !important;
             height: auto !important;
-            padding: 0 30px 8px !important;
+            padding: 9px 56px 18px !important;
             border: 0 !important;
             border-radius: 0 !important;
             outline: 0 !important;
@@ -68,7 +70,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 1px !important;
+            gap: 4px !important;
             position: relative !important;
             overflow: hidden !important;
             isolation: isolate !important;
@@ -149,46 +151,52 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             text-align: center !important;
             text-transform: uppercase !important;
             pointer-events: none !important;
+            transform: translateY(4px) !important;
         }
 
         #btn-play-pvp .btn-title {
             font-family: 'Russo One', sans-serif !important;
-            font-size: 24px !important;
-            color: #4b2200 !important;
-            text-shadow: 0 2px 0 rgba(255, 245, 214, 0.75), 0 3px 8px rgba(99, 42, 0, 0.22) !important;
+            font-size: 23px !important;
+            color: #fff4c8 !important;
+            -webkit-text-stroke: 1px #361000 !important;
+            text-shadow: 0 2px 0 #8b3400, 0 4px 8px rgba(28, 7, 0, 0.78), 0 0 10px rgba(255, 225, 116, 0.42) !important;
         }
 
         #btn-play-pvp .btn-sub {
             font-family: 'Montserrat', sans-serif !important;
-            font-size: 10px !important;
+            font-size: 9px !important;
             font-weight: 900 !important;
-            letter-spacing: 0.06em !important;
-            color: #6a2d00 !important;
-            text-shadow: 0 1px 0 rgba(255,255,255,0.42) !important;
+            letter-spacing: 0.04em !important;
+            color: #ffe78a !important;
+            -webkit-text-stroke: 0.45px #3b1300 !important;
+            text-shadow: 0 2px 0 rgba(92, 31, 0, 0.85), 0 3px 8px rgba(20, 5, 0, 0.75) !important;
         }
 
         #btn-play-pve .btn-title {
             font-family: 'Russo One', sans-serif !important;
-            font-size: 22px !important;
-            color: #f7efff !important;
-            text-shadow: 0 2px 0 rgba(67, 30, 92, 0.9), 0 4px 10px rgba(28, 8, 40, 0.4) !important;
+            font-size: 21px !important;
+            color: #fff8ff !important;
+            -webkit-text-stroke: 1px #250730 !important;
+            text-shadow: 0 2px 0 #6b267f, 0 4px 10px rgba(18, 3, 29, 0.78), 0 0 12px rgba(221, 166, 255, 0.38) !important;
         }
 
         #btn-play-pve .btn-sub {
             font-family: 'Montserrat', sans-serif !important;
-            font-size: 10px !important;
+            font-size: 9px !important;
             font-weight: 800 !important;
-            letter-spacing: 0.08em !important;
-            color: #ead8ff !important;
-            text-shadow: 0 1px 0 rgba(45, 18, 61, 0.8) !important;
+            letter-spacing: 0.05em !important;
+            color: #ffe7ff !important;
+            -webkit-text-stroke: 0.45px #2b0a38 !important;
+            text-shadow: 0 2px 0 rgba(65, 20, 82, 0.86), 0 3px 8px rgba(17, 3, 25, 0.76) !important;
         }
 
         @media (max-width: 768px) {
             #btn-play-pvp,
             #btn-play-pve {
-                width: 90% !important;
+                width: 94% !important;
+                aspect-ratio: 2048 / 850 !important;
                 min-height: 0 !important;
-                padding: 0 22px 7px !important;
+                padding: 8px 46px 16px !important;
             }
 
             #btn-play-pvp::before,
@@ -197,11 +205,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             #btn-play-pvp .btn-title {
-                font-size: 21px !important;
+                font-size: 20px !important;
             }
 
             #btn-play-pve .btn-title {
-                font-size: 19px !important;
+                font-size: 18px !important;
+            }
+
+            #btn-play-pvp .btn-sub,
+            #btn-play-pve .btn-sub {
+                font-size: 8px !important;
             }
         }
 
