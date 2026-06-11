@@ -1,0 +1,49 @@
+<svg width="900" height="240" viewBox="0 0 900 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="woodBasePve" x1="450" y1="18" x2="450" y2="222" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#56305D"/>
+      <stop offset="0.36" stop-color="#3B1947"/>
+      <stop offset="0.72" stop-color="#7A3E8B"/>
+      <stop offset="1" stop-color="#28122F"/>
+    </linearGradient>
+    <linearGradient id="violetPlate" x1="450" y1="26" x2="450" y2="182" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E7CCFF"/>
+      <stop offset="0.2" stop-color="#C97CFF"/>
+      <stop offset="0.58" stop-color="#8F45C7"/>
+      <stop offset="1" stop-color="#5A267F"/>
+    </linearGradient>
+    <linearGradient id="violetEdge" x1="450" y1="14" x2="450" y2="202" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9E9FF"/>
+      <stop offset="0.5" stop-color="#D799FF"/>
+      <stop offset="1" stop-color="#4C1D68"/>
+    </linearGradient>
+    <radialGradient id="shinePve" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(450 60) rotate(90) scale(96 360)">
+      <stop stop-color="#FFF6FF" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#FFF6FF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadowPve" x="12" y="8" width="876" height="220" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#16071C" flood-opacity="0.42"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadowPve)">
+    <rect x="34" y="26" width="832" height="178" rx="76" fill="url(#woodBasePve)"/>
+    <rect x="34" y="26" width="832" height="178" rx="76" stroke="#1F0B27" stroke-width="10"/>
+    <rect x="44" y="34" width="812" height="162" rx="70" stroke="url(#violetEdge)" stroke-width="9"/>
+    <rect x="72" y="52" width="756" height="114" rx="56" fill="url(#violetPlate)"/>
+    <rect x="72" y="52" width="756" height="114" rx="56" stroke="#F6E5FF" stroke-width="5"/>
+    <path d="M112 73C152 53 198 59 240 71C198 88 157 113 125 146C112 124 104 99 112 73Z" fill="#F0C2FF" fill-opacity="0.17"/>
+    <path d="M786 67C742 58 704 67 661 83C715 97 752 117 782 143C792 123 797 94 786 67Z" fill="#FFD7FF" fill-opacity="0.14"/>
+    <rect x="110" y="58" width="680" height="24" rx="12" fill="url(#shinePve)"/>
+    <rect x="98" y="176" width="704" height="10" rx="5" fill="#27102F" fill-opacity="0.55"/>
+
+    <g opacity="0.96">
+      <circle cx="110" cy="115" r="34" fill="#341342" stroke="#F2D7FF" stroke-width="6"/>
+      <circle cx="790" cy="115" r="34" fill="#341342" stroke="#F2D7FF" stroke-width="6"/>
+      <path d="M96 95H122C126 95 130 99 130 103V128C130 132 126 135 122 135H96C92 135 88 132 88 128V103C88 99 92 95 96 95Z" fill="#FFF0FF"/>
+      <path d="M101 95V135" stroke="#B86CF0" stroke-width="4"/>
+      <path d="M786 95H812C816 95 820 99 820 103V128C820 132 816 135 812 135H786C782 135 778 132 778 128V103C778 99 782 95 786 95Z" fill="#FFF0FF"/>
+      <path d="M791 95V135" stroke="#B86CF0" stroke-width="4"/>
+    </g>
+  </g>
+</svg>

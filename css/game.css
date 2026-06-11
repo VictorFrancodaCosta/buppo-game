@@ -408,3 +408,11 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
         height: 114px;
     }
 }
+
+/* Visual trims */
+.lobby-logo-right::after,
+#transition-overlay::before {
+    content: none !important;
+    display: none !important;
+    animation: none !important;
+}

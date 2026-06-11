@@ -25,6 +25,194 @@ safeLobbyEnhancement('failsafe do carregamento', () => {
     else document.addEventListener('DOMContentLoaded', start, { once: true });
 });
 
+safeLobbyEnhancement('ajustes visuais estaticos', () => {
+    const style = document.createElement('style');
+    style.textContent = `
+        .lobby-logo-right::after,
+        #transition-overlay::before {
+            content: none !important;
+            display: none !important;
+            animation: none !important;
+        }
+
+        .lobby-player-card {
+            display: none !important;
+        }
+
+        .lobby-logo-right {
+            transform-origin: center center !important;
+            animation: lobbyLogoEntranceJuice 0.82s cubic-bezier(0.12, 1.22, 0.2, 1) both,
+                       lobbyLogoBreathe 4.2s ease-in-out 0.82s infinite !important;
+        }
+
+        .lobby-btn-row {
+            gap: 14px !important;
+        }
+
+        #btn-play-pvp,
+        #btn-play-pve {
+            width: 100% !important;
+            min-height: 96px !important;
+            padding: 0 26px 10px !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background-color: transparent !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            background-size: 100% 100% !important;
+            box-shadow: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 1px !important;
+            position: relative !important;
+            overflow: visible !important;
+            isolation: isolate !important;
+            transition: transform 0.13s cubic-bezier(0.22, 1, 0.36, 1),
+                        filter 0.13s ease,
+                        box-shadow 0.13s ease !important;
+        }
+
+        #btn-play-pvp {
+            background-image: url('assets/img/btn_pvp_ranked.svg') !important;
+            filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.34)) !important;
+        }
+
+        #btn-play-pve {
+            background-image: url('assets/img/btn_pve_training.svg') !important;
+            filter: drop-shadow(0 7px 12px rgba(0, 0, 0, 0.34)) !important;
+        }
+
+        #btn-play-pvp::before,
+        #btn-play-pve::before {
+            content: '' !important;
+            position: absolute !important;
+            inset: 7px 26px 34px !important;
+            border-radius: 999px !important;
+            background: linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0) 58%) !important;
+            mix-blend-mode: screen !important;
+            opacity: 0.82 !important;
+            pointer-events: none !important;
+            z-index: 0 !important;
+            transition: opacity 0.13s ease !important;
+        }
+
+        #btn-play-pvp:hover,
+        #btn-play-pve:hover {
+            transform: translateY(-4px) scale(1.03) !important;
+        }
+
+        #btn-play-pvp:hover {
+            filter: brightness(1.07) drop-shadow(0 12px 18px rgba(0, 0, 0, 0.38)) drop-shadow(0 0 18px rgba(255, 196, 46, 0.26)) !important;
+        }
+
+        #btn-play-pve:hover {
+            filter: brightness(1.08) drop-shadow(0 11px 16px rgba(0, 0, 0, 0.38)) drop-shadow(0 0 18px rgba(191, 112, 255, 0.22)) !important;
+        }
+
+        #btn-play-pvp:active,
+        #btn-play-pve:active {
+            transform: translateY(3px) scale(0.985) !important;
+        }
+
+        #btn-play-pvp:active::before,
+        #btn-play-pve:active::before {
+            opacity: 0.55 !important;
+        }
+
+        #btn-play-pvp .btn-title,
+        #btn-play-pve .btn-title,
+        #btn-play-pvp .btn-sub,
+        #btn-play-pve .btn-sub {
+            position: relative !important;
+            z-index: 1 !important;
+            line-height: 1 !important;
+            text-align: center !important;
+            text-transform: uppercase !important;
+            pointer-events: none !important;
+        }
+
+        #btn-play-pvp .btn-title {
+            font-family: 'Russo One', sans-serif !important;
+            font-size: 24px !important;
+            color: #4b2200 !important;
+            text-shadow: 0 2px 0 rgba(255, 245, 214, 0.75), 0 3px 8px rgba(99, 42, 0, 0.22) !important;
+        }
+
+        #btn-play-pvp .btn-sub {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 10px !important;
+            font-weight: 900 !important;
+            letter-spacing: 0.06em !important;
+            color: #6a2d00 !important;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.42) !important;
+        }
+
+        #btn-play-pve .btn-title {
+            font-family: 'Russo One', sans-serif !important;
+            font-size: 22px !important;
+            color: #f7efff !important;
+            text-shadow: 0 2px 0 rgba(67, 30, 92, 0.9), 0 4px 10px rgba(28, 8, 40, 0.4) !important;
+        }
+
+        #btn-play-pve .btn-sub {
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.08em !important;
+            color: #ead8ff !important;
+            text-shadow: 0 1px 0 rgba(45, 18, 61, 0.8) !important;
+        }
+
+        @media (max-width: 768px) {
+            #btn-play-pvp,
+            #btn-play-pve {
+                min-height: 84px !important;
+                padding: 0 20px 8px !important;
+            }
+
+            #btn-play-pvp::before,
+            #btn-play-pve::before {
+                inset: 6px 20px 28px !important;
+            }
+
+            #btn-play-pvp .btn-title {
+                font-size: 21px !important;
+            }
+
+            #btn-play-pve .btn-title {
+                font-size: 19px !important;
+            }
+        }
+
+        @keyframes lobbyLogoEntranceJuice {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(28px) scale(0.48, 1.55) rotate(-5deg);
+                filter: drop-shadow(0 0 0 rgba(0,0,0,0));
+            }
+            34% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(-18px) scale(1.24, 0.74) rotate(3deg);
+                filter: drop-shadow(0 18px 34px rgba(0,0,0,0.95)) drop-shadow(0 0 28px rgba(255,215,0,0.55));
+            }
+            56% {
+                transform: translateX(-50%) translateY(8px) scale(0.88, 1.16) rotate(-2deg);
+            }
+            75% {
+                transform: translateX(-50%) translateY(-5px) scale(1.08, 0.94) rotate(1deg);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1) rotate(0deg);
+                filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9));
+            }
+        }
+    `;
+    document.head.appendChild(style);
+});
+
 // 1. EFEITO DE CURA
 window.triggerHealEffect = function() {
     const body = document.body;

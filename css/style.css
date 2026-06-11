@@ -21,14 +21,11 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-app); m
 .loader-bar-fill { width: 0%; height: 100%; background: var(--gold); transition: width 0.2s; box-shadow: 0 0 10px var(--gold); }
 .loader-txt { color: #777; margin-top: 10px; font-size: 12px; font-family: 'Montserrat', sans-serif; }
 #transition-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 42%, rgba(93,64,55,0.95), #050505 62%); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; opacity: 0; pointer-events: none; overflow: hidden; transform: scale(1.04); transition: opacity 0.42s ease-in-out, transform 0.42s cubic-bezier(0.2, 0.9, 0.25, 1); }
-#transition-overlay::before { content: ""; position: absolute; inset: -20%; background: conic-gradient(from 0deg, transparent, rgba(255,215,0,0.16), transparent 22%, rgba(0,206,201,0.12), transparent 45%); opacity: 0; transform: rotate(0deg) scale(0.88); filter: blur(1px); }
 #transition-overlay::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 0 36%, rgba(255,255,255,0.18) 46%, transparent 58%); transform: translateX(-120%); }
 #transition-overlay.active { opacity: 1; pointer-events: auto; }
 #transition-overlay.active { transform: scale(1); }
-#transition-overlay.active::before { opacity: 1; animation: transitionRuneSpin 1.7s linear infinite; }
 #transition-overlay.active::after { animation: transitionWipe 0.78s ease-out both; }
 #transition-overlay .trans-logo, #transition-overlay .trans-text { position: relative; z-index: 1; }
-@keyframes transitionRuneSpin { to { transform: rotate(360deg) scale(0.88); } }
 @keyframes transitionWipe { to { transform: translateX(120%); } }
 .trans-logo { max-width: 300px; width: 60%; height: auto; filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.4)); animation: transPulse 1s infinite alternate; }
 .trans-text { font-family: 'Russo One', sans-serif; color: var(--txt-secondary); font-size: 14px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.7; }
