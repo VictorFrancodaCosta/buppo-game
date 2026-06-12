@@ -67,7 +67,8 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-app); m
     body.force-landscape > *:not(#rotate-overlay) { visibility: hidden !important; }
 }
 
-#pwa-update-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); min-width: min(92vw, 420px); max-width: min(92vw, 460px); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border-radius: 16px; background: linear-gradient(180deg, rgba(55,31,23,0.97), rgba(24,13,9,0.98)); border: 2px solid rgba(255,215,0,0.72); box-shadow: 0 16px 36px rgba(0,0,0,0.55), 6px 6px 0 rgba(0,0,0,0.55); z-index: 92000; }
+#pwa-update-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); min-width: min(92vw, 420px); max-width: min(92vw, 460px); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border-radius: 16px; background: linear-gradient(180deg, rgba(55,31,23,0.97), rgba(24,13,9,0.98)); border: 2px solid rgba(255,215,0,0.72); box-shadow: 0 16px 36px rgba(0,0,0,0.55), 6px 6px 0 rgba(0,0,0,0.55); z-index: 92000; pointer-events: auto; }
+#pwa-update-toast[hidden] { display: none !important; }
 .pwa-update-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 #pwa-update-title { color: var(--gold); font-family: 'Russo One', sans-serif; font-size: 15px; letter-spacing: 0.8px; }
 #pwa-update-text { color: rgba(255,255,255,0.84); font-size: 12px; line-height: 1.35; }

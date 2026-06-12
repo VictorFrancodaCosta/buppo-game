@@ -1,5 +1,5 @@
-const STATIC_CACHE = 'buppo-static-v1';
-const RUNTIME_CACHE = 'buppo-runtime-v1';
+const STATIC_CACHE = 'buppo-static-v2';
+const RUNTIME_CACHE = 'buppo-runtime-v2';
 const STATIC_HOSTS = new Set([
     self.location.host,
     'fonts.googleapis.com',
@@ -13,12 +13,12 @@ const APP_SHELL = [
     './index.html',
     './offline.html',
     './manifest.json?v=2',
-    './css/style.css?v=4',
+    './css/style.css?v=5',
     './css/lobby.css?v=8',
     './css/game.css?v=8',
     './css/effects.css',
-    './js/main.js?v=8',
-    './js/pwa.js?v=1',
+    './js/main.js?v=9',
+    './js/pwa.js?v=2',
     './js/effects.js?v=24',
     './js/data.js',
     './js/firebase_network.js',

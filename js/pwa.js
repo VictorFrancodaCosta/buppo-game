@@ -10,6 +10,8 @@ let deferredInstallPrompt = null;
 let serviceWorkerRegistration = null;
 let hasReloadedForUpdate = false;
 let installFallbackTimer = null;
+let dismissedWaitingScriptURL = null;
+let updateActivationTimer = null;
 
 function isStandaloneMode() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -126,18 +128,37 @@ function showUpdateToast(title, text, actionLabel, onAction) {
     titleEl.textContent = title;
     textEl.textContent = text;
     actionBtn.textContent = actionLabel;
-    actionBtn.onclick = onAction;
-    dismissBtn.onclick = () => { toast.hidden = true; };
+    actionBtn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof onAction === 'function') onAction();
+    };
+    dismissBtn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        hideUpdateToast(true);
+    };
     toast.hidden = false;
+    toast.style.display = 'flex';
 }
 
-function hideUpdateToast() {
+function hideUpdateToast(rememberDismissal = false) {
     const toast = document.getElementById(UPDATE_TOAST_ID);
-    if (toast) toast.hidden = true;
+    if (rememberDismissal && serviceWorkerRegistration && serviceWorkerRegistration.waiting) {
+        dismissedWaitingScriptURL = serviceWorkerRegistration.waiting.scriptURL || '__waiting__';
+    }
+    if (toast) {
+        toast.hidden = true;
+        toast.style.display = 'none';
+    }
 }
 
 function activateWaitingWorker() {
-    if (!serviceWorkerRegistration || !serviceWorkerRegistration.waiting) return;
+    if (!serviceWorkerRegistration || !serviceWorkerRegistration.waiting) {
+        hideUpdateToast();
+        return;
+    }
+    dismissedWaitingScriptURL = null;
     showUpdateToast(
         'ATUALIZANDO BUPPO',
         'Aplicando a nova versao do jogo agora.',
@@ -145,10 +166,16 @@ function activateWaitingWorker() {
         () => {}
     );
     serviceWorkerRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    window.clearTimeout(updateActivationTimer);
+    updateActivationTimer = window.setTimeout(() => {
+        if (!hasReloadedForUpdate) window.location.reload();
+    }, 1800);
 }
 
 function handleWaitingServiceWorker() {
     if (!serviceWorkerRegistration || !serviceWorkerRegistration.waiting) return;
+    const waitingScriptURL = serviceWorkerRegistration.waiting.scriptURL || '__waiting__';
+    if (dismissedWaitingScriptURL === waitingScriptURL) return;
 
     if (isLiveMatchRunning()) {
         showUpdateToast(
@@ -172,6 +199,7 @@ async function registerServiceWorker() {
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (hasReloadedForUpdate) return;
             hasReloadedForUpdate = true;
+            window.clearTimeout(updateActivationTimer);
             window.location.reload();
         });
 
