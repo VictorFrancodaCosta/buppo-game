@@ -423,6 +423,81 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
     `;
     document.head.appendChild(style);
 
+    const syncResponsiveRuntimeLayout = () => {
+        const isTouchLayout = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+        const isTouchLandscape = isTouchLayout && window.innerWidth > window.innerHeight;
+        const logo = document.querySelector('.lobby-logo-right');
+        const frame = document.querySelector('.lobby-frame-container');
+        const uiOverlay = document.querySelector('.lobby-ui-overlay');
+        const middleArea = document.querySelector('.middle-area');
+        const slots = document.querySelectorAll('.slot');
+        const tableCards = document.querySelectorAll('.slot .card');
+
+        if (logo) {
+            if (isTouchLandscape) {
+                logo.style.setProperty('width', '128px', 'important');
+                logo.style.setProperty('max-width', '128px', 'important');
+                logo.style.setProperty('min-width', '128px', 'important');
+                logo.style.setProperty('top', '2px', 'important');
+            } else if (isTouchLayout) {
+                logo.style.setProperty('width', '260px', 'important');
+                logo.style.setProperty('max-width', '260px', 'important');
+                logo.style.removeProperty('min-width');
+                logo.style.setProperty('top', '12px', 'important');
+            } else {
+                logo.style.removeProperty('width');
+                logo.style.removeProperty('max-width');
+                logo.style.removeProperty('min-width');
+                logo.style.removeProperty('top');
+            }
+        }
+
+        if (frame) {
+            if (isTouchLandscape) frame.style.setProperty('max-height', '400px', 'important');
+            else frame.style.removeProperty('max-height');
+        }
+
+        if (uiOverlay) {
+            if (isTouchLandscape) uiOverlay.style.setProperty('padding-top', '21%', 'important');
+            else uiOverlay.style.removeProperty('padding-top');
+        }
+
+        if (middleArea) {
+            if (isTouchLandscape) {
+                middleArea.style.setProperty('gap', '24px', 'important');
+                middleArea.style.setProperty('padding-bottom', '8px', 'important');
+            } else {
+                middleArea.style.removeProperty('gap');
+                middleArea.style.removeProperty('padding-bottom');
+            }
+        }
+
+        slots.forEach((slot) => {
+            if (isTouchLandscape) {
+                slot.style.setProperty('width', '56px', 'important');
+                slot.style.setProperty('height', '82px', 'important');
+                slot.style.setProperty('transform', 'rotateX(18deg)', 'important');
+            } else {
+                slot.style.removeProperty('width');
+                slot.style.removeProperty('height');
+                slot.style.removeProperty('transform');
+            }
+        });
+
+        tableCards.forEach((card) => {
+            if (isTouchLandscape) card.style.setProperty('border-radius', '8px', 'important');
+            else card.style.removeProperty('border-radius');
+        });
+    };
+
+    window.syncResponsiveRuntimeLayout = syncResponsiveRuntimeLayout;
+    syncResponsiveRuntimeLayout();
+    window.addEventListener('resize', syncResponsiveRuntimeLayout);
+    window.addEventListener('orientationchange', syncResponsiveRuntimeLayout);
+    window.addEventListener('load', syncResponsiveRuntimeLayout);
+    setTimeout(syncResponsiveRuntimeLayout, 120);
+    setTimeout(syncResponsiveRuntimeLayout, 700);
+
     const lobbyScreen = document.getElementById('lobby-screen');
     const overlay = lobbyScreen?.querySelector('.lobby-ui-overlay') || null;
     let existingRow = document.querySelector('.lobby-btn-row');

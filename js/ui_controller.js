@@ -17,6 +17,10 @@ export function getCardArt(cardKey, isPlayer) {
     return CARDS_DB[cardKey].img;
 }
 
+function isTouchLandscapeLayout() {
+    return window.matchMedia('(hover: none), (pointer: coarse)').matches && window.innerWidth > window.innerHeight;
+}
+
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
@@ -30,6 +34,9 @@ window.showScreen = function(screenId) {
         if(configBtn) configBtn.style.display = 'none';
         const panel = document.getElementById('config-overlay');
         if(panel) { panel.style.display = 'none'; }
+    }
+    if (typeof window.syncResponsiveRuntimeLayout === 'function') {
+        setTimeout(() => window.syncResponsiveRuntimeLayout(), 0);
     }
 }
 
@@ -353,11 +360,14 @@ export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isT
     let e = { top: 0, left: 0, width: 0, height: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
     const fly = document.createElement('div'); fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
     let imgUrl = getCardArt(cardKey, isPlayer); fly.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
+    const isTouchLandscape = isTouchLandscapeLayout();
+    const isTouchLayout = isTouchLandscape || window.matchMedia('(hover: none), (pointer: coarse)').matches;
     let startW, startH;
     if(typeof startId !== 'string' && s.width > 0) { startW = s.width; startH = s.height; }
-    else { startW = window.innerWidth < 768 ? 84 : 105; startH = window.innerWidth < 768 ? 120 : 150; }
+    else if (isTouchLandscape) { startW = 58; startH = 84; }
+    else { startW = isTouchLayout ? 72 : 105; startH = isTouchLayout ? 102 : 150; }
     fly.style.width = startW + 'px'; fly.style.height = startH + 'px';
-    let tableW = window.innerWidth < 768 ? 110 : 180; let tableH = window.innerWidth < 768 ? 170 : 260;
+    let tableW = isTouchLandscape ? 56 : (isTouchLayout ? 92 : 180); let tableH = isTouchLandscape ? 82 : (isTouchLayout ? 136 : 260);
     const isToXP = typeof endId === 'string' && endId.endsWith('-xp');
     const xpW = 38;
     const xpH = 53;
@@ -375,7 +385,7 @@ export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isT
     try {
         fly.animate([
             { transform: 'translateY(0) rotate(-5deg) scale(1)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' },
-            { transform: `translateY(-${window.innerWidth < 768 ? 34 : 58}px) rotate(5deg) scale(${isToTable ? 1.05 : (isToXP ? 0.78 : 0.9)})`, boxShadow: '0 28px 56px rgba(0,0,0,0.75)', offset: 0.55 },
+            { transform: `translateY(-${isTouchLandscape ? 20 : (isTouchLayout ? 28 : 58)}px) rotate(5deg) scale(${isToTable ? 1.05 : (isToXP ? 0.78 : 0.9)})`, boxShadow: '0 28px 56px rgba(0,0,0,0.75)', offset: 0.55 },
             { transform: finalTransform, boxShadow: isToTable ? '0 16px 34px rgba(0,0,0,0.82)' : (isToXP ? '0 4px 10px rgba(0,0,0,0.5)' : '0 8px 20px rgba(0,0,0,0.55)') }
         ], { duration: 460, easing: 'cubic-bezier(0.22, 0.9, 0.24, 1)', fill: 'forwards' });
     } catch(e) {}
@@ -390,7 +400,17 @@ export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isT
 export function renderTable(key, slotId, isPlayer = false) {
     let el = document.getElementById(slotId); el.innerHTML = '';
     let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`;
-    let imgUrl = getCardArt(key, isPlayer); card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`; el.appendChild(card);
+    let imgUrl = getCardArt(key, isPlayer); card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
+    if (isTouchLandscapeLayout()) {
+        el.style.setProperty('width', '56px', 'important');
+        el.style.setProperty('height', '82px', 'important');
+        el.style.setProperty('transform', 'rotateX(18deg)', 'important');
+        card.style.setProperty('border-radius', '8px', 'important');
+    }
+    el.appendChild(card);
+    if (typeof window.syncResponsiveRuntimeLayout === 'function') {
+        window.syncResponsiveRuntimeLayout();
+    }
 }
 
 export function initGlobalHoverLogic() {
