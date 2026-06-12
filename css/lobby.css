@@ -187,9 +187,9 @@ button:disabled, .mini-btn:disabled { cursor: not-allowed !important; opacity: 0
         left: 50%;
         top: 8px;
         transform: translateX(-50%);
-        width: 24vw;
-        max-width: 190px;
-        min-width: 130px;
+        width: 20vw;
+        max-width: 160px;
+        min-width: 118px;
     }
 
     #lobby-screen::after {

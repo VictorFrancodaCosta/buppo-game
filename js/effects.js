@@ -333,16 +333,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         @media (max-width: 980px) and (orientation: landscape) {
             .lobby-logo-right {
-                width: min(22vw, 172px) !important;
-                max-width: 172px !important;
-                top: 6px !important;
+                width: min(20vw, 160px) !important;
+                max-width: 160px !important;
+                top: 4px !important;
             }
         }
 
         @media (max-width: 768px) {
             .lobby-logo-right {
-                width: min(74vw, 340px) !important;
-                max-width: 340px !important;
+                width: min(68vw, 300px) !important;
+                max-width: 300px !important;
             }
 
             .lobby-play-center {
