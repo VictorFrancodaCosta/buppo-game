@@ -247,8 +247,8 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     .slot {
-        width: 86px;
-        height: 126px;
+        width: 78px;
+        height: 114px;
         transform: rotateX(18deg);
     }
 
