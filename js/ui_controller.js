@@ -21,6 +21,17 @@ function isTouchLandscapeLayout() {
     return window.matchMedia('(hover: none), (pointer: coarse)').matches && window.innerWidth > window.innerHeight;
 }
 
+function syncOrientationRequirement() {
+    const isTouchDevice = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    document.documentElement.classList.toggle('force-landscape', isTouchDevice);
+    document.body.classList.toggle('force-landscape', isTouchDevice);
+}
+
+syncOrientationRequirement();
+window.addEventListener('resize', syncOrientationRequirement);
+window.addEventListener('orientationchange', syncOrientationRequirement);
+window.addEventListener('load', syncOrientationRequirement);
+
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
@@ -38,6 +49,7 @@ window.showScreen = function(screenId) {
     if (typeof window.syncResponsiveRuntimeLayout === 'function') {
         setTimeout(() => window.syncResponsiveRuntimeLayout(), 0);
     }
+    syncOrientationRequirement();
 }
 
 window.openDeckSelector = function() {
