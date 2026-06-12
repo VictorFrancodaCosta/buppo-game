@@ -331,7 +331,20 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             z-index: 2 !important;
         }
 
+        @media (max-width: 980px) and (orientation: landscape) {
+            .lobby-logo-right {
+                width: min(22vw, 172px) !important;
+                max-width: 172px !important;
+                top: 6px !important;
+            }
+        }
+
         @media (max-width: 768px) {
+            .lobby-logo-right {
+                width: min(74vw, 340px) !important;
+                max-width: 340px !important;
+            }
+
             .lobby-play-center {
                 top: clamp(250px, 41vh, 390px) !important;
                 width: min(90vw, 440px) !important;
