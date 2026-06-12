@@ -116,7 +116,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin: 0 !important;
             padding-top: 0 !important;
             align-self: stretch !important;
-            align-items: stretch !important;
+            align-items: center !important;
         }
 
         #btn-play-pvp,
@@ -151,12 +151,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         #btn-play-pvp {
-            background: transparent url('assets/img/btn_pvp_ranked.png?v=3') center / 108% auto no-repeat !important;
+            width: 100% !important;
+            background: transparent url('assets/img/btn_pvp_ranked.webp?v=1') center / 108% auto no-repeat !important;
             filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.34)) !important;
         }
 
         #btn-play-pve {
-            background: transparent url('assets/img/btn_pve_training.png?v=3') center / 108% auto no-repeat !important;
+            width: 92% !important;
+            aspect-ratio: 2048 / 600 !important;
+            background: transparent url('assets/img/btn_pve_training.webp?v=1') center / 104% auto no-repeat !important;
             filter: drop-shadow(0 7px 12px rgba(0, 0, 0, 0.34)) !important;
         }
 
@@ -251,13 +254,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         #btn-history {
-            width: 100% !important;
-            max-width: none !important;
-            min-height: 54px !important;
-            margin-top: 0 !important;
+            width: 84% !important;
+            max-width: 430px !important;
+            min-height: 46px !important;
+            margin-top: 4px !important;
             margin-bottom: 0 !important;
-            padding: 14px 20px !important;
-            font-size: 15px !important;
+            padding: 10px 18px !important;
+            font-size: 13px !important;
             border-radius: 8px !important;
             background: linear-gradient(180deg, rgba(94, 66, 15, 0.96), rgba(42, 26, 7, 0.98)) !important;
             border: 2px solid rgba(255, 215, 0, 0.88) !important;
@@ -313,10 +316,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
             #btn-play-pvp,
             #btn-play-pve {
-                width: 100% !important;
                 aspect-ratio: 2048 / 650 !important;
                 min-height: 0 !important;
                 padding: 10px 44px 16px !important;
+            }
+
+            #btn-play-pvp {
+                width: 100% !important;
+            }
+
+            #btn-play-pve {
+                width: 94% !important;
+                aspect-ratio: 2048 / 610 !important;
+                background-size: 103% auto !important;
             }
 
             #btn-play-pvp .btn-title {
@@ -333,8 +345,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             #btn-history {
-                font-size: 13px !important;
-                min-height: 48px !important;
+                width: 80% !important;
+                min-height: 42px !important;
+                font-size: 12px !important;
+                padding: 9px 14px !important;
             }
         }
 
