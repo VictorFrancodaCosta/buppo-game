@@ -9,18 +9,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="css/style.css?v=3">
-    <link rel="stylesheet" href="css/lobby.css?v=7">
+    <link rel="stylesheet" href="css/style.css?v=4">
+    <link rel="stylesheet" href="css/lobby.css?v=8">
     <link rel="stylesheet" href="css/game.css?v=8">
     <link rel="stylesheet" href="css/effects.css">
 
-    <link rel="icon" type="image/webp" href="assets/img/logo_buppo.webp">
-    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/img/pwa-icon-192.png">
+    <link rel="manifest" href="manifest.json?v=2">
 
     <meta name="theme-color" content="#000000">
+    <meta name="application-name" content="BUPPO">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <link rel="apple-touch-icon" href="assets/img/logo_buppo.webp">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/img/apple-touch-icon-180.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BUPPO">
@@ -90,6 +91,8 @@
             <div class="start-bg-layer"></div>
             <img src="assets/img/logo_buppo.webp" alt="BUPPO LOGO" class="game-logo">
             <button id="btn-login" onclick="googleLogin()"><span id="btn-text">LOGIN COM GOOGLE</span></button>
+            <button id="btn-install-app" type="button" hidden>INSTALAR APP</button>
+            <p id="install-hint" hidden></p>
             <p id="login-status" style="color: #888; font-family: 'Montserrat'; font-size: 12px; margin-top:-20px;"></p>
         </div>
 
@@ -224,6 +227,17 @@
         </div>
     </div>
 
+    <div id="pwa-update-toast" hidden>
+        <div class="pwa-update-copy">
+            <strong id="pwa-update-title">NOVA VERSAO PRONTA</strong>
+            <span id="pwa-update-text">Atualize o app para carregar as melhorias mais recentes.</span>
+        </div>
+        <div class="pwa-update-actions">
+            <button id="pwa-update-action" type="button">ATUALIZAR</button>
+            <button id="pwa-update-dismiss" type="button" aria-label="Fechar aviso">x</button>
+        </div>
+    </div>
+
     <div id="config-overlay" class="modal-overlay" onclick="if(event.target === this) window.toggleConfig()">
         <div class="modal-box config-box" onclick="event.stopPropagation()">
             <h2 class="cfg-title">CONFIGURAÇÕES</h2>
@@ -262,6 +276,6 @@
     <div id="modal-overlay" class="modal-overlay" onclick="cancelModal()"><div class="modal-box" onclick="event.stopPropagation()"><h2 id="modal-title"></h2><p id="modal-desc"></p><div class="modal-btns" id="modal-btns"></div></div></div>
 
     <script src="js/effects.js?v=24"></script> 
-    <script type="module" src="js/main.js?v=7"></script> 
+    <script type="module" src="js/main.js?v=8"></script> 
 </body>
 </html>

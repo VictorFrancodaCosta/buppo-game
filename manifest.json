@@ -1,21 +1,50 @@
 {
+  "id": "./",
   "name": "BUPPO - Card Game",
   "short_name": "BUPPO",
-  "start_url": "./index.html",
+  "description": "Duelo de cartas em partidas rapidas com visual medieval e foco mobile.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./?source=pwa",
+  "scope": "./",
   "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
   "background_color": "#000000",
-  "theme_color": "#ffd700",
+  "theme_color": "#000000",
   "orientation": "landscape",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "assets/img/logo_buppo.webp",
+      "src": "assets/img/pwa-icon-192.png",
       "sizes": "192x192",
-      "type": "image/webp"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "assets/img/logo_buppo.webp",
+      "src": "assets/img/pwa-icon-512.png",
       "sizes": "512x512",
-      "type": "image/webp"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/pwa-icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/img/pwa-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

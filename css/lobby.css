@@ -7,6 +7,9 @@
 @keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 #btn-login { padding: 15px 40px; font-size: 18px; font-family: 'Russo One', sans-serif; background: var(--purple-btn); color: #fff; border: 2px solid #fff; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(142, 68, 173, 0.6); transition: 0.2s; text-transform: uppercase; z-index: 2; position: relative; letter-spacing: 1px; min-width: 280px; }
 #btn-login:hover { transform: scale(1.05); box-shadow: 0 0 30px #9b59b6; background: #9b59b6; }
+#btn-install-app { padding: 13px 34px; font-size: 15px; font-family: 'Russo One', sans-serif; background: linear-gradient(180deg, #5d4037, #2d1a12); color: var(--gold); border: 2px solid rgba(255,255,255,0.78); border-radius: 999px; cursor: pointer; box-shadow: 0 8px 18px rgba(0,0,0,0.42), 0 0 0 2px rgba(255,215,0,0.18); transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease; text-transform: uppercase; z-index: 2; position: relative; letter-spacing: 1px; min-width: 250px; }
+#btn-install-app:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 22px rgba(0,0,0,0.5), 0 0 22px rgba(255,215,0,0.26); filter: brightness(1.06); }
+#install-hint { z-index: 2; position: relative; margin: -6px 0 0; min-height: 18px; color: rgba(255,255,255,0.8); font-size: 12px; font-weight: 700; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.9); }
 
 /* LOBBY SCREEN */
 #lobby-screen { --lobby-side-gap: 70px; justify-content: flex-start !important; align-items: flex-start !important; padding-left: calc(50% - 50vw + var(--lobby-side-gap)); padding-top: 8vh; box-sizing: border-box; z-index: 10000; position: relative; overflow: hidden; }

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUPPO | Offline</title>
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background:
+                radial-gradient(circle at top, rgba(255, 189, 89, 0.16), transparent 35%),
+                linear-gradient(180deg, #1f120c 0%, #090504 100%);
+            color: #f6e7bd;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        .panel {
+            width: min(92vw, 520px);
+            padding: 32px 28px;
+            border-radius: 24px;
+            border: 2px solid rgba(255, 215, 0, 0.55);
+            background: rgba(22, 12, 8, 0.88);
+            box-shadow: 0 22px 40px rgba(0, 0, 0, 0.55);
+        }
+
+        img {
+            width: min(280px, 72vw);
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: clamp(26px, 6vw, 42px);
+            color: #ffd700;
+        }
+
+        p {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.55;
+            color: rgba(255, 255, 255, 0.86);
+        }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <img src="assets/img/logo_buppo.webp" alt="BUPPO">
+        <h1>SEM CONEXAO</h1>
+        <p>Conecte o celular a internet para carregar o jogo completo e receber as atualizacoes mais recentes do BUPPO.</p>
+    </div>
+</body>
+</html>
