@@ -247,13 +247,13 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     .slot {
-        width: 72px;
-        height: 106px;
+        width: 136px;
+        height: 200px;
         transform: rotateX(18deg);
     }
 
     .slot .card {
-        border-radius: 10px !important;
+        border-radius: 12px !important;
     }
 
     .turn-display {
@@ -404,8 +404,8 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     .slot {
-        width: 72px;
-        height: 106px;
+        width: 118px;
+        height: 174px;
     }
 }
 

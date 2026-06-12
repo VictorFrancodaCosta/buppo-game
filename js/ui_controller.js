@@ -364,10 +364,10 @@ export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isT
     const isTouchLayout = isTouchLandscape || window.matchMedia('(hover: none), (pointer: coarse)').matches;
     let startW, startH;
     if(typeof startId !== 'string' && s.width > 0) { startW = s.width; startH = s.height; }
-    else if (isTouchLandscape) { startW = 58; startH = 84; }
+    else if (isTouchLandscape) { startW = 64; startH = 94; }
     else { startW = isTouchLayout ? 72 : 105; startH = isTouchLayout ? 102 : 150; }
     fly.style.width = startW + 'px'; fly.style.height = startH + 'px';
-    let tableW = isTouchLandscape ? 56 : (isTouchLayout ? 92 : 180); let tableH = isTouchLandscape ? 82 : (isTouchLayout ? 136 : 260);
+    let tableW = isTouchLandscape ? 136 : (isTouchLayout ? 92 : 180); let tableH = isTouchLandscape ? 200 : (isTouchLayout ? 136 : 260);
     const isToXP = typeof endId === 'string' && endId.endsWith('-xp');
     const xpW = 38;
     const xpH = 53;
@@ -385,7 +385,7 @@ export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isT
     try {
         fly.animate([
             { transform: 'translateY(0) rotate(-5deg) scale(1)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' },
-            { transform: `translateY(-${isTouchLandscape ? 20 : (isTouchLayout ? 28 : 58)}px) rotate(5deg) scale(${isToTable ? 1.05 : (isToXP ? 0.78 : 0.9)})`, boxShadow: '0 28px 56px rgba(0,0,0,0.75)', offset: 0.55 },
+            { transform: `translateY(-${isTouchLandscape ? 30 : (isTouchLayout ? 28 : 58)}px) rotate(5deg) scale(${isToTable ? 1.05 : (isToXP ? 0.78 : 0.9)})`, boxShadow: '0 28px 56px rgba(0,0,0,0.75)', offset: 0.55 },
             { transform: finalTransform, boxShadow: isToTable ? '0 16px 34px rgba(0,0,0,0.82)' : (isToXP ? '0 4px 10px rgba(0,0,0,0.5)' : '0 8px 20px rgba(0,0,0,0.55)') }
         ], { duration: 460, easing: 'cubic-bezier(0.22, 0.9, 0.24, 1)', fill: 'forwards' });
     } catch(e) {}
@@ -402,10 +402,10 @@ export function renderTable(key, slotId, isPlayer = false) {
     let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`;
     let imgUrl = getCardArt(key, isPlayer); card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
     if (isTouchLandscapeLayout()) {
-        el.style.setProperty('width', '56px', 'important');
-        el.style.setProperty('height', '82px', 'important');
+        el.style.setProperty('width', '136px', 'important');
+        el.style.setProperty('height', '200px', 'important');
         el.style.setProperty('transform', 'rotateX(18deg)', 'important');
-        card.style.setProperty('border-radius', '8px', 'important');
+        card.style.setProperty('border-radius', '12px', 'important');
     }
     el.appendChild(card);
     if (typeof window.syncResponsiveRuntimeLayout === 'function') {

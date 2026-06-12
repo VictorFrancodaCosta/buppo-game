@@ -435,10 +435,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         if (logo) {
             if (isTouchLandscape) {
-                logo.style.setProperty('width', '128px', 'important');
-                logo.style.setProperty('max-width', '128px', 'important');
-                logo.style.setProperty('min-width', '128px', 'important');
-                logo.style.setProperty('top', '2px', 'important');
+                logo.style.setProperty('width', 'clamp(220px, 29vw, 320px)', 'important');
+                logo.style.setProperty('max-width', '320px', 'important');
+                logo.style.setProperty('min-width', '220px', 'important');
+                logo.style.setProperty('top', '18px', 'important');
             } else if (isTouchLayout) {
                 logo.style.setProperty('width', '260px', 'important');
                 logo.style.setProperty('max-width', '260px', 'important');
@@ -453,19 +453,26 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         if (frame) {
-            if (isTouchLandscape) frame.style.setProperty('max-height', '400px', 'important');
-            else frame.style.removeProperty('max-height');
+            if (isTouchLandscape) {
+                frame.style.setProperty('height', 'min(74dvh, 540px)', 'important');
+                frame.style.setProperty('max-height', '540px', 'important');
+                frame.style.setProperty('margin-top', '16px', 'important');
+            } else {
+                frame.style.removeProperty('height');
+                frame.style.removeProperty('max-height');
+                frame.style.removeProperty('margin-top');
+            }
         }
 
         if (uiOverlay) {
-            if (isTouchLandscape) uiOverlay.style.setProperty('padding-top', '21%', 'important');
+            if (isTouchLandscape) uiOverlay.style.setProperty('padding-top', '19%', 'important');
             else uiOverlay.style.removeProperty('padding-top');
         }
 
         if (middleArea) {
             if (isTouchLandscape) {
-                middleArea.style.setProperty('gap', '24px', 'important');
-                middleArea.style.setProperty('padding-bottom', '8px', 'important');
+                middleArea.style.setProperty('gap', '30px', 'important');
+                middleArea.style.setProperty('padding-bottom', '18px', 'important');
             } else {
                 middleArea.style.removeProperty('gap');
                 middleArea.style.removeProperty('padding-bottom');
@@ -474,8 +481,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         slots.forEach((slot) => {
             if (isTouchLandscape) {
-                slot.style.setProperty('width', '56px', 'important');
-                slot.style.setProperty('height', '82px', 'important');
+                slot.style.setProperty('width', '136px', 'important');
+                slot.style.setProperty('height', '200px', 'important');
                 slot.style.setProperty('transform', 'rotateX(18deg)', 'important');
             } else {
                 slot.style.removeProperty('width');
@@ -485,7 +492,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         });
 
         tableCards.forEach((card) => {
-            if (isTouchLandscape) card.style.setProperty('border-radius', '8px', 'important');
+            if (isTouchLandscape) card.style.setProperty('border-radius', '12px', 'important');
             else card.style.removeProperty('border-radius');
         });
     };
