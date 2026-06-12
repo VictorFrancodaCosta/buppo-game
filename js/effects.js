@@ -133,10 +133,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #btn-play-pvp,
         #btn-play-pve {
             width: 100% !important;
-            aspect-ratio: 2048 / 768 !important;
+            aspect-ratio: 2048 / 680 !important;
             min-height: 0 !important;
             height: auto !important;
-            padding: 10px 54px 14px !important;
+            padding: 8px 46px 10px !important;
             border: 0 !important;
             border-radius: 0 !important;
             outline: 0 !important;
@@ -162,15 +162,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         #btn-play-pvp {
-            width: 92% !important;
+            width: 96% !important;
+            aspect-ratio: 2048 / 650 !important;
             background: transparent url('assets/img/btn_pvp_ranked.webp?v=2') center / 100% 100% no-repeat !important;
             filter: drop-shadow(6px 8px 0 rgba(26, 11, 4, 0.82))
                     drop-shadow(0 14px 18px rgba(0, 0, 0, 0.26)) !important;
         }
 
         #btn-play-pve {
-            width: 84% !important;
-            aspect-ratio: 2048 / 768 !important;
+            width: 80% !important;
+            aspect-ratio: 2048 / 760 !important;
             background: transparent url('assets/img/btn_pve_training.webp?v=2') center / 100% 100% no-repeat !important;
             filter: drop-shadow(6px 8px 0 rgba(23, 9, 29, 0.78))
                     drop-shadow(0 13px 17px rgba(0, 0, 0, 0.24)) !important;
@@ -243,12 +244,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pvp .btn-title {
             font-family: 'Bangers', cursive !important;
-            font-size: 24px !important;
-            color: #fff4c8 !important;
+            font-size: 32px !important;
+            color: #ffe58a !important;
             letter-spacing: 1px !important;
             -webkit-text-stroke: 1.8px #2d0d02 !important;
             paint-order: stroke fill !important;
-            text-shadow: 3px 3px 0 #2d0d02, 0 4px 8px rgba(28, 7, 0, 0.6), 0 0 8px rgba(255, 225, 116, 0.28) !important;
+            text-shadow: 3px 3px 0 #2d0d02, 0 4px 8px rgba(28, 7, 0, 0.6), 0 0 10px rgba(255, 213, 79, 0.34) !important;
         }
 
         #btn-play-pvp .btn-sub {
@@ -263,12 +264,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pve .btn-title {
             font-family: 'Bangers', cursive !important;
-            font-size: 24px !important;
-            color: #fff8ff !important;
+            font-size: 31px !important;
+            color: #f1deff !important;
             letter-spacing: 1px !important;
             -webkit-text-stroke: 1.8px #22062d !important;
             paint-order: stroke fill !important;
-            text-shadow: 3px 3px 0 #22062d, 0 4px 8px rgba(18, 3, 29, 0.56), 0 0 9px rgba(221, 166, 255, 0.24) !important;
+            text-shadow: 3px 3px 0 #22062d, 0 4px 8px rgba(18, 3, 29, 0.56), 0 0 10px rgba(201, 155, 255, 0.3) !important;
         }
 
         #btn-play-pve .btn-sub {
@@ -347,25 +348,27 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
             #btn-play-pvp,
             #btn-play-pve {
-                aspect-ratio: 2048 / 768 !important;
+                aspect-ratio: 2048 / 700 !important;
                 min-height: 0 !important;
-                padding: 8px 30px 12px !important;
+                padding: 7px 24px 10px !important;
             }
 
             #btn-play-pvp {
-                width: 94% !important;
+                width: 96% !important;
+                aspect-ratio: 2048 / 665 !important;
             }
 
             #btn-play-pve {
-                width: 86% !important;
+                width: 84% !important;
+                aspect-ratio: 2048 / 770 !important;
             }
 
             #btn-play-pvp .btn-title {
-                font-size: 20px !important;
+                font-size: 25px !important;
             }
 
             #btn-play-pve .btn-title {
-                font-size: 20px !important;
+                font-size: 24px !important;
             }
 
             #btn-play-pvp .btn-sub,
