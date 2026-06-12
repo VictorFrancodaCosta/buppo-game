@@ -484,7 +484,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 slot.style.setProperty('width', '136px', 'important');
                 slot.style.setProperty('height', '200px', 'important');
                 slot.style.setProperty('transform', 'rotateX(18deg)', 'important');
-                slot.style.setProperty('margin-top', '-46px', 'important');
+                slot.style.setProperty('margin-top', '-58px', 'important');
             } else {
                 slot.style.removeProperty('width');
                 slot.style.removeProperty('height');
