@@ -438,7 +438,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 logo.style.setProperty('width', 'clamp(220px, 29vw, 320px)', 'important');
                 logo.style.setProperty('max-width', '320px', 'important');
                 logo.style.setProperty('min-width', '220px', 'important');
-                logo.style.setProperty('top', '18px', 'important');
+                logo.style.setProperty('top', '34px', 'important');
             } else if (isTouchLayout) {
                 logo.style.setProperty('width', '260px', 'important');
                 logo.style.setProperty('max-width', '260px', 'important');
@@ -484,10 +484,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 slot.style.setProperty('width', '136px', 'important');
                 slot.style.setProperty('height', '200px', 'important');
                 slot.style.setProperty('transform', 'rotateX(18deg)', 'important');
+                slot.style.setProperty('margin-top', '-30px', 'important');
             } else {
                 slot.style.removeProperty('width');
                 slot.style.removeProperty('height');
                 slot.style.removeProperty('transform');
+                slot.style.removeProperty('margin-top');
             }
         });
 
