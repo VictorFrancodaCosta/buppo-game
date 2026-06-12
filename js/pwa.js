@@ -30,6 +30,12 @@ function canUseServiceWorker() {
     return window.isSecureContext || /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
 }
 
+function syncFullscreenButtonVisibility() {
+    const button = document.getElementById('btn-fullscreen');
+    if (!button) return;
+    button.style.display = (isTouchMobile() || isStandaloneMode()) ? 'none' : '';
+}
+
 function getInstallButton() {
     return document.getElementById(INSTALL_BUTTON_ID);
 }
@@ -234,6 +240,8 @@ export function initPWA() {
     bindInstallPromptUI();
     bindBeforeInstallPrompt();
     hideUpdateToast();
+    syncFullscreenButtonVisibility();
+    window.addEventListener('resize', syncFullscreenButtonVisibility);
 
     if (isStandaloneMode()) {
         hideInstallPrompt();

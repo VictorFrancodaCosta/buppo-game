@@ -25,6 +25,10 @@ function syncOrientationRequirement() {
     const isTouchDevice = window.matchMedia('(hover: none), (pointer: coarse)').matches;
     document.documentElement.classList.toggle('force-landscape', isTouchDevice);
     document.body.classList.toggle('force-landscape', isTouchDevice);
+
+    const fullScreenBtn = document.getElementById('btn-fullscreen');
+    const standaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (fullScreenBtn) fullScreenBtn.style.display = (isTouchDevice || standaloneMode) ? 'none' : '';
 }
 
 syncOrientationRequirement();
@@ -61,10 +65,6 @@ window.openDeckSelector = function() {
             opt.style = ""; const img = opt.querySelector('img'); if(img) img.style = "";
         });
     }
-    try {
-        if (!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
-        if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
-    } catch (e) { console.log(e); }
     window.showScreen('deck-selection-screen');
 };
 
@@ -77,6 +77,9 @@ window.openDeckSelector = function() {
 })();
 
 window.toggleFullScreen = function() {
+    const touchDevice = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    const standaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (touchDevice || standaloneMode) return;
     if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } else { if (document.exitFullscreen) document.exitFullscreen(); }
 }
 
