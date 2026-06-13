@@ -1,13 +1,13 @@
 // ARQUIVO: js/main.js
 import { CARDS_DB, ACTION_KEYS } from './data.js';
 import { auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, registrarEmpateDB, notifyAbandonmentDB } from './firebase_network.js';
-import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIMove, checkCardLethality, generateShuffledDeck } from './game_logic.js';
+import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIMove, generateShuffledDeck } from './game_logic.js';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MÓDULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=8';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showMasteryBanner, highlightMasteryXP, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=9';
 import { initiateMatchmaking } from './matchmaking.js';
 import { initPWA } from './pwa.js?v=5';
 
@@ -17,7 +17,6 @@ let assetsLoaded = 0;
 window.gameAssets = [];
 window.pvpUnsubscribe = null;
 window.isProcessing = false;
-window.isLethalHover = false;
 let turnCount = 1;
 let playerHistory = [];
 
@@ -864,8 +863,6 @@ function resetHandCardVisualState() {
 function clearHoverFocusState(force = false) {
     const activeHover = document.querySelector('.hand-card:hover, .xp-mini:hover');
     if(force || !activeHover) {
-        document.body.classList.remove('focus-hand', 'focus-xp', 'cinematic-active', 'tension-active');
-        window.isLethalHover = false;
         const tooltip = document.getElementById('tooltip-box');
         if(tooltip) tooltip.style.display = 'none';
     }
@@ -983,7 +980,7 @@ async function publishResolvedPvPTurn() {
 
 function checkEndGame(){
     if(player.hp<=0 || monster.hp<=0) {
-        window.isProcessing = true; window.isLethalHover = false; MusicController.stopCurrent();
+        window.isProcessing = true; MusicController.stopCurrent();
         clearPvPStatus();
         setTimeout(()=>{
             let title = document.getElementById('end-title'); let isWin = player.hp > 0; let isTie = player.hp <= 0 && monster.hp <= 0;
@@ -1495,7 +1492,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
                 player.xp.push(pAct); triggerXPGlow('p'); updateUI();
                 if (window.gameMode === 'pvp') commitTurnToDB(pAct);
             }
-            checkLevelUp(player, () => { if(player.hp > 0) { triggerDeckDrawGlow('p'); baseDraw(player, 1); turnCount++; updateUI(); showCombatCue("TURNO " + turnCount, "gold"); if(window.gameMode !== 'pvp') window.isProcessing = false; } finishLevelChecks(); });
+            checkLevelUp(player, () => { if(player.hp > 0) { triggerDeckDrawGlow('p'); baseDraw(player, 1); turnCount++; updateUI(); if(window.gameMode !== 'pvp') window.isProcessing = false; } finishLevelChecks(); });
         }, false, false, true);
 
         animateFly('m-slot', 'm-xp', mAct, () => {
@@ -1653,14 +1650,13 @@ function updateUnit(u) {
             const isLocallySelected = (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i);
             if (isLocallySelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
             if(window.isMatchStarting) c.style.opacity = '0'; else c.style.opacity = '1';
-            let lethalType = checkCardLethality(k, player, monster);
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             let imgUrl = getCardArt(k, true); c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
             c.onclick=()=>onCardClick(i);
             if(!touchLayout) {
                 bindFixedTooltip(c,k);
-                c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { window.isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
-                c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active'); window.isLethalHover = false; };
+                c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); playSound('sfx-hover'); };
+                c.onmouseleave = () => { tt.style.display='none'; };
             }
             hc.appendChild(c); apply3DTilt(c, true);
         });
@@ -1669,10 +1665,6 @@ function updateUnit(u) {
     let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
     u.xp.forEach(k=>{
         let d=document.createElement('div'); d.className='xp-mini'; d.dataset.cardKey = k; let imgUrl = getCardArt(k, (u === player)); d.style.backgroundImage = `url('${imgUrl}')`;
-        if(!isTouchLayout()) {
-            d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); };
-            d.onmouseleave = () => { document.body.classList.remove('focus-xp'); };
-        }
         xc.appendChild(d);
     });
     let mc=document.getElementById(u.id+'-masteries'); mc.innerHTML='';
