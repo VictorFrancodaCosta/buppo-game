@@ -65,7 +65,6 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 
 /* XP AREA */
 .xp-area { position: absolute; left: 50%; width: 325px; height: 105px; background-image: url('../assets/img/ui_area_xp.webp'); background-size: contain; background-position: center center; background-repeat: no-repeat; background-color: transparent; display: flex; align-items: center; justify-content: center; padding-bottom: 7px; border: none; border-radius: 0; box-shadow: none; filter: drop-shadow(0 10px 5px rgba(0,0,0,0.6)); z-index: 50; animation: hudFloatCentered 4s ease-in-out infinite; }
-.xp-area::before { content: ""; position: absolute; inset: 16px 22px 24px; pointer-events: none; border-radius: 999px; background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0) 40%), radial-gradient(circle at center, rgba(255,215,0,0.08), transparent 60%); opacity: 0.85; mix-blend-mode: screen; }
 .xp-glow { filter: drop-shadow(0 0 15px var(--gold)) drop-shadow(0 0 5px var(--gold)) !important; border-color: transparent !important; box-shadow: none !important; }
 #m-xp { top: 25px; } #p-xp { bottom: 180px; }
 @keyframes hudFloatCentered { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-6px); } }
@@ -78,6 +77,7 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 
 /* MESAS DE COLISÃO E SLOTS */
 .middle-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; gap: 80px; perspective: 1200px; pointer-events: none; z-index: 10; padding-bottom: 120px; box-sizing: border-box; }
+<<<<<<< Updated upstream
 .turn-display { position: absolute; top: 50%; left: calc(50% - 50vw + 30px); transform: translateY(-50%) rotate(-90deg); transform-origin: left center; font-family: 'Russo One', sans-serif; font-size: 24px; color: var(--gold); opacity: 0.98; letter-spacing: 6px; text-shadow: 2px 2px 0 #000; white-space: nowrap; padding: 10px 18px; border-radius: 14px 14px 0 0; background: linear-gradient(180deg, rgba(76, 47, 37, 0.92), rgba(37, 24, 18, 0.96)); border: 2px solid rgba(255,215,0,0.22); box-shadow: 0 8px 20px rgba(0,0,0,0.35), 6px 6px 0 rgba(23, 10, 7, 0.75); display: inline-flex; align-items: baseline; gap: 10px; overflow: hidden; }
 .turn-display::before { content: ""; position: absolute; inset: 4px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px 10px 0 0; pointer-events: none; }
 .turn-display::after { content: ""; position: absolute; inset: 0; background: linear-gradient(120deg, transparent 0 34%, rgba(255,255,255,0.18) 48%, transparent 60%); transform: translateX(-140%); opacity: 0; pointer-events: none; }
@@ -89,6 +89,10 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 .turn-display.turn-announce::after { opacity: 1; animation: turnBadgeSweep 0.65s ease-out; }
 .slot { width: 170px; height: 250px; border: none; display: flex; justify-content: center; align-items: center; background: transparent; transform: rotateX(25deg); transform-style: preserve-3d; perspective: 1000px; pointer-events: auto; position: relative; }
 .slot::after { content: ""; position: absolute; left: 50%; bottom: -8px; width: 84%; height: 20px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(circle at center, rgba(0,0,0,0.52), rgba(0,0,0,0)); opacity: 0.9; pointer-events: none; filter: blur(4px); }
+=======
+.turn-display { position: absolute; top: 50%; left: calc(50% - 50vw + 30px); transform: translateY(-50%) rotate(-90deg); transform-origin: left center; font-family: 'Russo One', sans-serif; font-size: 24px; color: var(--gold); opacity: 0.9; letter-spacing: 4px; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
+.slot { width: 170px; height: 250px; border: none; display: flex; justify-content: center; align-items: center; background: transparent; transform: rotateX(25deg); transform-style: preserve-3d; perspective: 1000px; pointer-events: auto; position: relative; }
+>>>>>>> Stashed changes
 .slot .card { width: 100% !important; height: 100% !important; margin: 0; border-radius: 16px !important; box-shadow: none; cursor: default; transform: translateZ(0px); border-width: 2px; }
 .card-on-table { box-shadow: 0 18px 28px rgba(0,0,0,0.58), 0 7px 0 rgba(0,0,0,0.42) !important; transform: translateY(-2px); overflow: hidden; }
 
@@ -143,8 +147,11 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 @keyframes introBounce { 0% { transform: translateY(120vh) scale(0.5); opacity: 0; } 60% { transform: translateY(-40px) scale(1.1); opacity: 1; } 80% { transform: translateY(10px) scale(0.95); } 100% { transform: translateY(0) scale(1); opacity: 1; } }
 .intro-anim { animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; pointer-events: none; }
 
+<<<<<<< Updated upstream
 /* CINEMATIC FOCUS STATES */
 
+=======
+>>>>>>> Stashed changes
 /* ANIMAÇÃO DE IMPACTO NA MESA (SLAM) */
 @keyframes cardSlam {
     0% { transform: scale(1.15); box-shadow: 0 20px 40px rgba(0,0,0,0.6); opacity: 0.8; }

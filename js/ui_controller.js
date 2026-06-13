@@ -172,6 +172,7 @@ export function triggerLevelUpVisuals(unitId) {
     cluster.appendChild(text); setTimeout(() => { text.remove(); }, 2000);
 }
 
+<<<<<<< Updated upstream
 function createCombatFxElement(className, text = '') {
     const el = document.createElement('div');
     el.className = className;
@@ -180,6 +181,8 @@ function createCombatFxElement(className, text = '') {
     return el;
 }
 
+=======
+>>>>>>> Stashed changes
 export function triggerDeckDrawGlow(unitId) {
     const deckId = unitId === 'm' ? 'm-deck' : `${unitId}-deck-container`;
     const deckEl = document.getElementById(deckId);
@@ -199,13 +202,21 @@ function centerOfElement(id) {
 
 export function triggerAttackSlash(targetIsPlayer) {
     const target = centerOfElement(targetIsPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+<<<<<<< Updated upstream
     const slash = createCombatFxElement('attack-slash-fx');
+=======
+    const slash = document.createElement('div');
+    slash.className = 'attack-slash-fx';
+>>>>>>> Stashed changes
     slash.style.left = target.x + 'px';
     slash.style.top = target.y + 'px';
+    document.body.appendChild(slash);
 
-    const spark = createCombatFxElement('impact-spark-fx');
+    const spark = document.createElement('div');
+    spark.className = 'impact-spark-fx';
     spark.style.left = target.x + 'px';
     spark.style.top = target.y + 'px';
+    document.body.appendChild(spark);
 
     setTimeout(() => slash.remove(), 520);
     setTimeout(() => spark.remove(), 520);
@@ -216,22 +227,36 @@ export function triggerBlockShield(blockerIsPlayer) {
     const m = centerOfElement('m-slot');
     const midX = (p.x + m.x) / 2;
     const midY = (p.y + m.y) / 2;
+<<<<<<< Updated upstream
     const shield = createCombatFxElement('block-shield-fx');
+=======
+    const shield = document.createElement('div');
+    shield.className = 'block-shield-fx';
+>>>>>>> Stashed changes
     shield.style.left = midX + 'px';
     shield.style.top = midY + 'px';
     shield.classList.add(blockerIsPlayer ? 'player-block' : 'enemy-block');
-    const ripple = createCombatFxElement('block-ripple-fx');
+    document.body.appendChild(shield);
+    const ripple = document.createElement('div');
+    ripple.className = 'block-ripple-fx';
     ripple.style.left = midX + 'px';
     ripple.style.top = midY + 'px';
+    document.body.appendChild(ripple);
     setTimeout(() => shield.remove(), 720);
     setTimeout(() => ripple.remove(), 620);
 }
 
 export function triggerRestAura(isPlayer) {
     const target = centerOfElement(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+<<<<<<< Updated upstream
     const aura = createCombatFxElement('rest-aura-fx');
+=======
+    const aura = document.createElement('div');
+    aura.className = 'rest-aura-fx';
+>>>>>>> Stashed changes
     aura.style.left = target.x + 'px';
     aura.style.top = target.y + 'px';
+    document.body.appendChild(aura);
 
     for(let i = 0; i < 18; i++) {
         const mote = document.createElement('span');
@@ -255,17 +280,27 @@ export function triggerTrainDeckGlow(isPlayer) {
         deckEl.classList.add('deck-train-glow');
         setTimeout(() => deckEl.classList.remove('deck-train-glow'), 850);
     }
-    const rune = createCombatFxElement('train-rune-fx', '*');
+    const rune = document.createElement('div');
+    rune.className = 'train-rune-fx';
+    rune.innerText = '*';
     rune.style.left = target.x + 'px';
     rune.style.top = target.y + 'px';
+    document.body.appendChild(rune);
     setTimeout(() => rune.remove(), 900);
 }
 
 export function triggerDisarmSeal(targetIsPlayer, label = '') {
     const target = centerOfElement(targetIsPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+<<<<<<< Updated upstream
     const seal = createCombatFxElement('disarm-seal-fx', label || '!');
+=======
+    const seal = document.createElement('div');
+    seal.className = 'disarm-seal-fx';
+    seal.innerText = label || '!';
+>>>>>>> Stashed changes
     seal.style.left = target.x + 'px';
     seal.style.top = target.y + 'px';
+    document.body.appendChild(seal);
     setTimeout(() => seal.remove(), 1050);
 }
 
@@ -306,8 +341,11 @@ export function showMasteryBanner(type, isPlayer = true) {
     };
     const meta = metaMap[type] || { label: type, cls: 'neutral' };
     playSound('sfx-mastery');
-    const banner = createCombatFxElement(`mastery-banner ${meta.cls}`, `MAESTRIA EM ${meta.label}`);
+    const banner = document.createElement('div');
+    banner.className = `mastery-banner ${meta.cls}`;
+    banner.innerText = `MAESTRIA EM ${meta.label}`;
     banner.classList.add(isPlayer ? 'from-player' : 'from-enemy');
+    document.body.appendChild(banner);
     setTimeout(() => {
         banner.remove();
     }, 1350);

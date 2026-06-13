@@ -825,6 +825,7 @@ function showPvPStatus(msg) {
     document.body.classList.add('pvp-waiting-table');
     let el = document.getElementById('pvp-status-bar');
     if (!el) {
+<<<<<<< Updated upstream
         el = document.createElement('div'); el.id = 'pvp-status-bar';
         el.style.position = 'fixed'; el.style.top = '46%'; el.style.left = '50%'; el.style.transform = 'translate(-50%, -50%)';
         el.style.background = 'rgba(0,0,0,0.7)'; el.style.color = '#ffd700'; el.style.padding = '10px 20px';
@@ -832,6 +833,30 @@ function showPvPStatus(msg) {
         document.body.appendChild(el);
     }
     el.innerText = msg;
+=======
+        el = document.createElement('div');
+        el.id = 'pvp-status-bar';
+        el.style.position = 'fixed';
+        el.style.top = '46%';
+        el.style.left = '50%';
+        el.style.transform = 'translate(-50%, -50%)';
+        el.style.zIndex = '9999';
+        el.style.padding = '12px 22px';
+        el.style.borderRadius = '999px';
+        el.style.background = 'rgba(0, 0, 0, 0.72)';
+        el.style.border = '2px solid rgba(255, 215, 0, 0.82)';
+        el.style.color = '#ffe7a8';
+        el.style.fontFamily = "'Russo One', sans-serif";
+        el.style.fontSize = '14px';
+        el.style.letterSpacing = '1px';
+        el.style.textTransform = 'uppercase';
+        el.style.textAlign = 'center';
+        el.style.textShadow = '0 2px 0 #000';
+        el.style.boxShadow = '0 10px 22px rgba(0,0,0,0.45)';
+        document.body.appendChild(el);
+    }
+    el.textContent = msg;
+>>>>>>> Stashed changes
 }
 
 function clearPvPStatus() {
@@ -1407,7 +1432,11 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
     }
 
     const phaseReveal = () => {
+<<<<<<< Updated upstream
         setTimeout(phaseResult, 180);
+=======
+        setTimeout(phaseResult, 120);
+>>>>>>> Stashed changes
     };
 
     const phaseResult = () => {
@@ -1506,7 +1535,12 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             checkLevelUp(monster, () => { if(monster.hp > 0) { triggerDeckDrawGlow('m'); baseDraw(monster, 1); } finishLevelChecks(); });
         }, false, false, false);
 
+<<<<<<< Updated upstream
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
+=======
+        document.getElementById('p-slot').innerHTML = '';
+        document.getElementById('m-slot').innerHTML = '';
+>>>>>>> Stashed changes
     };
 
     phaseReveal();

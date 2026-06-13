@@ -1,6 +1,10 @@
 /* ARQUIVO: css/style.css */
 * { -webkit-tap-highlight-color: transparent; outline: none; -webkit-touch-callout: none; }
+<<<<<<< Updated upstream
 :root { --bg-app: #050505; --txt-primary: #ecf0f1; --txt-secondary: #d7ccc8; --accent-blue: #00cec9; --accent-red: #ff7675; --gold: #ffd700; --wood-dark: #3e2723; --wood-light: #5d4037; --beige-dark: #3e3223; --purple-btn: #8e44ad; --cardback-url: url('../assets/img/deck_verso_cavaleiro.webp'); --lobby-bg-url: url('../assets/img/bg_saguao.webp'); --table-saguao: url('../assets/img/bg_saguao.webp'); --table-cavaleiro: url('../assets/img/mesa_cavaleiro.webp'); --table-mago: url('../assets/img/mesa_mago.webp'); --bg-image-url: var(--table-saguao); }
+=======
+:root { --bg-app: #050505; --txt-primary: #ecf0f1; --txt-secondary: #d7ccc8; --accent-blue: #00cec9; --accent-red: #ff7675; --gold: #ffd700; --wood-dark: #3e2723; --wood-light: #5d4037; --beige-dark: #3e3223; --purple-btn: #8e44ad; --cardback-url: url('../assets/img/deck_verso_cavaleiro.webp'); --lobby-bg-url: url('../assets/img/bg_saguao.webp'); --table-saguao: url('../assets/img/bg_saguao.webp'); --table-cavaleiro: url('../assets/img/mesa_cavaleiro.webp'); --table-mago: url('../assets/img/mesa_mago.webp'); --bg-image-url: var(--table-saguao); --parallax-x: 0px; --parallax-y: 0px; --scene-pulse: 1; --global-warmth: 0.18; --comics-shadow: 8px 8px 0 rgba(20, 10, 6, 0.82); }
+>>>>>>> Stashed changes
 body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-app); margin: 0; padding: 0; height: 100vh; overflow: hidden; user-select: none; color: var(--txt-primary); }
 #game-container { max-width: 1600px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; padding: 0 15px; box-sizing: border-box; position: relative; perspective: 1200px; z-index: 10; opacity: 1 !important; }
 .screen { display: none; height: 100%; width: 100%; flex-direction: column; justify-content: space-between; }
