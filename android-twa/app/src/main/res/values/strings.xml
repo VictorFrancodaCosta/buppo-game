@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">BUPPO</string>
+    <string name="default_url">https://victorfrancodacosta.github.io/buppo-game/</string>
+    <string name="asset_statements">[{&quot;relation&quot;:[&quot;delegate_permission/common.handle_all_urls&quot;],&quot;target&quot;:{&quot;namespace&quot;:&quot;web&quot;,&quot;site&quot;:&quot;https://victorfrancodacosta.github.io&quot;}}]</string>
+</resources>

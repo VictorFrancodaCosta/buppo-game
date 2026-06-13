@@ -12,6 +12,7 @@ let hasReloadedForUpdate = false;
 let installFallbackTimer = null;
 let dismissedWaitingScriptURL = null;
 let updateActivationTimer = null;
+let forcedLoaderUpdate = false;
 
 function isStandaloneMode() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -123,6 +124,34 @@ function isLiveMatchRunning() {
     return !!gameScreen && gameScreen.classList.contains('active') && !(endScreen && endScreen.classList.contains('visible'));
 }
 
+function getLoadingScreen() {
+    return document.getElementById('loading-screen');
+}
+
+function isLoadingScreenVisible() {
+    const loading = getLoadingScreen();
+    if (!loading) return false;
+    if (loading.style.display === 'none') return false;
+    if (loading.style.opacity === '0') return false;
+    return true;
+}
+
+function setLoaderStatus(text) {
+    const status = document.querySelector('.loader-txt');
+    if (status) status.textContent = text;
+}
+
+function lockLoaderForUpdate() {
+    const loading = getLoadingScreen();
+    if (!loading) return;
+    forcedLoaderUpdate = true;
+    window.forcedLoaderUpdate = true;
+    loading.style.display = 'flex';
+    loading.style.opacity = '1';
+    loading.style.pointerEvents = 'auto';
+    setLoaderStatus('ATUALIZANDO O JOGO...');
+}
+
 function showUpdateToast(title, text, actionLabel, onAction) {
     const toast = document.getElementById(UPDATE_TOAST_ID);
     const titleEl = document.getElementById(UPDATE_TITLE_ID);
@@ -159,18 +188,24 @@ function hideUpdateToast(rememberDismissal = false) {
     }
 }
 
-function activateWaitingWorker() {
+function activateWaitingWorker(options = {}) {
+    const { useLoader = false, silent = false } = options;
     if (!serviceWorkerRegistration || !serviceWorkerRegistration.waiting) {
         hideUpdateToast();
         return;
     }
     dismissedWaitingScriptURL = null;
-    showUpdateToast(
-        'ATUALIZANDO BUPPO',
-        'Aplicando a nova versao do jogo agora.',
-        'ATUALIZANDO',
-        () => {}
-    );
+    if (useLoader) {
+        lockLoaderForUpdate();
+        hideUpdateToast();
+    } else if (!silent) {
+        showUpdateToast(
+            'ATUALIZANDO BUPPO',
+            'Aplicando a nova versao do jogo agora.',
+            'ATUALIZANDO',
+            () => {}
+        );
+    }
     serviceWorkerRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
     window.clearTimeout(updateActivationTimer);
     updateActivationTimer = window.setTimeout(() => {
@@ -183,6 +218,11 @@ function handleWaitingServiceWorker() {
     const waitingScriptURL = serviceWorkerRegistration.waiting.scriptURL || '__waiting__';
     if (dismissedWaitingScriptURL === waitingScriptURL) return;
 
+    if (isLoadingScreenVisible()) {
+        activateWaitingWorker({ useLoader: true, silent: true });
+        return;
+    }
+
     if (isLiveMatchRunning()) {
         showUpdateToast(
             'NOVA VERSAO PRONTA',
@@ -193,7 +233,7 @@ function handleWaitingServiceWorker() {
         return;
     }
 
-    activateWaitingWorker();
+    activateWaitingWorker({ silent: true });
 }
 
 async function registerServiceWorker() {
@@ -201,6 +241,7 @@ async function registerServiceWorker() {
 
     try {
         serviceWorkerRegistration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+        serviceWorkerRegistration.update().catch(() => {});
 
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (hasReloadedForUpdate) return;
@@ -237,6 +278,7 @@ async function registerServiceWorker() {
 }
 
 export function initPWA() {
+    window.forcedLoaderUpdate = false;
     bindInstallPromptUI();
     bindBeforeInstallPrompt();
     hideUpdateToast();
