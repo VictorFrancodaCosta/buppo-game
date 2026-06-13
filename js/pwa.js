@@ -13,6 +13,9 @@ let installFallbackTimer = null;
 let dismissedWaitingScriptURL = null;
 let updateActivationTimer = null;
 let forcedLoaderUpdate = false;
+let autoFullscreenBound = false;
+let fullscreenGestureInFlight = false;
+let fullscreenGestureListeners = [];
 
 function isStandaloneMode() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -26,6 +29,10 @@ function isAndroidDevice() {
     return /Android/i.test(window.navigator.userAgent || '');
 }
 
+function isNativeAndroidApp() {
+    return /BuppoAndroidApp\/\d+/i.test(window.navigator.userAgent || '');
+}
+
 function canUseServiceWorker() {
     if (!('serviceWorker' in navigator)) return false;
     return window.isSecureContext || /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
@@ -34,7 +41,85 @@ function canUseServiceWorker() {
 function syncFullscreenButtonVisibility() {
     const button = document.getElementById('btn-fullscreen');
     if (!button) return;
-    button.style.display = (isTouchMobile() || isStandaloneMode()) ? 'none' : '';
+    button.style.display = (isStandaloneMode() || isNativeAndroidApp() || !!document.fullscreenElement) ? 'none' : '';
+}
+
+function canRequestFullscreen() {
+    return !!document.fullscreenEnabled && typeof document.documentElement.requestFullscreen === 'function';
+}
+
+function shouldAutoFullscreen() {
+    return isTouchMobile() && !isStandaloneMode() && !isNativeAndroidApp() && canRequestFullscreen();
+}
+
+async function requestFullscreenInternal() {
+    try {
+        await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+        return true;
+    } catch (error) {
+        try {
+            await document.documentElement.requestFullscreen();
+            return true;
+        } catch (fallbackError) {
+            console.warn('Falha ao solicitar fullscreen.', fallbackError || error);
+            return false;
+        }
+    }
+}
+
+export async function requestGameFullscreen(source = 'auto') {
+    if (!canRequestFullscreen() || document.fullscreenElement || isStandaloneMode() || isNativeAndroidApp()) {
+        syncFullscreenButtonVisibility();
+        return false;
+    }
+
+    const success = await requestFullscreenInternal();
+    if (!success && source === 'auto') {
+        syncFullscreenButtonVisibility();
+    }
+    return success;
+}
+
+window.requestGameFullscreen = requestGameFullscreen;
+
+function unbindAutoFullscreenGesture() {
+    fullscreenGestureListeners.forEach(({ target, type, handler, options }) => {
+        target.removeEventListener(type, handler, options);
+    });
+    fullscreenGestureListeners = [];
+    autoFullscreenBound = false;
+}
+
+function bindAutoFullscreenGesture() {
+    if (!shouldAutoFullscreen() || autoFullscreenBound) return;
+
+    const handler = async () => {
+        if (fullscreenGestureInFlight || document.fullscreenElement) {
+            unbindAutoFullscreenGesture();
+            syncFullscreenButtonVisibility();
+            return;
+        }
+
+        fullscreenGestureInFlight = true;
+        const success = await requestGameFullscreen('auto');
+        fullscreenGestureInFlight = false;
+        if (success || !shouldAutoFullscreen()) {
+            unbindAutoFullscreenGesture();
+        }
+        syncFullscreenButtonVisibility();
+    };
+
+    const options = { capture: true, passive: true };
+    [
+        [window, 'pointerdown'],
+        [window, 'touchend'],
+        [window, 'click']
+    ].forEach(([target, type]) => {
+        target.addEventListener(type, handler, options);
+        fullscreenGestureListeners.push({ target, type, handler, options });
+    });
+
+    autoFullscreenBound = true;
 }
 
 function getInstallButton() {
@@ -284,6 +369,11 @@ export function initPWA() {
     hideUpdateToast();
     syncFullscreenButtonVisibility();
     window.addEventListener('resize', syncFullscreenButtonVisibility);
+    window.addEventListener('orientationchange', syncFullscreenButtonVisibility);
+    document.addEventListener('fullscreenchange', () => {
+        syncFullscreenButtonVisibility();
+        if (!document.fullscreenElement) bindAutoFullscreenGesture();
+    });
 
     if (isStandaloneMode()) {
         hideInstallPrompt();
@@ -291,5 +381,6 @@ export function initPWA() {
         scheduleInstallFallback();
     }
 
+    bindAutoFullscreenGesture();
     registerServiceWorker();
 }
