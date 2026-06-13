@@ -1,5 +1,5 @@
-const STATIC_CACHE = 'buppo-static-v3';
-const RUNTIME_CACHE = 'buppo-runtime-v3';
+const STATIC_CACHE = 'buppo-static-v4';
+const RUNTIME_CACHE = 'buppo-runtime-v4';
 const STATIC_HOSTS = new Set([
     self.location.host,
     'fonts.googleapis.com',
@@ -11,7 +11,7 @@ const APP_SHELL = [
     './',
     './index.html',
     './offline.html',
-    './manifest.json?v=3',
+    './manifest.json?v=4',
     './css/style.css?v=6',
     './css/lobby.css?v=8',
     './css/game.css?v=8',
