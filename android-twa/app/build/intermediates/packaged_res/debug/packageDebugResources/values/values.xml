@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="buppo_black">#000000</color>
+    <string name="app_name">BUPPO</string>
+    <string name="asset_statements">[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"https://victorfrancodacosta.github.io"}}]</string>
+    <string name="default_url">https://victorfrancodacosta.github.io/buppo-game/</string>
+    <style name="Theme.Buppo" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@color/buppo_black</item>
+        <item name="android:navigationBarColor">@color/buppo_black</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+    <style name="Theme.Buppo.Launcher" parent="Theme.Buppo">
+        <item name="android:windowBackground">@color/buppo_black</item>
+    </style>
+</resources>

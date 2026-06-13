@@ -1,0 +1,11 @@
+R_DEF: Internal format may change without notice
+local
+color buppo_black
+drawable buppo_splash
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+string asset_statements
+string default_url
+style Theme.Buppo
+style Theme.Buppo.Launcher
