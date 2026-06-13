@@ -768,3 +768,4 @@ window.triggerBlockEffect = function() {
         setTimeout(() => blockText.remove(), 300);
     }, 700);
 }
+
