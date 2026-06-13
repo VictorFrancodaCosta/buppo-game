@@ -172,14 +172,7 @@ export function triggerLevelUpVisuals(unitId) {
     cluster.appendChild(text); setTimeout(() => { text.remove(); }, 2000);
 }
 
-const ACTION_META = {
-    ATAQUE: { label: 'ATAQUE', icon: 'X', cls: 'attack' },
-    BLOQUEIO: { label: 'BLOQUEIO', icon: 'O', cls: 'block' },
-    DESCANSAR: { label: 'DESCANSAR', icon: '+', cls: 'rest' },
-    TREINAR: { label: 'TREINAR', icon: '*', cls: 'train' },
-    DESARMAR: { label: 'DESARMAR', icon: '!', cls: 'disarm' }
-};
-
+<<<<<<< Updated upstream
 function createCombatFxElement(className, text = '') {
     const el = document.createElement('div');
     el.className = className;
@@ -188,27 +181,8 @@ function createCombatFxElement(className, text = '') {
     return el;
 }
 
-export function showCombatCue(text, tone = 'gold', duration = 900) {
-    const cue = createCombatFxElement(`combat-cue ${tone}`, text);
-    setTimeout(() => cue.remove(), duration);
-}
-
-export function triggerActionCue(cardKey, isPlayer = true) {
-    const meta = ACTION_META[cardKey] || { label: cardKey, icon: '?', cls: 'neutral' };
-    const slot = document.getElementById(isPlayer ? 'p-slot' : 'm-slot');
-    const rect = slot ? slot.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
-    const burst = createCombatFxElement(`action-burst ${meta.cls}`, meta.icon);
-    burst.style.left = (rect.left + rect.width / 2) + 'px';
-    burst.style.top = (rect.top + rect.height / 2) + 'px';
-    for(let i = 0; i < 14; i++) {
-        const spark = document.createElement('span');
-        spark.style.setProperty('--a', `${(360 / 14) * i}deg`);
-        spark.style.setProperty('--d', `${50 + Math.random() * 42}px`);
-        burst.appendChild(spark);
-    }
-    setTimeout(() => burst.remove(), 850);
-}
-
+=======
+>>>>>>> Stashed changes
 export function triggerDeckDrawGlow(unitId) {
     const deckId = unitId === 'm' ? 'm-deck' : `${unitId}-deck-container`;
     const deckEl = document.getElementById(deckId);
@@ -228,13 +202,21 @@ function centerOfElement(id) {
 
 export function triggerAttackSlash(targetIsPlayer) {
     const target = centerOfElement(targetIsPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+<<<<<<< Updated upstream
     const slash = createCombatFxElement('attack-slash-fx');
+=======
+    const slash = document.createElement('div');
+    slash.className = 'attack-slash-fx';
+>>>>>>> Stashed changes
     slash.style.left = target.x + 'px';
     slash.style.top = target.y + 'px';
+    document.body.appendChild(slash);
 
-    const spark = createCombatFxElement('impact-spark-fx');
+    const spark = document.createElement('div');
+    spark.className = 'impact-spark-fx';
     spark.style.left = target.x + 'px';
     spark.style.top = target.y + 'px';
+    document.body.appendChild(spark);
 
     setTimeout(() => slash.remove(), 520);
     setTimeout(() => spark.remove(), 520);
@@ -245,22 +227,36 @@ export function triggerBlockShield(blockerIsPlayer) {
     const m = centerOfElement('m-slot');
     const midX = (p.x + m.x) / 2;
     const midY = (p.y + m.y) / 2;
+<<<<<<< Updated upstream
     const shield = createCombatFxElement('block-shield-fx');
+=======
+    const shield = document.createElement('div');
+    shield.className = 'block-shield-fx';
+>>>>>>> Stashed changes
     shield.style.left = midX + 'px';
     shield.style.top = midY + 'px';
     shield.classList.add(blockerIsPlayer ? 'player-block' : 'enemy-block');
-    const ripple = createCombatFxElement('block-ripple-fx');
+    document.body.appendChild(shield);
+    const ripple = document.createElement('div');
+    ripple.className = 'block-ripple-fx';
     ripple.style.left = midX + 'px';
     ripple.style.top = midY + 'px';
+    document.body.appendChild(ripple);
     setTimeout(() => shield.remove(), 720);
     setTimeout(() => ripple.remove(), 620);
 }
 
 export function triggerRestAura(isPlayer) {
     const target = centerOfElement(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+<<<<<<< Updated upstream
     const aura = createCombatFxElement('rest-aura-fx');
+=======
+    const aura = document.createElement('div');
+    aura.className = 'rest-aura-fx';
+>>>>>>> Stashed changes
     aura.style.left = target.x + 'px';
     aura.style.top = target.y + 'px';
+    document.body.appendChild(aura);
 
     for(let i = 0; i < 18; i++) {
         const mote = document.createElement('span');
@@ -284,17 +280,27 @@ export function triggerTrainDeckGlow(isPlayer) {
         deckEl.classList.add('deck-train-glow');
         setTimeout(() => deckEl.classList.remove('deck-train-glow'), 850);
     }
-    const rune = createCombatFxElement('train-rune-fx', '*');
+    const rune = document.createElement('div');
+    rune.className = 'train-rune-fx';
+    rune.innerText = '*';
     rune.style.left = target.x + 'px';
     rune.style.top = target.y + 'px';
+    document.body.appendChild(rune);
     setTimeout(() => rune.remove(), 900);
 }
 
 export function triggerDisarmSeal(targetIsPlayer, label = '') {
     const target = centerOfElement(targetIsPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+<<<<<<< Updated upstream
     const seal = createCombatFxElement('disarm-seal-fx', label || '!');
+=======
+    const seal = document.createElement('div');
+    seal.className = 'disarm-seal-fx';
+    seal.innerText = label || '!';
+>>>>>>> Stashed changes
     seal.style.left = target.x + 'px';
     seal.style.top = target.y + 'px';
+    document.body.appendChild(seal);
     setTimeout(() => seal.remove(), 1050);
 }
 
@@ -326,14 +332,22 @@ export function triggerHealPulse(isPlayer) {
 }
 
 export function showMasteryBanner(type, isPlayer = true) {
-    const meta = ACTION_META[type] || { label: type, cls: 'neutral' };
-    document.body.classList.add('mastery-focus-active');
+    const metaMap = {
+        ATAQUE: { label: 'ATAQUE', cls: 'attack' },
+        BLOQUEIO: { label: 'BLOQUEIO', cls: 'block' },
+        DESCANSAR: { label: 'DESCANSAR', cls: 'rest' },
+        TREINAR: { label: 'TREINAR', cls: 'train' },
+        DESARMAR: { label: 'DESARMAR', cls: 'disarm' }
+    };
+    const meta = metaMap[type] || { label: type, cls: 'neutral' };
     playSound('sfx-mastery');
-    const banner = createCombatFxElement(`mastery-banner ${meta.cls}`, `MAESTRIA EM ${meta.label}`);
+    const banner = document.createElement('div');
+    banner.className = `mastery-banner ${meta.cls}`;
+    banner.innerText = `MAESTRIA EM ${meta.label}`;
     banner.classList.add(isPlayer ? 'from-player' : 'from-enemy');
+    document.body.appendChild(banner);
     setTimeout(() => {
         banner.remove();
-        document.body.classList.remove('mastery-focus-active');
     }, 1350);
 }
 
@@ -346,21 +360,9 @@ export function highlightMasteryXP(unitId, type) {
         if(highlighted >= 3) return;
         if(card.dataset.cardKey === type || card.getAttribute('data-card-key') === type) {
             highlighted++;
-            card.classList.add('mastery-xp-highlight');
-            setTimeout(() => card.classList.remove('mastery-xp-highlight'), 1400);
-
-            const rect = card.getBoundingClientRect();
-            if(rect.width > 0 && rect.height > 0) {
-                const glowCard = document.createElement('div');
-                glowCard.className = 'mastery-xp-spot';
-                glowCard.style.left = rect.left + 'px';
-                glowCard.style.top = rect.top + 'px';
-                glowCard.style.width = rect.width + 'px';
-                glowCard.style.height = rect.height + 'px';
-                glowCard.style.backgroundImage = card.style.backgroundImage;
-                document.body.appendChild(glowCard);
-                setTimeout(() => glowCard.remove(), 1400);
-            }
+            card.style.transform = 'scale(1.12)';
+            card.style.transition = 'transform 0.18s ease';
+            setTimeout(() => { card.style.transform = ''; }, 240);
         }
     });
 }
