@@ -1,5 +1,5 @@
-const STATIC_CACHE = 'buppo-static-v5';
-const RUNTIME_CACHE = 'buppo-runtime-v5';
+const STATIC_CACHE = 'buppo-static-v6';
+const RUNTIME_CACHE = 'buppo-runtime-v6';
 const STATIC_HOSTS = new Set([
     self.location.host,
     'fonts.googleapis.com',
@@ -16,15 +16,15 @@ const APP_SHELL = [
     './css/lobby.css?v=8',
     './css/game.css?v=8',
     './css/effects.css',
-    './js/main.js?v=11',
-    './js/pwa.js?v=4',
+    './js/main.js?v=12',
+    './js/pwa.js?v=5',
     './js/effects.js?v=24',
     './js/data.js',
     './js/firebase_network.js',
     './js/game_logic.js',
     './js/audio_controller.js',
     './js/matchmaking.js',
-    './js/ui_controller.js?v=7',
+    './js/ui_controller.js?v=8',
     './assets/img/logo_buppo.webp',
     './assets/img/bg_saguao.webp',
     './assets/img/ui_moldura_perfil.webp',

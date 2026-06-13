@@ -21,6 +21,10 @@ function isTouchLandscapeLayout() {
     return window.matchMedia('(hover: none), (pointer: coarse)').matches && window.innerWidth > window.innerHeight;
 }
 
+function isNativeAndroidApp() {
+    return /BuppoAndroidApp\/\d+/i.test(window.navigator.userAgent || '');
+}
+
 function syncOrientationRequirement() {
     const isTouchDevice = window.matchMedia('(hover: none), (pointer: coarse)').matches;
     document.documentElement.classList.toggle('force-landscape', isTouchDevice);
@@ -28,13 +32,15 @@ function syncOrientationRequirement() {
 
     const fullScreenBtn = document.getElementById('btn-fullscreen');
     const standaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    if (fullScreenBtn) fullScreenBtn.style.display = (isTouchDevice || standaloneMode) ? 'none' : '';
+    const hideFullscreenButton = isNativeAndroidApp() || standaloneMode || !!document.fullscreenElement;
+    if (fullScreenBtn) fullScreenBtn.style.display = hideFullscreenButton ? 'none' : '';
 }
 
 syncOrientationRequirement();
 window.addEventListener('resize', syncOrientationRequirement);
 window.addEventListener('orientationchange', syncOrientationRequirement);
 window.addEventListener('load', syncOrientationRequirement);
+document.addEventListener('fullscreenchange', syncOrientationRequirement);
 
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -77,10 +83,17 @@ window.openDeckSelector = function() {
 })();
 
 window.toggleFullScreen = function() {
-    const touchDevice = window.matchMedia('(hover: none), (pointer: coarse)').matches;
-    const standaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    if (touchDevice || standaloneMode) return;
-    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } else { if (document.exitFullscreen) document.exitFullscreen(); }
+    if (document.fullscreenElement) {
+        if (document.exitFullscreen) document.exitFullscreen();
+        return;
+    }
+
+    if (typeof window.requestGameFullscreen === 'function') {
+        window.requestGameFullscreen('manual').catch((e) => console.log(e));
+        return;
+    }
+
+    document.documentElement.requestFullscreen().catch((e) => console.log(e));
 }
 
 window.toggleConfig = function() {
