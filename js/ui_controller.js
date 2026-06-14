@@ -102,15 +102,37 @@ window.cancelModal = function() { document.getElementById('modal-overlay').style
 
 export function spawnParticles(x, y, color) { for(let i=0; i<15; i++) { let p = document.createElement('div'); p.className = 'particle'; p.style.backgroundColor = color; p.style.left = x + 'px'; p.style.top = y + 'px'; let angle = Math.random() * Math.PI * 2; let vel = 50 + Math.random() * 100; p.style.setProperty('--tx', `${Math.cos(angle)*vel}px`); p.style.setProperty('--ty', `${Math.sin(angle)*vel}px`); document.body.appendChild(p); setTimeout(() => p.remove(), 800); } }
 
+function triggerScreenShakeHard() {
+    document.body.classList.remove('shake-screen-hard');
+    void document.body.offsetWidth;
+    document.body.classList.add('shake-screen-hard');
+    setTimeout(() => document.body.classList.remove('shake-screen-hard'), 650);
+}
+
+function triggerBlockXpBounce() {
+    const xpCards = document.querySelectorAll('#p-xp .xp-mini, #m-xp .xp-mini');
+    xpCards.forEach((card, index) => {
+        card.classList.remove('xp-block-bounce');
+        void card.offsetWidth;
+        card.style.animationDelay = `${Math.min(index, 8) * 28}ms`;
+        card.classList.add('xp-block-bounce');
+        setTimeout(() => {
+            card.classList.remove('xp-block-bounce');
+            card.style.animationDelay = '';
+        }, 820);
+    });
+}
+
 export function triggerDamageEffect(isPlayer, playAudio = true) {
     try {
         if(playAudio) { if(!isPlayer && window.currentDeck === 'mage') playSound('sfx-hit-mage'); else playSound('sfx-hit'); }
         let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId);
         if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); }
         if (isPlayer) {
-            document.body.classList.add('shake-screen-hard'); setTimeout(() => document.body.classList.remove('shake-screen-hard'), 400);
             if(window.triggerDamageEffect) window.triggerDamageEffect(); 
             let ov = document.getElementById('dmg-overlay-old'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 150); }
+        } else {
+            triggerScreenShakeHard();
         }
     } catch(e) {}
 }
@@ -131,9 +153,12 @@ export function triggerHealEffect(isPlayer) {
 export function triggerBlockEffect(isPlayer) {
     try {
         if(isPlayer && window.currentDeck === 'mage') playSound('sfx-block-mage'); else playSound('sfx-block');
-        if (!isPlayer) {
-             if(window.triggerBlockEffect) window.triggerBlockEffect();
-             let ov = document.getElementById('block-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 200); }
+        if(window.triggerBlockEffect) window.triggerBlockEffect();
+        triggerBlockXpBounce();
+        let ov = document.getElementById('block-overlay');
+        if(ov) {
+            ov.style.opacity = '1';
+            setTimeout(() => ov.style.opacity = '', 200);
         }
     } catch(e) { console.warn("Erro no bloqueio:", e); }
 }

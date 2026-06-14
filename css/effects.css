@@ -56,14 +56,14 @@
 
 /* Tremor Forte */
 .shake-screen-hard {
-    animation: violentShake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    animation: violentShake 0.62s cubic-bezier(.36,.07,.19,.97) both;
     transform: translate3d(0, 0, 0);
 }
 @keyframes violentShake {
-    10%, 90% { transform: translate3d(-4px, -2px, 0) rotate(-0.5deg); }
-    20%, 80% { transform: translate3d(6px, 4px, 0) rotate(0.5deg); }
-    30%, 50%, 70% { transform: translate3d(-8px, -6px, 0) rotate(-1deg); }
-    40%, 60% { transform: translate3d(8px, 6px, 0) rotate(1deg); }
+    8%, 92% { transform: translate3d(-8px, -4px, 0) rotate(-0.9deg); }
+    16%, 84% { transform: translate3d(11px, 7px, 0) rotate(1deg); }
+    26%, 46%, 66% { transform: translate3d(-16px, -10px, 0) rotate(-1.8deg); }
+    36%, 56%, 76% { transform: translate3d(17px, 11px, 0) rotate(1.7deg); }
 }
 
 /* Linha de Corte */
@@ -379,6 +379,20 @@
     0% { opacity: 0; transform: translate(-50%, -50%) scale(0.35); }
     18% { opacity: 1; }
     100% { opacity: 0; transform: translate(-50%, -50%) scale(3.1); }
+}
+
+.xp-mini.xp-block-bounce {
+    animation: xpBlockBounce 0.72s cubic-bezier(0.18, 0.9, 0.22, 1.2) both;
+    z-index: 12610;
+}
+
+@keyframes xpBlockBounce {
+    0% { transform: translateY(0) scale(1) rotate(0deg); }
+    24% { transform: translateY(-34px) scale(1.12) rotate(-4deg); }
+    44% { transform: translateY(0) scale(0.96) rotate(3deg); }
+    62% { transform: translateY(-14px) scale(1.05) rotate(-2deg); }
+    78% { transform: translateY(0) scale(0.99) rotate(1deg); }
+    100% { transform: translateY(0) scale(1) rotate(0deg); }
 }
 
 .rest-aura-fx {
