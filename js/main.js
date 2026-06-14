@@ -1450,12 +1450,12 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         if(!pDead && pAct === 'DESCANSAR') {
             let healAmount = (pDmg === 0) ? 3 : 2;
             player.hp = Math.min(player.maxHp, player.hp + healAmount);
-            showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerRestAura(true); triggerHealEffect(true); triggerHealPulse(true); playSound('sfx-heal');
+            showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); triggerHealPulse(true); playSound('sfx-heal');
         }
         if(!mDead && mAct === 'DESCANSAR') {
             let healAmount = (mDmg === 0) ? 3 : 2;
             monster.hp = Math.min(monster.maxHp, monster.hp + healAmount);
-            triggerRestAura(false); triggerHealEffect(false); triggerHealPulse(false); playSound('sfx-heal');
+            triggerHealEffect(false); triggerHealPulse(false); playSound('sfx-heal');
         }
 
         updateUI();

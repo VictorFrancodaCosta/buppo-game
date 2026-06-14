@@ -382,51 +382,36 @@
 }
 
 .xp-mini.xp-block-bounce {
-    animation: xpBlockBounce 0.72s cubic-bezier(0.18, 0.9, 0.22, 1.2) both;
+    animation: xpBlockBounce 0.96s cubic-bezier(0.18, 0.9, 0.22, 1.08) both;
     z-index: 12610;
 }
 
 @keyframes xpBlockBounce {
     0% { transform: translateY(0) scale(1) rotate(0deg); }
-    24% { transform: translateY(-34px) scale(1.12) rotate(-4deg); }
-    44% { transform: translateY(0) scale(0.96) rotate(3deg); }
-    62% { transform: translateY(-14px) scale(1.05) rotate(-2deg); }
-    78% { transform: translateY(0) scale(0.99) rotate(1deg); }
+    18% { transform: translateY(0) scale(1) rotate(0deg); }
+    42% { transform: translateY(-42px) scale(1.13) rotate(-4deg); }
+    66% { transform: translateY(0) scale(0.95) rotate(3deg); }
+    82% { transform: translateY(-13px) scale(1.04) rotate(-2deg); }
+    93% { transform: translateY(0) scale(0.99) rotate(1deg); }
     100% { transform: translateY(0) scale(1) rotate(0deg); }
 }
 
-.rest-aura-fx {
-    position: fixed;
-    width: 190px;
-    height: 90px;
-    transform: translate(-50%, -50%) scale(0.7);
-    z-index: 12300;
-    pointer-events: none;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(85,239,196,0.4) 0%, rgba(46,204,113,0.18) 42%, transparent 72%);
-    box-shadow: 0 0 32px rgba(85,239,196,0.65);
-    animation: restAuraLift 1s ease-out forwards;
-}
 .rest-mote-fx {
     position: fixed;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     z-index: 12301;
     pointer-events: none;
     background: #55efc4;
-    box-shadow: 0 0 10px #55efc4;
-    animation: restMoteRise 1s ease-out forwards;
-}
-@keyframes restAuraLift {
-    0% { opacity: 0; transform: translate(-50%, -35%) scale(0.7); }
-    25% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -85%) scale(1.18); }
+    box-shadow: 0 0 10px #55efc4, 0 0 24px rgba(85,239,196,0.62);
+    animation: restMoteRise 1.8s ease-out forwards;
 }
 @keyframes restMoteRise {
-    0% { opacity: 0; transform: translateY(0) scale(0.5); }
-    20% { opacity: 1; }
-    100% { opacity: 0; transform: translateY(calc(var(--rise) * -1)) scale(1.2); }
+    0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.35); }
+    14% { opacity: 0.95; }
+    72% { opacity: 0.85; }
+    100% { opacity: 0; transform: translate3d(var(--drift), calc(var(--rise) * -1), 0) scale(1.25); }
 }
 
 .deck-train-glow {

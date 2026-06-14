@@ -114,12 +114,12 @@ function triggerBlockXpBounce() {
     xpCards.forEach((card, index) => {
         card.classList.remove('xp-block-bounce');
         void card.offsetWidth;
-        card.style.animationDelay = `${Math.min(index, 8) * 28}ms`;
+        card.style.animationDelay = `${160 + Math.min(index, 8) * 38}ms`;
         card.classList.add('xp-block-bounce');
         setTimeout(() => {
             card.classList.remove('xp-block-bounce');
             card.style.animationDelay = '';
-        }, 820);
+        }, 1300);
     });
 }
 
@@ -141,12 +141,7 @@ export function triggerCritEffect() { let ov = document.getElementById('crit-ove
 
 export function triggerHealEffect(isPlayer) {
     try {
-        let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId);
-        if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#2ecc71'); }
-        if (isPlayer) {
-            if(window.triggerHealEffect) window.triggerHealEffect();
-            let ov = document.getElementById('heal-overlay'); if(ov) { ov.style.opacity = '1'; setTimeout(() => ov.style.opacity = '0', 300); }
-        }
+        triggerRestAura(isPlayer);
     } catch(e) {}
 }
 
@@ -266,21 +261,26 @@ export function triggerBlockShield(blockerIsPlayer) {
 }
 
 export function triggerRestAura(isPlayer) {
-    const target = centerOfElement(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
-    const aura = createCombatFxElement('rest-aura-fx');
-    aura.style.left = target.x + 'px';
-    aura.style.top = target.y + 'px';
+    const count = isPlayer ? 58 : 42;
+    const baseY = window.innerHeight + 18;
+    const bandWidth = Math.min(window.innerWidth, 980);
+    const bandLeft = (window.innerWidth - bandWidth) / 2;
 
-    for(let i = 0; i < 18; i++) {
+    for(let i = 0; i < count; i++) {
         const mote = document.createElement('span');
-        mote.style.left = (target.x + (Math.random() - 0.5) * 190) + 'px';
-        mote.style.top = (target.y + 35 + Math.random() * 45) + 'px';
-        mote.style.setProperty('--rise', `${70 + Math.random() * 65}px`);
+        const size = 5 + Math.random() * 10;
+        mote.style.left = (bandLeft + Math.random() * bandWidth) + 'px';
+        mote.style.top = (baseY + Math.random() * 42) + 'px';
+        mote.style.width = size + 'px';
+        mote.style.height = size + 'px';
+        mote.style.animationDuration = (1.45 + Math.random() * 0.75) + 's';
+        mote.style.animationDelay = (Math.random() * 0.34) + 's';
+        mote.style.setProperty('--rise', `${window.innerHeight * (0.58 + Math.random() * 0.34)}px`);
+        mote.style.setProperty('--drift', `${(Math.random() - 0.5) * 120}px`);
         document.body.appendChild(mote);
         mote.className = 'rest-mote-fx';
-        setTimeout(() => mote.remove(), 1000);
+        setTimeout(() => mote.remove(), 2500);
     }
-    setTimeout(() => aura.remove(), 1000);
 }
 
 export function triggerTrainDeckGlow(isPlayer) {
