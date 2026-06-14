@@ -1242,15 +1242,11 @@ function showDisabledCardWarning(index) {
     const handContainer = document.getElementById('player-hand');
     const cardEl = handContainer && handContainer.children[index];
     if(!cardEl) { showCenterText("NÃO PODE JOGAR", "#ff7675"); return; }
-    document.querySelectorAll('.disabled-card-warning').forEach(el => el.remove());
-    const rect = cardEl.getBoundingClientRect();
+    cardEl.querySelectorAll('.disabled-card-warning').forEach(el => el.remove());
     const warning = document.createElement('div');
     warning.className = 'disabled-card-warning';
     warning.innerText = "NÃO PODE JOGAR";
-    warning.style.left = (rect.left + rect.width / 2) + 'px';
-    warning.style.top = (rect.top + rect.height * 0.42) + 'px';
-    warning.style.width = Math.max(92, rect.width * 0.92) + 'px';
-    document.body.appendChild(warning);
+    cardEl.appendChild(warning);
     setTimeout(() => warning.remove(), 760);
 }
 

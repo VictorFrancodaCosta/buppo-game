@@ -68,8 +68,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .user-welcome {
-            font-size: 22px !important;
-            margin-bottom: 4px !important;
+            font-size: 30px !important;
+            line-height: 1.02 !important;
+            margin-bottom: 5px !important;
+            max-width: 96% !important;
         }
 
         .user-stats {
@@ -244,10 +246,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pvp .btn-title {
             font-family: 'Bangers', cursive !important;
-            font-size: 32px !important;
+            font-size: 42px !important;
             color: #ffe58a !important;
             letter-spacing: 1px !important;
-            -webkit-text-stroke: 1.8px #2d0d02 !important;
+            -webkit-text-stroke: 2.2px #2d0d02 !important;
             paint-order: stroke fill !important;
             text-shadow: 3px 3px 0 #2d0d02, 0 4px 8px rgba(28, 7, 0, 0.6), 0 0 10px rgba(255, 213, 79, 0.34) !important;
         }
@@ -264,10 +266,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #btn-play-pve .btn-title {
             font-family: 'Bangers', cursive !important;
-            font-size: 31px !important;
+            font-size: 40px !important;
             color: #f1deff !important;
             letter-spacing: 1px !important;
-            -webkit-text-stroke: 1.8px #22062d !important;
+            -webkit-text-stroke: 2.2px #22062d !important;
             paint-order: stroke fill !important;
             text-shadow: 3px 3px 0 #22062d, 0 4px 8px rgba(18, 3, 29, 0.56), 0 0 10px rgba(201, 155, 255, 0.3) !important;
         }
@@ -377,11 +379,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             #btn-play-pvp .btn-title {
-                font-size: 25px !important;
+                font-size: 32px !important;
             }
 
             #btn-play-pve .btn-title {
-                font-size: 24px !important;
+                font-size: 31px !important;
             }
 
             #btn-play-pvp .btn-sub,
