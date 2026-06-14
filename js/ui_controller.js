@@ -149,7 +149,7 @@ export function triggerBlockEffect(isPlayer) {
     try {
         if(isPlayer && window.currentDeck === 'mage') playSound('sfx-block-mage'); else playSound('sfx-block');
         if(window.triggerBlockEffect) window.triggerBlockEffect();
-        setTimeout(triggerBlockXpBounce, 260);
+        triggerBlockXpBounce();
         let ov = document.getElementById('block-overlay');
         if(ov) {
             ov.style.opacity = '1';

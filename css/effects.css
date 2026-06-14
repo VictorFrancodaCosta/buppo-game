@@ -521,18 +521,19 @@ body.mastery-focus-active .middle-area,
 body.mastery-focus-active .avatar-cluster,
 body.mastery-focus-active .deck-area,
 body.mastery-focus-active #p-deck-container,
-body.mastery-focus-active .hand-wrapper {
-    filter: brightness(0.42) saturate(0.75);
+body.mastery-focus-active .hand-wrapper,
+body.mastery-focus-active .xp-area {
+    filter: grayscale(100%) brightness(0.32);
 }
 
 body.mastery-focus-active .xp-area {
-    filter: drop-shadow(0 0 20px #ffd700) brightness(1.15);
     z-index: 12550;
 }
 
 .xp-mini.mastery-xp-highlight {
     animation: masteryXpPulse 1.35s ease-out forwards;
     z-index: 12600;
+    filter: none !important;
 }
 
 .mastery-xp-spot {
