@@ -345,6 +345,48 @@ export function triggerHpImpact(isPlayer) {
     }
 }
 
+export function triggerCriticalDamagePop(isPlayer) {
+    const cluster = document.getElementById(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+    if(!cluster) return;
+    const rect = cluster.getBoundingClientRect();
+    const pop = createCombatFxElement('critical-damage-pop', 'CRÍTICO!');
+    pop.style.left = (rect.left + rect.width * (isPlayer ? 0.72 : 0.28)) + 'px';
+    pop.style.top = (rect.top + rect.height * 0.08) + 'px';
+    pop.style.setProperty('--crit-rot', isPlayer ? '-7deg' : '7deg');
+    setTimeout(() => pop.remove(), 980);
+}
+
+export function triggerClusterExplosion(isPlayer) {
+    const cluster = document.getElementById(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+    if(!cluster || cluster.dataset.exploded === '1') return;
+    cluster.dataset.exploded = '1';
+    const rect = cluster.getBoundingClientRect();
+    const source = isPlayer ? "url('assets/img/cluster_jogador.webp')" : "url('assets/img/cluster_inimigo.webp')";
+    const cols = 4;
+    const rows = 3;
+
+    for(let y = 0; y < rows; y++) {
+        for(let x = 0; x < cols; x++) {
+            const shard = document.createElement('div');
+            shard.className = 'cluster-explosion-shard';
+            shard.style.left = (rect.left + rect.width * x / cols) + 'px';
+            shard.style.top = (rect.top + rect.height * y / rows) + 'px';
+            shard.style.width = (rect.width / cols) + 'px';
+            shard.style.height = (rect.height / rows) + 'px';
+            shard.style.backgroundImage = source;
+            shard.style.backgroundSize = `${cols * 100}% ${rows * 100}%`;
+            shard.style.backgroundPosition = `${cols === 1 ? 0 : (x / (cols - 1)) * 100}% ${rows === 1 ? 0 : (y / (rows - 1)) * 100}%`;
+            shard.style.setProperty('--tx', `${(x - 1.5) * 120 + (Math.random() - 0.5) * 90}px`);
+            shard.style.setProperty('--ty', `${(y - 1) * 90 - 80 + (Math.random() - 0.5) * 95}px`);
+            shard.style.setProperty('--rot', `${(Math.random() - 0.5) * 140}deg`);
+            document.body.appendChild(shard);
+            setTimeout(() => shard.remove(), 1250);
+        }
+    }
+
+    cluster.classList.add('cluster-defeated-hidden');
+}
+
 export function triggerHealPulse(isPlayer) {
     const hpFill = document.getElementById(isPlayer ? 'p-hp-fill' : 'm-hp-fill');
     if(hpFill) {
