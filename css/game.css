@@ -123,10 +123,10 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
     transform: translate(-50%, -50%);
     width: 92%;
     padding: 6px 4px;
-    border: 2px solid #ff7675;
+    border: 2px solid #ffd700;
     border-radius: 6px;
     background: rgba(0,0,0,0.78);
-    color: #ff7675;
+    color: #ffd700;
     font-family: 'Russo One', sans-serif;
     font-size: 11px;
     text-align: center;
