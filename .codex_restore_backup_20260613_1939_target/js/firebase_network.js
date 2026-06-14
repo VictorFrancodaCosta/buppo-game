@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithPopup, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInWithPopup, signInWithRedirect, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, updateDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -13,6 +13,16 @@ const firebaseConfig = {
 
 export let app, auth, db, provider;
 
+function shouldUseRedirectLogin() {
+    try {
+        const ua = window.navigator.userAgent || "";
+        const isTouchMobile = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+        return isTouchMobile || /BuppoAndroidApp\/\d+/i.test(ua);
+    } catch (e) {
+        return false;
+    }
+}
+
 try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
@@ -24,6 +34,9 @@ try {
 }
 
 export async function loginWithGoogle() {
+    if (shouldUseRedirectLogin()) {
+        return await signInWithRedirect(auth, provider);
+    }
     return await signInWithPopup(auth, provider);
 }
 

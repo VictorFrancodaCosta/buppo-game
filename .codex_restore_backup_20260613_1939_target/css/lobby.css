@@ -7,24 +7,23 @@
 @keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 #btn-login { padding: 15px 40px; font-size: 18px; font-family: 'Russo One', sans-serif; background: var(--purple-btn); color: #fff; border: 2px solid #fff; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(142, 68, 173, 0.6); transition: 0.2s; text-transform: uppercase; z-index: 2; position: relative; letter-spacing: 1px; min-width: 280px; }
 #btn-login:hover { transform: scale(1.05); box-shadow: 0 0 30px #9b59b6; background: #9b59b6; }
+#btn-install-app { padding: 13px 34px; font-size: 15px; font-family: 'Russo One', sans-serif; background: linear-gradient(180deg, #5d4037, #2d1a12); color: var(--gold); border: 2px solid rgba(255,255,255,0.78); border-radius: 999px; cursor: pointer; box-shadow: 0 8px 18px rgba(0,0,0,0.42), 0 0 0 2px rgba(255,215,0,0.18); transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease; text-transform: uppercase; z-index: 2; position: relative; letter-spacing: 1px; min-width: 250px; }
+#btn-install-app:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 22px rgba(0,0,0,0.5), 0 0 22px rgba(255,215,0,0.26); filter: brightness(1.06); }
+#install-hint { z-index: 2; position: relative; margin: -6px 0 0; min-height: 18px; color: rgba(255,255,255,0.8); font-size: 12px; font-weight: 700; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.9); }
 
 /* LOBBY SCREEN */
 #lobby-screen { --lobby-side-gap: 70px; justify-content: flex-start !important; align-items: flex-start !important; padding-left: calc(50% - 50vw + var(--lobby-side-gap)); padding-top: 8vh; box-sizing: border-box; z-index: 10000; position: relative; overflow: hidden; }
-.lobby-logo-right { position: fixed; left: 50%; top: 8vh; transform: translateX(-50%); max-width: 430px; width: 28vw; height: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9)); z-index: 6; pointer-events: none; animation: lobbyLogoBreathe 4.2s ease-in-out infinite, lobbyLogoPop 0.72s cubic-bezier(0.2, 1.25, 0.28, 1) both; }
-@keyframes lobbyLogoBreathe { 0%, 100% { transform: translateX(-50%) translateY(0) scale(1); filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9)); } 50% { transform: translateX(-50%) translateY(-8px) scale(1.018); filter: drop-shadow(0 16px 34px rgba(0,0,0,0.95)) drop-shadow(0 0 18px rgba(255,215,0,0.22)); } }
-@keyframes lobbyLogoPop { 0% { transform: translateX(-50%) scale(0.86, 1.12); opacity: 0; } 62% { transform: translateX(-50%) scale(1.045, 0.96); opacity: 1; } 100% { transform: translateX(-50%) scale(1); opacity: 1; } }
+.lobby-logo-right { position: fixed; left: 50%; top: 8vh; transform: translateX(-50%); max-width: 430px; width: 28vw; height: auto; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.9)); z-index: 6; pointer-events: none; }
 #lobby-screen::after { content: "BUPPO \00a9  Todos os direitos reservados."; position: fixed; left: calc(50% - 50vw + var(--lobby-side-gap)); bottom: 22px; z-index: 7; color: #fff; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 0; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; }
-.lobby-frame-container { position: fixed; top: 8vh; left: calc(50% - 50vw + var(--lobby-side-gap)); z-index: 5; width: auto; height: 82vh; max-height: 860px; margin-left: 0; display: flex; justify-content: center; align-items: center; animation: frameFloat 4s ease-in-out infinite; }
-@keyframes frameFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.lobby-frame-container { position: fixed; top: 8vh; left: calc(50% - 50vw + var(--lobby-side-gap)); z-index: 5; width: auto; height: 82vh; max-height: 860px; margin-left: 0; display: flex; justify-content: center; align-items: center; }
 .lobby-frame-img { height: 100%; width: auto; filter: drop-shadow(0 20px 50px rgba(0,0,0,0.8)); display: block; }
 .lobby-ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; padding: 18% 14% 14% 14%; box-sizing: border-box; text-align: center; color: #fff; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
-.lobby-player-card { width: 92%; min-height: 54px; display: flex; align-items: center; gap: 10px; padding: 7px 10px; margin-bottom: 6px; box-sizing: border-box; border-radius: 10px; border: 1px solid rgba(255,215,0,0.48); background: linear-gradient(90deg, rgba(0,0,0,0.38), rgba(255,215,0,0.13), rgba(0,0,0,0.28)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 7px 16px rgba(0,0,0,0.32); animation: identitySlideIn 0.55s cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+.lobby-player-card { width: 92%; min-height: 54px; display: flex; align-items: center; gap: 10px; padding: 7px 10px; margin-bottom: 6px; box-sizing: border-box; border-radius: 10px; border: 1px solid rgba(255,215,0,0.48); background: linear-gradient(90deg, rgba(0,0,0,0.38), rgba(255,215,0,0.13), rgba(0,0,0,0.28)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 7px 16px rgba(0,0,0,0.32); }
 .lobby-avatar { width: 39px; height: 39px; flex: 0 0 39px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #fff7ba 0 12%, #f1c40f 35%, #9b4b10 100%); border: 2px solid #fff; color: #3e2723; font-family: 'Russo One', sans-serif; font-size: 18px; box-shadow: 0 0 0 2px rgba(0,0,0,0.45), 0 0 18px rgba(255,215,0,0.42); text-shadow: 1px 1px 0 rgba(255,255,255,0.45); }
 .lobby-identity-main { flex: 1; min-width: 0; text-align: left; }
 .lobby-rank-title { font-family: 'Russo One', sans-serif; font-size: 10px; color: #ffd700; letter-spacing: 0.7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lobby-xp-track { position: relative; height: 8px; margin-top: 6px; border-radius: 999px; overflow: hidden; background: rgba(0,0,0,0.48); box-shadow: inset 0 1px 4px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.14); }
 .lobby-xp-track span { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: inherit; background: linear-gradient(90deg, #2ecc71, #f1c40f, #fff2a6); box-shadow: 0 0 12px rgba(255,215,0,0.55); transition: width 0.85s cubic-bezier(0.18, 0.88, 0.32, 1.18); }
-@keyframes identitySlideIn { from { opacity: 0; transform: translateY(-8px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .user-welcome { font-family: 'Russo One'; font-size: 24px; margin-bottom: 4px; text-transform: uppercase; color: #fff; }
 .player-game-id { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; color: rgba(255, 215, 0, 0.78); letter-spacing: 1px; vertical-align: middle; margin-left: 6px; text-shadow: 1px 1px 0 #000; }
 .user-stats { color: #ffd700; font-size: 14px; font-weight: 700; margin-bottom: 11px; font-family: 'Russo One'; transition: transform 0.25s ease, text-shadow 0.25s ease; }
@@ -33,7 +32,7 @@
 #ranking-table { width: 100%; border-collapse: collapse; font-size: 14px; color: #fff; }
 #ranking-table th { text-align: left; padding: 5px; border-bottom: 2px solid #fff; font-family: 'Russo One'; color: var(--gold); text-shadow: 2px 2px 0 #000; }
 #ranking-table td { padding: 8px 5px; border-bottom: 1px solid rgba(255,255,255,0.3); font-weight: 700; text-shadow: 1px 1px 0 #000; }
-#ranking-table tbody tr { opacity: 0; transform: translateX(-18px) scale(0.98); animation: rankRowIn 0.42s cubic-bezier(0.2, 0.9, 0.28, 1.1) forwards; animation-delay: calc(var(--rank-order, 0) * 55ms); }
+#ranking-table tbody tr { opacity: 1; transform: none; }
 #ranking-table tbody tr:nth-child(1) { --rank-order: 1; }
 #ranking-table tbody tr:nth-child(2) { --rank-order: 2; }
 #ranking-table tbody tr:nth-child(3) { --rank-order: 3; }
@@ -45,19 +44,15 @@
 #ranking-table tbody tr:nth-child(9) { --rank-order: 9; }
 #ranking-table tbody tr:nth-child(10) { --rank-order: 10; }
 #ranking-table tbody tr:hover { background: rgba(255,255,255,0.08); }
-.rank-1 { color: #ffd700 !important; font-size: 16px; animation-name: rankRowIn, topRankGlow !important; animation-duration: 0.42s, 2.2s !important; animation-timing-function: cubic-bezier(0.2, 0.9, 0.28, 1.1), ease-in-out !important; animation-delay: calc(var(--rank-order, 0) * 55ms), 0.55s !important; animation-fill-mode: forwards, none !important; animation-iteration-count: 1, infinite !important; }
+.rank-1 { color: #ffd700 !important; font-size: 16px; }
 .rank-1 td { border-bottom-color: rgba(255,215,0,0.58) !important; }
-@keyframes rankRowIn { to { opacity: 1; transform: translateX(0) scale(1); } }
-@keyframes topRankGlow { 0%, 100% { text-shadow: 1px 1px 0 #000, 0 0 8px rgba(255,215,0,0.35); } 50% { text-shadow: 1px 1px 0 #000, 0 0 17px rgba(255,215,0,0.9); } }
 .lobby-btn-row { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-bottom: 10px; align-items: center; }
-#btn-play-pvp { width: 100%; background: linear-gradient(180deg, #f9d83d 0%, #f39c12 100%); border: 2px solid #fff; border-radius: 50px; padding: 12px 0; cursor: pointer; box-shadow: 0 7px 0 #9c5a08, 0 12px 18px rgba(0,0,0,0.35), 0 0 0 rgba(243, 156, 18, 0); transition: transform 0.16s cubic-bezier(0.2, 1, 0.3, 1), filter 0.16s, box-shadow 0.16s; display: flex; flex-direction: column; align-items: center; justify-content: center; text-shadow: 1px 1px 0 rgba(255,255,255,0.4); animation: pulseGold 2s infinite; position: relative; overflow: hidden; }
+#btn-play-pvp { width: 100%; background: linear-gradient(180deg, #f9d83d 0%, #f39c12 100%); border: 2px solid #fff; border-radius: 50px; padding: 12px 0; cursor: pointer; box-shadow: 0 7px 0 #9c5a08, 0 12px 18px rgba(0,0,0,0.35), 0 0 0 rgba(243, 156, 18, 0); transition: transform 0.16s cubic-bezier(0.2, 1, 0.3, 1), filter 0.16s, box-shadow 0.16s; display: flex; flex-direction: column; align-items: center; justify-content: center; text-shadow: 1px 1px 0 rgba(255,255,255,0.4); position: relative; overflow: hidden; }
 #btn-play-pvp::after, #btn-play-pve::after, #btn-history::after, #btn-logout::after, .friends-add-icon::after { content: ""; position: absolute; inset: 50%; width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.75), transparent 70%); opacity: 0; transform: translate(-50%, -50%) scale(0); pointer-events: none; }
 #btn-play-pvp:hover { transform: translateY(-3px) scale(1.035); filter: brightness(1.1); box-shadow: 0 10px 0 #9c5a08, 0 18px 22px rgba(0,0,0,0.38), 0 0 22px rgba(255,215,0,0.24); }
 #btn-play-pvp:active { transform: translateY(5px) scale(0.985); box-shadow: 0 2px 0 #9c5a08, 0 6px 10px rgba(0,0,0,0.38); }
-#btn-play-pvp:active::after, #btn-play-pve:active::after, #btn-history:active::after, #btn-logout:active::after, .friends-add-icon:active::after { animation: buttonRipple 0.45s ease-out; }
 #btn-play-pvp .btn-title { font-family: 'Russo One', sans-serif; font-size: 22px; color: #5d4037; text-transform: uppercase; }
 #btn-play-pvp .btn-sub { font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 800; color: #8e44ad; margin-top: -2px; }
-@keyframes pulseGold { 0% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(241, 196, 15, 0); } 100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); } }
 #btn-play-pve { width: 90%; background: linear-gradient(180deg, #a858c5, #7d348f); border: 2px solid rgba(255,255,255,0.38); border-radius: 50px; padding: 8px 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.16s cubic-bezier(0.2, 1, 0.3, 1), filter 0.16s, box-shadow 0.16s; position: relative; overflow: hidden; box-shadow: 0 5px 0 #4d1f5e, 0 9px 14px rgba(0,0,0,0.34); }
 #btn-play-pve:hover { filter: brightness(1.1); transform: translateY(-2px) scale(1.025); box-shadow: 0 8px 0 #4d1f5e, 0 14px 18px rgba(0,0,0,0.36), 0 0 18px rgba(168,88,197,0.35); }
 #btn-play-pve:active { transform: translateY(4px) scale(0.985); box-shadow: 0 2px 0 #4d1f5e, 0 5px 9px rgba(0,0,0,0.36); }
@@ -66,6 +61,8 @@
 #btn-logout { background: rgba(0,0,0,0.4); border: 1px solid #fff; color: #ccc; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 12px; font-family: 'Russo One'; text-transform: uppercase; position: relative; overflow: hidden; transition: transform 0.16s, box-shadow 0.16s, background 0.16s; }
 #btn-logout:hover { background: rgba(255,0,0,0.4); color: #fff; }
 #btn-logout:active { transform: translateY(2px) scale(0.97); }
+<<<<<<< Updated upstream
+=======
 @keyframes buttonRipple { 0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(18); } }
 #lobby-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
 .lobby-flare { position: absolute; background: radial-gradient(circle, #fff 10%, var(--gold) 60%, transparent 100%); border-radius: 50%; opacity: 0; box-shadow: 0 0 15px var(--gold); filter: blur(2px); animation: flareFloat linear infinite both; }
@@ -77,14 +74,18 @@
 @keyframes flareFloat { 0% { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); } 10% { opacity: 0.8; } 80% { opacity: 0.6; } 100% { opacity: 0; transform: translateY(-150px) scale(0) rotate(45deg); } }
 @keyframes candleSpark { 0% { opacity: 0; transform: translateY(0) translateX(0) scale(0.5); } 18% { opacity: 1; } 100% { opacity: 0; transform: translateY(-90px) translateX(28px) scale(0.1); } }
 @keyframes bookGlowPulse { 0%, 100% { opacity: 0.45; transform: scale(0.96); } 50% { opacity: 0.82; transform: scale(1.04); } }
+<<<<<<< HEAD
+>>>>>>> Stashed changes
+=======
 
+>>>>>>> parent of 7db9775 (update visual test)
 /* FRIENDS PANEL */
 .friends-panel { position: fixed; top: 8vh; right: calc(50% - 50vw + var(--lobby-side-gap, 70px)); width: 330px; min-height: 238px; max-height: 50vh; z-index: 12000; display: flex; flex-direction: column; padding: 16px; box-sizing: border-box; color: #fff; background: linear-gradient(180deg, rgba(93, 64, 55, 0.96), rgba(38, 24, 20, 0.94)); border: 3px solid var(--gold); border-radius: 18px; box-shadow: 0 16px 35px rgba(0,0,0,0.72), inset 0 0 0 2px rgba(255,255,255,0.12), inset 0 -18px 28px rgba(0,0,0,0.28); font-family: 'Montserrat', sans-serif; text-shadow: 2px 2px 0 #000; }
 .friends-panel::before { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(255,255,255,0.18); border-radius: 13px; pointer-events: none; }
 .friends-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 2px solid rgba(255,215,0,0.35); position: relative; z-index: 1; }
 .friends-title { font-family: 'Russo One', sans-serif; color: var(--gold); font-size: 18px; letter-spacing: 1px; }
 .friends-subtitle { color: rgba(255,255,255,0.58); font-weight: 800; font-size: 9px; letter-spacing: 1px; margin-top: 2px; }
-.friends-add-icon { width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff; background: linear-gradient(180deg, #f1c40f, #f39c12); color: #3e2723; font-family: 'Russo One', sans-serif; font-size: 24px; line-height: 24px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.45); transition: transform 0.18s, filter 0.18s, box-shadow 0.18s; position: relative; overflow: hidden; animation: addFriendGlow 2.8s ease-in-out infinite; }
+.friends-add-icon { width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff; background: linear-gradient(180deg, #f1c40f, #f39c12); color: #3e2723; font-family: 'Russo One', sans-serif; font-size: 24px; line-height: 24px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.45); transition: transform 0.18s, filter 0.18s, box-shadow 0.18s; position: relative; overflow: hidden; }
 .friends-add-icon:hover { transform: scale(1.08) rotate(8deg); filter: brightness(1.08); box-shadow: 0 6px 14px rgba(0,0,0,0.45), 0 0 18px rgba(255,215,0,0.48); }
 .friends-list { flex: 1; min-height: 146px; overflow-y: auto; padding: 10px 2px 0 0; margin-bottom: 0; position: relative; z-index: 1; scrollbar-width: thin; scrollbar-color: var(--gold) transparent; }
 .friend-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin-bottom: 7px; background: rgba(0,0,0,0.32); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
@@ -100,7 +101,6 @@
 .friend-row { cursor: pointer; transition: transform 0.16s, border-color 0.16s, background 0.16s; }
 .friend-row:hover { transform: translateX(-2px) scale(1.015); border-color: rgba(255,215,0,0.58); background: rgba(255,215,0,0.12); }
 @keyframes onlinePulse { 0% { box-shadow: 0 0 0 2px rgba(0,0,0,0.45), 0 0 0 0 rgba(46,204,113,0.72); } 70% { box-shadow: 0 0 0 2px rgba(0,0,0,0.45), 0 0 0 9px rgba(46,204,113,0); } 100% { box-shadow: 0 0 0 2px rgba(0,0,0,0.45), 0 0 0 0 rgba(46,204,113,0); } }
-@keyframes addFriendGlow { 0%, 100% { box-shadow: 0 4px 10px rgba(0,0,0,0.45), 0 0 0 rgba(255,215,0,0); } 50% { box-shadow: 0 4px 10px rgba(0,0,0,0.45), 0 0 18px rgba(255,215,0,0.5); } }
 .friends-empty { color: rgba(255,255,255,0.58); font-family: 'Russo One', sans-serif; font-size: 12px; text-align: center; padding: 32px 8px; }
 .friend-action-popover { display: none; position: fixed; z-index: 95000; padding: 8px; background: linear-gradient(180deg, rgba(93, 64, 55, 0.98), rgba(38, 24, 20, 0.98)); border: 2px solid var(--gold); border-radius: 10px; box-shadow: 0 14px 28px rgba(0,0,0,0.72), inset 0 0 0 1px rgba(255,255,255,0.12); }
 .friend-action-popover button { display: block; width: 100%; border: 2px solid #fff; border-radius: 50px; padding: 10px 14px; margin-bottom: 6px; background: linear-gradient(180deg, #f1c40f, #f39c12); color: #5d4037; font-family: 'Russo One', sans-serif; font-size: 11px; cursor: pointer; white-space: nowrap; }

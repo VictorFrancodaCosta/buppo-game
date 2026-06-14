@@ -7,8 +7,9 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 
 // IMPORTANDO OS NOVOS MÓDULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=7';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=8';
 import { initiateMatchmaking } from './matchmaking.js';
+import { initPWA } from './pwa.js?v=5';
 
 // --- VARIÁVEIS GLOBAIS DE ESTADO ---
 window.currentUser = null;
@@ -1163,8 +1164,10 @@ function updateLoader() {
     assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100);
     const fill = document.getElementById('loader-fill'); if(fill) fill.style.width = pct + '%';
     if(assetsLoaded >= totalAssets) {
+        if (window.forcedLoaderUpdate) return;
         if(window.updateVol) window.updateVol('master', window.masterVol);
         setTimeout(() => {
+            if (window.forcedLoaderUpdate) return;
             const loading = document.getElementById('loading-screen');
             if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
             if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
@@ -1731,6 +1734,7 @@ window.saveAudioSettings = async function() {
 
 setTimeout(() => {
     if (assetsLoaded < totalAssets) {
+        if (window.forcedLoaderUpdate) return;
         updateLoader();
         const loading = document.getElementById('loading-screen'); if(loading) loading.style.display = 'none';
         if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
@@ -1738,3 +1742,4 @@ setTimeout(() => {
 }, 3000);
 
 preloadGame();
+initPWA();

@@ -174,6 +174,8 @@
     animation: hitFlinch 0.4s ease-out forwards;
 }
 
+<<<<<<< HEAD
+=======
 /* =========================================
    5. PACOTE DE COMBATE CINEMATICO
 ========================================= */
@@ -248,6 +250,7 @@
     100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--d) * -1)) scaleY(1); }
 }
 
+>>>>>>> parent of 7db9775 (update visual test)
 .mastery-banner {
     position: fixed;
     top: 47%;
@@ -492,6 +495,8 @@
     100% { opacity: 0; transform: translate(-50%, -62%) scale(0.92) rotate(8deg); }
 }
 
+<<<<<<< HEAD
+=======
 body.mastery-focus-active #game-background,
 body.mastery-focus-active .middle-area,
 body.mastery-focus-active .avatar-cluster,
@@ -537,6 +542,7 @@ body.mastery-focus-active .xp-area {
     100% { opacity: 0; transform: scale(1.05); filter: brightness(1); }
 }
 
+>>>>>>> parent of 7db9775 (update visual test)
 .pvp-ready-glow {
     filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5));
 }
