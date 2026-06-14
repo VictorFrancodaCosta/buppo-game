@@ -285,25 +285,28 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         #btn-history {
-            width: 68% !important;
-            max-width: 340px !important;
-            min-height: 38px !important;
-            margin-top: 2px !important;
+            width: auto !important;
+            max-width: none !important;
+            min-height: 0 !important;
+            margin-top: 8px !important;
             margin-bottom: 0 !important;
-            padding: 7px 14px !important;
-            font-size: 11px !important;
-            border-radius: 8px !important;
+            padding: 0 !important;
             align-self: center !important;
-            background: linear-gradient(180deg, rgba(94, 66, 15, 0.96), rgba(42, 26, 7, 0.98)) !important;
-            border: 2px solid rgba(255, 215, 0, 0.88) !important;
-            color: #ffe082 !important;
-            box-shadow: 5px 6px 0 rgba(26, 11, 4, 0.78),
-                        0 10px 18px rgba(0, 0, 0, 0.2),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
-            text-shadow: 0 2px 0 rgba(50, 26, 0, 0.92), 0 4px 8px rgba(0, 0, 0, 0.65) !important;
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            color: #fff !important;
+            box-shadow: none !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: 28px !important;
+            line-height: 1 !important;
+            letter-spacing: 1px !important;
+            text-transform: uppercase !important;
+            -webkit-text-stroke: 1.5px #1b0a03 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 3px 3px 0 #1b0a03, 0 4px 8px rgba(0,0,0,0.72) !important;
             transition: transform 0.13s cubic-bezier(0.22, 1, 0.36, 1),
-                        filter 0.13s ease,
-                        box-shadow 0.13s ease !important;
+                        text-shadow 0.13s ease !important;
         }
 
         #btn-history::after {
@@ -312,19 +315,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         #btn-history:hover {
-            transform: translateY(-2px) scale(1.01) !important;
-            filter: brightness(1.05) !important;
-            box-shadow: 0 14px 24px rgba(0, 0, 0, 0.42), 0 0 16px rgba(255, 215, 0, 0.18) !important;
+            transform: scale(1.08) !important;
+            text-shadow: 3px 3px 0 #1b0a03, 0 0 14px rgba(255,255,255,0.42), 0 5px 9px rgba(0,0,0,0.78) !important;
         }
 
         #btn-history:active {
-            transform: translateY(2px) scale(0.985) !important;
+            transform: scale(0.98) !important;
         }
 
         #btn-logout {
-            position: absolute !important;
+            position: fixed !important;
             left: 50% !important;
-            bottom: 5.5% !important;
+            top: calc(8vh + min(82vh, 860px) + 10px) !important;
+            bottom: auto !important;
             transform: translateX(-50%) !important;
             margin: 0 !important;
             padding: 6px 18px !important;
@@ -392,10 +395,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             #btn-history {
-                width: 70% !important;
-                min-height: 34px !important;
-                font-size: 10px !important;
-                padding: 6px 10px !important;
+                width: auto !important;
+                min-height: 0 !important;
+                font-size: 22px !important;
+                padding: 0 !important;
             }
         }
 

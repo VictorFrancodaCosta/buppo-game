@@ -109,20 +109,6 @@ function triggerScreenShakeHard() {
     setTimeout(() => document.body.classList.remove('shake-screen-hard'), 450);
 }
 
-function triggerBlockXpBounce() {
-    const xpCards = Array.from(document.querySelectorAll('#p-xp .xp-mini, #m-xp .xp-mini'));
-    xpCards.forEach((card, index) => {
-        card.classList.remove('xp-block-bounce');
-        void card.offsetWidth;
-        card.style.animationDelay = `${Math.min(index, 8) * 18}ms`;
-        card.classList.add('xp-block-bounce');
-        setTimeout(() => {
-            card.classList.remove('xp-block-bounce');
-            card.style.animationDelay = '';
-        }, 860);
-    });
-}
-
 export function triggerDamageEffect(isPlayer, playAudio = true) {
     try {
         if(playAudio) { if(!isPlayer && window.currentDeck === 'mage') playSound('sfx-hit-mage'); else playSound('sfx-hit'); }
@@ -149,7 +135,6 @@ export function triggerBlockEffect(isPlayer) {
     try {
         if(isPlayer && window.currentDeck === 'mage') playSound('sfx-block-mage'); else playSound('sfx-block');
         if(window.triggerBlockEffect) window.triggerBlockEffect();
-        triggerBlockXpBounce();
         let ov = document.getElementById('block-overlay');
         if(ov) {
             ov.style.opacity = '1';
