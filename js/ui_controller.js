@@ -106,20 +106,24 @@ function triggerScreenShakeHard() {
     document.body.classList.remove('shake-screen-hard');
     void document.body.offsetWidth;
     document.body.classList.add('shake-screen-hard');
-    setTimeout(() => document.body.classList.remove('shake-screen-hard'), 650);
+    setTimeout(() => document.body.classList.remove('shake-screen-hard'), 450);
 }
 
 function triggerBlockXpBounce() {
     const xpCards = document.querySelectorAll('#p-xp .xp-mini, #m-xp .xp-mini');
     xpCards.forEach((card, index) => {
-        card.classList.remove('xp-block-bounce');
-        void card.offsetWidth;
-        card.style.animationDelay = `${160 + Math.min(index, 8) * 38}ms`;
-        card.classList.add('xp-block-bounce');
-        setTimeout(() => {
-            card.classList.remove('xp-block-bounce');
-            card.style.animationDelay = '';
-        }, 1300);
+        const rect = card.getBoundingClientRect();
+        if(rect.width <= 0 || rect.height <= 0) return;
+        const clone = document.createElement('div');
+        clone.className = 'xp-block-bounce-clone';
+        clone.style.left = rect.left + 'px';
+        clone.style.top = rect.top + 'px';
+        clone.style.width = rect.width + 'px';
+        clone.style.height = rect.height + 'px';
+        clone.style.backgroundImage = card.style.backgroundImage;
+        clone.style.animationDelay = `${Math.min(index, 8) * 34}ms`;
+        document.body.appendChild(clone);
+        setTimeout(() => clone.remove(), 1200);
     });
 }
 
@@ -261,10 +265,15 @@ export function triggerBlockShield(blockerIsPlayer) {
 }
 
 export function triggerRestAura(isPlayer) {
-    const count = isPlayer ? 58 : 42;
+    if(!isPlayer) {
+        triggerClusterHealFlares(false);
+        return;
+    }
+
+    const count = 72;
     const baseY = window.innerHeight + 18;
-    const bandWidth = Math.min(window.innerWidth, 980);
-    const bandLeft = (window.innerWidth - bandWidth) / 2;
+    const bandWidth = window.innerWidth;
+    const bandLeft = 0;
 
     for(let i = 0; i < count; i++) {
         const mote = document.createElement('span');
@@ -281,6 +290,32 @@ export function triggerRestAura(isPlayer) {
         mote.className = 'rest-mote-fx';
         setTimeout(() => mote.remove(), 2500);
     }
+}
+
+function triggerClusterHealFlares(isPlayer) {
+    const cluster = document.getElementById(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+    if(!cluster) return;
+    cluster.classList.remove('cluster-heal-glow');
+    void cluster.offsetWidth;
+    cluster.classList.add('cluster-heal-glow');
+
+    const rect = cluster.getBoundingClientRect();
+    for(let i = 0; i < 32; i++) {
+        const mote = document.createElement('span');
+        const size = 5 + Math.random() * 9;
+        mote.className = 'cluster-heal-mote';
+        mote.style.left = (rect.left + rect.width * (0.16 + Math.random() * 0.68)) + 'px';
+        mote.style.top = (rect.top + rect.height * (0.42 + Math.random() * 0.42)) + 'px';
+        mote.style.width = size + 'px';
+        mote.style.height = size + 'px';
+        mote.style.animationDelay = (Math.random() * 0.18) + 's';
+        mote.style.animationDuration = (0.92 + Math.random() * 0.42) + 's';
+        mote.style.setProperty('--drift', `${(Math.random() - 0.5) * 78}px`);
+        mote.style.setProperty('--rise', `${58 + Math.random() * 68}px`);
+        document.body.appendChild(mote);
+        setTimeout(() => mote.remove(), 1600);
+    }
+    setTimeout(() => cluster.classList.remove('cluster-heal-glow'), 850);
 }
 
 export function triggerTrainDeckGlow(isPlayer) {
