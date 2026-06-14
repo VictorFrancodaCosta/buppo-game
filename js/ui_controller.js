@@ -110,20 +110,16 @@ function triggerScreenShakeHard() {
 }
 
 function triggerBlockXpBounce() {
-    const xpCards = document.querySelectorAll('#p-xp .xp-mini, #m-xp .xp-mini');
+    const xpCards = Array.from(document.querySelectorAll('#p-xp .xp-mini, #m-xp .xp-mini'));
     xpCards.forEach((card, index) => {
-        const rect = card.getBoundingClientRect();
-        if(rect.width <= 0 || rect.height <= 0) return;
-        const clone = document.createElement('div');
-        clone.className = 'xp-block-bounce-clone';
-        clone.style.left = rect.left + 'px';
-        clone.style.top = rect.top + 'px';
-        clone.style.width = rect.width + 'px';
-        clone.style.height = rect.height + 'px';
-        clone.style.backgroundImage = card.style.backgroundImage;
-        clone.style.animationDelay = `${Math.min(index, 8) * 34}ms`;
-        document.body.appendChild(clone);
-        setTimeout(() => clone.remove(), 1200);
+        card.classList.remove('xp-block-bounce');
+        void card.offsetWidth;
+        card.style.animationDelay = `${Math.min(index, 8) * 18}ms`;
+        card.classList.add('xp-block-bounce');
+        setTimeout(() => {
+            card.classList.remove('xp-block-bounce');
+            card.style.animationDelay = '';
+        }, 860);
     });
 }
 
@@ -153,7 +149,7 @@ export function triggerBlockEffect(isPlayer) {
     try {
         if(isPlayer && window.currentDeck === 'mage') playSound('sfx-block-mage'); else playSound('sfx-block');
         if(window.triggerBlockEffect) window.triggerBlockEffect();
-        triggerBlockXpBounce();
+        setTimeout(triggerBlockXpBounce, 260);
         let ov = document.getElementById('block-overlay');
         if(ov) {
             ov.style.opacity = '1';
@@ -269,6 +265,8 @@ export function triggerRestAura(isPlayer) {
         triggerClusterHealFlares(false);
         return;
     }
+
+    triggerClusterHealFlares(true);
 
     const count = 72;
     const baseY = window.innerHeight + 18;

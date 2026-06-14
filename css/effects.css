@@ -55,7 +55,7 @@
 ========================================= */
 
 /* Tremor Forte */
-.shake-screen-hard {
+body.shake-screen-hard #game-background {
     animation: violentShake 0.38s cubic-bezier(.36,.07,.19,.97) both;
     transform: translate3d(0, 0, 0);
 }
@@ -100,7 +100,7 @@
 ========================================= */
 
 /* Recuo da tela (Impacto Absorvido) */
-.screen-recoil {
+body.screen-recoil #game-background {
     animation: recoilMotion 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 @keyframes recoilMotion {
@@ -381,26 +381,16 @@
     100% { opacity: 0; transform: translate(-50%, -50%) scale(3.1); }
 }
 
-.xp-block-bounce-clone {
-    position: fixed;
+.xp-mini.xp-block-bounce {
     z-index: 12610;
-    pointer-events: none;
-    border: 1px solid #111;
-    border-radius: 3px;
-    background-size: cover;
-    background-position: center;
-    box-shadow: 0 5px 10px rgba(0,0,0,0.65), 0 0 16px rgba(0,206,201,0.45);
     transform-origin: center bottom;
-    animation: xpBlockBounce 0.98s cubic-bezier(0.18, 0.9, 0.22, 1.08) both;
+    animation: xpBlockBounce 0.74s cubic-bezier(0.18, 0.9, 0.22, 1.06) both;
 }
 
 @keyframes xpBlockBounce {
     0% { transform: translateY(0) scale(1) rotate(0deg); }
-    18% { transform: translateY(0) scale(1) rotate(0deg); }
-    42% { transform: translateY(-42px) scale(1.13) rotate(-4deg); }
-    66% { transform: translateY(0) scale(0.95) rotate(3deg); }
-    82% { transform: translateY(-13px) scale(1.04) rotate(-2deg); }
-    93% { transform: translateY(0) scale(0.99) rotate(1deg); }
+    34% { transform: translateY(-36px) scale(1.16) rotate(-3deg); box-shadow: 0 9px 18px rgba(0,0,0,0.72), 0 0 18px rgba(0,206,201,0.55); }
+    72% { transform: translateY(2px) scale(0.97) rotate(2deg); }
     100% { transform: translateY(0) scale(1) rotate(0deg); }
 }
 
