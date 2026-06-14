@@ -1222,9 +1222,12 @@ function onCardClick(index) {
     if(window.isProcessing) return; if (!player.hand[index]) return;
     if (window.gameMode === 'pvp' && (window.isResolvingTurn || window.pvpWaitingForTurnReset)) return;
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
-    playSound('sfx-play'); clearHoverFocusState(true);
     let cardKey = player.hand[index];
-    if(player.disabled === cardKey) { showCenterText("DESARMADA!"); return; }
+    if(player.disabled === cardKey) {
+        showDisabledCardWarning(index);
+        return;
+    }
+    playSound('sfx-play'); clearHoverFocusState(true);
 
     if(cardKey === 'DESARMAR') {
         window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => {
@@ -1233,6 +1236,19 @@ function onCardClick(index) {
     } else {
         if(window.gameMode === 'pvp') lockInPvPMove(index, null); else playCardFlow(index, null);
     }
+}
+
+function showDisabledCardWarning(index) {
+    const handContainer = document.getElementById('player-hand');
+    const cardEl = handContainer && handContainer.children[index];
+    if(!cardEl) { showCenterText("NÃO PODE JOGAR", "#ff7675"); return; }
+    const old = cardEl.querySelector('.disabled-card-warning');
+    if(old) old.remove();
+    const warning = document.createElement('div');
+    warning.className = 'disabled-card-warning';
+    warning.innerText = "NÃO PODE JOGAR";
+    cardEl.appendChild(warning);
+    setTimeout(() => warning.remove(), 760);
 }
 
 async function lockInPvPMove(index, disarmChoice) {
@@ -1516,6 +1532,7 @@ function checkLevelUp(u, doneCb) {
     if(u.xp.length >= 5) {
         const xpForLevelUp = [...u.xp];
         let xpContainer = document.getElementById(u.id + '-xp'); let minis = Array.from(xpContainer.getElementsByClassName('xp-mini'));
+        xpContainer.classList.add('levelup-xp-consuming');
         minis.forEach(realCard => {
             let rect = realCard.getBoundingClientRect(); let clone = document.createElement('div'); clone.className = 'xp-anim-clone';
             clone.style.left = rect.left + 'px'; clone.style.top = rect.top + 'px'; clone.style.width = rect.width + 'px'; clone.style.height = rect.height + 'px'; clone.style.backgroundImage = realCard.style.backgroundImage;
@@ -1543,7 +1560,7 @@ function checkLevelUp(u, doneCb) {
                     }
                 } else { shuffle(u.deck); }
                 let clones = document.getElementsByClassName('xp-anim-clone'); while(clones.length > 0) clones[0].remove();
-                updateUI(); doneCb();
+                updateUI(); xpContainer.classList.remove('levelup-xp-consuming'); doneCb();
             }), triggers.length > 0 ? 850 : 0);
         }, 1000);
     } else { doneCb(); }
