@@ -326,7 +326,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #btn-logout {
             position: fixed !important;
             left: 50% !important;
-            top: calc(8vh + min(82vh, 860px) + 10px) !important;
+            top: calc(8vh + min(82vh, 860px) + 2px) !important;
             bottom: auto !important;
             transform: translateX(-50%) !important;
             margin: 0 !important;

@@ -258,14 +258,16 @@ body.screen-recoil #game-background {
     padding: 14px 28px;
     min-width: 320px;
     text-align: center;
-    font-family: 'Russo One', sans-serif;
-    font-size: 22px;
-    letter-spacing: 2px;
+    font-family: 'Bangers', cursive;
+    font-size: 36px;
+    letter-spacing: 1px;
     color: #ffd700;
     border-top: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
     background: linear-gradient(90deg, transparent, rgba(0,0,0,0.78), transparent);
-    text-shadow: 0 3px 0 #000, 0 0 18px currentColor;
+    -webkit-text-stroke: 2px #120602;
+    paint-order: stroke fill;
+    text-shadow: 3px 3px 0 #120602, 0 5px 10px rgba(0,0,0,0.72), 0 0 18px currentColor;
     animation: masteryBannerIn 1.35s ease-out forwards;
 }
 .mastery-banner.attack { color: #ff4757; }

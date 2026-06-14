@@ -229,11 +229,18 @@ export function triggerAttackSlash(targetIsPlayer) {
     setTimeout(() => spark.remove(), 520);
 }
 
-export function triggerBlockShield(blockerIsPlayer) {
-    const p = centerOfElement('p-slot');
-    const m = centerOfElement('m-slot');
-    const midX = (p.x + m.x) / 2;
-    const midY = (p.y + m.y) / 2;
+export function triggerBlockShield(blockerIsPlayer, anchor = 'center') {
+    let midX, midY;
+    if(anchor === 'cluster') {
+        const target = centerOfElement(blockerIsPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+        midX = target.x;
+        midY = target.y;
+    } else {
+        const p = centerOfElement('p-slot');
+        const m = centerOfElement('m-slot');
+        midX = (p.x + m.x) / 2;
+        midY = (p.y + m.y) / 2;
+    }
     const shield = createCombatFxElement('block-shield-fx');
     shield.style.left = midX + 'px';
     shield.style.top = midY + 'px';
