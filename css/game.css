@@ -116,12 +116,9 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 .disabled-card { --disabled-hover-y: 0px; --disabled-hover-scale: 1; filter: grayscale(100%) brightness(0.5) !important; cursor: not-allowed; border-color: #555; animation: disabledCardStruggle 0.72s steps(1, end) infinite; }
 .disabled-card:hover { --disabled-hover-y: -140px; --disabled-hover-scale: 2.3; margin: 0 30px; z-index: 10000 !important; box-shadow: 0 0 30px rgba(255, 215, 0, 0.32), 0 50px 100px rgba(0,0,0,1); }
 .disabled-card-warning {
-    position: absolute;
-    left: 50%;
-    top: 42%;
+    position: fixed;
     z-index: 30;
     transform: translate(-50%, -50%);
-    width: 92%;
     padding: 6px 4px;
     border: 2px solid #ffd700;
     border-radius: 6px;
