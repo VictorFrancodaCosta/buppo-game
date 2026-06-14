@@ -1631,6 +1631,8 @@ function updateUI() {
 }
 
 function updateUnit(u) {
+    const cluster = document.getElementById(u.id + '-stats-cluster');
+    if(cluster) cluster.classList.toggle('critical-hp-pulse', u.hp === 1);
     document.getElementById(u.id+'-lvl').firstChild.nodeValue = u.lvl;
     document.getElementById(u.id+'-hp-txt').innerText = `${Math.max(0,u.hp)}/${u.maxHp}`;
     let hpPct = (Math.max(0,u.hp)/u.maxHp)*100;

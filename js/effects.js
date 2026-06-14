@@ -703,7 +703,7 @@ window.triggerDamageEffect = function() {
         if(bloodContainer) bloodContainer.innerHTML = '';
     }, 2600);
 }
-// 3. EFEITO DE BLOQUEIO (Escudo + Onda + Texto "BLOQUEADO")
+// 3. EFEITO DE BLOQUEIO (Escudo + Onda)
 window.triggerBlockEffect = function() {
     const body = document.body;
     const overlay = document.getElementById('block-overlay');
@@ -726,45 +726,11 @@ window.triggerBlockEffect = function() {
         shockwave.classList.add('active'); 
     }
 
-    // 3. TEXTO "BLOQUEADO" (Novo)
-    const blockText = document.createElement('div');
-    blockText.innerText = "BLOQUEADO";
-    
-    // Estilos Inline para garantir o visual pedido
-    blockText.style.position = 'fixed';
-    blockText.style.top = '45%'; // Um pouco acima do centro exato
-    blockText.style.left = '50%';
-    blockText.style.transform = 'translate(-50%, -50%) scale(0.5)'; // Come\u00e7a pequeno
-    blockText.style.fontFamily = "'Bangers', cursive";
-    blockText.style.fontSize = '5rem'; // Tamanho m\u00e9dio
-    blockText.style.color = '#3498db'; // Azul do bloqueio
-    blockText.style.webkitTextStroke = '2px black'; // Outline preto
-    blockText.style.textShadow = '0 0 10px rgba(52, 152, 219, 0.8)';
-    blockText.style.zIndex = '9005'; // Acima de tudo
-    blockText.style.pointerEvents = 'none';
-    blockText.style.opacity = '0';
-    blockText.style.transition = 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-
-    document.body.appendChild(blockText);
-
-    // Anima\u00e7\u00e3o de Entrada (Pop)
-    requestAnimationFrame(() => {
-        blockText.style.opacity = '1';
-        blockText.style.transform = 'translate(-50%, -50%) scale(1)';
-    });
-
     // Limpeza Geral
     setTimeout(() => {
-        // Sa\u00edda do texto
-        blockText.style.opacity = '0';
-        blockText.style.transform = 'translate(-50%, -0%) scale(1.5)'; // Sobe e cresce sumindo
-        
         // Remove classes
         body.classList.remove('screen-recoil');
         if(overlay) overlay.classList.remove('active');
         if(shockwave) shockwave.classList.remove('active');
-        
-        // Remove elemento texto do DOM
-        setTimeout(() => blockText.remove(), 300);
     }, 700);
 }

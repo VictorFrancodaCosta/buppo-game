@@ -345,9 +345,12 @@ export function triggerHpImpact(isPlayer) {
     const hpFill = document.getElementById(isPlayer ? 'p-hp-fill' : 'm-hp-fill');
     if(cluster) {
         cluster.classList.remove('avatar-hit-anim');
+        cluster.classList.remove('cluster-damage-glow');
         void cluster.offsetWidth;
         cluster.classList.add('avatar-hit-anim');
+        cluster.classList.add('cluster-damage-glow');
         setTimeout(() => cluster.classList.remove('avatar-hit-anim'), 450);
+        setTimeout(() => cluster.classList.remove('cluster-damage-glow'), 520);
     }
     if(hpFill) {
         hpFill.classList.remove('hp-hit-flash');

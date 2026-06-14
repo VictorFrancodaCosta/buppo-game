@@ -384,7 +384,7 @@ body.screen-recoil #game-background {
 .xp-mini.xp-block-bounce {
     z-index: 12610;
     transform-origin: center bottom;
-    animation: xpBlockBounce 0.74s cubic-bezier(0.18, 0.9, 0.22, 1.06) both;
+    animation: xpBlockBounce 0.92s cubic-bezier(0.18, 0.9, 0.22, 1.06) both;
 }
 
 @keyframes xpBlockBounce {
@@ -413,7 +413,15 @@ body.screen-recoil #game-background {
 }
 
 .cluster-heal-glow {
-    animation: clusterHealGlow 0.82s ease-out;
+    animation: hudFloat 4s ease-in-out infinite, clusterHealGlow 0.82s ease-out;
+}
+
+.cluster-damage-glow {
+    animation: hudFloat 4s ease-in-out infinite, clusterDamageGlow 0.52s ease-out !important;
+}
+
+.critical-hp-pulse {
+    animation: hudFloat 4s ease-in-out infinite, criticalHpPulse 1.05s ease-in-out infinite;
 }
 
 .cluster-heal-mote {
@@ -431,6 +439,18 @@ body.screen-recoil #game-background {
     22% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 18px #55efc4) brightness(1.35); }
     68% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 14px rgba(85,239,196,0.8)) brightness(1.18); }
     100% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); }
+}
+
+@keyframes clusterDamageGlow {
+    0% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); }
+    22% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 20px #ff2d2d) brightness(1.35); }
+    70% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 14px rgba(255,45,45,0.82)) brightness(1.12); }
+    100% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)); }
+}
+
+@keyframes criticalHpPulse {
+    0%, 100% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 4px rgba(255,45,45,0.35)); }
+    50% { filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 14px rgba(255,45,45,0.72)); }
 }
 
 @keyframes clusterHealMoteRise {
