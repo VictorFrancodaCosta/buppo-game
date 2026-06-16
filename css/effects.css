@@ -704,6 +704,68 @@ body.mastery-focus-active .xp-area {
     animation-name: criticalDamagePopDown;
 }
 
+.match-reward-pop {
+    position: absolute;
+    left: 58%;
+    top: -54px;
+    z-index: 8;
+    pointer-events: none;
+    white-space: nowrap;
+    font-family: 'Bangers', cursive;
+    font-size: 18px;
+    letter-spacing: 0.8px;
+    color: #fff8bf;
+    -webkit-text-stroke: 1.25px #4b0700;
+    paint-order: stroke fill;
+    text-shadow: 3px 3px 0 #4b0700, 0 5px 9px rgba(0,0,0,0.72), 0 0 14px rgba(255, 213, 0, 0.95), 0 0 28px rgba(255, 174, 0, 0.78);
+    transform: translate(-50%, 14px) rotate(-3deg) scale(0.72);
+    animation: matchRewardPop 0.86s cubic-bezier(0.18, 1.15, 0.22, 1) forwards;
+}
+
+.match-reward-gold {
+    position: absolute;
+    left: 58%;
+    top: -42px;
+    z-index: 7;
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 76px;
+    padding: 3px 10px 3px 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,215,0,0.7);
+    background: linear-gradient(90deg, rgba(21,8,0,0.78), rgba(132,83,0,0.58), rgba(21,8,0,0.72));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 5px 12px rgba(0,0,0,0.45), 0 0 13px rgba(255,215,0,0.28);
+    transform: translateX(-50%);
+    font-family: 'Russo One', sans-serif;
+    font-size: 18px;
+    color: #fff7b6;
+    text-shadow: 2px 2px 0 #1b0a03, 0 0 10px rgba(255,215,0,0.72);
+    animation: matchRewardGoldSettle 0.46s cubic-bezier(0.18, 1.2, 0.28, 1) both;
+}
+
+.match-reward-gold img {
+    width: 29px;
+    height: 29px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 0 rgba(0,0,0,0.55)) drop-shadow(0 0 8px rgba(255,215,0,0.72));
+}
+
+@keyframes matchRewardPop {
+    0% { opacity: 0; transform: translate(-50%, 14px) rotate(-3deg) scale(0.72); }
+    20% { opacity: 1; transform: translate(-50%, -5px) rotate(-3deg) scale(1.08); }
+    66% { opacity: 1; transform: translate(-50%, -10px) rotate(-3deg) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -24px) rotate(-3deg) scale(0.92); }
+}
+
+@keyframes matchRewardGoldSettle {
+    0% { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.75); }
+    65% { opacity: 1; transform: translateX(-50%) translateY(-2px) scale(1.08); }
+    100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
 @keyframes criticalDamagePop {
     0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--crit-rot)) scale(0.45); }
     20% { opacity: 1; transform: translate(-50%, -60%) rotate(var(--crit-rot)) scale(1.2); }

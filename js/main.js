@@ -28,6 +28,7 @@ window.pvpSelectedCardIndex = null;
 window.isResolvingTurn = false;
 window.pvpWaitingForTurnReset = false;
 window.pvpLocalResolutionComplete = false;
+window.matchRewardGold = 0;
 window.pvpStartData = null;
 window.latestMatchData = null;
 window.friendsRefreshInterval = null;
@@ -711,6 +712,7 @@ function startGameFlow() {
         baseDraw(monster, 6); baseDraw(player, 6);
     }
     turnCount = 1; playerHistory = [];
+    resetMatchRewardGold();
     updateUI(); dealAllInitialCards();
     if(window.gameMode === 'pvp') startPvPListener();
     updatePresence();
@@ -1043,6 +1045,41 @@ function checkEndGame(){
     } else if (window.gameMode !== 'pvp' || !window.pvpWaitingForTurnReset) { window.isProcessing = false; }
 }
 
+function resetMatchRewardGold() {
+    window.matchRewardGold = 0;
+    const reward = document.getElementById('p-match-reward-gold');
+    if(reward) reward.remove();
+    document.querySelectorAll('.match-reward-pop').forEach(el => el.remove());
+}
+
+function awardMatchRewardGold(amount = 1) {
+    if(isFriendlyMatch()) return;
+    if(!window.currentUser || amount <= 0) return;
+    window.matchRewardGold = (window.matchRewardGold || 0) + amount;
+    const cluster = document.getElementById('p-stats-cluster');
+    if(!cluster) return;
+
+    const pop = document.createElement('div');
+    pop.className = 'match-reward-pop';
+    pop.textContent = 'RECOMPENSA POR CONQUISTA';
+    cluster.appendChild(pop);
+    setTimeout(() => pop.remove(), 900);
+    setTimeout(renderMatchRewardGold, 420);
+}
+
+function renderMatchRewardGold() {
+    const cluster = document.getElementById('p-stats-cluster');
+    if(!cluster || !window.matchRewardGold) return;
+    let reward = document.getElementById('p-match-reward-gold');
+    if(!reward) {
+        reward = document.createElement('div');
+        reward.id = 'p-match-reward-gold';
+        reward.className = 'match-reward-gold';
+        cluster.appendChild(reward);
+    }
+    reward.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>x${window.matchRewardGold}</span>`;
+}
+
 function showEndPoints(points, goldReward = null) {
     const content = document.querySelector('#end-screen .end-content');
     if(!content) return;
@@ -1057,7 +1094,8 @@ function showEndPoints(points, goldReward = null) {
     el.className = points < 0 ? 'points-loss' : (points === 1 ? 'points-tie' : 'points-win');
     el.innerText = `${points > 0 ? '+' : ''}${points} PTS`;
 
-    const reward = goldReward !== null ? goldReward : ((points === 8) ? 3 : (points === 3 ? 1 : 0));
+    const baseReward = goldReward !== null ? goldReward : ((points === 8) ? 3 : (points === 3 ? 1 : 0));
+    const reward = baseReward > 0 ? baseReward + (window.matchRewardGold || 0) : 0;
     let goldEl = document.getElementById('end-gold-reward');
     if(reward > 0) {
         if(!goldEl) {
@@ -1125,7 +1163,7 @@ async function saveMatchHistory(result, pointsChange) {
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
-    const reward = await registrarVitoriaDB(window.currentUser, modoAtual);
+    const reward = await registrarVitoriaDB(window.currentUser, modoAtual, window.matchRewardGold || 0);
     const pts = reward.points || 0;
     if(pts > 0) await saveMatchHistory('WIN', pts);
 };
@@ -1503,7 +1541,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             if(pAct === 'ATAQUE') triggerAttackSlash(false);
             let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn);
             triggerHpImpact(false);
-            if(mDmg >= 3) triggerCriticalDamagePop(false);
+            if(mDmg >= 3) { triggerCriticalDamagePop(false); awardMatchRewardGold(1); }
             if(hpBefore > 0 && monster.hp <= 0) triggerClusterExplosion(false);
         }
 
@@ -1600,6 +1638,7 @@ function checkLevelUp(u, doneCb) {
 
             setTimeout(() => processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++;
+                if(u === player) awardMatchRewardGold(1);
                 lvlEl.classList.add('level-up-anim'); triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
                 xpForLevelUp.forEach(x => u.deck.push(x)); u.xp = [];
 
@@ -1656,7 +1695,7 @@ function flushRestMasteryHeals() {
     updateUI();
 }
 
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerAttackSlash(target === player); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(u.bonusAtk >= 3) triggerCriticalDamagePop(target === player); if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerAttackSlash(target === player); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(u.bonusAtk >= 3) { triggerCriticalDamagePop(target === player); if(u === player) awardMatchRewardGold(1); } if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
 
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;

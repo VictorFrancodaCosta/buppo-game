@@ -49,13 +49,13 @@ export async function saveMatchHistoryDB(currentUser, enemyName, gameMode, curre
     }
 }
 
-export async function registrarVitoriaDB(currentUser, gameMode) {
+export async function registrarVitoriaDB(currentUser, gameMode, bonusGold = 0) {
     if(!currentUser) return { points: 0, gold: 0 };
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
         let pontosGanhos = (gameMode === 'pvp') ? 8 : 3;
-        let moedasGanhas = (gameMode === 'pvp') ? 3 : 1;
+        let moedasGanhas = ((gameMode === 'pvp') ? 3 : 1) + Math.max(0, bonusGold || 0);
         if(userSnap.exists()) {
             const data = userSnap.data();
             await updateDoc(userRef, {
