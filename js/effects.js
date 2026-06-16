@@ -45,8 +45,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-avatar {
             position: absolute !important;
-            left: 20.15% !important;
-            top: 12.78% !important;
+            left: 21.4% !important;
+            top: 14.1% !important;
             width: 16% !important;
             height: auto !important;
             aspect-ratio: 1 !important;
@@ -612,7 +612,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
     let existingRow = document.querySelector('.lobby-btn-row');
     let historyButton = document.getElementById('btn-history');
     const logoutButton = document.getElementById('btn-logout');
-    if(logoutButton) logoutButton.textContent = 'TROCAR CONTA';
+    if(logoutButton) {
+        logoutButton.textContent = 'TROCAR CONTA';
+        logoutButton.removeAttribute('data-tip');
+        logoutButton.removeAttribute('title');
+    }
     if (lobbyScreen) {
         let playCenter = document.querySelector('.lobby-play-center');
         if (!playCenter) {
