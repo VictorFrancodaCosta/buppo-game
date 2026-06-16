@@ -707,10 +707,21 @@ body.mastery-focus-active .xp-area {
 .match-reward-pop {
     position: absolute;
     left: 58%;
-    top: -54px;
+    top: calc(-54px - var(--reward-pop-offset, 0px));
     z-index: 8;
     pointer-events: none;
     white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    text-align: center;
+    line-height: 1;
+    transform: translate(-50%, 14px) rotate(-3deg) scale(0.72);
+    animation: matchRewardPop 0.96s cubic-bezier(0.18, 1.15, 0.22, 1) forwards;
+}
+
+.match-reward-pop-title {
     font-family: 'Bangers', cursive;
     font-size: 18px;
     letter-spacing: 0.8px;
@@ -718,8 +729,15 @@ body.mastery-focus-active .xp-area {
     -webkit-text-stroke: 1.25px #4b0700;
     paint-order: stroke fill;
     text-shadow: 3px 3px 0 #4b0700, 0 5px 9px rgba(0,0,0,0.72), 0 0 14px rgba(255, 213, 0, 0.95), 0 0 28px rgba(255, 174, 0, 0.78);
-    transform: translate(-50%, 14px) rotate(-3deg) scale(0.72);
-    animation: matchRewardPop 0.86s cubic-bezier(0.18, 1.15, 0.22, 1) forwards;
+}
+
+.match-reward-pop-name {
+    font-family: 'Russo One', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0;
+    color: #ffffff;
+    -webkit-text-stroke: 0;
+    text-shadow: 2px 2px 0 #2a0b00, 0 0 10px rgba(255, 210, 0, 0.75), 0 4px 8px rgba(0,0,0,0.65);
 }
 
 .match-reward-gold {
