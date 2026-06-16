@@ -104,10 +104,10 @@ body.screen-recoil #game-background {
     animation: recoilMotion 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 body.critical-impact-negative #game-background {
-    animation: criticalBackgroundInvert 0.32s steps(1, end);
+    animation: criticalBackgroundInvert 0.3s steps(1, end);
 }
 body.shake-screen-hard.critical-impact-negative #game-background {
-    animation: violentShake 0.38s cubic-bezier(.36,.07,.19,.97) both, criticalBackgroundInvert 0.32s steps(1, end);
+    animation: violentShake 0.38s cubic-bezier(.36,.07,.19,.97) both, criticalBackgroundInvert 0.3s steps(1, end);
 }
 @keyframes recoilMotion {
     0% { transform: scale(1); filter: grayscale(0%) brightness(1); }
@@ -116,7 +116,7 @@ body.shake-screen-hard.critical-impact-negative #game-background {
 }
 @keyframes criticalBackgroundInvert {
     0%, 100% { filter: invert(0) saturate(1) contrast(1); }
-    18%, 58% { filter: invert(1) saturate(1.55) contrast(1.18); }
+    12%, 42% { filter: invert(1) saturate(1.55) contrast(1.18); }
 }
 
 /* Vignette Azul */
@@ -182,6 +182,31 @@ body.shake-screen-hard.critical-impact-negative #game-background {
 
 .avatar-hit-anim {
     animation: hitFlinch 0.4s ease-out forwards;
+}
+
+.cluster-slash-piece {
+    position: fixed;
+    z-index: 13008;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    filter: drop-shadow(0 10px 0 rgba(0,0,0,0.42)) drop-shadow(0 0 14px rgba(255,0,0,0.65));
+    opacity: 0;
+    animation: clusterSlashSeparate 0.42s cubic-bezier(0.16, 0.84, 0.31, 1) forwards;
+}
+.cluster-slash-piece.top {
+    clip-path: polygon(0 0, 100% 0, 100% 28%, 0 78%);
+}
+.cluster-slash-piece.bottom {
+    clip-path: polygon(0 78%, 100% 28%, 100% 100%, 0 100%);
+}
+
+@keyframes clusterSlashSeparate {
+    0% { opacity: 0; transform: translate3d(0, 0, 0); }
+    12% { opacity: 1; transform: translate3d(0, 0, 0); }
+    34% { opacity: 1; transform: translate3d(var(--slash-x), var(--slash-y), 0); }
+    76% { opacity: 1; transform: translate3d(calc(var(--slash-x) * 0.22), calc(var(--slash-y) * 0.22), 0); }
+    100% { opacity: 0; transform: translate3d(0, 0, 0); }
 }
 
 /* =========================================
@@ -282,7 +307,7 @@ body.shake-screen-hard.critical-impact-negative #game-background {
     text-shadow: 3px 3px 0 var(--mastery-stroke), 0 5px 10px rgba(0,0,0,0.72), 0 0 18px var(--mastery-glow), 0 0 34px var(--mastery-glow);
     animation: masteryBannerIn 1.35s ease-out forwards;
 }
-.mastery-banner.attack { --mastery-stroke: #e90000; --mastery-glow: rgba(255, 0, 0, 0.95); }
+.mastery-banner.attack { --mastery-stroke: #050505; --mastery-glow: rgba(255, 0, 0, 0.95); }
 .mastery-banner.block { --mastery-stroke: #050505; --mastery-glow: rgba(0, 137, 255, 0.95); }
 .mastery-banner.rest { --mastery-stroke: #050505; --mastery-glow: rgba(40, 255, 116, 0.95); }
 .mastery-banner.train { --mastery-stroke: #050505; --mastery-glow: rgba(178, 77, 255, 0.96); }

@@ -341,6 +341,7 @@ export function triggerHpImpact(isPlayer) {
         void cluster.offsetWidth;
         cluster.classList.add('avatar-hit-anim');
         cluster.classList.add('cluster-damage-glow');
+        triggerClusterSlashSplit(cluster, isPlayer);
         setTimeout(() => cluster.classList.remove('avatar-hit-anim'), 450);
         setTimeout(() => cluster.classList.remove('cluster-damage-glow'), 520);
     }
@@ -350,6 +351,27 @@ export function triggerHpImpact(isPlayer) {
         hpFill.classList.add('hp-hit-flash');
         setTimeout(() => hpFill.classList.remove('hp-hit-flash'), 500);
     }
+}
+
+function triggerClusterSlashSplit(cluster, isPlayer) {
+    const rect = cluster.getBoundingClientRect();
+    const source = isPlayer ? "url('assets/img/cluster_jogador.webp')" : "url('assets/img/cluster_inimigo.webp')";
+    const previousOpacity = cluster.style.opacity;
+    setTimeout(() => { cluster.style.opacity = '0.18'; }, 80);
+    setTimeout(() => { cluster.style.opacity = previousOpacity; }, 330);
+    ['top', 'bottom'].forEach(part => {
+        const piece = document.createElement('div');
+        piece.className = `cluster-slash-piece ${part}`;
+        piece.style.left = rect.left + 'px';
+        piece.style.top = rect.top + 'px';
+        piece.style.width = rect.width + 'px';
+        piece.style.height = rect.height + 'px';
+        piece.style.backgroundImage = source;
+        piece.style.setProperty('--slash-x', part === 'top' ? '-12px' : '12px');
+        piece.style.setProperty('--slash-y', part === 'top' ? '-7px' : '7px');
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 460);
+    });
 }
 
 export function triggerCriticalDamagePop(isPlayer) {
@@ -364,7 +386,7 @@ export function triggerCriticalDamagePop(isPlayer) {
     document.body.classList.remove('critical-impact-negative');
     void document.body.offsetWidth;
     document.body.classList.add('critical-impact-negative');
-    setTimeout(() => document.body.classList.remove('critical-impact-negative'), 340);
+    setTimeout(() => document.body.classList.remove('critical-impact-negative'), 320);
     setTimeout(() => pop.remove(), 980);
 }
 
