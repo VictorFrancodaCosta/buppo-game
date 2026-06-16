@@ -103,10 +103,20 @@ body.shake-screen-hard #game-background {
 body.screen-recoil #game-background {
     animation: recoilMotion 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+body.critical-impact-negative #game-background {
+    animation: criticalBackgroundInvert 0.32s steps(1, end);
+}
+body.shake-screen-hard.critical-impact-negative #game-background {
+    animation: violentShake 0.38s cubic-bezier(.36,.07,.19,.97) both, criticalBackgroundInvert 0.32s steps(1, end);
+}
 @keyframes recoilMotion {
     0% { transform: scale(1); filter: grayscale(0%) brightness(1); }
     30% { transform: scale(0.96); filter: grayscale(100%) brightness(0.96); }
     100% { transform: scale(1); filter: grayscale(0%) brightness(1); }
+}
+@keyframes criticalBackgroundInvert {
+    0%, 100% { filter: invert(0) saturate(1) contrast(1); }
+    18%, 58% { filter: invert(1) saturate(1.55) contrast(1.18); }
 }
 
 /* Vignette Azul */
@@ -261,20 +271,22 @@ body.screen-recoil #game-background {
     font-family: 'Bangers', cursive;
     font-size: 36px;
     letter-spacing: 1px;
-    color: #ffd700;
-    border-top: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
+    color: #fff;
+    --mastery-stroke: #120602;
+    --mastery-glow: rgba(255, 215, 0, 0.88);
+    border-top: 2px solid rgba(255,255,255,0.86);
+    border-bottom: 2px solid rgba(255,255,255,0.86);
     background: linear-gradient(90deg, transparent, rgba(0,0,0,0.78), transparent);
-    -webkit-text-stroke: 2px #120602;
+    -webkit-text-stroke: 2px var(--mastery-stroke);
     paint-order: stroke fill;
-    text-shadow: 3px 3px 0 #120602, 0 5px 10px rgba(0,0,0,0.72), 0 0 18px currentColor;
+    text-shadow: 3px 3px 0 var(--mastery-stroke), 0 5px 10px rgba(0,0,0,0.72), 0 0 18px var(--mastery-glow), 0 0 34px var(--mastery-glow);
     animation: masteryBannerIn 1.35s ease-out forwards;
 }
-.mastery-banner.attack { color: #ff4757; }
-.mastery-banner.block { color: #00cec9; }
-.mastery-banner.rest { color: #55efc4; }
-.mastery-banner.train { color: #a29bfe; }
-.mastery-banner.disarm { color: #ffa502; }
+.mastery-banner.attack { --mastery-stroke: #e90000; --mastery-glow: rgba(255, 0, 0, 0.95); }
+.mastery-banner.block { --mastery-stroke: #050505; --mastery-glow: rgba(0, 137, 255, 0.95); }
+.mastery-banner.rest { --mastery-stroke: #050505; --mastery-glow: rgba(40, 255, 116, 0.95); }
+.mastery-banner.train { --mastery-stroke: #050505; --mastery-glow: rgba(178, 77, 255, 0.96); }
+.mastery-banner.disarm { --mastery-stroke: #050505; --mastery-glow: rgba(255, 218, 32, 0.98); }
 .mastery-banner.from-player { top: 58%; }
 .mastery-banner.from-enemy { top: 34%; }
 
@@ -664,9 +676,13 @@ body.mastery-focus-active .xp-area {
     color: #ffe58a;
     -webkit-text-stroke: 2.4px #4b0700;
     paint-order: stroke fill;
-    text-shadow: 4px 4px 0 #4b0700, 0 6px 10px rgba(0,0,0,0.75), 0 0 18px rgba(255,45,45,0.8);
+    text-shadow: 4px 4px 0 #4b0700, 0 6px 10px rgba(0,0,0,0.75), 0 0 14px rgba(255, 243, 76, 1), 0 0 28px rgba(255, 213, 0, 0.98), 0 0 46px rgba(255, 174, 0, 0.82);
     transform: translate(-50%, -50%) rotate(var(--crit-rot)) scale(0.45);
     animation: criticalDamagePop 0.96s cubic-bezier(0.18, 1.15, 0.22, 1) forwards;
+}
+
+.critical-damage-pop.from-enemy {
+    animation-name: criticalDamagePopDown;
 }
 
 @keyframes criticalDamagePop {
@@ -674,6 +690,13 @@ body.mastery-focus-active .xp-area {
     20% { opacity: 1; transform: translate(-50%, -60%) rotate(var(--crit-rot)) scale(1.2); }
     52% { opacity: 1; transform: translate(-50%, -54%) rotate(var(--crit-rot)) scale(1); }
     100% { opacity: 0; transform: translate(-50%, -92%) rotate(var(--crit-rot)) scale(0.88); }
+}
+
+@keyframes criticalDamagePopDown {
+    0% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--crit-rot)) scale(0.45); }
+    20% { opacity: 1; transform: translate(-50%, -36%) rotate(var(--crit-rot)) scale(1.2); }
+    52% { opacity: 1; transform: translate(-50%, -28%) rotate(var(--crit-rot)) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, 22%) rotate(var(--crit-rot)) scale(0.88); }
 }
 
 .cluster-defeated-hidden {
