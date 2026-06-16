@@ -252,6 +252,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         html += '</tbody></table>';
         document.getElementById('ranking-content').innerHTML = html;
     });
+    if(document.activeElement && document.activeElement.closest && document.activeElement.closest('#end-screen')) document.activeElement.blur();
     window.showScreen('lobby-screen'); document.getElementById('end-screen').classList.remove('visible');
     document.getElementById('btn-config-toggle').style.display = 'flex';
 };
@@ -1449,6 +1450,7 @@ window.registrarEmpateOnline = async function(modo = 'pve') {
 };
 
 window.restartMatch = function() {
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
     if(isFriendlyMatch() && window.currentMatchId && window.myRole) {
         const rematchField = window.myRole === 'player1' ? 'player1Rematch' : 'player2Rematch';
         updateDoc(doc(db, "matches", window.currentMatchId), { [rematchField]: true }).then(async () => {
@@ -1538,6 +1540,30 @@ document.addEventListener('click', function(e) {
     const target = e.target.closest('#deck-selection-screen .circle-btn, #deck-selection-screen .btn-back, #deck-selection-screen button, .return-btn');
     if (target) { e.stopPropagation(); window.playNavSound(); window.transitionToLobby(true); }
 });
+
+document.addEventListener('keydown', function(e) {
+    if(e.code !== 'Space' && e.code !== 'Enter') return;
+    const active = document.activeElement;
+    if(!active || !active.closest || !active.closest('#end-screen')) return;
+    const endVisible = document.getElementById('end-screen')?.classList.contains('visible');
+    if(!endVisible) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        active.blur();
+    }
+}, true);
+
+document.addEventListener('keyup', function(e) {
+    if(e.code !== 'Space' && e.code !== 'Enter') return;
+    const active = document.activeElement;
+    if(!active || !active.closest || !active.closest('#end-screen')) return;
+    const endVisible = document.getElementById('end-screen')?.classList.contains('visible');
+    if(!endVisible) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        active.blur();
+    }
+}, true);
 
 window.addEventListener('beforeunload', () => { if (window.gameMode === 'pvp' && window.currentMatchId && !document.getElementById('end-screen').classList.contains('visible')) notifyAbandonment(); });
 document.addEventListener('visibilitychange', () => { if(!document.hidden && window.updatePresence) window.updatePresence(); });
