@@ -45,9 +45,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-avatar {
             position: absolute !important;
-            left: 18.9% !important;
-            top: 12.4% !important;
-            width: 13.4% !important;
+            left: 18.45% !important;
+            top: 12.08% !important;
+            width: 16% !important;
             height: auto !important;
             aspect-ratio: 1 !important;
             transform: translate(-50%, -50%) !important;
