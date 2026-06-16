@@ -355,16 +355,38 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         #btn-logout {
-            position: fixed !important;
+            position: absolute !important;
             left: 50% !important;
-            top: calc(8vh + min(82vh, 860px) + 2px) !important;
-            bottom: auto !important;
+            top: auto !important;
+            bottom: 4.8% !important;
             transform: translateX(-50%) !important;
             margin: 0 !important;
-            padding: 6px 18px !important;
-            font-size: 10px !important;
-            min-width: 162px !important;
-            z-index: 2 !important;
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #fff !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: 25px !important;
+            line-height: 1 !important;
+            letter-spacing: 1px !important;
+            min-width: 0 !important;
+            width: auto !important;
+            z-index: 3 !important;
+            -webkit-text-stroke: 1.35px #1b0a03 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 3px 3px 0 #1b0a03, 0 4px 8px rgba(0,0,0,0.72) !important;
+            transition: transform 0.16s cubic-bezier(0.2, 1, 0.3, 1), text-shadow 0.16s ease, color 0.16s ease !important;
+        }
+
+        #btn-logout:hover {
+            color: #fff8c8 !important;
+            transform: translateX(-50%) scale(1.08) !important;
+            text-shadow: 3px 3px 0 #1b0a03, 0 0 14px rgba(255,215,0,0.48), 0 5px 9px rgba(0,0,0,0.78) !important;
+        }
+
+        #btn-logout:active {
+            transform: translateX(-50%) scale(0.98) !important;
         }
 
         @media (max-width: 980px) and (orientation: landscape) {
@@ -547,6 +569,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
     const overlay = lobbyScreen?.querySelector('.lobby-ui-overlay') || null;
     let existingRow = document.querySelector('.lobby-btn-row');
     let historyButton = document.getElementById('btn-history');
+    const logoutButton = document.getElementById('btn-logout');
+    if(logoutButton) logoutButton.textContent = 'TROCAR CONTA';
     if (lobbyScreen) {
         let playCenter = document.querySelector('.lobby-play-center');
         if (!playCenter) {

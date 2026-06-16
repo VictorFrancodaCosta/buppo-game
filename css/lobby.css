@@ -54,10 +54,10 @@
 @keyframes topRankGlow { 0%, 100% { text-shadow: 1px 1px 0 #000, 0 0 8px rgba(255,215,0,0.35); } 50% { text-shadow: 1px 1px 0 #000, 0 0 17px rgba(255,215,0,0.9); } }
 .lobby-btn-row { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-bottom: 10px; align-items: center; }
 #btn-play-pvp { width: 100%; background: linear-gradient(180deg, #f9d83d 0%, #f39c12 100%); border: 2px solid #fff; border-radius: 50px; padding: 12px 0; cursor: pointer; box-shadow: 0 7px 0 #9c5a08, 0 12px 18px rgba(0,0,0,0.35), 0 0 0 rgba(243, 156, 18, 0); transition: transform 0.16s cubic-bezier(0.2, 1, 0.3, 1), filter 0.16s, box-shadow 0.16s; display: flex; flex-direction: column; align-items: center; justify-content: center; text-shadow: 1px 1px 0 rgba(255,255,255,0.4); animation: pulseGold 2s infinite; position: relative; overflow: hidden; }
-#btn-play-pvp::after, #btn-play-pve::after, #btn-logout::after, .friends-add-icon::after { content: ""; position: absolute; inset: 50%; width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.75), transparent 70%); opacity: 0; transform: translate(-50%, -50%) scale(0); pointer-events: none; }
+#btn-play-pvp::after, #btn-play-pve::after, .friends-add-icon::after { content: ""; position: absolute; inset: 50%; width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.75), transparent 70%); opacity: 0; transform: translate(-50%, -50%) scale(0); pointer-events: none; }
 #btn-play-pvp:hover { transform: translateY(-3px) scale(1.035); filter: brightness(1.1); box-shadow: 0 10px 0 #9c5a08, 0 18px 22px rgba(0,0,0,0.38), 0 0 22px rgba(255,215,0,0.24); }
 #btn-play-pvp:active { transform: translateY(5px) scale(0.985); box-shadow: 0 2px 0 #9c5a08, 0 6px 10px rgba(0,0,0,0.38); }
-#btn-play-pvp:active::after, #btn-play-pve:active::after, #btn-logout:active::after, .friends-add-icon:active::after { animation: buttonRipple 0.45s ease-out; }
+#btn-play-pvp:active::after, #btn-play-pve:active::after, .friends-add-icon:active::after { animation: buttonRipple 0.45s ease-out; }
 #btn-play-pvp .btn-title { font-family: 'Russo One', sans-serif; font-size: 28px; color: #5d4037; text-transform: uppercase; }
 #btn-play-pvp .btn-sub { font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 800; color: #8e44ad; margin-top: -2px; }
 @keyframes pulseGold { 0% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(241, 196, 15, 0); } 100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); } }
@@ -66,9 +66,9 @@
 #btn-play-pve:active { transform: translateY(4px) scale(0.985); box-shadow: 0 2px 0 #4d1f5e, 0 5px 9px rgba(0,0,0,0.36); }
 #btn-play-pve .btn-title { font-family: 'Russo One', sans-serif; font-size: 24px; color: #ecf0f1; }
 #btn-play-pve .btn-sub { font-family: 'Montserrat', sans-serif; font-size: 9px; color: #bdc3c7; }
-#btn-logout { background: rgba(0,0,0,0.4); border: 1px solid #fff; color: #ccc; padding: 8px 20px; border-radius: 30px; cursor: pointer; font-size: 12px; font-family: 'Russo One'; text-transform: uppercase; position: relative; overflow: hidden; transition: transform 0.16s, box-shadow 0.16s, background 0.16s; }
-#btn-logout:hover { background: rgba(255,0,0,0.4); color: #fff; }
-#btn-logout:active { transform: translateY(2px) scale(0.97); }
+#btn-logout { position: absolute; left: 50%; bottom: 4.8%; transform: translateX(-50%); width: auto; min-width: 0; padding: 0; margin: 0; border: none; background: transparent; box-shadow: none; color: #fff; cursor: pointer; font-family: 'Bangers', cursive; font-size: 25px; line-height: 1; letter-spacing: 1px; text-transform: uppercase; -webkit-text-stroke: 1.35px #1b0a03; paint-order: stroke fill; text-shadow: 3px 3px 0 #1b0a03, 0 4px 8px rgba(0,0,0,0.72); overflow: visible; transition: transform 0.16s cubic-bezier(0.2, 1, 0.3, 1), text-shadow 0.16s ease, color 0.16s ease; }
+#btn-logout:hover { color: #fff8c8; transform: translateX(-50%) scale(1.08); text-shadow: 3px 3px 0 #1b0a03, 0 0 14px rgba(255,215,0,0.48), 0 5px 9px rgba(0,0,0,0.78); }
+#btn-logout:active { transform: translateX(-50%) scale(0.98); }
 @keyframes buttonRipple { 0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(18); } }
 #lobby-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
 .lobby-flare { position: absolute; background: radial-gradient(circle, #fff 10%, var(--gold) 60%, transparent 100%); border-radius: 50%; opacity: 0; box-shadow: 0 0 15px var(--gold); filter: blur(2px); animation: flareFloat linear infinite both; }
@@ -165,7 +165,7 @@ button:disabled, .mini-btn:disabled { cursor: not-allowed !important; opacity: 0
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* MEDIA QUERIES LOBBY */
-@media (max-width: 768px) { #lobby-screen { align-items: center !important; justify-content: center !important; padding-left: 0 !important; overflow: hidden; } #lobby-screen::after { left: 14px; bottom: 12px; font-size: 10px; } .lobby-frame-container { position: relative; top: auto; left: auto; width: 95vw; max-width: 550px; height: auto; max-height: 80vh; margin-left: 0; margin-top: 80px; display: flex; justify-content: center; align-items: center; } .lobby-frame-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; } .lobby-ui-overlay { padding: 28% 14% 12% 14%; } .user-welcome { font-size: 26px; margin-bottom: 5px; } .user-stats { font-size: 13px; margin-bottom: 8px; } .gold-wallet { min-height: 30px; font-size: 16px; margin-bottom: 7px; } .gold-wallet img { width: 28px; height: 28px; } #ranking-table { font-size: 13px; } #ranking-table th, #ranking-table td { padding: 6px 4px; } .ranking-scroll { margin-bottom: 15px; max-height: 180px; } #btn-play-match { font-size: 20px; padding: 12px 0; width: 90%; margin-bottom: 8px; } #btn-logout { font-size: 11px; padding: 6px 18px; } .lobby-logo-right { left: 50%; top: 5%; transform: translate(-50%, 0); width: 410px; position: absolute; z-index: 20; } #btn-play-pvp .btn-title { font-size: 26px; } #btn-play-pve .btn-title { font-size: 24px; } .lobby-btn-row { gap: 8px; } }
+@media (max-width: 768px) { #lobby-screen { align-items: center !important; justify-content: center !important; padding-left: 0 !important; overflow: hidden; } #lobby-screen::after { left: 14px; bottom: 12px; font-size: 10px; } .lobby-frame-container { position: relative; top: auto; left: auto; width: 95vw; max-width: 550px; height: auto; max-height: 80vh; margin-left: 0; margin-top: 80px; display: flex; justify-content: center; align-items: center; } .lobby-frame-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; } .lobby-ui-overlay { padding: 28% 14% 12% 14%; } .user-welcome { font-size: 26px; margin-bottom: 5px; } .user-stats { font-size: 13px; margin-bottom: 8px; } .gold-wallet { min-height: 30px; font-size: 16px; margin-bottom: 7px; } .gold-wallet img { width: 28px; height: 28px; } #ranking-table { font-size: 13px; } #ranking-table th, #ranking-table td { padding: 6px 4px; } .ranking-scroll { margin-bottom: 15px; max-height: 180px; } #btn-play-match { font-size: 20px; padding: 12px 0; width: 90%; margin-bottom: 8px; } #btn-logout { bottom: 4.6%; padding: 0; font-size: 20px; } .lobby-logo-right { left: 50%; top: 5%; transform: translate(-50%, 0); width: 410px; position: absolute; z-index: 20; } #btn-play-pvp .btn-title { font-size: 26px; } #btn-play-pve .btn-title { font-size: 24px; } .lobby-btn-row { gap: 8px; } }
 @media (max-height: 800px) { .deck-option { width: 300px; } .img-titulo-placa { max-width: 450px; } #deck-selection-screen { gap: 15px; } }
 
 @media (max-height: 820px) {
@@ -284,8 +284,9 @@ button:disabled, .mini-btn:disabled { cursor: not-allowed !important; opacity: 0
     }
 
     #btn-logout {
-        font-size: 9px;
-        padding: 5px 12px;
+        bottom: 4.4%;
+        padding: 0;
+        font-size: 16px;
     }
 
     #deck-selection-screen {
