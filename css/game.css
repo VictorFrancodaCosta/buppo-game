@@ -26,10 +26,10 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 #end-screen.visible .end-content { transform: scale(1); }
 #end-title { font-family: 'Russo One', sans-serif; font-size: 80px; margin-bottom: 30px; text-transform: uppercase; text-shadow: 0 5px 15px rgba(0,0,0,0.5); margin-top: 0; }
 .win-theme { color: #ffd700; text-shadow: 0 0 30px rgba(255, 215, 0, 0.6); } .lose-theme { color: #ff7675; text-shadow: 0 0 30px rgba(255, 118, 117, 0.6); } .tie-theme { color: #fff; text-shadow: 0 0 30px rgba(255, 255, 255, 0.6); }
-.end-reward-row { display: flex; align-items: center; justify-content: center; gap: 26px; margin: -16px 0 28px; flex-wrap: wrap; }
-.end-reward-gold { display: inline-flex; align-items: center; justify-content: center; gap: 10px; margin: 0; color: #fff8bf; font-family: 'Russo One', sans-serif; font-size: 30px; text-transform: uppercase; text-shadow: 2px 2px 0 #1b0a03, 0 0 18px rgba(255,215,0,0.78); animation: endGoldRewardPop 0.65s cubic-bezier(0.18, 1.25, 0.28, 1) both; }
-.end-reward-gold img { width: 45px; height: 45px; object-fit: contain; filter: drop-shadow(0 3px 0 rgba(0,0,0,0.62)) drop-shadow(0 0 13px rgba(255,215,0,0.8)); }
-.end-points-arrow { position: relative; width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.34); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 10px rgba(0,0,0,0.42); }
+.end-reward-row { display: flex; align-items: center; justify-content: center; gap: 22px; margin: -16px 0 28px; flex-wrap: wrap; }
+.end-reward-gold { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; margin: 0; color: #fff8bf; font-family: 'Russo One', sans-serif; font-size: 30px; line-height: 1; text-transform: uppercase; text-shadow: 2px 2px 0 #1b0a03, 0 0 18px rgba(255,215,0,0.78); animation: endGoldRewardPop 0.65s cubic-bezier(0.18, 1.25, 0.28, 1) both; }
+.end-reward-gold img { width: 36px; height: 36px; object-fit: contain; flex: 0 0 36px; transform: translateY(1px); filter: drop-shadow(0 3px 0 rgba(0,0,0,0.62)) drop-shadow(0 0 13px rgba(255,215,0,0.8)); }
+.end-points-arrow { position: relative; width: 36px; height: 36px; flex: 0 0 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.34); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 10px rgba(0,0,0,0.42); }
 .end-points-arrow::before { content: ""; width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.5)); }
 .end-points-arrow.up::before { border-bottom: 18px solid #2ecc71; transform: translateY(-2px); }
 .end-points-arrow.down::before { border-top: 18px solid #ff7675; transform: translateY(2px); }
@@ -436,6 +436,15 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     .end-reward-gold {
         font-size: 22px;
         margin: 0;
+        height: 36px;
+        line-height: 1;
+    }
+
+    .end-reward-gold img,
+    .end-points-arrow {
+        width: 30px;
+        height: 30px;
+        flex-basis: 30px;
     }
 
     .end-reward-gold img {

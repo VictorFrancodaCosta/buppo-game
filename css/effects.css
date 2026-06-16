@@ -832,9 +832,11 @@ body.mastery-focus-active .xp-area {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
+    height: 44px;
     font-family: 'Russo One', sans-serif;
     font-size: 34px;
+    line-height: 1;
     letter-spacing: 2px;
     text-shadow: 0 3px 0 #000, 0 0 22px currentColor;
 }
