@@ -357,9 +357,14 @@ export function triggerCriticalDamagePop(isPlayer) {
     if(!cluster) return;
     const rect = cluster.getBoundingClientRect();
     const pop = createCombatFxElement('critical-damage-pop', 'CRÍTICO!');
+    pop.classList.add(isPlayer ? 'from-player' : 'from-enemy');
     pop.style.left = (rect.left + rect.width * (isPlayer ? 0.72 : 0.28)) + 'px';
-    pop.style.top = (rect.top + rect.height * 0.08) + 'px';
+    pop.style.top = (rect.top + rect.height * (isPlayer ? 0.08 : 0.58)) + 'px';
     pop.style.setProperty('--crit-rot', isPlayer ? '-7deg' : '7deg');
+    document.body.classList.remove('critical-impact-negative');
+    void document.body.offsetWidth;
+    document.body.classList.add('critical-impact-negative');
+    setTimeout(() => document.body.classList.remove('critical-impact-negative'), 340);
     setTimeout(() => pop.remove(), 980);
 }
 
