@@ -1084,8 +1084,8 @@ function awardMatchRewardGold(amount = 1, title = 'Conquista') {
     pop.style.setProperty('--reward-pop-offset', `${activePops * 42}px`);
     pop.innerHTML = `<span class="match-reward-pop-title">RECOMPENSA POR CONQUISTA</span><span class="match-reward-pop-name">${title}</span>`;
     cluster.appendChild(pop);
-    setTimeout(() => pop.remove(), 900);
-    setTimeout(renderMatchRewardGold, 420);
+    setTimeout(() => pop.remove(), 1600);
+    setTimeout(renderMatchRewardGold, 650);
 }
 
 function renderMatchRewardGold() {

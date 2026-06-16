@@ -718,7 +718,7 @@ body.mastery-focus-active .xp-area {
     text-align: center;
     line-height: 1;
     transform: translate(-50%, 14px) rotate(-3deg) scale(0.72);
-    animation: matchRewardPop 0.96s cubic-bezier(0.18, 1.15, 0.22, 1) forwards;
+    animation: matchRewardPop 1.5s cubic-bezier(0.18, 1.15, 0.22, 1) forwards;
 }
 
 .match-reward-pop-title {
@@ -773,9 +773,9 @@ body.mastery-focus-active .xp-area {
 
 @keyframes matchRewardPop {
     0% { opacity: 0; transform: translate(-50%, 14px) rotate(-3deg) scale(0.72); }
-    20% { opacity: 1; transform: translate(-50%, -5px) rotate(-3deg) scale(1.08); }
-    66% { opacity: 1; transform: translate(-50%, -10px) rotate(-3deg) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -24px) rotate(-3deg) scale(0.92); }
+    16% { opacity: 1; transform: translate(-50%, -5px) rotate(-3deg) scale(1.08); }
+    76% { opacity: 1; transform: translate(-50%, -13px) rotate(-3deg) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -32px) rotate(-3deg) scale(0.92); }
 }
 
 @keyframes matchRewardGoldSettle {
