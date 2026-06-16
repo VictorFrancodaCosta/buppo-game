@@ -341,7 +341,7 @@ export function triggerHpImpact(isPlayer) {
         void cluster.offsetWidth;
         cluster.classList.add('avatar-hit-anim');
         cluster.classList.add('cluster-damage-glow');
-        triggerClusterSlashSplit(cluster, isPlayer);
+        if(!isPlayer) triggerOpponentBloodDrops(cluster);
         setTimeout(() => cluster.classList.remove('avatar-hit-anim'), 450);
         setTimeout(() => cluster.classList.remove('cluster-damage-glow'), 520);
     }
@@ -353,28 +353,43 @@ export function triggerHpImpact(isPlayer) {
     }
 }
 
-function triggerClusterSlashSplit(cluster, isPlayer) {
+function triggerOpponentBloodDrops(cluster) {
     const rect = cluster.getBoundingClientRect();
-    const source = isPlayer ? "url('assets/img/cluster_jogador.webp')" : "url('assets/img/cluster_inimigo.webp')";
-    const previousOpacity = cluster.style.opacity;
-    setTimeout(() => { cluster.style.opacity = '0.18'; }, 80);
-    setTimeout(() => { cluster.style.opacity = previousOpacity; }, 330);
-    ['top', 'bottom'].forEach(part => {
-        const piece = document.createElement('div');
-        piece.className = `cluster-slash-piece ${part}`;
-        piece.style.left = rect.left + 'px';
-        piece.style.top = rect.top + 'px';
-        piece.style.width = rect.width + 'px';
-        piece.style.height = rect.height + 'px';
-        piece.style.backgroundImage = source;
-        piece.style.setProperty('--slash-x', part === 'top' ? '-12px' : '12px');
-        piece.style.setProperty('--slash-y', part === 'top' ? '-7px' : '7px');
-        document.body.appendChild(piece);
-        setTimeout(() => piece.remove(), 460);
-    });
+    for(let i = 0; i < 9; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'cluster-blood-drop';
+        const size = 5 + Math.random() * 9;
+        drop.style.width = size + 'px';
+        drop.style.height = (size * (0.9 + Math.random() * 0.8)) + 'px';
+        drop.style.left = (rect.left + rect.width * (0.18 + Math.random() * 0.62)) + 'px';
+        drop.style.top = (rect.top + rect.height * (0.16 + Math.random() * 0.5)) + 'px';
+        drop.style.setProperty('--blood-x', ((Math.random() - 0.5) * 34) + 'px');
+        drop.style.setProperty('--blood-y', (18 + Math.random() * 32) + 'px');
+        drop.style.animationDelay = (Math.random() * 0.07) + 's';
+        document.body.appendChild(drop);
+        setTimeout(() => drop.remove(), 620);
+    }
 }
 
 export function triggerCriticalDamagePop(isPlayer) {
+    const cluster = document.getElementById(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+    if(!cluster) return;
+    const rect = cluster.getBoundingClientRect();
+    const pop = createCombatFxElement('critical-damage-pop', 'CRÃTICO!');
+    pop.textContent = 'CR\u00cdTICO!';
+    pop.classList.add(isPlayer ? 'from-player' : 'from-enemy');
+    pop.style.left = (rect.left + rect.width * (isPlayer ? 0.72 : 0.28)) + 'px';
+    pop.style.top = (rect.top + rect.height * (isPlayer ? 0.08 : 0.58)) + 'px';
+    pop.style.setProperty('--crit-rot', isPlayer ? '-7deg' : '7deg');
+    document.body.classList.remove('critical-impact-negative');
+    void document.body.offsetWidth;
+    document.body.classList.add('critical-impact-negative');
+    setTimeout(() => document.body.classList.remove('critical-impact-negative'), 220);
+    setTimeout(() => pop.remove(), 980);
+}
+
+/*
+function unusedTriggerCriticalDamagePopLegacy(isPlayer) {
     const cluster = document.getElementById(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
     if(!cluster) return;
     const rect = cluster.getBoundingClientRect();
@@ -389,6 +404,7 @@ export function triggerCriticalDamagePop(isPlayer) {
     setTimeout(() => document.body.classList.remove('critical-impact-negative'), 320);
     setTimeout(() => pop.remove(), 980);
 }
+*/
 
 export function triggerClusterExplosion(isPlayer) {
     const cluster = document.getElementById(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
