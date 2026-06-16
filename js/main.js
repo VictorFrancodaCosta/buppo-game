@@ -266,7 +266,15 @@ function renderTurnDisplay() {
     const turnEl = document.getElementById('turn-txt');
     if(!turnEl) return;
     const time = Number.isFinite(window.turnTimeLeft) ? window.turnTimeLeft : 10;
-    turnEl.innerHTML = `<span class="turn-label">TURNO ${turnCount}</span><span class="turn-timer ${time <= 5 ? 'danger' : ''}">${time}</span>`;
+    turnEl.innerHTML = `<span class="turn-label">TURNO ${turnCount}</span>`;
+    let timerEl = document.getElementById('turn-timer');
+    if(!timerEl) {
+        timerEl = document.createElement('div');
+        timerEl.id = 'turn-timer';
+        document.body.appendChild(timerEl);
+    }
+    timerEl.className = `turn-timer ${time <= 5 ? 'danger' : ''}`;
+    timerEl.textContent = time;
 }
 
 function playTurnTimerTick() {

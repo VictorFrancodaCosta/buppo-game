@@ -722,8 +722,8 @@ body.mastery-focus-active .xp-area {
 }
 
 .match-reward-pop.enemy-reward-pop {
-    left: 34%;
-    top: calc(150px + var(--reward-pop-offset, 0px));
+    left: 48%;
+    top: calc(194px + var(--reward-pop-offset, 0px));
     transform: translate(-50%, -14px) rotate(3deg) scale(0.72);
     animation-name: matchRewardPopEnemy;
 }
@@ -843,14 +843,15 @@ body.mastery-focus-active .xp-area {
 
 #end-points {
     margin: 0;
-    display: inline-flex;
+    display: inline-grid;
+    grid-template-columns: 32px auto;
     align-items: center;
     justify-content: center;
     gap: 8px;
     height: 44px;
     font-family: 'Russo One', sans-serif;
-    font-size: 34px;
-    line-height: 1;
+    font-size: 30px;
+    line-height: 44px;
     letter-spacing: 2px;
     text-shadow: 0 3px 0 #000, 0 0 22px currentColor;
 }
