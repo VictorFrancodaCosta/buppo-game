@@ -262,7 +262,23 @@ function renderLobbyIdentity(name, gameId) {
     if(!el) return;
     const safeName = escapeHTML(getPlayerFirstName(name));
     const safeId = escapeHTML(gameId || "----");
+    setTimeout(() => renderLobbyAvatar(name), 0);
     el.innerHTML = `OLÁ, ${safeName} <span class="player-game-id">#${safeId}</span>`;
+}
+
+function renderLobbyAvatar(name) {
+    const avatar = document.getElementById('lobby-avatar');
+    if(!avatar) return;
+    const photoURL = window.currentUser && window.currentUser.photoURL ? window.currentUser.photoURL : '';
+    const initial = getPlayerFirstName(name || (window.currentUser && window.currentUser.displayName) || 'JOGADOR').charAt(0) || 'B';
+    avatar.textContent = photoURL ? '' : initial;
+    if(photoURL) {
+        avatar.style.backgroundImage = `url("${photoURL}")`;
+        avatar.classList.add('has-photo');
+    } else {
+        avatar.style.backgroundImage = '';
+        avatar.classList.remove('has-photo');
+    }
 }
 
 function isFriendOnline(lastSeen) {

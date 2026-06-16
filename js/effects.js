@@ -36,7 +36,31 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-player-card {
+            display: contents !important;
+        }
+
+        .lobby-identity-main {
             display: none !important;
+        }
+
+        .lobby-avatar {
+            position: absolute !important;
+            left: 18.9% !important;
+            top: 12.4% !important;
+            width: 13.4% !important;
+            height: auto !important;
+            aspect-ratio: 1 !important;
+            transform: translate(-50%, -50%) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 50% !important;
+            overflow: hidden !important;
+            background-size: cover !important;
+            background-position: center !important;
+            border: 2px solid rgba(255,255,255,0.72) !important;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.46), 0 0 0 2px rgba(0,0,0,0.48), 0 0 18px rgba(255,215,0,0.38) !important;
+            z-index: 4 !important;
         }
 
         .lobby-play-center {
@@ -68,25 +92,30 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .user-welcome {
+            align-self: flex-end !important;
+            width: 73% !important;
             font-size: 30px !important;
             line-height: 1.02 !important;
             margin-bottom: 5px !important;
-            max-width: 96% !important;
+            max-width: 73% !important;
         }
 
         .user-stats {
+            align-self: flex-end !important;
+            width: 73% !important;
             font-size: 13px !important;
             margin-bottom: 6px !important;
         }
 
         .gold-wallet {
+            align-self: flex-end !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             gap: 7px !important;
             min-height: 32px !important;
             padding: 3px 12px 3px 7px !important;
-            margin: 0 0 7px !important;
+            margin: 0 6% 7px 0 !important;
             border: 1px solid rgba(255,215,0,0.62) !important;
             border-radius: 999px !important;
             background: linear-gradient(90deg, rgba(0,0,0,0.42), rgba(255,215,0,0.16), rgba(0,0,0,0.36)) !important;

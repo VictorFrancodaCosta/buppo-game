@@ -18,18 +18,18 @@
 @keyframes frameFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 .lobby-frame-img { height: 100%; width: auto; filter: drop-shadow(0 20px 50px rgba(0,0,0,0.8)); display: block; }
 .lobby-ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; padding: 18% 14% 14% 14%; box-sizing: border-box; text-align: center; color: #fff; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
-.lobby-player-card { width: 92%; min-height: 54px; display: flex; align-items: center; gap: 10px; padding: 7px 10px; margin-bottom: 6px; box-sizing: border-box; border-radius: 10px; border: 1px solid rgba(255,215,0,0.48); background: linear-gradient(90deg, rgba(0,0,0,0.38), rgba(255,215,0,0.13), rgba(0,0,0,0.28)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 7px 16px rgba(0,0,0,0.32); animation: identitySlideIn 0.55s cubic-bezier(0.2, 1.1, 0.3, 1) both; }
-.lobby-avatar { width: 39px; height: 39px; flex: 0 0 39px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: radial-gradient(circle at 35% 25%, #fff7ba 0 12%, #f1c40f 35%, #9b4b10 100%); border: 2px solid #fff; color: #3e2723; font-family: 'Russo One', sans-serif; font-size: 18px; box-shadow: 0 0 0 2px rgba(0,0,0,0.45), 0 0 18px rgba(255,215,0,0.42); text-shadow: 1px 1px 0 rgba(255,255,255,0.45); }
-.lobby-identity-main { flex: 1; min-width: 0; text-align: left; }
+.lobby-player-card { display: contents; }
+.lobby-avatar { position: absolute; left: 18.9%; top: 12.4%; width: 13.4%; aspect-ratio: 1; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 35% 25%, #fff7ba 0 12%, #f1c40f 35%, #9b4b10 100%); background-size: cover; background-position: center; border: 2px solid rgba(255,255,255,0.72); color: #3e2723; font-family: 'Russo One', sans-serif; font-size: clamp(18px, 2.5vw, 34px); box-shadow: inset 0 0 10px rgba(0,0,0,0.46), 0 0 0 2px rgba(0,0,0,0.48), 0 0 18px rgba(255,215,0,0.38); text-shadow: 1px 1px 0 rgba(255,255,255,0.45); z-index: 4; }
+.lobby-identity-main { display: none; }
 .lobby-rank-title { font-family: 'Russo One', sans-serif; font-size: 10px; color: #ffd700; letter-spacing: 0.7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lobby-xp-track { position: relative; height: 8px; margin-top: 6px; border-radius: 999px; overflow: hidden; background: rgba(0,0,0,0.48); box-shadow: inset 0 1px 4px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.14); }
 .lobby-xp-track span { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: inherit; background: linear-gradient(90deg, #2ecc71, #f1c40f, #fff2a6); box-shadow: 0 0 12px rgba(255,215,0,0.55); transition: width 0.85s cubic-bezier(0.18, 0.88, 0.32, 1.18); }
 @keyframes identitySlideIn { from { opacity: 0; transform: translateY(-8px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.user-welcome { font-family: 'Russo One'; font-size: 30px; line-height: 1.02; margin-bottom: 5px; text-transform: uppercase; color: #fff; max-width: 96%; }
+.user-welcome { align-self: flex-end; width: 73%; font-family: 'Russo One'; font-size: 30px; line-height: 1.02; margin-bottom: 5px; text-transform: uppercase; color: #fff; max-width: 73%; }
 .player-game-id { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 900; color: rgba(255, 215, 0, 0.86); letter-spacing: 1px; vertical-align: middle; margin-left: 6px; text-shadow: 1px 1px 0 #000; }
-.user-stats { color: #ffd700; font-size: 14px; font-weight: 700; margin-bottom: 11px; font-family: 'Russo One'; transition: transform 0.25s ease, text-shadow 0.25s ease; }
+.user-stats { align-self: flex-end; width: 73%; color: #ffd700; font-size: 14px; font-weight: 700; margin-bottom: 11px; font-family: 'Russo One'; transition: transform 0.25s ease, text-shadow 0.25s ease; }
 .user-stats.stats-pulse { transform: scale(1.045); text-shadow: 0 0 12px rgba(255,215,0,0.85), 2px 2px 0 #000; }
-.gold-wallet { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 34px; padding: 3px 12px 3px 7px; margin: -3px 0 7px; border: 1px solid rgba(255,215,0,0.62); border-radius: 999px; background: linear-gradient(90deg, rgba(0,0,0,0.42), rgba(255,215,0,0.16), rgba(0,0,0,0.36)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 5px 12px rgba(0,0,0,0.3), 0 0 12px rgba(255,215,0,0.16); color: #fff8c8; font-family: 'Russo One', sans-serif; font-size: 18px; line-height: 1; text-shadow: 2px 2px 0 #1b0a03, 0 0 10px rgba(255,215,0,0.58); }
+.gold-wallet { align-self: flex-end; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 34px; padding: 3px 12px 3px 7px; margin: -3px 6% 7px 0; border: 1px solid rgba(255,215,0,0.62); border-radius: 999px; background: linear-gradient(90deg, rgba(0,0,0,0.42), rgba(255,215,0,0.16), rgba(0,0,0,0.36)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 5px 12px rgba(0,0,0,0.3), 0 0 12px rgba(255,215,0,0.16); color: #fff8c8; font-family: 'Russo One', sans-serif; font-size: 18px; line-height: 1; text-shadow: 2px 2px 0 #1b0a03, 0 0 10px rgba(255,215,0,0.58); }
 .gold-wallet img { width: 31px; height: 31px; object-fit: contain; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.58)) drop-shadow(0 0 7px rgba(255,215,0,0.62)); }
 .gold-wallet span { min-width: 28px; text-align: left; }
 .ranking-scroll { flex-grow: 1; width: 100%; overflow-y: auto; margin-bottom: 15px; scrollbar-width: thin; scrollbar-color: var(--wood-dark) transparent; position: relative; }
@@ -169,8 +169,8 @@ button:disabled, .mini-btn:disabled { cursor: not-allowed !important; opacity: 0
 @media (max-height: 800px) { .deck-option { width: 300px; } .img-titulo-placa { max-width: 450px; } #deck-selection-screen { gap: 15px; } }
 
 @media (max-height: 820px) {
-    .lobby-player-card { min-height: 46px; padding: 5px 9px; margin-bottom: 4px; }
-    .lobby-avatar { width: 32px; height: 32px; flex-basis: 32px; font-size: 15px; }
+    .lobby-player-card { display: contents; }
+    .lobby-avatar { width: 13.4%; height: auto; flex-basis: auto; font-size: clamp(16px, 2.1vw, 28px); }
     .lobby-rank-title { font-size: 8px; }
     .lobby-xp-track { height: 6px; margin-top: 4px; }
     .user-welcome { font-size: 26px; }
@@ -219,7 +219,7 @@ button:disabled, .mini-btn:disabled { cursor: not-allowed !important; opacity: 0
     }
 
     .lobby-player-card {
-        display: none;
+        display: contents;
     }
 
     .user-welcome {
