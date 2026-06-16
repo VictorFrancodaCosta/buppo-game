@@ -721,6 +721,13 @@ body.mastery-focus-active .xp-area {
     animation: matchRewardPop 2.5s cubic-bezier(0.18, 1.15, 0.22, 1) forwards;
 }
 
+.match-reward-pop.enemy-reward-pop {
+    left: 34%;
+    top: calc(150px + var(--reward-pop-offset, 0px));
+    transform: translate(-50%, -14px) rotate(3deg) scale(0.72);
+    animation-name: matchRewardPopEnemy;
+}
+
 .match-reward-pop-title {
     font-family: 'Bangers', cursive;
     font-size: 42px;
@@ -786,6 +793,13 @@ body.mastery-focus-active .xp-area {
     12% { opacity: 1; transform: translate(-50%, -5px) rotate(-3deg) scale(1.08); }
     82% { opacity: 1; transform: translate(-50%, -18px) rotate(-3deg) scale(1); }
     100% { opacity: 0; transform: translate(-50%, -42px) rotate(-3deg) scale(0.92); }
+}
+
+@keyframes matchRewardPopEnemy {
+    0% { opacity: 0; transform: translate(-50%, -14px) rotate(3deg) scale(0.72); }
+    12% { opacity: 1; transform: translate(-50%, 5px) rotate(3deg) scale(1.08); }
+    82% { opacity: 1; transform: translate(-50%, 18px) rotate(3deg) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, 42px) rotate(3deg) scale(0.92); }
 }
 
 @keyframes matchRewardGoldSettle {

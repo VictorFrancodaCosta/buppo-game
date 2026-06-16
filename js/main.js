@@ -34,6 +34,12 @@ window.currentGoldCoins = 0;
 window.matchRewardState = null;
 window.matchRewardPendingTitles = [];
 window.matchRewardPendingTimer = null;
+window.opponentMatchRewardPendingTitles = [];
+window.opponentMatchRewardPendingTimer = null;
+window.turnTimerInterval = null;
+window.turnTimeLeft = 10;
+window.turnTimerActive = false;
+window.turnTimerLastBeep = 0;
 window.pvpStartData = null;
 window.latestMatchData = null;
 window.friendsRefreshInterval = null;
@@ -254,6 +260,87 @@ function updateLobbyGoldWallet(amount = 0) {
     window.currentGoldCoins = Math.max(0, amount || 0);
     const count = document.getElementById('lobby-gold-count');
     if(count) count.innerText = window.currentGoldCoins;
+}
+
+function renderTurnDisplay() {
+    const turnEl = document.getElementById('turn-txt');
+    if(!turnEl) return;
+    const time = Number.isFinite(window.turnTimeLeft) ? window.turnTimeLeft : 10;
+    turnEl.innerHTML = `<span class="turn-label">TURNO ${turnCount}</span><span class="turn-timer ${time <= 5 ? 'danger' : ''}">${time}</span>`;
+}
+
+function playTurnTimerTick() {
+    if(!window.sfxEnabled) return;
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if(!AudioCtx) return;
+        if(!window.turnTimerAudioCtx) window.turnTimerAudioCtx = new AudioCtx();
+        const ctx = window.turnTimerAudioCtx;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 760;
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.045, ctx.currentTime + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.105);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.12);
+    } catch(e) {}
+}
+
+function stopTurnTimer() {
+    if(window.turnTimerInterval) {
+        clearInterval(window.turnTimerInterval);
+        window.turnTimerInterval = null;
+    }
+    window.turnTimerActive = false;
+}
+
+function startTurnTimer() {
+    stopTurnTimer();
+    if(document.getElementById('end-screen')?.classList.contains('visible')) return;
+    if(window.isProcessing || window.isResolvingTurn || window.pvpWaitingForTurnReset) return;
+    if(!player || !Array.isArray(player.hand) || player.hand.length === 0) return;
+    window.turnTimeLeft = 10;
+    window.turnTimerLastBeep = 0;
+    window.turnTimerActive = true;
+    renderTurnDisplay();
+    window.turnTimerInterval = setInterval(() => {
+        if(window.isProcessing || window.isResolvingTurn || window.pvpWaitingForTurnReset || document.getElementById('end-screen')?.classList.contains('visible')) {
+            stopTurnTimer();
+            renderTurnDisplay();
+            return;
+        }
+        window.turnTimeLeft = Math.max(0, (window.turnTimeLeft || 0) - 1);
+        if(window.turnTimeLeft <= 5 && window.turnTimeLeft > 0 && window.turnTimerLastBeep !== window.turnTimeLeft) {
+            window.turnTimerLastBeep = window.turnTimeLeft;
+            playTurnTimerTick();
+        }
+        renderTurnDisplay();
+        if(window.turnTimeLeft <= 0) {
+            stopTurnTimer();
+            handleTurnTimeout();
+        }
+    }, 1000);
+}
+
+function getAutoPlayableCardIndex() {
+    if(!player || !Array.isArray(player.hand) || player.hand.length === 0) return -1;
+    const available = player.hand.findIndex(card => card !== player.disabled);
+    return available >= 0 ? available : 0;
+}
+
+function handleTurnTimeout() {
+    if(window.isProcessing || window.isResolvingTurn || window.pvpWaitingForTurnReset) return;
+    const index = getAutoPlayableCardIndex();
+    if(index < 0) return;
+    const cardKey = player.hand[index];
+    showCombatCue("TEMPO ESGOTADO", "red", 760);
+    playSound('sfx-play');
+    if(window.gameMode === 'pvp') lockInPvPMove(index, cardKey === 'DESARMAR' ? 'ATAQUE' : null);
+    else playCardFlow(index, cardKey === 'DESARMAR' ? 'ATAQUE' : null);
 }
 
 function getPlayerFirstName(name = "JOGADOR") {
@@ -694,6 +781,7 @@ async function ensurePlayerGameId(userRef, playerData) {
 }
 
 function startGameFlow() {
+    stopTurnTimer();
     document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
     document.getElementById('end-screen').classList.remove('visible');
     window.isProcessing = false; window.isResolvingTurn = false; window.pvpSelectedCardIndex = null;
@@ -918,6 +1006,7 @@ function finishPvPTurnResetIfReady(matchData = window.latestMatchData) {
     updateUI();
     clearPvPStatus();
     updatePvPReadyIndicator(false, false);
+    startTurnTimer();
     return true;
 }
 
@@ -1016,6 +1105,7 @@ async function publishResolvedPvPTurn() {
 
 function checkEndGame(){
     if(player.hp<=0 || monster.hp<=0) {
+        stopTurnTimer();
         window.isProcessing = true; window.isLethalHover = false; MusicController.stopCurrent();
         clearPvPStatus();
         setTimeout(()=>{
@@ -1072,9 +1162,14 @@ function resetMatchRewardGold() {
         opponent: { successfulBlocks: 0, effectiveAttacks: 0, lowHpWinAwarded: false }
     };
     window.matchRewardPendingTitles = [];
+    window.opponentMatchRewardPendingTitles = [];
     if(window.matchRewardPendingTimer) {
         clearTimeout(window.matchRewardPendingTimer);
         window.matchRewardPendingTimer = null;
+    }
+    if(window.opponentMatchRewardPendingTimer) {
+        clearTimeout(window.opponentMatchRewardPendingTimer);
+        window.opponentMatchRewardPendingTimer = null;
     }
     const reward = document.getElementById('p-match-reward-gold');
     if(reward) reward.remove();
@@ -1116,26 +1211,32 @@ function awardMatchRewardGoldFor(u, amount = 1, title = 'Conquista') {
         if(!window.matchRewardPendingTitles) window.matchRewardPendingTitles = [];
         window.matchRewardPendingTitles.push(title);
         if(window.matchRewardPendingTimer) clearTimeout(window.matchRewardPendingTimer);
-        window.matchRewardPendingTimer = setTimeout(showMatchRewardPop, 90);
+        window.matchRewardPendingTimer = setTimeout(() => showMatchRewardPop(true), 90);
     } else {
         window.opponentMatchRewardGold = (window.opponentMatchRewardGold || 0) + amount;
+        if(!window.opponentMatchRewardPendingTitles) window.opponentMatchRewardPendingTitles = [];
+        window.opponentMatchRewardPendingTitles.push(title);
+        if(window.opponentMatchRewardPendingTimer) clearTimeout(window.opponentMatchRewardPendingTimer);
+        window.opponentMatchRewardPendingTimer = setTimeout(() => showMatchRewardPop(false), 90);
     }
     setTimeout(() => renderMatchRewardGold(isPlayerReward), 900);
 }
 
-function showMatchRewardPop() {
-    window.matchRewardPendingTimer = null;
-    const cluster = document.getElementById('p-stats-cluster');
+function showMatchRewardPop(isPlayerReward = true) {
+    if(isPlayerReward) window.matchRewardPendingTimer = null;
+    else window.opponentMatchRewardPendingTimer = null;
+    const cluster = document.getElementById(isPlayerReward ? 'p-stats-cluster' : 'm-stats-cluster');
     if(!cluster) return;
-    const titles = window.matchRewardPendingTitles || [];
-    window.matchRewardPendingTitles = [];
+    const titles = isPlayerReward ? (window.matchRewardPendingTitles || []) : (window.opponentMatchRewardPendingTitles || []);
+    if(isPlayerReward) window.matchRewardPendingTitles = [];
+    else window.opponentMatchRewardPendingTitles = [];
     if(titles.length === 0) return;
 
     const counts = new Map();
     titles.forEach(title => counts.set(title, (counts.get(title) || 0) + 1));
 
     const pop = document.createElement('div');
-    pop.className = 'match-reward-pop';
+    pop.className = `match-reward-pop ${isPlayerReward ? 'player-reward-pop' : 'enemy-reward-pop'}`;
     const activePops = cluster.querySelectorAll('.match-reward-pop').length;
     pop.style.setProperty('--reward-pop-offset', `${activePops * 66}px`);
 
@@ -1456,7 +1557,7 @@ function dealAllInitialCards() {
     cards.forEach((cardEl, i) => { cardEl.classList.add('intro-anim'); cardEl.style.animationDelay = (i * 0.1) + 's'; cardEl.style.opacity = ''; });
     window.isMatchStarting = false;
     if(handEl) handEl.classList.remove('preparing');
-    setTimeout(() => { cards.forEach(c => { c.classList.remove('intro-anim'); c.style.animationDelay = ''; }); window.isProcessing = false; }, 2000);
+    setTimeout(() => { cards.forEach(c => { c.classList.remove('intro-anim'); c.style.animationDelay = ''; }); window.isProcessing = false; startTurnTimer(); }, 2000);
 }
 
 function onCardClick(index) {
@@ -1468,6 +1569,7 @@ function onCardClick(index) {
         showDisabledCardWarning(index);
         return;
     }
+    stopTurnTimer();
     playSound('sfx-play'); clearHoverFocusState(true);
 
     if(cardKey === 'DESARMAR') {
@@ -1765,6 +1867,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
                 window.pendingLevelUpSync = null;
             }
             checkEndGame();
+            if(player.hp > 0 && monster.hp > 0 && window.gameMode !== 'pvp') startTurnTimer();
             if(onComplete) onComplete();
         };
 
@@ -1910,7 +2013,7 @@ window.closeHistory = function() { window.playNavSound(); document.getElementByI
 function updateUI() {
     updateUnit(player);
     updateUnit(monster);
-    document.getElementById('turn-txt').innerText = "TURNO " + turnCount;
+    renderTurnDisplay();
     setTimeout(() => clearHoverFocusState(false), 0);
 }
 
