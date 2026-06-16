@@ -49,13 +49,13 @@ export async function saveMatchHistoryDB(currentUser, enemyName, gameMode, curre
     }
 }
 
-export async function registrarVitoriaDB(currentUser, gameMode, bonusGold = 0) {
+export async function registrarVitoriaDB(currentUser, gameMode, bonusGold = 0, stolenGold = 0) {
     if(!currentUser) return { points: 0, gold: 0 };
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
         let pontosGanhos = (gameMode === 'pvp') ? 8 : 3;
-        let moedasGanhas = ((gameMode === 'pvp') ? 3 : 1) + Math.max(0, bonusGold || 0);
+        let moedasGanhas = ((gameMode === 'pvp') ? 3 : 1) + Math.max(0, bonusGold || 0) + Math.max(0, stolenGold || 0);
         if(userSnap.exists()) {
             const data = userSnap.data();
             await updateDoc(userRef, {
@@ -71,21 +71,26 @@ export async function registrarVitoriaDB(currentUser, gameMode, bonusGold = 0) {
     }
 }
 
-export async function registrarDerrotaDB(currentUser, gameMode) {
-    if(!currentUser) return 0;
+export async function registrarDerrotaDB(currentUser, gameMode, goldLost = 0) {
+    if(!currentUser) return { points: 0, goldLost: 0 };
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
         let pontosPerdidos = 3;
+        let moedasPerdidas = 0;
         if(userSnap.exists()) {
             const data = userSnap.data();
             let novoScore = Math.max(0, (data.score || 0) - pontosPerdidos);
-            await updateDoc(userRef, { score: novoScore });
+            moedasPerdidas = Math.min(Math.max(0, data.goldCoins || 0), Math.max(0, goldLost || 0));
+            await updateDoc(userRef, {
+                score: novoScore,
+                goldCoins: Math.max(0, (data.goldCoins || 0) - moedasPerdidas)
+            });
         }
-        return -pontosPerdidos;
+        return { points: -pontosPerdidos, goldLost: moedasPerdidas };
     } catch(e) { 
         console.error("Erro ao registrar derrota:", e); 
-        return 0; 
+        return { points: 0, goldLost: 0 }; 
     }
 }
 

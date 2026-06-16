@@ -764,6 +764,16 @@ body.mastery-focus-active .xp-area {
     animation: matchRewardGoldSettle 0.46s cubic-bezier(0.18, 1.2, 0.28, 1) both;
 }
 
+.match-reward-gold.enemy-reward-gold {
+    left: 42%;
+    top: 136px;
+}
+
+.end-reward-gold.gold-loss {
+    color: #ffb3a8;
+    text-shadow: 2px 2px 0 #2a0500, 0 0 18px rgba(255, 64, 64, 0.78);
+}
+
 .match-reward-gold img {
     width: 29px;
     height: 29px;

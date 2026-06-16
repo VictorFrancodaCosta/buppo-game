@@ -29,6 +29,8 @@ window.isResolvingTurn = false;
 window.pvpWaitingForTurnReset = false;
 window.pvpLocalResolutionComplete = false;
 window.matchRewardGold = 0;
+window.opponentMatchRewardGold = 0;
+window.currentGoldCoins = 0;
 window.matchRewardState = null;
 window.matchRewardPendingTitles = [];
 window.matchRewardPendingTimer = null;
@@ -249,8 +251,9 @@ window.goToLobby = async function(isAutoLogin = false) {
 };
 
 function updateLobbyGoldWallet(amount = 0) {
+    window.currentGoldCoins = Math.max(0, amount || 0);
     const count = document.getElementById('lobby-gold-count');
-    if(count) count.innerText = Math.max(0, amount || 0);
+    if(count) count.innerText = window.currentGoldCoins;
 }
 
 function getPlayerFirstName(name = "JOGADOR") {
@@ -1036,9 +1039,18 @@ function checkEndGame(){
             }
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
             if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃO";
-            if(isWin && player.hp === 1 && window.matchRewardState && !window.matchRewardState.lowHpWinAwarded) {
-                window.matchRewardState.lowHpWinAwarded = true;
-                awardMatchRewardGold(1, MATCH_REWARD_TITLES.LOW_HP_WIN);
+            if(isWin && player.hp === 1) {
+                const state = getMatchRewardState(player);
+                if(!state.lowHpWinAwarded) {
+                    state.lowHpWinAwarded = true;
+                    awardMatchRewardGoldFor(player, 1, MATCH_REWARD_TITLES.LOW_HP_WIN);
+                }
+            } else if(!isWin && !isTie && monster.hp === 1) {
+                const state = getMatchRewardState(monster);
+                if(!state.lowHpWinAwarded) {
+                    state.lowHpWinAwarded = true;
+                    awardMatchRewardGoldFor(monster, 1, MATCH_REWARD_TITLES.LOW_HP_WIN);
+                }
             }
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
             else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
@@ -1054,10 +1066,10 @@ function checkEndGame(){
 
 function resetMatchRewardGold() {
     window.matchRewardGold = 0;
+    window.opponentMatchRewardGold = 0;
     window.matchRewardState = {
-        successfulBlocks: 0,
-        effectiveAttacks: 0,
-        lowHpWinAwarded: false
+        player: { successfulBlocks: 0, effectiveAttacks: 0, lowHpWinAwarded: false },
+        opponent: { successfulBlocks: 0, effectiveAttacks: 0, lowHpWinAwarded: false }
     };
     window.matchRewardPendingTitles = [];
     if(window.matchRewardPendingTimer) {
@@ -1066,6 +1078,8 @@ function resetMatchRewardGold() {
     }
     const reward = document.getElementById('p-match-reward-gold');
     if(reward) reward.remove();
+    const enemyReward = document.getElementById('m-match-reward-gold');
+    if(enemyReward) enemyReward.remove();
     document.querySelectorAll('.match-reward-pop').forEach(el => el.remove());
 }
 
@@ -1079,14 +1093,34 @@ const MATCH_REWARD_TITLES = {
 };
 
 function awardMatchRewardGold(amount = 1, title = 'Conquista') {
+    awardMatchRewardGoldFor(player, amount, title);
+}
+
+function getMatchRewardSide(u) {
+    return u === player ? 'player' : 'opponent';
+}
+
+function getMatchRewardState(u) {
+    const side = getMatchRewardSide(u);
+    if(!window.matchRewardState) resetMatchRewardGold();
+    if(!window.matchRewardState[side]) window.matchRewardState[side] = { successfulBlocks: 0, effectiveAttacks: 0, lowHpWinAwarded: false };
+    return window.matchRewardState[side];
+}
+
+function awardMatchRewardGoldFor(u, amount = 1, title = 'Conquista') {
     if(isFriendlyMatch()) return;
     if(!window.currentUser || amount <= 0) return;
-    window.matchRewardGold = (window.matchRewardGold || 0) + amount;
-    if(!window.matchRewardPendingTitles) window.matchRewardPendingTitles = [];
-    window.matchRewardPendingTitles.push(title);
-    if(window.matchRewardPendingTimer) clearTimeout(window.matchRewardPendingTimer);
-    window.matchRewardPendingTimer = setTimeout(showMatchRewardPop, 90);
-    setTimeout(renderMatchRewardGold, 900);
+    const isPlayerReward = u === player;
+    if(isPlayerReward) {
+        window.matchRewardGold = (window.matchRewardGold || 0) + amount;
+        if(!window.matchRewardPendingTitles) window.matchRewardPendingTitles = [];
+        window.matchRewardPendingTitles.push(title);
+        if(window.matchRewardPendingTimer) clearTimeout(window.matchRewardPendingTimer);
+        window.matchRewardPendingTimer = setTimeout(showMatchRewardPop, 90);
+    } else {
+        window.opponentMatchRewardGold = (window.opponentMatchRewardGold || 0) + amount;
+    }
+    setTimeout(() => renderMatchRewardGold(isPlayerReward), 900);
 }
 
 function showMatchRewardPop() {
@@ -1121,17 +1155,19 @@ function showMatchRewardPop() {
     setTimeout(() => pop.remove(), 2700);
 }
 
-function renderMatchRewardGold() {
-    const cluster = document.getElementById('p-stats-cluster');
-    if(!cluster || !window.matchRewardGold) return;
-    let reward = document.getElementById('p-match-reward-gold');
+function renderMatchRewardGold(isPlayerReward = true) {
+    const cluster = document.getElementById(isPlayerReward ? 'p-stats-cluster' : 'm-stats-cluster');
+    const amount = isPlayerReward ? (window.matchRewardGold || 0) : (window.opponentMatchRewardGold || 0);
+    if(!cluster || !amount) return;
+    const id = isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold';
+    let reward = document.getElementById(id);
     if(!reward) {
         reward = document.createElement('div');
-        reward.id = 'p-match-reward-gold';
-        reward.className = 'match-reward-gold';
+        reward.id = id;
+        reward.className = `match-reward-gold ${isPlayerReward ? 'player-reward-gold' : 'enemy-reward-gold'}`;
         cluster.appendChild(reward);
     }
-    reward.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>x${window.matchRewardGold}</span>`;
+    reward.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>x${amount}</span>`;
 }
 
 function showEndPoints(points, goldReward = null) {
@@ -1149,9 +1185,10 @@ function showEndPoints(points, goldReward = null) {
     el.innerText = `${points > 0 ? '+' : ''}${points} PTS`;
 
     const baseReward = goldReward !== null ? goldReward : ((points === 8) ? 3 : (points === 3 ? 1 : 0));
-    const reward = baseReward > 0 ? baseReward + (window.matchRewardGold || 0) : 0;
+    const reward = baseReward > 0 ? baseReward + (window.matchRewardGold || 0) + (window.opponentMatchRewardGold || 0) : 0;
+    const lostGold = points < 0 ? Math.min(window.currentGoldCoins || 0, window.opponentMatchRewardGold || 0) : 0;
     let goldEl = document.getElementById('end-gold-reward');
-    if(reward > 0) {
+    if(reward > 0 || lostGold > 0) {
         if(!goldEl) {
             goldEl = document.createElement('div');
             goldEl.id = 'end-gold-reward';
@@ -1159,7 +1196,8 @@ function showEndPoints(points, goldReward = null) {
             if(el.nextSibling) content.insertBefore(goldEl, el.nextSibling);
             else content.appendChild(goldEl);
         }
-        goldEl.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>+${reward} OURO</span>`;
+        goldEl.classList.toggle('gold-loss', lostGold > 0);
+        goldEl.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>${lostGold > 0 ? '-' + lostGold : '+' + reward} OURO</span>`;
     } else if(goldEl) {
         goldEl.remove();
     }
@@ -1214,10 +1252,32 @@ async function saveMatchHistory(result, pointsChange) {
     await saveMatchHistoryDB(window.currentUser, enemyName, window.gameMode, window.currentDeck, pointsChange, result);
 }
 
+function getOpponentUid() {
+    if(window.gameMode !== 'pvp' || !window.pvpStartData || !window.myRole) return null;
+    const opponentRole = window.myRole === 'player1' ? 'player2' : 'player1';
+    return window.pvpStartData[opponentRole]?.uid || window.latestMatchData?.[opponentRole]?.uid || null;
+}
+
+async function getStealableOpponentGold(requestedGold) {
+    const amount = Math.max(0, requestedGold || 0);
+    if(amount <= 0) return 0;
+    const opponentUid = getOpponentUid();
+    if(!opponentUid) return amount;
+    try {
+        const snap = await getDoc(doc(db, "players", opponentUid));
+        if(!snap.exists()) return 0;
+        return Math.min(amount, Math.max(0, snap.data().goldCoins || 0));
+    } catch(e) {
+        return amount;
+    }
+}
+
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
-    const reward = await registrarVitoriaDB(window.currentUser, modoAtual, window.matchRewardGold || 0);
+    const stolenGold = await getStealableOpponentGold(window.opponentMatchRewardGold || 0);
+    const reward = await registrarVitoriaDB(window.currentUser, modoAtual, window.matchRewardGold || 0, stolenGold);
+    if(Number.isFinite(reward.gold)) updateLobbyGoldWallet((window.currentGoldCoins || 0) + reward.gold);
     const pts = reward.points || 0;
     if(pts > 0) await saveMatchHistory('WIN', pts);
 };
@@ -1225,7 +1285,9 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
 window.registrarDerrotaOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
-    const pts = await registrarDerrotaDB(window.currentUser, modoAtual);
+    const result = await registrarDerrotaDB(window.currentUser, modoAtual, window.opponentMatchRewardGold || 0);
+    if(Number.isFinite(result.goldLost)) updateLobbyGoldWallet((window.currentGoldCoins || 0) - result.goldLost);
+    const pts = result.points || 0;
     if(pts !== 0) await saveMatchHistory('LOSS', pts);
 };
 
@@ -1568,9 +1630,14 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         if(mAct === 'TREINAR') triggerTrainDeckGlow(false);
         if(pBlocks) { triggerBlockShield(true); triggerBlockEffect(true); }
         else if(mBlocks) { triggerBlockShield(false); triggerBlockEffect(false); }
-        if(pBlocks && window.matchRewardState) {
-            window.matchRewardState.successfulBlocks++;
-            if(window.matchRewardState.successfulBlocks % 3 === 0) awardMatchRewardGold(1, MATCH_REWARD_TITLES.BLOCK_STREAK);
+        if(pBlocks) {
+            const state = getMatchRewardState(player);
+            state.successfulBlocks++;
+            if(state.successfulBlocks % 3 === 0) awardMatchRewardGoldFor(player, 1, MATCH_REWARD_TITLES.BLOCK_STREAK);
+        } else if(mBlocks) {
+            const state = getMatchRewardState(monster);
+            state.successfulBlocks++;
+            if(state.successfulBlocks % 3 === 0) awardMatchRewardGoldFor(monster, 1, MATCH_REWARD_TITLES.BLOCK_STREAK);
         }
         if(disarmClash) showCenterText("ANULADO", "#aaa");
         else {
@@ -1590,7 +1657,12 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             if(mAct === 'ATAQUE') triggerAttackSlash(true);
             if (!mBlocks) { triggerDamageEffect(true, soundOn); }
             triggerHpImpact(true);
-            if(pDmg >= 3) triggerCriticalDamagePop(true);
+            if(pDmg >= 3) { triggerCriticalDamagePop(true); awardMatchRewardGoldFor(monster, 1, MATCH_REWARD_TITLES.CRITICAL_DAMAGE); }
+            if(mAct === 'ATAQUE' && !pBlocks) {
+                const state = getMatchRewardState(monster);
+                state.effectiveAttacks++;
+                if(state.effectiveAttacks % 5 === 0) awardMatchRewardGoldFor(monster, 1, MATCH_REWARD_TITLES.ATTACK_STREAK);
+            }
             if(hpBefore > 0 && player.hp <= 0) triggerClusterExplosion(true);
         }
         if(mDmg > 0) {
@@ -1599,10 +1671,11 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             if(pAct === 'ATAQUE') triggerAttackSlash(false);
             let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn);
             triggerHpImpact(false);
-            if(mDmg >= 3) { triggerCriticalDamagePop(false); awardMatchRewardGold(1, MATCH_REWARD_TITLES.CRITICAL_DAMAGE); }
-            if(pAct === 'ATAQUE' && !mBlocks && window.matchRewardState) {
-                window.matchRewardState.effectiveAttacks++;
-                if(window.matchRewardState.effectiveAttacks % 5 === 0) awardMatchRewardGold(1, MATCH_REWARD_TITLES.ATTACK_STREAK);
+            if(mDmg >= 3) { triggerCriticalDamagePop(false); awardMatchRewardGoldFor(player, 1, MATCH_REWARD_TITLES.CRITICAL_DAMAGE); }
+            if(pAct === 'ATAQUE' && !mBlocks) {
+                const state = getMatchRewardState(player);
+                state.effectiveAttacks++;
+                if(state.effectiveAttacks % 5 === 0) awardMatchRewardGoldFor(player, 1, MATCH_REWARD_TITLES.ATTACK_STREAK);
             }
             if(hpBefore > 0 && monster.hp <= 0) triggerClusterExplosion(false);
         }
@@ -1700,7 +1773,7 @@ function checkLevelUp(u, doneCb) {
 
             setTimeout(() => processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++;
-                if(u === player && u.lvl > 3) awardMatchRewardGold(1, MATCH_REWARD_TITLES.HIGH_LEVEL);
+                if(u.lvl > 3) awardMatchRewardGoldFor(u, 1, MATCH_REWARD_TITLES.HIGH_LEVEL);
                 lvlEl.classList.add('level-up-anim'); triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
                 xpForLevelUp.forEach(x => u.deck.push(x)); u.xp = [];
 
@@ -1720,7 +1793,7 @@ function checkLevelUp(u, doneCb) {
 
 function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
-    if(u === player) awardMatchRewardGold(1, MATCH_REWARD_TITLES.MASTERY);
+    awardMatchRewardGoldFor(u, 1, MATCH_REWARD_TITLES.MASTERY);
     if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
     else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
     else if(type === 'TREINAR' && u.id === 'm') {
@@ -1758,7 +1831,7 @@ function flushRestMasteryHeals() {
     updateUI();
 }
 
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerAttackSlash(target === player); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(u.bonusAtk >= 3) { triggerCriticalDamagePop(target === player); if(u === player) awardMatchRewardGold(1, MATCH_REWARD_TITLES.CRITICAL_DAMAGE); } if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerAttackSlash(target === player); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(u.bonusAtk >= 3) { triggerCriticalDamagePop(target === player); awardMatchRewardGoldFor(u, 1, MATCH_REWARD_TITLES.CRITICAL_DAMAGE); } if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
 
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;
@@ -1864,6 +1937,9 @@ function bindMasteryTooltip(el, key, value, ownerId) {
         onmouseenter: (e) => {
             let db=CARDS_DB[key]; document.getElementById('tt-title').innerHTML = key;
             document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
+            const masteryLabel = key === 'ATAQUE' ? 'MAESTRIA EM ATAQUE' : 'MAESTRIA EM BLOQUEIO';
+            document.getElementById('tt-title').innerHTML = `${masteryLabel} N\u00cdVEL ${value}`;
+            document.getElementById('tt-content').innerHTML = '';
             tt.style.display = 'block'; tt.classList.remove('tooltip-anim-up', 'tooltip-anim-down'); void tt.offsetWidth;
             let rect = el.getBoundingClientRect();
             if(ownerId === 'p') { tt.classList.add('tooltip-anim-up'); tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px'; tt.style.top = 'auto'; }
