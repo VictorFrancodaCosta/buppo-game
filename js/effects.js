@@ -45,8 +45,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-avatar {
             position: absolute !important;
-            left: 18.45% !important;
-            top: 12.08% !important;
+            left: 19.05% !important;
+            top: 12.78% !important;
             width: 16% !important;
             height: auto !important;
             aspect-ratio: 1 !important;
@@ -108,6 +108,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .gold-wallet {
+            position: relative !important;
+            right: 36.5% !important;
+            transform: translateX(50%) !important;
             align-self: flex-end !important;
             display: inline-flex !important;
             align-items: center !important;
@@ -115,7 +118,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             gap: 7px !important;
             min-height: 32px !important;
             padding: 3px 12px 3px 7px !important;
-            margin: 0 6% 7px 0 !important;
+            margin: 0 0 7px 0 !important;
             border: 1px solid rgba(255,215,0,0.62) !important;
             border-radius: 999px !important;
             background: linear-gradient(90deg, rgba(0,0,0,0.42), rgba(255,215,0,0.16), rgba(0,0,0,0.36)) !important;
