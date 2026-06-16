@@ -1170,6 +1170,30 @@ function renderMatchRewardGold(isPlayerReward = true) {
     reward.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>x${amount}</span>`;
 }
 
+function animateEndCounter(el, finalValue, formatter) {
+    if(!el) return;
+    const value = Math.abs(finalValue || 0);
+    const duration = 760;
+    const start = performance.now();
+    const tick = (now) => {
+        const progress = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(value * eased);
+        el.textContent = formatter(current);
+        if(progress < 1) {
+            requestAnimationFrame(tick);
+        } else {
+            el.textContent = formatter(value);
+            el.classList.remove('end-counter-bounce');
+            void el.offsetWidth;
+            el.classList.add('end-counter-bounce');
+            setTimeout(() => el.classList.remove('end-counter-bounce'), 360);
+        }
+    };
+    el.textContent = formatter(0);
+    requestAnimationFrame(tick);
+}
+
 function showEndPoints(points, goldReward = null) {
     const content = document.querySelector('#end-screen .end-content');
     if(!content) return;
@@ -1182,7 +1206,8 @@ function showEndPoints(points, goldReward = null) {
         else content.appendChild(el);
     }
     el.className = points < 0 ? 'points-loss' : (points === 1 ? 'points-tie' : 'points-win');
-    el.innerText = `${points > 0 ? '+' : ''}${points} PTS`;
+    const pointSign = points > 0 ? '+' : (points < 0 ? '-' : '');
+    animateEndCounter(el, points, value => `${pointSign}${value} PTS`);
 
     const baseReward = goldReward !== null ? goldReward : ((points === 8) ? 3 : (points === 3 ? 1 : 0));
     const reward = baseReward > 0 ? baseReward + (window.matchRewardGold || 0) + (window.opponentMatchRewardGold || 0) : 0;
@@ -1197,7 +1222,11 @@ function showEndPoints(points, goldReward = null) {
             else content.appendChild(goldEl);
         }
         goldEl.classList.toggle('gold-loss', lostGold > 0);
-        goldEl.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>${lostGold > 0 ? '-' + lostGold : '+' + reward} OURO</span>`;
+        goldEl.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span></span>`;
+        const goldSpan = goldEl.querySelector('span');
+        const goldSign = lostGold > 0 ? '-' : '+';
+        const goldValue = lostGold > 0 ? lostGold : reward;
+        animateEndCounter(goldSpan, goldValue, value => `${goldSign}${value} OURO`);
     } else if(goldEl) {
         goldEl.remove();
     }
@@ -1940,6 +1969,7 @@ function bindMasteryTooltip(el, key, value, ownerId) {
             const masteryLabel = key === 'ATAQUE' ? 'MAESTRIA EM ATAQUE' : 'MAESTRIA EM BLOQUEIO';
             document.getElementById('tt-title').innerHTML = `${masteryLabel} N\u00cdVEL ${value}`;
             document.getElementById('tt-content').innerHTML = '';
+            tt.classList.add('mastery-tooltip');
             tt.style.display = 'block'; tt.classList.remove('tooltip-anim-up', 'tooltip-anim-down'); void tt.offsetWidth;
             let rect = el.getBoundingClientRect();
             if(ownerId === 'p') { tt.classList.add('tooltip-anim-up'); tt.style.bottom = (window.innerHeight - rect.top + 10) + 'px'; tt.style.top = 'auto'; }
@@ -1951,7 +1981,7 @@ function bindMasteryTooltip(el, key, value, ownerId) {
 
 function addMI(parent, key, value, col, ownerId){
     let d = document.createElement('div'); d.className = 'mastery-icon'; d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`; d.style.borderColor = col;
-    let handlers = bindMasteryTooltip(d, key, value, ownerId); d.onmouseenter = handlers.onmouseenter; d.onmouseleave = () => { tt.style.display = 'none'; }; parent.appendChild(d);
+    let handlers = bindMasteryTooltip(d, key, value, ownerId); d.onmouseenter = handlers.onmouseenter; d.onmouseleave = () => { tt.style.display = 'none'; tt.classList.remove('mastery-tooltip'); }; parent.appendChild(d);
 }
 
 const tt=document.getElementById('tooltip-box');
@@ -1966,6 +1996,7 @@ function bindFixedTooltip(el,k) {
 }
 
 function showTT(k) {
+    tt.classList.remove('mastery-tooltip');
     let db = CARDS_DB[k]; document.getElementById('tt-title').innerHTML = k;
     if (db.customTooltip) {
         let content = db.customTooltip; let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
