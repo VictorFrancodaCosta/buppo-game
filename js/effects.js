@@ -76,7 +76,38 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .user-stats {
             font-size: 13px !important;
-            margin-bottom: 10px !important;
+            margin-bottom: 6px !important;
+        }
+
+        .gold-wallet {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 7px !important;
+            min-height: 32px !important;
+            padding: 3px 12px 3px 7px !important;
+            margin: 0 0 7px !important;
+            border: 1px solid rgba(255,215,0,0.62) !important;
+            border-radius: 999px !important;
+            background: linear-gradient(90deg, rgba(0,0,0,0.42), rgba(255,215,0,0.16), rgba(0,0,0,0.36)) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 5px 12px rgba(0,0,0,0.3), 0 0 12px rgba(255,215,0,0.16) !important;
+            color: #fff8c8 !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: 17px !important;
+            line-height: 1 !important;
+            text-shadow: 2px 2px 0 #1b0a03, 0 0 10px rgba(255,215,0,0.58) !important;
+        }
+
+        .gold-wallet img {
+            width: 30px !important;
+            height: 30px !important;
+            object-fit: contain !important;
+            filter: drop-shadow(0 2px 0 rgba(0,0,0,0.58)) drop-shadow(0 0 7px rgba(255,215,0,0.62)) !important;
+        }
+
+        .gold-wallet span {
+            min-width: 28px !important;
+            text-align: left !important;
         }
 
         .ranking-scroll {

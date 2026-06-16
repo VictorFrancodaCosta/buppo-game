@@ -193,10 +193,11 @@ window.goToLobby = async function(isAutoLogin = false) {
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
         const gameId = await generateUniqueGameId(window.currentUser.uid);
-        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, friends: [], lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true } });
+        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, friends: [], lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true } });
         window.currentPlayerGameId = gameId;
         renderLobbyIdentity(window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
+        updateLobbyGoldWallet(0);
         window.updateVol('master', 0.5);
     } else {
         const d = userSnap.data();
@@ -204,6 +205,8 @@ window.goToLobby = async function(isAutoLogin = false) {
         window.currentPlayerGameId = gameId;
         renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+
+        updateLobbyGoldWallet(d.goldCoins || 0);
 
         if(d.settings) {
             window.masterVol = d.settings.vol !== undefined ? d.settings.vol : 0.5;
@@ -240,6 +243,11 @@ window.goToLobby = async function(isAutoLogin = false) {
     window.showScreen('lobby-screen'); document.getElementById('end-screen').classList.remove('visible');
     document.getElementById('btn-config-toggle').style.display = 'flex';
 };
+
+function updateLobbyGoldWallet(amount = 0) {
+    const count = document.getElementById('lobby-gold-count');
+    if(count) count.innerText = Math.max(0, amount || 0);
+}
 
 function getPlayerFirstName(name = "JOGADOR") {
     return String(name || "JOGADOR").split(' ')[0].toUpperCase();
@@ -748,6 +756,8 @@ function startPvPListener() {
             if(endScreen) endScreen.classList.remove('visible');
             const pts = document.getElementById('end-points');
             if(pts) pts.remove();
+            const gold = document.getElementById('end-gold-reward');
+            if(gold) gold.remove();
             window.transitionToGame();
             return;
         }
@@ -989,6 +999,8 @@ function checkEndGame(){
             if(isFriendlyMatch()) {
                 const existingPoints = document.getElementById('end-points');
                 if(existingPoints) existingPoints.remove();
+                const existingGold = document.getElementById('end-gold-reward');
+                if(existingGold) existingGold.remove();
                 if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); }
                 else if(isWin) { title.innerText = "VITORIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
                 else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); }
@@ -1015,7 +1027,7 @@ function checkEndGame(){
     } else if (window.gameMode !== 'pvp' || !window.pvpWaitingForTurnReset) { window.isProcessing = false; }
 }
 
-function showEndPoints(points) {
+function showEndPoints(points, goldReward = null) {
     const content = document.querySelector('#end-screen .end-content');
     if(!content) return;
     let el = document.getElementById('end-points');
@@ -1028,6 +1040,21 @@ function showEndPoints(points) {
     }
     el.className = points < 0 ? 'points-loss' : (points === 1 ? 'points-tie' : 'points-win');
     el.innerText = `${points > 0 ? '+' : ''}${points} PTS`;
+
+    const reward = goldReward !== null ? goldReward : ((points === 8) ? 3 : (points === 3 ? 1 : 0));
+    let goldEl = document.getElementById('end-gold-reward');
+    if(reward > 0) {
+        if(!goldEl) {
+            goldEl = document.createElement('div');
+            goldEl.id = 'end-gold-reward';
+            goldEl.className = 'end-reward-gold';
+            if(el.nextSibling) content.insertBefore(goldEl, el.nextSibling);
+            else content.appendChild(goldEl);
+        }
+        goldEl.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>+${reward} OURO</span>`;
+    } else if(goldEl) {
+        goldEl.remove();
+    }
 }
 
 function triggerEndScreenFx(result) {
@@ -1082,7 +1109,8 @@ async function saveMatchHistory(result, pointsChange) {
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
-    const pts = await registrarVitoriaDB(window.currentUser, modoAtual);
+    const reward = await registrarVitoriaDB(window.currentUser, modoAtual);
+    const pts = reward.points || 0;
     if(pts > 0) await saveMatchHistory('WIN', pts);
 };
 
@@ -1117,6 +1145,8 @@ window.restartMatch = function() {
     document.getElementById('end-screen').classList.remove('visible');
     const pts = document.getElementById('end-points');
     if(pts) pts.remove();
+    const gold = document.getElementById('end-gold-reward');
+    if(gold) gold.remove();
     document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
 
     if(window.gameMode === 'pvp') {

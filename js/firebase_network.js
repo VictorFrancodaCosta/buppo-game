@@ -50,22 +50,24 @@ export async function saveMatchHistoryDB(currentUser, enemyName, gameMode, curre
 }
 
 export async function registrarVitoriaDB(currentUser, gameMode) {
-    if(!currentUser) return 0;
+    if(!currentUser) return { points: 0, gold: 0 };
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
         let pontosGanhos = (gameMode === 'pvp') ? 8 : 3;
+        let moedasGanhas = (gameMode === 'pvp') ? 3 : 1;
         if(userSnap.exists()) {
             const data = userSnap.data();
             await updateDoc(userRef, {
                 totalWins: (data.totalWins || 0) + 1,
-                score: (data.score || 0) + pontosGanhos
+                score: (data.score || 0) + pontosGanhos,
+                goldCoins: (data.goldCoins || 0) + moedasGanhas
             });
         }
-        return pontosGanhos;
+        return { points: pontosGanhos, gold: moedasGanhas };
     } catch(e) { 
         console.error("Erro ao registrar vitoria:", e); 
-        return 0; 
+        return { points: 0, gold: 0 }; 
     }
 }
 
