@@ -29,15 +29,13 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 .end-reward-row { display: flex; align-items: center; justify-content: center; gap: 22px; margin: -12px 0 52px; flex-wrap: wrap; }
 .end-reward-gold { display: inline-grid; grid-template-columns: 32px auto; align-items: center; justify-content: center; gap: 8px; height: 44px; margin: 0; color: #fff8bf; font-family: 'Russo One', sans-serif; font-size: 30px; line-height: 1; text-transform: uppercase; text-shadow: 2px 2px 0 #1b0a03, 0 0 18px rgba(255,215,0,0.78); animation: endGoldRewardPop 0.65s cubic-bezier(0.18, 1.25, 0.28, 1) both; }
 .end-reward-gold span,
-.end-points-count { display: inline-flex; align-items: center; height: 44px; line-height: 1; transform: translateY(1px); }
+.end-points-count { display: inline-flex; align-items: center; height: 44px; line-height: 1; }
 .end-reward-gold img { width: 32px; height: 32px; object-fit: contain; align-self: center; justify-self: center; transform: none; filter: drop-shadow(0 3px 0 rgba(0,0,0,0.62)) drop-shadow(0 0 13px rgba(255,215,0,0.8)); }
 .end-points-arrow { position: relative; width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.34); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 10px rgba(0,0,0,0.42); }
 .end-points-arrow::before { content: ""; width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.5)); }
 .end-points-arrow.up::before { border-bottom: 18px solid #2ecc71; transform: translateY(-2px); }
 .end-points-arrow.down::before { border-top: 18px solid #ff7675; transform: translateY(2px); }
 @keyframes endGoldRewardPop { 0% { opacity: 0; transform: translateY(14px) scale(0.72); } 62% { opacity: 1; transform: translateY(-3px) scale(1.08); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-.end-counter-bounce { display: inline-block; animation: endCounterBounce 0.34s cubic-bezier(0.18, 1.35, 0.28, 1) both; }
-@keyframes endCounterBounce { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 72% { transform: scale(0.94); } 100% { transform: scale(1); } }
 .end-btn-row { display: flex; gap: 20px; justify-content: center; }
 .big-btn { padding: 20px 50px; font-size: 24px; font-family: 'Russo One', sans-serif; background: #ffd700; color: #000; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4); transition: transform 0.2s, box-shadow 0.2s; text-transform: uppercase; }
 .big-btn:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 15px 35px rgba(255, 215, 0, 0.6); }

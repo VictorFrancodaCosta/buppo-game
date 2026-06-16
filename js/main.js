@@ -305,6 +305,8 @@ function stopTurnTimer() {
         window.turnTimerInterval = null;
     }
     window.turnTimerActive = false;
+    const timerEl = document.getElementById('turn-timer');
+    if(timerEl) timerEl.remove();
 }
 
 function startTurnTimer() {
@@ -1294,10 +1296,6 @@ function animateEndCounter(el, finalValue, formatter) {
             requestAnimationFrame(tick);
         } else {
             el.textContent = formatter(value);
-            el.classList.remove('end-counter-bounce');
-            void el.offsetWidth;
-            el.classList.add('end-counter-bounce');
-            setTimeout(() => el.classList.remove('end-counter-bounce'), 360);
         }
     };
     el.textContent = formatter(0);
