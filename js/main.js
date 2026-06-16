@@ -1197,17 +1197,28 @@ function animateEndCounter(el, finalValue, formatter) {
 function showEndPoints(points, goldReward = null) {
     const content = document.querySelector('#end-screen .end-content');
     if(!content) return;
+    let rewardRow = document.getElementById('end-reward-row');
+    if(!rewardRow) {
+        rewardRow = document.createElement('div');
+        rewardRow.id = 'end-reward-row';
+        const title = document.getElementById('end-title');
+        if(title && title.nextSibling) content.insertBefore(rewardRow, title.nextSibling);
+        else content.appendChild(rewardRow);
+    }
     let el = document.getElementById('end-points');
     if(!el) {
         el = document.createElement('div');
         el.id = 'end-points';
-        const title = document.getElementById('end-title');
-        if(title && title.nextSibling) content.insertBefore(el, title.nextSibling);
-        else content.appendChild(el);
+        rewardRow.appendChild(el);
+    } else if(el.parentElement !== rewardRow) {
+        rewardRow.appendChild(el);
     }
     el.className = points < 0 ? 'points-loss' : (points === 1 ? 'points-tie' : 'points-win');
+    const pointIcon = points < 0 ? 'down' : 'up';
+    el.innerHTML = `<span class="end-points-arrow ${pointIcon}" aria-hidden="true"></span><span class="end-points-count"></span>`;
+    const pointSpan = el.querySelector('.end-points-count');
     const pointSign = points > 0 ? '+' : (points < 0 ? '-' : '');
-    animateEndCounter(el, points, value => `${pointSign}${value} PTS`);
+    animateEndCounter(pointSpan, points, value => `${pointSign}${value} PTS`);
 
     const baseReward = goldReward !== null ? goldReward : ((points === 8) ? 3 : (points === 3 ? 1 : 0));
     const reward = baseReward > 0 ? baseReward + (window.matchRewardGold || 0) + (window.opponentMatchRewardGold || 0) : 0;
@@ -1218,8 +1229,9 @@ function showEndPoints(points, goldReward = null) {
             goldEl = document.createElement('div');
             goldEl.id = 'end-gold-reward';
             goldEl.className = 'end-reward-gold';
-            if(el.nextSibling) content.insertBefore(goldEl, el.nextSibling);
-            else content.appendChild(goldEl);
+            rewardRow.appendChild(goldEl);
+        } else if(goldEl.parentElement !== rewardRow) {
+            rewardRow.appendChild(goldEl);
         }
         goldEl.classList.toggle('gold-loss', lostGold > 0);
         goldEl.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span></span>`;
