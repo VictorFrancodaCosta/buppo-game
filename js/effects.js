@@ -55,12 +55,22 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             align-items: center !important;
             justify-content: center !important;
             border-radius: 50% !important;
-            overflow: hidden !important;
+            overflow: visible !important;
             background-size: cover !important;
             background-position: center !important;
-            border: 2px solid rgba(255,255,255,0.72) !important;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.46), 0 0 0 2px rgba(0,0,0,0.48), 0 0 18px rgba(255,215,0,0.38) !important;
+            border: none !important;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.46), 0 0 18px rgba(255,215,0,0.38) !important;
             z-index: 4 !important;
+        }
+
+        .lobby-avatar::after {
+            content: "" !important;
+            position: absolute !important;
+            inset: -23% !important;
+            pointer-events: none !important;
+            background: url('assets/img/avatar_moldura_madeira.png') center / contain no-repeat !important;
+            filter: drop-shadow(0 4px 5px rgba(0,0,0,0.62)) !important;
+            z-index: 2 !important;
         }
 
         .lobby-play-center {
