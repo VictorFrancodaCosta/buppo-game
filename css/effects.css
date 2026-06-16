@@ -707,18 +707,18 @@ body.mastery-focus-active .xp-area {
 .match-reward-pop {
     position: absolute;
     left: 58%;
-    top: calc(-72px - var(--reward-pop-offset, 0px));
+    top: calc(-132px - var(--reward-pop-offset, 0px));
     z-index: 8;
     pointer-events: none;
     white-space: nowrap;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1px;
+    gap: 3px;
     text-align: center;
     line-height: 1;
     transform: translate(-50%, 14px) rotate(-3deg) scale(0.72);
-    animation: matchRewardPop 1.5s cubic-bezier(0.18, 1.15, 0.22, 1) forwards;
+    animation: matchRewardPop 2.5s cubic-bezier(0.18, 1.15, 0.22, 1) forwards;
 }
 
 .match-reward-pop-title {
@@ -773,9 +773,9 @@ body.mastery-focus-active .xp-area {
 
 @keyframes matchRewardPop {
     0% { opacity: 0; transform: translate(-50%, 14px) rotate(-3deg) scale(0.72); }
-    16% { opacity: 1; transform: translate(-50%, -5px) rotate(-3deg) scale(1.08); }
-    76% { opacity: 1; transform: translate(-50%, -13px) rotate(-3deg) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -32px) rotate(-3deg) scale(0.92); }
+    12% { opacity: 1; transform: translate(-50%, -5px) rotate(-3deg) scale(1.08); }
+    82% { opacity: 1; transform: translate(-50%, -18px) rotate(-3deg) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -42px) rotate(-3deg) scale(0.92); }
 }
 
 @keyframes matchRewardGoldSettle {

@@ -30,6 +30,8 @@ window.pvpWaitingForTurnReset = false;
 window.pvpLocalResolutionComplete = false;
 window.matchRewardGold = 0;
 window.matchRewardState = null;
+window.matchRewardPendingTitles = [];
+window.matchRewardPendingTimer = null;
 window.pvpStartData = null;
 window.latestMatchData = null;
 window.friendsRefreshInterval = null;
@@ -1057,6 +1059,11 @@ function resetMatchRewardGold() {
         effectiveAttacks: 0,
         lowHpWinAwarded: false
     };
+    window.matchRewardPendingTitles = [];
+    if(window.matchRewardPendingTimer) {
+        clearTimeout(window.matchRewardPendingTimer);
+        window.matchRewardPendingTimer = null;
+    }
     const reward = document.getElementById('p-match-reward-gold');
     if(reward) reward.remove();
     document.querySelectorAll('.match-reward-pop').forEach(el => el.remove());
@@ -1075,17 +1082,43 @@ function awardMatchRewardGold(amount = 1, title = 'Conquista') {
     if(isFriendlyMatch()) return;
     if(!window.currentUser || amount <= 0) return;
     window.matchRewardGold = (window.matchRewardGold || 0) + amount;
+    if(!window.matchRewardPendingTitles) window.matchRewardPendingTitles = [];
+    window.matchRewardPendingTitles.push(title);
+    if(window.matchRewardPendingTimer) clearTimeout(window.matchRewardPendingTimer);
+    window.matchRewardPendingTimer = setTimeout(showMatchRewardPop, 90);
+    setTimeout(renderMatchRewardGold, 900);
+}
+
+function showMatchRewardPop() {
+    window.matchRewardPendingTimer = null;
     const cluster = document.getElementById('p-stats-cluster');
     if(!cluster) return;
+    const titles = window.matchRewardPendingTitles || [];
+    window.matchRewardPendingTitles = [];
+    if(titles.length === 0) return;
+
+    const counts = new Map();
+    titles.forEach(title => counts.set(title, (counts.get(title) || 0) + 1));
 
     const pop = document.createElement('div');
     pop.className = 'match-reward-pop';
     const activePops = cluster.querySelectorAll('.match-reward-pop').length;
-    pop.style.setProperty('--reward-pop-offset', `${activePops * 42}px`);
-    pop.innerHTML = `<span class="match-reward-pop-title">RECOMPENSA POR CONQUISTA</span><span class="match-reward-pop-name">${title}</span>`;
+    pop.style.setProperty('--reward-pop-offset', `${activePops * 66}px`);
+
+    const heading = document.createElement('span');
+    heading.className = 'match-reward-pop-title';
+    heading.textContent = 'CONQUISTA';
+    pop.appendChild(heading);
+
+    counts.forEach((count, title) => {
+        const name = document.createElement('span');
+        name.className = 'match-reward-pop-name';
+        name.textContent = count > 1 ? `${title} x${count}` : title;
+        pop.appendChild(name);
+    });
+
     cluster.appendChild(pop);
-    setTimeout(() => pop.remove(), 1600);
-    setTimeout(renderMatchRewardGold, 650);
+    setTimeout(() => pop.remove(), 2700);
 }
 
 function renderMatchRewardGold() {
