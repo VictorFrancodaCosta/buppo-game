@@ -1318,7 +1318,7 @@ function animateRewardCoin(isPlayerReward, index = 0, onLand = null) {
     };
 }
 
-function setRewardWalletDisplay(isPlayerReward, amount, hidden = false) {
+function setRewardWalletDisplay(isPlayerReward, amount, hidden = false, coinHidden = false) {
     const cluster = document.getElementById(isPlayerReward ? 'p-stats-cluster' : 'm-stats-cluster');
     if(!cluster || amount <= 0) return null;
     const id = isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold';
@@ -1330,6 +1330,7 @@ function setRewardWalletDisplay(isPlayerReward, amount, hidden = false) {
         cluster.appendChild(reward);
     }
     reward.classList.toggle('wallet-hidden', hidden);
+    reward.classList.toggle('wallet-coin-hidden', coinHidden);
     reward.setAttribute('aria-label', `Ouro da partida: ${amount}`);
     reward.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>x${amount}</span>`;
     return reward;
@@ -1350,10 +1351,10 @@ function queueRewardCoinAnimation(isPlayerReward, amount, label) {
         const labels = [...new Set(batch.map(item => item.label).filter(Boolean))];
         const startAmount = batch.length ? Math.max(0, batch[0].previousAmount || 0) : 0;
         const finalAmount = startAmount + total;
-        setRewardWalletDisplay(isPlayerReward, startAmount > 0 ? startAmount : finalAmount, startAmount <= 0);
+        setRewardWalletDisplay(isPlayerReward, startAmount > 0 ? startAmount : finalAmount, startAmount <= 0, true);
         animateRewardCoinLabel(isPlayerReward, labels);
         for(let i = 0; i < total; i++) {
-            animateRewardCoin(isPlayerReward, i, () => setRewardWalletDisplay(isPlayerReward, startAmount + i + 1, false));
+            animateRewardCoin(isPlayerReward, i, () => setRewardWalletDisplay(isPlayerReward, startAmount + i + 1, false, i < total - 1));
         }
     }, 90);
 }
