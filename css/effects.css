@@ -755,8 +755,6 @@ body.mastery-focus-active .xp-area {
 
 .reward-coin-fly {
     position: fixed;
-    width: 58px;
-    height: 58px;
     z-index: 90;
     pointer-events: none;
     object-fit: contain;

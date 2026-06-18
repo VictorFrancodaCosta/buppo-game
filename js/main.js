@@ -1259,11 +1259,11 @@ function animateRewardCoinLabel(isPlayerReward, labels = []) {
 
     labelFx.animate([
         { transform: 'translate(-50%, -50%) translateY(8px) scale(0.74)', opacity: 0 },
-        { transform: 'translate(-50%, -50%) translateY(-4px) scale(1.16)', opacity: 1, offset: 0.22 },
-        { transform: 'translate(-50%, -50%) translateY(0) scale(1)', opacity: 1, offset: 0.72 },
+        { transform: 'translate(-50%, -50%) translateY(-4px) scale(1.16)', opacity: 1, offset: 0.18 },
+        { transform: 'translate(-50%, -50%) translateY(0) scale(1)', opacity: 1, offset: 0.78 },
         { transform: 'translate(-50%, -50%) translateY(-10px) scale(0.94)', opacity: 0 }
     ], {
-        duration: 1500,
+        duration: 2500,
         easing: 'cubic-bezier(0.15, 0.86, 0.22, 1)',
         fill: 'forwards'
     }).onfinish = () => labelFx.remove();
@@ -1279,23 +1279,32 @@ function animateRewardCoin(isPlayerReward, index = 0, onLand = null) {
     coinFx.alt = '';
     coinFx.style.left = `${start.x}px`;
     coinFx.style.top = `${start.y}px`;
+    const coinSize = Math.max(24, Math.round(target.size || 29));
+    coinFx.style.width = `${coinSize}px`;
+    coinFx.style.height = `${coinSize}px`;
     document.body.appendChild(coinFx);
 
-    const delay = index * 210;
-    const lift = isPlayerReward ? -172 : 172;
-    const sideDrift = isPlayerReward ? 58 + (index % 2) * 18 : -58 - (index % 2) * 18;
-    const landingScale = Math.max(0.38, Math.min(0.72, (target.size || 29) / 58));
+    const delay = index * 230;
+    const lift = isPlayerReward ? -220 : 220;
+    const sideDrift = isPlayerReward ? 34 + (index % 2) * 12 : -34 - (index % 2) * 12;
+    const dropX = target.x - start.x;
+    const dropY = target.y - start.y;
+    const topX = sideDrift;
+    const topY = lift;
+    const fallX = dropX * 0.78;
+    const fallY = dropY + (isPlayerReward ? -42 : 42);
     playRewardCoinSound(delay + 160);
-    setTimeout(() => coinFx.classList.add('coin-released'), delay + 250);
+    setTimeout(() => coinFx.classList.add('coin-released'), delay + 160);
     coinFx.animate([
-        { transform: 'translate(-50%, -50%) translate(0, 0) rotateY(0deg) scale(0.48)', opacity: 0 },
-        { transform: 'translate(-50%, -50%) translate(0, -14px) rotateY(240deg) scale(1.35)', opacity: 1, offset: 0.16 },
-        { transform: `translate(-50%, -50%) translate(${sideDrift}px, ${lift}px) rotateY(900deg) scale(1.65)`, opacity: 1, offset: 0.52 },
-        { transform: `translate(-50%, -50%) translate(${target.x - start.x}px, ${target.y - start.y}px) rotateY(1620deg) scale(${landingScale})`, opacity: 1 }
+        { transform: 'translate(-50%, -50%) translate(0, 0) rotateY(0deg) scale(0.55)', opacity: 0 },
+        { transform: 'translate(-50%, -50%) translate(0, -10px) rotateY(180deg) scale(1.7)', opacity: 1, offset: 0.11 },
+        { transform: `translate(-50%, -50%) translate(${topX}px, ${topY}px) rotateY(720deg) scale(2.15)`, opacity: 1, offset: 0.38 },
+        { transform: `translate(-50%, -50%) translate(${fallX}px, ${fallY}px) rotateY(1260deg) scale(1.28)`, opacity: 1, offset: 0.74 },
+        { transform: `translate(-50%, -50%) translate(${dropX}px, ${dropY}px) rotateY(1620deg) scale(1)`, opacity: 1 }
     ], {
-        duration: 2000,
+        duration: 2050,
         delay,
-        easing: 'cubic-bezier(0.16, 0.9, 0.24, 1)',
+        easing: 'cubic-bezier(0.15, 0.82, 0.2, 1)',
         fill: 'forwards'
     }).onfinish = () => {
         if(typeof onLand === 'function') onLand();
