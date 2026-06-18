@@ -431,6 +431,232 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             transform: translateX(-50%) scale(0.98) !important;
         }
 
+        #lobby-screen .lobby-play-center {
+            position: fixed !important;
+            left: 50% !important;
+            top: 50% !important;
+            width: min(38vw, 650px) !important;
+            min-width: 430px !important;
+            max-width: 650px !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 45 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            pointer-events: auto !important;
+        }
+
+        #lobby-screen #btn-play-pvp.lobby-main-play {
+            width: 100% !important;
+            aspect-ratio: 2048 / 650 !important;
+            padding: 10px 64px 14px !important;
+            background: transparent url('assets/img/btn_pvp_ranked.webp?v=2') center / 100% 100% no-repeat !important;
+            filter: drop-shadow(8px 11px 0 rgba(26, 11, 4, 0.82))
+                    drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)) !important;
+            overflow: visible !important;
+            transform-origin: center center !important;
+        }
+
+        #lobby-screen #btn-play-pvp.lobby-main-play .btn-title {
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(70px, 5.9vw, 112px) !important;
+            color: #fff4a2 !important;
+            letter-spacing: 1px !important;
+            line-height: 0.84 !important;
+            transform: translateY(2px) !important;
+            -webkit-text-stroke: 3.4px #2b0b02 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 5px 5px 0 #2b0b02,
+                         0 8px 13px rgba(28, 7, 0, 0.68),
+                         0 0 18px rgba(255, 220, 80, 0.42) !important;
+        }
+
+        #lobby-screen #btn-play-pvp.lobby-main-play:hover,
+        #lobby-screen #btn-play-pvp.lobby-main-play:focus-visible {
+            transform: translateY(-5px) scale(1.055) !important;
+            filter: brightness(1.11)
+                    drop-shadow(9px 13px 0 rgba(26, 11, 4, 0.84))
+                    drop-shadow(0 22px 24px rgba(0, 0, 0, 0.34))
+                    drop-shadow(0 0 28px rgba(255, 207, 53, 0.42)) !important;
+        }
+
+        #lobby-screen #btn-play-pvp.lobby-main-play:active {
+            transform: translateY(3px) scale(0.985) !important;
+        }
+
+        .lobby-mode-overlay {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 30000 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            background: rgba(18, 7, 3, 0.38) !important;
+            backdrop-filter: blur(10px) saturate(0.92) !important;
+            transition: opacity 0.18s ease, visibility 0.18s ease !important;
+        }
+
+        .lobby-mode-overlay.visible {
+            pointer-events: auto !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .lobby-mode-panel {
+            position: relative !important;
+            width: min(88vw, 980px) !important;
+            min-height: min(62vh, 560px) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 4vh 4vw 14vh !important;
+        }
+
+        .lobby-mode-choices {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: clamp(34px, 5vw, 80px) !important;
+            width: 100% !important;
+        }
+
+        .lobby-mode-btn,
+        .lobby-mode-history {
+            border: 0 !important;
+            background-color: transparent !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            background-size: 100% 100% !important;
+            cursor: pointer !important;
+            appearance: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            transform-origin: center center !important;
+        }
+
+        .lobby-mode-btn {
+            position: relative !important;
+            width: min(38vw, 430px) !important;
+            aspect-ratio: 2048 / 820 !important;
+            filter: drop-shadow(8px 12px 0 rgba(25, 10, 4, 0.72))
+                    drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)) !important;
+            animation: lobbyModePop 0.36s cubic-bezier(0.12, 1.25, 0.22, 1) backwards,
+                       lobbyModeFloat 2.9s ease-in-out 0.38s infinite !important;
+            transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease !important;
+        }
+
+        .lobby-mode-pvp {
+            background-image: url('assets/img/botao_pvp.webp') !important;
+        }
+
+        .lobby-mode-pve {
+            background-image: url('assets/img/botao_pve.webp') !important;
+            animation-delay: 0.07s, 0.52s !important;
+        }
+
+        .lobby-mode-btn:hover,
+        .lobby-mode-btn:focus-visible {
+            transform: translateY(-8px) scale(1.06) !important;
+            filter: brightness(1.12)
+                    drop-shadow(9px 14px 0 rgba(25, 10, 4, 0.74))
+                    drop-shadow(0 21px 24px rgba(0, 0, 0, 0.34))
+                    drop-shadow(0 0 24px rgba(255, 223, 83, 0.34)) !important;
+        }
+
+        .lobby-mode-btn::before {
+            content: attr(data-points);
+            position: absolute !important;
+            left: 50% !important;
+            top: -54px !important;
+            transform: translateX(-50%) translateY(8px) scale(0.9) rotate(-2deg) !important;
+            min-width: 140px !important;
+            padding: 11px 22px 10px !important;
+            border: 4px solid #2a1004 !important;
+            border-radius: 28px 24px 31px 23px !important;
+            background: #fff7d7 !important;
+            color: #2a1004 !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: 32px !important;
+            line-height: 1 !important;
+            letter-spacing: 1px !important;
+            text-align: center !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            box-shadow: 4px 5px 0 rgba(0, 0, 0, 0.42) !important;
+            transition: opacity 0.14s ease, transform 0.14s ease !important;
+        }
+
+        .lobby-mode-btn::after {
+            content: "";
+            position: absolute !important;
+            left: 50% !important;
+            top: -7px !important;
+            width: 24px !important;
+            height: 24px !important;
+            background: #fff7d7 !important;
+            border-right: 4px solid #2a1004 !important;
+            border-bottom: 4px solid #2a1004 !important;
+            transform: translateX(-50%) rotate(45deg) scale(0.8) !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transition: opacity 0.14s ease, transform 0.14s ease !important;
+        }
+
+        .lobby-mode-btn:hover::before,
+        .lobby-mode-btn:focus-visible::before {
+            opacity: 1 !important;
+            transform: translateX(-50%) translateY(0) scale(1) rotate(-2deg) !important;
+        }
+
+        .lobby-mode-btn:hover::after,
+        .lobby-mode-btn:focus-visible::after {
+            opacity: 1 !important;
+            transform: translateX(-50%) rotate(45deg) scale(1) !important;
+        }
+
+        .lobby-mode-history {
+            position: absolute !important;
+            left: 50% !important;
+            bottom: clamp(28px, 6vh, 58px) !important;
+            width: min(28vw, 350px) !important;
+            min-width: 250px !important;
+            aspect-ratio: 2048 / 650 !important;
+            background-image: url('assets/img/botao_historico.webp') !important;
+            filter: drop-shadow(5px 8px 0 rgba(16, 7, 3, 0.72))
+                    drop-shadow(0 11px 14px rgba(0, 0, 0, 0.28)) !important;
+            transform: translateX(-50%) !important;
+            animation: lobbyHistoryPop 0.32s cubic-bezier(0.12, 1.2, 0.22, 1) 0.12s backwards !important;
+            transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease !important;
+        }
+
+        .lobby-mode-history:hover,
+        .lobby-mode-history:focus-visible {
+            transform: translateX(-50%) translateY(-4px) scale(1.05) !important;
+            filter: brightness(1.12)
+                    drop-shadow(6px 9px 0 rgba(16, 7, 3, 0.74))
+                    drop-shadow(0 13px 15px rgba(0, 0, 0, 0.3))
+                    drop-shadow(0 0 18px rgba(255, 241, 160, 0.25)) !important;
+        }
+
+        @keyframes lobbyModePop {
+            0% { opacity: 0; transform: translateY(26px) scale(0.58); }
+            62% { opacity: 1; transform: translateY(-7px) scale(1.08); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes lobbyHistoryPop {
+            0% { opacity: 0; transform: translateX(-50%) translateY(22px) scale(0.62); }
+            62% { opacity: 1; transform: translateX(-50%) translateY(-6px) scale(1.06); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        }
+
+        @keyframes lobbyModeFloat {
+            0%, 100% { translate: 0 0; }
+            50% { translate: 0 -8px; }
+        }
+
         @media (max-width: 980px) and (orientation: landscape) {
             .lobby-logo-right {
                 width: min(20vw, 160px) !important;
@@ -494,6 +720,45 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 min-height: 0 !important;
                 font-size: 22px !important;
                 padding: 0 !important;
+            }
+
+            #lobby-screen .lobby-play-center {
+                left: 50% !important;
+                top: 50% !important;
+                width: min(86vw, 480px) !important;
+                min-width: 0 !important;
+                transform: translate(-50%, -50%) !important;
+            }
+
+            #lobby-screen #btn-play-pvp.lobby-main-play {
+                width: 100% !important;
+                aspect-ratio: 2048 / 650 !important;
+                padding: 8px 38px 12px !important;
+            }
+
+            #lobby-screen #btn-play-pvp.lobby-main-play .btn-title {
+                font-size: clamp(54px, 13vw, 82px) !important;
+            }
+
+            .lobby-mode-panel {
+                width: 94vw !important;
+                min-height: 76vh !important;
+                padding: 5vh 4vw 12vh !important;
+            }
+
+            .lobby-mode-choices {
+                flex-direction: column !important;
+                gap: 22px !important;
+            }
+
+            .lobby-mode-btn {
+                width: min(82vw, 390px) !important;
+            }
+
+            .lobby-mode-history {
+                width: min(68vw, 300px) !important;
+                min-width: 210px !important;
+                bottom: 24px !important;
             }
         }
 
@@ -609,7 +874,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
     const lobbyScreen = document.getElementById('lobby-screen');
     const overlay = lobbyScreen?.querySelector('.lobby-ui-overlay') || null;
-    let existingRow = document.querySelector('.lobby-btn-row');
     let historyButton = document.getElementById('btn-history');
     const logoutButton = document.getElementById('btn-logout');
     if(logoutButton) {
@@ -625,79 +889,80 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             lobbyScreen.appendChild(playCenter);
         }
 
-        const ensurePlayButton = (id, title, subtitle, tooltip, handlerName) => {
-            let button = document.getElementById(id);
-            if (!button) {
-                button = document.createElement('button');
-                button.id = id;
-                button.type = 'button';
-            }
+        const oldRow = document.querySelector('.lobby-btn-row');
+        const oldPveButton = document.getElementById('btn-play-pve');
+        if (oldPveButton) oldPveButton.remove();
+        if (oldRow) oldRow.remove();
 
-            button.setAttribute('data-tip', tooltip);
-            button.onclick = () => {
-                if (typeof window[handlerName] === 'function') {
-                    window[handlerName]();
-                }
-            };
-
-            const titleSpan = document.createElement('span');
-            titleSpan.className = 'btn-title';
-            titleSpan.textContent = title;
-
-            const subSpan = document.createElement('span');
-            subSpan.className = 'btn-sub';
-            subSpan.textContent = subtitle;
-
-            button.replaceChildren(titleSpan, subSpan);
-            return button;
-        };
-
-        if (!existingRow) {
-            existingRow = document.createElement('div');
-            existingRow.className = 'lobby-btn-row';
+        let playButton = document.getElementById('btn-play-pvp');
+        if (!playButton) {
+            playButton = document.createElement('button');
+            playButton.id = 'btn-play-pvp';
+            playButton.type = 'button';
         }
-
-        const pvpButton = ensurePlayButton(
-            'btn-play-pvp',
-            'PARTIDA RANQUEADA',
-            '',
-            'Entre na fila ranqueada',
-            'startPvPSearch'
-        );
-        const pveButton = ensurePlayButton(
-            'btn-play-pve',
-            'PARTIDA PVE',
-            '',
-            'Treine contra a CPU',
-            'startPvE'
-        );
-
-        if (pvpButton.parentElement !== existingRow) {
-            existingRow.appendChild(pvpButton);
-        }
-
-        if (pveButton.parentElement !== existingRow) {
-            existingRow.appendChild(pveButton);
-        }
-
-        if (existingRow.parentElement !== playCenter) {
-            playCenter.appendChild(existingRow);
-        }
-
-        if (!historyButton && overlay) {
-            historyButton = document.createElement('button');
-            historyButton.id = 'btn-history';
-            historyButton.type = 'button';
-            historyButton.onclick = () => window.openHistory?.();
-            overlay.appendChild(historyButton);
+        playButton.className = 'lobby-main-play';
+        playButton.removeAttribute('data-tip');
+        playButton.removeAttribute('title');
+        playButton.onclick = () => window.openLobbyModeChooser?.();
+        playButton.replaceChildren(Object.assign(document.createElement('span'), {
+            className: 'btn-title',
+            textContent: 'JOGAR'
+        }));
+        if (playButton.parentElement !== playCenter) {
+            playCenter.appendChild(playButton);
         }
 
         if (historyButton) {
-            historyButton.textContent = 'HIST\u00d3RICO DE PARTIDAS';
-            if (historyButton.parentElement !== playCenter) {
-                playCenter.appendChild(historyButton);
-            }
+            historyButton.style.display = 'none';
+            historyButton.removeAttribute('title');
+            historyButton.removeAttribute('data-tip');
         }
+
+        let modeOverlay = document.getElementById('lobby-mode-overlay');
+        if (!modeOverlay) {
+            modeOverlay = document.createElement('div');
+            modeOverlay.id = 'lobby-mode-overlay';
+            modeOverlay.className = 'lobby-mode-overlay';
+            lobbyScreen.appendChild(modeOverlay);
+        }
+
+        modeOverlay.innerHTML = `
+            <div class="lobby-mode-panel" role="dialog" aria-modal="true" aria-label="Escolha o modo de jogo">
+                <div class="lobby-mode-choices">
+                    <button id="btn-mode-pvp" class="lobby-mode-btn lobby-mode-pvp" type="button" data-points="(+3 pontos)" aria-label="Partida PVP"></button>
+                    <button id="btn-mode-pve" class="lobby-mode-btn lobby-mode-pve" type="button" data-points="(+1 ponto)" aria-label="Partida PVE"></button>
+                </div>
+                <button id="btn-mode-history" class="lobby-mode-history" type="button" aria-label="Hist\u00f3rico de partidas"></button>
+            </div>
+        `;
+
+        const closeModeChooser = () => {
+            modeOverlay.classList.remove('visible');
+            document.body.classList.remove('lobby-mode-choice-open');
+        };
+        window.closeLobbyModeChooser = closeModeChooser;
+        window.openLobbyModeChooser = () => {
+            modeOverlay.classList.add('visible');
+            document.body.classList.add('lobby-mode-choice-open');
+        };
+
+        modeOverlay.onclick = (event) => {
+            if (event.target === modeOverlay) closeModeChooser();
+        };
+
+        const startMode = (handlerName) => {
+            closeModeChooser();
+            if (typeof window[handlerName] === 'function') {
+                window[handlerName]();
+            }
+        };
+
+        modeOverlay.querySelector('#btn-mode-pvp').onclick = () => startMode('startPvPSearch');
+        modeOverlay.querySelector('#btn-mode-pve').onclick = () => startMode('startPvE');
+        modeOverlay.querySelector('#btn-mode-history').onclick = () => {
+            closeModeChooser();
+            window.openHistory?.();
+        };
     }
 });
 

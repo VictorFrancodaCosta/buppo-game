@@ -88,6 +88,7 @@ async function createWindow() {
     backgroundColor: '#120806',
     title: 'BUPPO',
     autoHideMenuBar: true,
+    fullscreen: true,
     fullscreenable: true,
     webPreferences: {
       contextIsolation: true,

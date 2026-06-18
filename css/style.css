@@ -42,6 +42,7 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-app); m
 .cfg-row { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .cfg-label { font-family: 'Russo One'; color: #fff; font-size: 12px; opacity: 0.9; text-transform: uppercase; }
 .cfg-toggles { display: flex; justify-content: center; flex-wrap: wrap; width: 100%; gap: 12px 16px; margin-top: 10px; }
+.cfg-toggles .cfg-check-container:nth-child(3) { flex-basis: 100%; justify-content: center; margin-top: 2px; }
 .cfg-check-container { display: flex; align-items: center; gap: 10px; color: #fff; font-family: 'Russo One'; font-size: 13px; cursor: pointer; }
 .cfg-check-container input { display: none; }
 .checkmark { width: 22px; height: 22px; background: var(--wood-dark); border: 2px solid var(--gold); border-radius: 4px; position: relative; display: flex; justify-content: center; align-items: center; font-size: 14px; color: var(--gold); }
