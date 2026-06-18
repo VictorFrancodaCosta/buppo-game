@@ -751,12 +751,37 @@ body.mastery-focus-active .xp-area {
 
 .reward-coin-fly {
     position: fixed;
-    width: 34px;
-    height: 34px;
+    min-width: 142px;
+    height: 82px;
     z-index: 13040;
     pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+    transform-origin: center;
+    perspective: 420px;
+}
+
+.reward-coin-fly span {
+    font-family: 'Bangers', cursive;
+    font-size: 24px;
+    line-height: 0.9;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    color: #ffe46f;
+    -webkit-text-stroke: 1.5px #3c1200;
+    paint-order: stroke fill;
+    text-shadow: 2px 2px 0 #1b0a03, 0 4px 8px rgba(0,0,0,0.7);
+}
+
+.reward-coin-fly img {
+    width: 48px;
+    height: 48px;
     object-fit: contain;
     transform-origin: center;
+    animation: rewardCoinSpinBounce 0.56s linear infinite;
     filter: drop-shadow(0 5px 0 rgba(63, 25, 0, 0.7)) drop-shadow(0 0 13px rgba(255, 226, 55, 0.92));
 }
 
@@ -770,6 +795,13 @@ body.mastery-focus-active .xp-area {
     0% { transform: translateX(-50%) translateY(0) scale(1); filter: brightness(1); }
     45% { transform: translateX(-50%) translateY(-3px) scale(1.14); filter: brightness(1.25); }
     100% { transform: translateX(-50%) translateY(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes rewardCoinSpinBounce {
+    0% { transform: rotateY(0deg) translateY(0) scale(1); }
+    35% { transform: rotateY(180deg) translateY(-7px) scale(1.18); }
+    70% { transform: rotateY(360deg) translateY(0) scale(1); }
+    100% { transform: rotateY(540deg) translateY(-2px) scale(1.08); }
 }
 
 @keyframes criticalDamagePop {

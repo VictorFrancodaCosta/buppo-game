@@ -1239,33 +1239,33 @@ function getRewardCoinTargetRect(isPlayerReward) {
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
 }
 
-function animateRewardCoin(isPlayerReward, index = 0) {
+function animateRewardCoin(isPlayerReward, index = 0, label = MATCH_REWARD_LABELS.EFFECTIVE_ATTACK) {
     const start = getRewardCoinStartRect(isPlayerReward);
     const target = getRewardCoinTargetRect(isPlayerReward);
     if(!start || !target) return;
-    const coin = document.createElement('img');
-    coin.className = 'reward-coin-fly';
-    coin.src = 'assets/img/moeda_ouro.png';
-    coin.alt = '';
-    coin.style.left = `${start.x}px`;
-    coin.style.top = `${start.y}px`;
-    document.body.appendChild(coin);
+    const coinFx = document.createElement('div');
+    coinFx.className = 'reward-coin-fly';
+    coinFx.style.left = `${start.x}px`;
+    coinFx.style.top = `${start.y}px`;
+    coinFx.innerHTML = `<span>${label}</span><img src="assets/img/moeda_ouro.png" alt="">`;
+    document.body.appendChild(coinFx);
 
-    const delay = index * 130;
-    const lift = isPlayerReward ? -88 : 88;
-    const sideDrift = isPlayerReward ? 26 : -26;
-    playRewardCoinSound(delay + 140);
-    coin.animate([
-        { transform: 'translate(-50%, -50%) translate(0, 0) rotateY(0deg) scale(0.82)', opacity: 0 },
-        { transform: `translate(-50%, -50%) translate(${sideDrift}px, ${lift}px) rotateY(540deg) scale(1.18)`, opacity: 1, offset: 0.42 },
-        { transform: `translate(-50%, -50%) translate(${target.x - start.x}px, ${target.y - start.y}px) rotateY(1080deg) scale(0.82)`, opacity: 1 }
+    const delay = index * 190;
+    const lift = isPlayerReward ? -126 : 126;
+    const sideDrift = isPlayerReward ? 34 : -34;
+    playRewardCoinSound(delay + 160);
+    coinFx.animate([
+        { transform: 'translate(-50%, -50%) translate(0, 0) scale(0.62)', opacity: 0 },
+        { transform: 'translate(-50%, -50%) translate(0, -10px) scale(1.28)', opacity: 1, offset: 0.16 },
+        { transform: `translate(-50%, -50%) translate(${sideDrift}px, ${lift}px) scale(1.48)`, opacity: 1, offset: 0.46 },
+        { transform: `translate(-50%, -50%) translate(${target.x - start.x}px, ${target.y - start.y}px) scale(0.86)`, opacity: 1 }
     ], {
-        duration: 780,
+        duration: 1120,
         delay,
-        easing: 'cubic-bezier(0.18, 0.85, 0.28, 1)',
+        easing: 'cubic-bezier(0.16, 0.9, 0.24, 1)',
         fill: 'forwards'
     }).onfinish = () => {
-        coin.remove();
+        coinFx.remove();
         const reward = document.getElementById(isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold');
         if(reward) {
             reward.classList.remove('coin-landed');
@@ -1285,7 +1285,7 @@ function awardMatchRewardGoldFor(u, amount = 1, label = MATCH_REWARD_LABELS.EFFE
         window.opponentMatchRewardGold = (window.opponentMatchRewardGold || 0) + amount;
     }
     renderMatchRewardGold(isPlayerReward);
-    for(let i = 0; i < amount; i++) animateRewardCoin(isPlayerReward, i);
+    for(let i = 0; i < amount; i++) animateRewardCoin(isPlayerReward, i, label);
 }
 
 function renderMatchRewardGold(isPlayerReward = true) {
@@ -1352,8 +1352,7 @@ function showEndPoints(points, goldReward = null) {
     const pointSign = points > 0 ? '+' : (points < 0 ? '-' : '');
     animateEndCounter(pointSpan, points, value => `${pointSign}${value} PTS`);
 
-    const baseReward = goldReward !== null ? goldReward : ((points === 8) ? 3 : (points === 3 ? 1 : 0));
-    const reward = baseReward > 0 ? baseReward + (window.matchRewardGold || 0) + (window.opponentMatchRewardGold || 0) : 0;
+    const reward = goldReward !== null ? Math.max(0, goldReward || 0) : (points > 0 ? (window.matchRewardGold || 0) + (window.opponentMatchRewardGold || 0) : 0);
     const lostGold = points < 0 ? Math.min(window.currentGoldCoins || 0, window.opponentMatchRewardGold || 0) : 0;
     let goldEl = document.getElementById('end-gold-reward');
     if(reward > 0 || lostGold > 0) {

@@ -55,7 +55,7 @@ export async function registrarVitoriaDB(currentUser, gameMode, bonusGold = 0, s
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
         let pontosGanhos = (gameMode === 'pvp') ? 8 : 3;
-        let moedasGanhas = ((gameMode === 'pvp') ? 3 : 1) + Math.max(0, bonusGold || 0) + Math.max(0, stolenGold || 0);
+        let moedasGanhas = Math.max(0, bonusGold || 0) + Math.max(0, stolenGold || 0);
         if(userSnap.exists()) {
             const data = userSnap.data();
             await updateDoc(userRef, {
