@@ -1244,35 +1244,32 @@ function getRewardCoinTargetRect(isPlayerReward) {
     const target = coin || reward;
     if(!target) return null;
     const rect = target.getBoundingClientRect();
-    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, size: Math.max(rect.width, rect.height) };
 }
 
 function animateRewardCoinLabel(isPlayerReward, labels = []) {
-    const start = getRewardCoinStartRect(isPlayerReward);
     const target = getRewardCoinTargetRect(isPlayerReward);
-    if(!start || !target || labels.length === 0) return;
+    if(!target || labels.length === 0) return;
     const labelFx = document.createElement('div');
     labelFx.className = 'reward-coin-label-fly';
-    labelFx.style.left = `${start.x}px`;
-    labelFx.style.top = `${start.y}px`;
+    labelFx.style.left = `${target.x}px`;
+    labelFx.style.top = `${target.y + (isPlayerReward ? -48 : 48)}px`;
     labelFx.innerHTML = labels.map(label => `<span>${label}</span>`).join('');
     document.body.appendChild(labelFx);
 
-    const lift = isPlayerReward ? -164 : 164;
-    const sideDrift = isPlayerReward ? 54 : -54;
     labelFx.animate([
-        { transform: 'translate(-50%, -50%) translate(0, 0) scale(0.7)', opacity: 0 },
-        { transform: `translate(-50%, -50%) translate(${sideDrift * 0.35}px, ${lift * 0.45}px) scale(1.18)`, opacity: 1, offset: 0.28 },
-        { transform: `translate(-50%, -50%) translate(${sideDrift}px, ${lift}px) scale(1.08)`, opacity: 1, offset: 0.68 },
-        { transform: `translate(-50%, -50%) translate(${target.x - start.x}px, ${target.y - start.y - 24}px) scale(0.88)`, opacity: 0 }
+        { transform: 'translate(-50%, -50%) translateY(8px) scale(0.74)', opacity: 0 },
+        { transform: 'translate(-50%, -50%) translateY(-4px) scale(1.16)', opacity: 1, offset: 0.22 },
+        { transform: 'translate(-50%, -50%) translateY(0) scale(1)', opacity: 1, offset: 0.72 },
+        { transform: 'translate(-50%, -50%) translateY(-10px) scale(0.94)', opacity: 0 }
     ], {
-        duration: 2000,
+        duration: 1500,
         easing: 'cubic-bezier(0.15, 0.86, 0.22, 1)',
         fill: 'forwards'
     }).onfinish = () => labelFx.remove();
 }
 
-function animateRewardCoin(isPlayerReward, index = 0) {
+function animateRewardCoin(isPlayerReward, index = 0, onLand = null) {
     const start = getRewardCoinStartRect(isPlayerReward);
     const target = getRewardCoinTargetRect(isPlayerReward);
     if(!start || !target) return;
@@ -1287,19 +1284,21 @@ function animateRewardCoin(isPlayerReward, index = 0) {
     const delay = index * 210;
     const lift = isPlayerReward ? -172 : 172;
     const sideDrift = isPlayerReward ? 58 + (index % 2) * 18 : -58 - (index % 2) * 18;
+    const landingScale = Math.max(0.38, Math.min(0.72, (target.size || 29) / 58));
     playRewardCoinSound(delay + 160);
     setTimeout(() => coinFx.classList.add('coin-released'), delay + 250);
     coinFx.animate([
         { transform: 'translate(-50%, -50%) translate(0, 0) rotateY(0deg) scale(0.48)', opacity: 0 },
         { transform: 'translate(-50%, -50%) translate(0, -14px) rotateY(240deg) scale(1.35)', opacity: 1, offset: 0.16 },
         { transform: `translate(-50%, -50%) translate(${sideDrift}px, ${lift}px) rotateY(900deg) scale(1.65)`, opacity: 1, offset: 0.52 },
-        { transform: `translate(-50%, -50%) translate(${target.x - start.x}px, ${target.y - start.y}px) rotateY(1620deg) scale(0.82)`, opacity: 1 }
+        { transform: `translate(-50%, -50%) translate(${target.x - start.x}px, ${target.y - start.y}px) rotateY(1620deg) scale(${landingScale})`, opacity: 1 }
     ], {
         duration: 2000,
         delay,
         easing: 'cubic-bezier(0.16, 0.9, 0.24, 1)',
         fill: 'forwards'
     }).onfinish = () => {
+        if(typeof onLand === 'function') onLand();
         coinFx.remove();
         const reward = document.getElementById(isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold');
         if(reward) {
@@ -1310,11 +1309,29 @@ function animateRewardCoin(isPlayerReward, index = 0) {
     };
 }
 
+function setRewardWalletDisplay(isPlayerReward, amount, hidden = false) {
+    const cluster = document.getElementById(isPlayerReward ? 'p-stats-cluster' : 'm-stats-cluster');
+    if(!cluster || amount <= 0) return null;
+    const id = isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold';
+    let reward = document.getElementById(id);
+    if(!reward) {
+        reward = document.createElement('div');
+        reward.id = id;
+        reward.className = `match-reward-gold ${isPlayerReward ? 'player-reward-gold' : 'enemy-reward-gold'}`;
+        cluster.appendChild(reward);
+    }
+    reward.classList.toggle('wallet-hidden', hidden);
+    reward.setAttribute('aria-label', `Ouro da partida: ${amount}`);
+    reward.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>x${amount}</span>`;
+    return reward;
+}
+
 function queueRewardCoinAnimation(isPlayerReward, amount, label) {
     const side = isPlayerReward ? 'player' : 'opponent';
     if(!window.matchRewardAnimationQueue) window.matchRewardAnimationQueue = { player: [], opponent: [] };
     if(!window.matchRewardAnimationTimers) window.matchRewardAnimationTimers = { player: null, opponent: null };
-    window.matchRewardAnimationQueue[side].push({ amount, label });
+    const previousAmount = isPlayerReward ? Math.max(0, (window.matchRewardGold || 0) - amount) : Math.max(0, (window.opponentMatchRewardGold || 0) - amount);
+    window.matchRewardAnimationQueue[side].push({ amount, label, previousAmount });
     if(window.matchRewardAnimationTimers[side]) clearTimeout(window.matchRewardAnimationTimers[side]);
     window.matchRewardAnimationTimers[side] = setTimeout(() => {
         const batch = window.matchRewardAnimationQueue[side] || [];
@@ -1322,8 +1339,13 @@ function queueRewardCoinAnimation(isPlayerReward, amount, label) {
         window.matchRewardAnimationTimers[side] = null;
         const total = batch.reduce((sum, item) => sum + Math.max(0, item.amount || 0), 0);
         const labels = [...new Set(batch.map(item => item.label).filter(Boolean))];
+        const startAmount = batch.length ? Math.max(0, batch[0].previousAmount || 0) : 0;
+        const finalAmount = startAmount + total;
+        setRewardWalletDisplay(isPlayerReward, startAmount > 0 ? startAmount : finalAmount, startAmount <= 0);
         animateRewardCoinLabel(isPlayerReward, labels);
-        for(let i = 0; i < total; i++) animateRewardCoin(isPlayerReward, i);
+        for(let i = 0; i < total; i++) {
+            animateRewardCoin(isPlayerReward, i, () => setRewardWalletDisplay(isPlayerReward, startAmount + i + 1, false));
+        }
     }, 90);
 }
 
@@ -1336,24 +1358,12 @@ function awardMatchRewardGoldFor(u, amount = 1, label = MATCH_REWARD_LABELS.EFFE
     } else {
         window.opponentMatchRewardGold = (window.opponentMatchRewardGold || 0) + amount;
     }
-    renderMatchRewardGold(isPlayerReward);
     queueRewardCoinAnimation(isPlayerReward, amount, label);
 }
 
 function renderMatchRewardGold(isPlayerReward = true) {
-    const cluster = document.getElementById(isPlayerReward ? 'p-stats-cluster' : 'm-stats-cluster');
     const amount = isPlayerReward ? (window.matchRewardGold || 0) : (window.opponentMatchRewardGold || 0);
-    if(!cluster || !amount) return;
-    const id = isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold';
-    let reward = document.getElementById(id);
-    if(!reward) {
-        reward = document.createElement('div');
-        reward.id = id;
-        reward.className = `match-reward-gold ${isPlayerReward ? 'player-reward-gold' : 'enemy-reward-gold'}`;
-        cluster.appendChild(reward);
-    }
-    reward.setAttribute('aria-label', `Ouro da partida: ${amount}`);
-    reward.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>x${amount}</span>`;
+    return setRewardWalletDisplay(isPlayerReward, amount, false);
 }
 
 function animateEndCounter(el, finalValue, formatter) {
