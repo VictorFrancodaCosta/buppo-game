@@ -740,6 +740,11 @@ body.mastery-focus-active .xp-area {
     visibility: hidden;
 }
 
+.match-reward-gold.wallet-targeting {
+    animation: none;
+    transform: translateX(-50%);
+}
+
 .match-reward-gold.enemy-reward-gold {
     left: 18%;
     top: 136px;

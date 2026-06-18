@@ -1284,7 +1284,7 @@ function animateRewardCoin(isPlayerReward, index = 0, onLand = null) {
     coinFx.style.height = `${coinSize}px`;
     document.body.appendChild(coinFx);
 
-    const delay = index * 230;
+    const delay = index * 160;
     const lift = isPlayerReward ? -220 : 220;
     const sideDrift = isPlayerReward ? 34 + (index % 2) * 12 : -34 - (index % 2) * 12;
     const dropX = target.x - start.x;
@@ -1293,16 +1293,16 @@ function animateRewardCoin(isPlayerReward, index = 0, onLand = null) {
     const topY = lift;
     const fallX = dropX * 0.78;
     const fallY = dropY + (isPlayerReward ? -42 : 42);
-    playRewardCoinSound(delay + 160);
-    setTimeout(() => coinFx.classList.add('coin-released'), delay + 160);
+    playRewardCoinSound(delay + 100);
+    setTimeout(() => coinFx.classList.add('coin-released'), delay + 90);
     coinFx.animate([
         { transform: 'translate(-50%, -50%) translate(0, 0) rotateY(0deg) scale(0.55)', opacity: 0 },
         { transform: 'translate(-50%, -50%) translate(0, -10px) rotateY(180deg) scale(1.7)', opacity: 1, offset: 0.11 },
-        { transform: `translate(-50%, -50%) translate(${topX}px, ${topY}px) rotateY(720deg) scale(2.15)`, opacity: 1, offset: 0.42 },
-        { transform: `translate(-50%, -50%) translate(${fallX}px, ${fallY}px) rotateY(1260deg) scale(1.28)`, opacity: 1, offset: 0.84 },
+        { transform: `translate(-50%, -50%) translate(${topX}px, ${topY}px) rotateY(720deg) scale(2.15)`, opacity: 1, offset: 0.36 },
+        { transform: `translate(-50%, -50%) translate(${fallX}px, ${fallY}px) rotateY(1260deg) scale(1.28)`, opacity: 1, offset: 0.78 },
         { transform: `translate(-50%, -50%) translate(${dropX}px, ${dropY}px) rotateY(1620deg) scale(1)`, opacity: 1 }
     ], {
-        duration: 1950,
+        duration: 1500,
         delay,
         easing: 'cubic-bezier(0.15, 0.82, 0.2, 1)',
         fill: 'forwards'
@@ -1331,6 +1331,7 @@ function setRewardWalletDisplay(isPlayerReward, amount, hidden = false, coinHidd
     }
     reward.classList.toggle('wallet-hidden', hidden);
     reward.classList.toggle('wallet-coin-hidden', coinHidden);
+    reward.classList.toggle('wallet-targeting', coinHidden);
     reward.setAttribute('aria-label', `Ouro da partida: ${amount}`);
     reward.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>x${amount}</span>`;
     return reward;
