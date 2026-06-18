@@ -1243,7 +1243,7 @@ function animateRewardCoinLabel(isPlayerReward, labels = []) {
     const labelFx = document.createElement('div');
     labelFx.className = 'reward-coin-label-fly';
     labelFx.style.left = `${target.x}px`;
-    labelFx.style.top = `${target.y - 62}px`;
+    labelFx.style.top = `${target.y + (isPlayerReward ? -62 : 62)}px`;
     labelFx.innerHTML = labels.map(label => `<span>${label}</span>`).join('');
     document.body.appendChild(labelFx);
 
@@ -1285,7 +1285,7 @@ function setRewardWalletDisplay(isPlayerReward, amount) {
         cluster.appendChild(reward);
     }
     reward.setAttribute('aria-label', `Ouro da partida: ${amount}`);
-    reward.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>x${amount}</span>`;
+    reward.innerHTML = `<span class="reward-wallet-coin"><img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"></span><span>x${amount}</span>`;
     return reward;
 }
 

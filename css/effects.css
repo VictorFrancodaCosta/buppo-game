@@ -707,7 +707,7 @@ body.mastery-focus-active .xp-area {
 .match-reward-gold {
     position: absolute;
     left: 58%;
-    top: -42px;
+    top: -54px;
     z-index: 7;
     pointer-events: none;
     display: inline-flex;
@@ -726,8 +726,12 @@ body.mastery-focus-active .xp-area {
     text-shadow: 3px 3px 0 #1b0a03, 0 0 12px rgba(255,215,0,0.72);
 }
 
-.match-reward-gold.coin-pop-active img {
+.match-reward-gold.coin-pop-active .reward-wallet-coin {
     animation: rewardWalletCoinPop 1s cubic-bezier(0.14, 0.86, 0.2, 1) both;
+}
+
+.match-reward-gold.coin-pop-active .reward-wallet-coin::after {
+    animation: rewardWalletCoinFoil 1s ease-out both;
 }
 
 .match-reward-gold.enemy-reward-gold {
@@ -740,11 +744,32 @@ body.mastery-focus-active .xp-area {
     text-shadow: 2px 2px 0 #2a0500, 0 0 18px rgba(255, 64, 64, 0.78);
 }
 
+.reward-wallet-coin {
+    position: relative;
+    width: 58px;
+    height: 58px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: center;
+}
+
+.reward-wallet-coin::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(115deg, transparent 18%, rgba(255,255,255,0.12) 33%, rgba(255,255,255,0.96) 48%, rgba(255,245,150,0.72) 58%, transparent 74%);
+    mix-blend-mode: screen;
+    transform: translateX(-135%) rotate(18deg);
+}
+
 .match-reward-gold img {
     width: 58px;
     height: 58px;
     object-fit: contain;
-    transform-origin: center;
     filter: drop-shadow(0 4px 0 rgba(0,0,0,0.58)) drop-shadow(0 0 12px rgba(255,215,0,0.8));
 }
 
@@ -798,11 +823,18 @@ body.mastery-focus-active .xp-area {
 }
 
 @keyframes rewardWalletCoinPop {
-    0% { opacity: 0; transform: scale(0.18) rotateY(0deg); }
-    34% { opacity: 1; transform: scale(1.55) rotateY(180deg); }
-    58% { opacity: 1; transform: scale(0.88) rotateY(330deg); }
-    78% { opacity: 1; transform: scale(1.12) rotateY(430deg); }
-    100% { opacity: 1; transform: scale(1) rotateY(540deg); }
+    0% { opacity: 0; transform: scale(0.18); }
+    34% { opacity: 1; transform: scale(1.55); }
+    58% { opacity: 1; transform: scale(0.88); }
+    78% { opacity: 1; transform: scale(1.12); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes rewardWalletCoinFoil {
+    0%, 24% { opacity: 0; transform: translateX(-135%) rotate(18deg); }
+    36% { opacity: 0.95; transform: translateX(-20%) rotate(18deg); }
+    48% { opacity: 0.72; transform: translateX(42%) rotate(18deg); }
+    62%, 100% { opacity: 0; transform: translateX(135%) rotate(18deg); }
 }
 
 @keyframes rewardCoinSpinBounce {
