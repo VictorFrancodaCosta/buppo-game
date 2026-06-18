@@ -435,9 +435,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             position: fixed !important;
             left: 50% !important;
             top: 50% !important;
-            width: min(38vw, 650px) !important;
-            min-width: 430px !important;
-            max-width: 650px !important;
+            width: min(34vw, 590px) !important;
+            min-width: 390px !important;
+            max-width: 590px !important;
             transform: translate(-50%, -50%) !important;
             z-index: 45 !important;
             display: flex !important;
@@ -459,7 +459,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen #btn-play-pvp.lobby-main-play .btn-title {
             font-family: 'Bangers', cursive !important;
-            font-size: clamp(70px, 5.9vw, 112px) !important;
+            font-size: clamp(62px, 5.2vw, 98px) !important;
             color: #fff4a2 !important;
             letter-spacing: 1px !important;
             line-height: 0.84 !important;
@@ -487,6 +487,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-overlay {
             position: fixed !important;
             inset: 0 !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            min-width: 100vw !important;
+            min-height: 100vh !important;
             z-index: 30000 !important;
             display: flex !important;
             align-items: center !important;
@@ -508,7 +514,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-panel {
             position: relative !important;
             width: min(88vw, 980px) !important;
-            min-height: min(62vh, 560px) !important;
+            min-height: 100vh !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -539,7 +545,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-btn {
             position: relative !important;
             width: min(38vw, 430px) !important;
-            aspect-ratio: 2048 / 820 !important;
+            aspect-ratio: 2048 / 650 !important;
             filter: drop-shadow(8px 12px 0 rgba(25, 10, 4, 0.72))
                     drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)) !important;
             animation: lobbyModePop 0.36s cubic-bezier(0.12, 1.25, 0.22, 1) backwards,
@@ -619,10 +625,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-history {
             position: absolute !important;
             left: 50% !important;
-            bottom: clamp(28px, 6vh, 58px) !important;
-            width: min(28vw, 350px) !important;
-            min-width: 250px !important;
-            aspect-ratio: 2048 / 650 !important;
+            bottom: clamp(10px, 2.2vh, 24px) !important;
+            width: min(21vw, 280px) !important;
+            min-width: 210px !important;
+            aspect-ratio: 2048 / 560 !important;
             background-image: url('assets/img/botao_historico.webp') !important;
             filter: drop-shadow(5px 8px 0 rgba(16, 7, 3, 0.72))
                     drop-shadow(0 11px 14px rgba(0, 0, 0, 0.28)) !important;
@@ -725,7 +731,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             #lobby-screen .lobby-play-center {
                 left: 50% !important;
                 top: 50% !important;
-                width: min(86vw, 480px) !important;
+                width: min(78vw, 430px) !important;
                 min-width: 0 !important;
                 transform: translate(-50%, -50%) !important;
             }
@@ -737,12 +743,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             #lobby-screen #btn-play-pvp.lobby-main-play .btn-title {
-                font-size: clamp(54px, 13vw, 82px) !important;
+                font-size: clamp(48px, 12vw, 74px) !important;
             }
 
             .lobby-mode-panel {
                 width: 94vw !important;
-                min-height: 76vh !important;
+                min-height: 100vh !important;
                 padding: 5vh 4vw 12vh !important;
             }
 
@@ -752,13 +758,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-btn {
-                width: min(82vw, 390px) !important;
+                width: min(78vw, 360px) !important;
             }
 
             .lobby-mode-history {
-                width: min(68vw, 300px) !important;
-                min-width: 210px !important;
-                bottom: 24px !important;
+                width: min(54vw, 240px) !important;
+                min-width: 180px !important;
+                bottom: 10px !important;
             }
         }
 
@@ -923,7 +929,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             modeOverlay = document.createElement('div');
             modeOverlay.id = 'lobby-mode-overlay';
             modeOverlay.className = 'lobby-mode-overlay';
-            lobbyScreen.appendChild(modeOverlay);
+        }
+        if (modeOverlay.parentElement !== document.body) {
+            document.body.appendChild(modeOverlay);
         }
 
         modeOverlay.innerHTML = `
