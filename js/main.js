@@ -32,10 +32,6 @@ window.matchRewardGold = 0;
 window.opponentMatchRewardGold = 0;
 window.currentGoldCoins = 0;
 window.matchRewardState = null;
-window.matchRewardPendingTitles = [];
-window.matchRewardPendingTimer = null;
-window.opponentMatchRewardPendingTitles = [];
-window.opponentMatchRewardPendingTimer = null;
 window.turnTimerInterval = null;
 window.turnTimeLeft = 10;
 window.turnTimerActive = false;
@@ -1152,19 +1148,6 @@ function checkEndGame(){
             }
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
             if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃO";
-            if(isWin && player.hp === 1) {
-                const state = getMatchRewardState(player);
-                if(!state.lowHpWinAwarded) {
-                    state.lowHpWinAwarded = true;
-                    awardMatchRewardGoldFor(player, 1, MATCH_REWARD_TITLES.LOW_HP_WIN);
-                }
-            } else if(!isWin && !isTie && monster.hp === 1) {
-                const state = getMatchRewardState(monster);
-                if(!state.lowHpWinAwarded) {
-                    state.lowHpWinAwarded = true;
-                    awardMatchRewardGoldFor(monster, 1, MATCH_REWARD_TITLES.LOW_HP_WIN);
-                }
-            }
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
             else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
             else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
@@ -1180,103 +1163,129 @@ function checkEndGame(){
 function resetMatchRewardGold() {
     window.matchRewardGold = 0;
     window.opponentMatchRewardGold = 0;
-    window.matchRewardState = {
-        player: { successfulBlocks: 0, effectiveAttacks: 0, lowHpWinAwarded: false },
-        opponent: { successfulBlocks: 0, effectiveAttacks: 0, lowHpWinAwarded: false }
-    };
-    window.matchRewardPendingTitles = [];
-    window.opponentMatchRewardPendingTitles = [];
-    if(window.matchRewardPendingTimer) {
-        clearTimeout(window.matchRewardPendingTimer);
-        window.matchRewardPendingTimer = null;
-    }
-    if(window.opponentMatchRewardPendingTimer) {
-        clearTimeout(window.opponentMatchRewardPendingTimer);
-        window.opponentMatchRewardPendingTimer = null;
-    }
+    window.matchRewardState = null;
     const reward = document.getElementById('p-match-reward-gold');
     if(reward) reward.remove();
     const enemyReward = document.getElementById('m-match-reward-gold');
     if(enemyReward) enemyReward.remove();
-    document.querySelectorAll('.match-reward-pop').forEach(el => el.remove());
+    document.querySelectorAll('.reward-coin-fly').forEach(el => el.remove());
 }
 
-const MATCH_REWARD_TITLES = {
-    MASTERY: 'Maestria Executada',
-    CRITICAL_DAMAGE: 'Golpe Cr\u00edtico',
-    BLOCK_STREAK: 'Defesa Inabal\u00e1vel',
-    HIGH_LEVEL: 'Ascens\u00e3o de Elite',
-    LOW_HP_WIN: 'Vit\u00f3ria no Limite',
-    ATTACK_STREAK: 'Sequ\u00eancia de Ataques'
+const MATCH_REWARD_LABELS = {
+    EFFECTIVE_ATTACK: 'ATAQUE EFETIVO',
+    LEVEL_UP: 'MAIS FORTE',
+    PERFECT_DEFENSE: 'DEFESA PERFEITA',
+    CRITICAL_DAMAGE: 'DANO CR\u00cdTICO!'
 };
 
-function awardMatchRewardGold(amount = 1, title = 'Conquista') {
-    awardMatchRewardGoldFor(player, amount, title);
+function awardMatchRewardGold(amount = 1, label = MATCH_REWARD_LABELS.EFFECTIVE_ATTACK) {
+    awardMatchRewardGoldFor(player, amount, label);
 }
 
-function getMatchRewardSide(u) {
-    return u === player ? 'player' : 'opponent';
+function awardAttackRewardGold(u, damage) {
+    if(damage <= 0) return;
+    if(damage >= 3) awardMatchRewardGoldFor(u, 2, MATCH_REWARD_LABELS.CRITICAL_DAMAGE);
+    else awardMatchRewardGoldFor(u, 1, MATCH_REWARD_LABELS.EFFECTIVE_ATTACK);
 }
 
-function getMatchRewardState(u) {
-    const side = getMatchRewardSide(u);
-    if(!window.matchRewardState) resetMatchRewardGold();
-    if(!window.matchRewardState[side]) window.matchRewardState[side] = { successfulBlocks: 0, effectiveAttacks: 0, lowHpWinAwarded: false };
-    return window.matchRewardState[side];
+function playRewardCoinSound(delay = 0) {
+    if(!window.sfxEnabled) return;
+    setTimeout(() => {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if(!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const gain = ctx.createGain();
+            const oscA = ctx.createOscillator();
+            const oscB = ctx.createOscillator();
+            const now = ctx.currentTime;
+            oscA.type = 'triangle';
+            oscB.type = 'sine';
+            oscA.frequency.setValueAtTime(880, now);
+            oscA.frequency.exponentialRampToValueAtTime(1568, now + 0.09);
+            oscB.frequency.setValueAtTime(1760, now + 0.05);
+            oscB.frequency.exponentialRampToValueAtTime(2349, now + 0.16);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.18, now + 0.018);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+            oscA.connect(gain);
+            oscB.connect(gain);
+            gain.connect(ctx.destination);
+            oscA.start(now);
+            oscB.start(now + 0.045);
+            oscA.stop(now + 0.22);
+            oscB.stop(now + 0.22);
+            setTimeout(() => ctx.close().catch(()=>{}), 320);
+        } catch(e) {}
+    }, delay);
 }
 
-function awardMatchRewardGoldFor(u, amount = 1, title = 'Conquista') {
+function getRewardCoinStartRect(isPlayerReward) {
+    const cluster = document.getElementById(isPlayerReward ? 'p-stats-cluster' : 'm-stats-cluster');
+    if(!cluster) return null;
+    const rect = cluster.getBoundingClientRect();
+    return {
+        x: isPlayerReward ? rect.left + rect.width * 0.62 : rect.left + rect.width * 0.38,
+        y: isPlayerReward ? rect.top + rect.height * 0.25 : rect.top + rect.height * 0.72
+    };
+}
+
+function getRewardCoinTargetRect(isPlayerReward) {
+    const reward = document.getElementById(isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold');
+    const coin = reward ? reward.querySelector('img') : null;
+    const target = coin || reward;
+    if(!target) return null;
+    const rect = target.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
+function animateRewardCoin(isPlayerReward, index = 0) {
+    const start = getRewardCoinStartRect(isPlayerReward);
+    const target = getRewardCoinTargetRect(isPlayerReward);
+    if(!start || !target) return;
+    const coin = document.createElement('img');
+    coin.className = 'reward-coin-fly';
+    coin.src = 'assets/img/moeda_ouro.png';
+    coin.alt = '';
+    coin.style.left = `${start.x}px`;
+    coin.style.top = `${start.y}px`;
+    document.body.appendChild(coin);
+
+    const delay = index * 130;
+    const lift = isPlayerReward ? -88 : 88;
+    const sideDrift = isPlayerReward ? 26 : -26;
+    playRewardCoinSound(delay + 140);
+    coin.animate([
+        { transform: 'translate(-50%, -50%) translate(0, 0) rotateY(0deg) scale(0.82)', opacity: 0 },
+        { transform: `translate(-50%, -50%) translate(${sideDrift}px, ${lift}px) rotateY(540deg) scale(1.18)`, opacity: 1, offset: 0.42 },
+        { transform: `translate(-50%, -50%) translate(${target.x - start.x}px, ${target.y - start.y}px) rotateY(1080deg) scale(0.82)`, opacity: 1 }
+    ], {
+        duration: 780,
+        delay,
+        easing: 'cubic-bezier(0.18, 0.85, 0.28, 1)',
+        fill: 'forwards'
+    }).onfinish = () => {
+        coin.remove();
+        const reward = document.getElementById(isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold');
+        if(reward) {
+            reward.classList.remove('coin-landed');
+            void reward.offsetWidth;
+            reward.classList.add('coin-landed');
+        }
+    };
+}
+
+function awardMatchRewardGoldFor(u, amount = 1, label = MATCH_REWARD_LABELS.EFFECTIVE_ATTACK) {
     if(isFriendlyMatch()) return;
     if(!window.currentUser || amount <= 0) return;
     const isPlayerReward = u === player;
     if(isPlayerReward) {
         window.matchRewardGold = (window.matchRewardGold || 0) + amount;
-        if(!window.matchRewardPendingTitles) window.matchRewardPendingTitles = [];
-        window.matchRewardPendingTitles.push(title);
-        if(window.matchRewardPendingTimer) clearTimeout(window.matchRewardPendingTimer);
-        window.matchRewardPendingTimer = setTimeout(() => showMatchRewardPop(true), 90);
     } else {
         window.opponentMatchRewardGold = (window.opponentMatchRewardGold || 0) + amount;
-        if(!window.opponentMatchRewardPendingTitles) window.opponentMatchRewardPendingTitles = [];
-        window.opponentMatchRewardPendingTitles.push(title);
-        if(window.opponentMatchRewardPendingTimer) clearTimeout(window.opponentMatchRewardPendingTimer);
-        window.opponentMatchRewardPendingTimer = setTimeout(() => showMatchRewardPop(false), 90);
     }
-    setTimeout(() => renderMatchRewardGold(isPlayerReward), 900);
-}
-
-function showMatchRewardPop(isPlayerReward = true) {
-    if(isPlayerReward) window.matchRewardPendingTimer = null;
-    else window.opponentMatchRewardPendingTimer = null;
-    const cluster = document.getElementById(isPlayerReward ? 'p-stats-cluster' : 'm-stats-cluster');
-    if(!cluster) return;
-    const titles = isPlayerReward ? (window.matchRewardPendingTitles || []) : (window.opponentMatchRewardPendingTitles || []);
-    if(isPlayerReward) window.matchRewardPendingTitles = [];
-    else window.opponentMatchRewardPendingTitles = [];
-    if(titles.length === 0) return;
-
-    const counts = new Map();
-    titles.forEach(title => counts.set(title, (counts.get(title) || 0) + 1));
-
-    const pop = document.createElement('div');
-    pop.className = `match-reward-pop ${isPlayerReward ? 'player-reward-pop' : 'enemy-reward-pop'}`;
-    const activePops = cluster.querySelectorAll('.match-reward-pop').length;
-    pop.style.setProperty('--reward-pop-offset', `${activePops * 66}px`);
-
-    const heading = document.createElement('span');
-    heading.className = 'match-reward-pop-title';
-    heading.textContent = 'CONQUISTA';
-    pop.appendChild(heading);
-
-    counts.forEach((count, title) => {
-        const name = document.createElement('span');
-        name.className = 'match-reward-pop-name';
-        name.textContent = count > 1 ? `${title} x${count}` : title;
-        pop.appendChild(name);
-    });
-
-    cluster.appendChild(pop);
-    setTimeout(() => pop.remove(), 2700);
+    renderMatchRewardGold(isPlayerReward);
+    for(let i = 0; i < amount; i++) animateRewardCoin(isPlayerReward, i);
 }
 
 function renderMatchRewardGold(isPlayerReward = true) {
@@ -1291,6 +1300,7 @@ function renderMatchRewardGold(isPlayerReward = true) {
         reward.className = `match-reward-gold ${isPlayerReward ? 'player-reward-gold' : 'enemy-reward-gold'}`;
         cluster.appendChild(reward);
     }
+    reward.setAttribute('aria-label', `Ouro da partida: ${amount}`);
     reward.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>x${amount}</span>`;
 }
 
@@ -1822,15 +1832,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         if(mAct === 'TREINAR') triggerTrainDeckGlow(false);
         if(pBlocks) { triggerBlockShield(true); triggerBlockEffect(true); }
         else if(mBlocks) { triggerBlockShield(false); triggerBlockEffect(false); }
-        if(pBlocks) {
-            const state = getMatchRewardState(player);
-            state.successfulBlocks++;
-            if(state.successfulBlocks % 3 === 0) awardMatchRewardGoldFor(player, 1, MATCH_REWARD_TITLES.BLOCK_STREAK);
-        } else if(mBlocks) {
-            const state = getMatchRewardState(monster);
-            state.successfulBlocks++;
-            if(state.successfulBlocks % 3 === 0) awardMatchRewardGoldFor(monster, 1, MATCH_REWARD_TITLES.BLOCK_STREAK);
-        }
+        if(pBlocks) awardMatchRewardGoldFor(player, 2, MATCH_REWARD_LABELS.PERFECT_DEFENSE);
+        else if(mBlocks) awardMatchRewardGoldFor(monster, 2, MATCH_REWARD_LABELS.PERFECT_DEFENSE);
         if(disarmClash) showCenterText("ANULADO", "#aaa");
         else {
             if(mAct === 'DESARMAR') triggerDisarmSeal(true, nextPlayerDisabled);
@@ -1849,12 +1852,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             if(mAct === 'ATAQUE') triggerAttackSlash(true);
             if (!mBlocks) { triggerDamageEffect(true, soundOn); }
             triggerHpImpact(true);
-            if(pDmg >= 3) { triggerCriticalDamagePop(true); awardMatchRewardGoldFor(monster, 1, MATCH_REWARD_TITLES.CRITICAL_DAMAGE); }
-            if(mAct === 'ATAQUE' && !pBlocks) {
-                const state = getMatchRewardState(monster);
-                state.effectiveAttacks++;
-                if(state.effectiveAttacks % 5 === 0) awardMatchRewardGoldFor(monster, 1, MATCH_REWARD_TITLES.ATTACK_STREAK);
-            }
+            if(pDmg >= 3) triggerCriticalDamagePop(true);
+            if(mAct === 'ATAQUE' && !pBlocks) awardAttackRewardGold(monster, pDmg);
             if(hpBefore > 0 && player.hp <= 0) triggerClusterExplosion(true);
         }
         if(mDmg > 0) {
@@ -1863,12 +1862,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             if(pAct === 'ATAQUE') triggerAttackSlash(false);
             let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn);
             triggerHpImpact(false);
-            if(mDmg >= 3) { triggerCriticalDamagePop(false); awardMatchRewardGoldFor(player, 1, MATCH_REWARD_TITLES.CRITICAL_DAMAGE); }
-            if(pAct === 'ATAQUE' && !mBlocks) {
-                const state = getMatchRewardState(player);
-                state.effectiveAttacks++;
-                if(state.effectiveAttacks % 5 === 0) awardMatchRewardGoldFor(player, 1, MATCH_REWARD_TITLES.ATTACK_STREAK);
-            }
+            if(mDmg >= 3) triggerCriticalDamagePop(false);
+            if(pAct === 'ATAQUE' && !mBlocks) awardAttackRewardGold(player, mDmg);
             if(hpBefore > 0 && monster.hp <= 0) triggerClusterExplosion(false);
         }
 
@@ -1965,7 +1960,7 @@ function checkLevelUp(u, doneCb) {
 
             setTimeout(() => processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++;
-                if(u.lvl > 3) awardMatchRewardGoldFor(u, 1, MATCH_REWARD_TITLES.HIGH_LEVEL);
+                awardMatchRewardGoldFor(u, 1, MATCH_REWARD_LABELS.LEVEL_UP);
                 lvlEl.classList.add('level-up-anim'); triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
                 xpForLevelUp.forEach(x => u.deck.push(x)); u.xp = [];
 
@@ -1985,7 +1980,6 @@ function checkLevelUp(u, doneCb) {
 
 function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
-    awardMatchRewardGoldFor(u, 1, MATCH_REWARD_TITLES.MASTERY);
     if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
     else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
     else if(type === 'TREINAR' && u.id === 'm') {
@@ -2023,7 +2017,7 @@ function flushRestMasteryHeals() {
     updateUI();
 }
 
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerAttackSlash(target === player); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(u.bonusAtk >= 3) { triggerCriticalDamagePop(target === player); awardMatchRewardGoldFor(u, 1, MATCH_REWARD_TITLES.CRITICAL_DAMAGE); } if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerAttackSlash(target === player); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(u.bonusAtk >= 3) triggerCriticalDamagePop(target === player); awardAttackRewardGold(u, u.bonusAtk); if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
 
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;

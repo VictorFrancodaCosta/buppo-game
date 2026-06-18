@@ -704,49 +704,6 @@ body.mastery-focus-active .xp-area {
     animation-name: criticalDamagePopDown;
 }
 
-.match-reward-pop {
-    position: absolute;
-    left: 58%;
-    top: calc(-132px - var(--reward-pop-offset, 0px));
-    z-index: 8;
-    pointer-events: none;
-    white-space: nowrap;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    text-align: center;
-    line-height: 1;
-    transform: translate(-50%, 14px) rotate(-3deg) scale(0.72);
-    animation: matchRewardPop 2.5s cubic-bezier(0.18, 1.15, 0.22, 1) forwards;
-}
-
-.match-reward-pop.enemy-reward-pop {
-    left: 48%;
-    top: calc(194px + var(--reward-pop-offset, 0px));
-    transform: translate(-50%, -14px) rotate(3deg) scale(0.72);
-    animation-name: matchRewardPopEnemy;
-}
-
-.match-reward-pop-title {
-    font-family: 'Bangers', cursive;
-    font-size: 42px;
-    letter-spacing: 1px;
-    color: #fff8bf;
-    -webkit-text-stroke: 2.4px #4b0700;
-    paint-order: stroke fill;
-    text-shadow: 3px 3px 0 #4b0700, 0 5px 9px rgba(0,0,0,0.72);
-}
-
-.match-reward-pop-name {
-    font-family: 'Russo One', sans-serif;
-    font-size: 24px;
-    letter-spacing: 0;
-    color: #ffffff;
-    -webkit-text-stroke: 0;
-    text-shadow: 2px 2px 0 #2a0b00, 0 0 10px rgba(255, 210, 0, 0.75), 0 4px 8px rgba(0,0,0,0.65);
-}
-
 .match-reward-gold {
     position: absolute;
     left: 58%;
@@ -771,6 +728,10 @@ body.mastery-focus-active .xp-area {
     animation: matchRewardGoldSettle 0.46s cubic-bezier(0.18, 1.2, 0.28, 1) both;
 }
 
+.match-reward-gold.coin-landed {
+    animation: matchRewardGoldLand 0.34s cubic-bezier(0.18, 1.4, 0.28, 1) both;
+}
+
 .match-reward-gold.enemy-reward-gold {
     left: 18%;
     top: 136px;
@@ -788,24 +749,27 @@ body.mastery-focus-active .xp-area {
     filter: drop-shadow(0 2px 0 rgba(0,0,0,0.55)) drop-shadow(0 0 8px rgba(255,215,0,0.72));
 }
 
-@keyframes matchRewardPop {
-    0% { opacity: 0; transform: translate(-50%, 14px) rotate(-3deg) scale(0.72); }
-    12% { opacity: 1; transform: translate(-50%, -5px) rotate(-3deg) scale(1.08); }
-    82% { opacity: 1; transform: translate(-50%, -18px) rotate(-3deg) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -42px) rotate(-3deg) scale(0.92); }
-}
-
-@keyframes matchRewardPopEnemy {
-    0% { opacity: 0; transform: translate(-50%, -14px) rotate(3deg) scale(0.72); }
-    12% { opacity: 1; transform: translate(-50%, 5px) rotate(3deg) scale(1.08); }
-    82% { opacity: 1; transform: translate(-50%, 18px) rotate(3deg) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, 42px) rotate(3deg) scale(0.92); }
+.reward-coin-fly {
+    position: fixed;
+    width: 34px;
+    height: 34px;
+    z-index: 13040;
+    pointer-events: none;
+    object-fit: contain;
+    transform-origin: center;
+    filter: drop-shadow(0 5px 0 rgba(63, 25, 0, 0.7)) drop-shadow(0 0 13px rgba(255, 226, 55, 0.92));
 }
 
 @keyframes matchRewardGoldSettle {
     0% { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.75); }
     65% { opacity: 1; transform: translateX(-50%) translateY(-2px) scale(1.08); }
     100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+@keyframes matchRewardGoldLand {
+    0% { transform: translateX(-50%) translateY(0) scale(1); filter: brightness(1); }
+    45% { transform: translateX(-50%) translateY(-3px) scale(1.14); filter: brightness(1.25); }
+    100% { transform: translateX(-50%) translateY(0) scale(1); filter: brightness(1); }
 }
 
 @keyframes criticalDamagePop {
