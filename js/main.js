@@ -1298,11 +1298,11 @@ function animateRewardCoin(isPlayerReward, index = 0, onLand = null) {
     coinFx.animate([
         { transform: 'translate(-50%, -50%) translate(0, 0) rotateY(0deg) scale(0.55)', opacity: 0 },
         { transform: 'translate(-50%, -50%) translate(0, -10px) rotateY(180deg) scale(1.7)', opacity: 1, offset: 0.11 },
-        { transform: `translate(-50%, -50%) translate(${topX}px, ${topY}px) rotateY(720deg) scale(2.15)`, opacity: 1, offset: 0.38 },
-        { transform: `translate(-50%, -50%) translate(${fallX}px, ${fallY}px) rotateY(1260deg) scale(1.28)`, opacity: 1, offset: 0.74 },
+        { transform: `translate(-50%, -50%) translate(${topX}px, ${topY}px) rotateY(720deg) scale(2.15)`, opacity: 1, offset: 0.42 },
+        { transform: `translate(-50%, -50%) translate(${fallX}px, ${fallY}px) rotateY(1260deg) scale(1.28)`, opacity: 1, offset: 0.84 },
         { transform: `translate(-50%, -50%) translate(${dropX}px, ${dropY}px) rotateY(1620deg) scale(1)`, opacity: 1 }
     ], {
-        duration: 2050,
+        duration: 1950,
         delay,
         easing: 'cubic-bezier(0.15, 0.82, 0.2, 1)',
         fill: 'forwards'
