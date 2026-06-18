@@ -751,22 +751,34 @@ body.mastery-focus-active .xp-area {
 
 .reward-coin-fly {
     position: fixed;
-    min-width: 142px;
-    height: 82px;
+    width: 58px;
+    height: 58px;
+    z-index: 90;
+    pointer-events: none;
+    object-fit: contain;
+    transform-origin: center;
+    filter: drop-shadow(0 6px 0 rgba(63, 25, 0, 0.72)) drop-shadow(0 0 16px rgba(255, 226, 55, 0.95));
+}
+
+.reward-coin-fly.coin-released {
     z-index: 13040;
+}
+
+.reward-coin-label-fly {
+    position: fixed;
+    min-width: 172px;
+    z-index: 13041;
     pointer-events: none;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
     gap: 2px;
     transform-origin: center;
-    perspective: 420px;
 }
 
-.reward-coin-fly span {
+.reward-coin-label-fly span {
     font-family: 'Bangers', cursive;
-    font-size: 24px;
+    font-size: 27px;
     line-height: 0.9;
     letter-spacing: 1px;
     white-space: nowrap;
@@ -774,15 +786,6 @@ body.mastery-focus-active .xp-area {
     -webkit-text-stroke: 1.5px #3c1200;
     paint-order: stroke fill;
     text-shadow: 2px 2px 0 #1b0a03, 0 4px 8px rgba(0,0,0,0.7);
-}
-
-.reward-coin-fly img {
-    width: 48px;
-    height: 48px;
-    object-fit: contain;
-    transform-origin: center;
-    animation: rewardCoinSpinBounce 0.56s linear infinite;
-    filter: drop-shadow(0 5px 0 rgba(63, 25, 0, 0.7)) drop-shadow(0 0 13px rgba(255, 226, 55, 0.92));
 }
 
 @keyframes matchRewardGoldSettle {

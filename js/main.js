@@ -32,6 +32,8 @@ window.matchRewardGold = 0;
 window.opponentMatchRewardGold = 0;
 window.currentGoldCoins = 0;
 window.matchRewardState = null;
+window.matchRewardAnimationQueue = { player: [], opponent: [] };
+window.matchRewardAnimationTimers = { player: null, opponent: null };
 window.turnTimerInterval = null;
 window.turnTimeLeft = 10;
 window.turnTimerActive = false;
@@ -1164,11 +1166,17 @@ function resetMatchRewardGold() {
     window.matchRewardGold = 0;
     window.opponentMatchRewardGold = 0;
     window.matchRewardState = null;
+    if(window.matchRewardAnimationTimers) {
+        if(window.matchRewardAnimationTimers.player) clearTimeout(window.matchRewardAnimationTimers.player);
+        if(window.matchRewardAnimationTimers.opponent) clearTimeout(window.matchRewardAnimationTimers.opponent);
+    }
+    window.matchRewardAnimationQueue = { player: [], opponent: [] };
+    window.matchRewardAnimationTimers = { player: null, opponent: null };
     const reward = document.getElementById('p-match-reward-gold');
     if(reward) reward.remove();
     const enemyReward = document.getElementById('m-match-reward-gold');
     if(enemyReward) enemyReward.remove();
-    document.querySelectorAll('.reward-coin-fly').forEach(el => el.remove());
+    document.querySelectorAll('.reward-coin-fly, .reward-coin-label-fly').forEach(el => el.remove());
 }
 
 const MATCH_REWARD_LABELS = {
@@ -1225,8 +1233,8 @@ function getRewardCoinStartRect(isPlayerReward) {
     if(!cluster) return null;
     const rect = cluster.getBoundingClientRect();
     return {
-        x: isPlayerReward ? rect.left + rect.width * 0.62 : rect.left + rect.width * 0.38,
-        y: isPlayerReward ? rect.top + rect.height * 0.25 : rect.top + rect.height * 0.72
+        x: isPlayerReward ? rect.left + rect.width * 0.44 : rect.left + rect.width * 0.56,
+        y: isPlayerReward ? rect.top + rect.height * 0.62 : rect.top + rect.height * 0.42
     };
 }
 
@@ -1239,28 +1247,55 @@ function getRewardCoinTargetRect(isPlayerReward) {
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
 }
 
-function animateRewardCoin(isPlayerReward, index = 0, label = MATCH_REWARD_LABELS.EFFECTIVE_ATTACK) {
+function animateRewardCoinLabel(isPlayerReward, labels = []) {
+    const start = getRewardCoinStartRect(isPlayerReward);
+    const target = getRewardCoinTargetRect(isPlayerReward);
+    if(!start || !target || labels.length === 0) return;
+    const labelFx = document.createElement('div');
+    labelFx.className = 'reward-coin-label-fly';
+    labelFx.style.left = `${start.x}px`;
+    labelFx.style.top = `${start.y}px`;
+    labelFx.innerHTML = labels.map(label => `<span>${label}</span>`).join('');
+    document.body.appendChild(labelFx);
+
+    const lift = isPlayerReward ? -164 : 164;
+    const sideDrift = isPlayerReward ? 54 : -54;
+    labelFx.animate([
+        { transform: 'translate(-50%, -50%) translate(0, 0) scale(0.7)', opacity: 0 },
+        { transform: `translate(-50%, -50%) translate(${sideDrift * 0.35}px, ${lift * 0.45}px) scale(1.18)`, opacity: 1, offset: 0.28 },
+        { transform: `translate(-50%, -50%) translate(${sideDrift}px, ${lift}px) scale(1.08)`, opacity: 1, offset: 0.68 },
+        { transform: `translate(-50%, -50%) translate(${target.x - start.x}px, ${target.y - start.y - 24}px) scale(0.88)`, opacity: 0 }
+    ], {
+        duration: 2000,
+        easing: 'cubic-bezier(0.15, 0.86, 0.22, 1)',
+        fill: 'forwards'
+    }).onfinish = () => labelFx.remove();
+}
+
+function animateRewardCoin(isPlayerReward, index = 0) {
     const start = getRewardCoinStartRect(isPlayerReward);
     const target = getRewardCoinTargetRect(isPlayerReward);
     if(!start || !target) return;
-    const coinFx = document.createElement('div');
+    const coinFx = document.createElement('img');
     coinFx.className = 'reward-coin-fly';
+    coinFx.src = 'assets/img/moeda_ouro.png';
+    coinFx.alt = '';
     coinFx.style.left = `${start.x}px`;
     coinFx.style.top = `${start.y}px`;
-    coinFx.innerHTML = `<span>${label}</span><img src="assets/img/moeda_ouro.png" alt="">`;
     document.body.appendChild(coinFx);
 
-    const delay = index * 190;
-    const lift = isPlayerReward ? -126 : 126;
-    const sideDrift = isPlayerReward ? 34 : -34;
+    const delay = index * 210;
+    const lift = isPlayerReward ? -172 : 172;
+    const sideDrift = isPlayerReward ? 58 + (index % 2) * 18 : -58 - (index % 2) * 18;
     playRewardCoinSound(delay + 160);
+    setTimeout(() => coinFx.classList.add('coin-released'), delay + 250);
     coinFx.animate([
-        { transform: 'translate(-50%, -50%) translate(0, 0) scale(0.62)', opacity: 0 },
-        { transform: 'translate(-50%, -50%) translate(0, -10px) scale(1.28)', opacity: 1, offset: 0.16 },
-        { transform: `translate(-50%, -50%) translate(${sideDrift}px, ${lift}px) scale(1.48)`, opacity: 1, offset: 0.46 },
-        { transform: `translate(-50%, -50%) translate(${target.x - start.x}px, ${target.y - start.y}px) scale(0.86)`, opacity: 1 }
+        { transform: 'translate(-50%, -50%) translate(0, 0) rotateY(0deg) scale(0.48)', opacity: 0 },
+        { transform: 'translate(-50%, -50%) translate(0, -14px) rotateY(240deg) scale(1.35)', opacity: 1, offset: 0.16 },
+        { transform: `translate(-50%, -50%) translate(${sideDrift}px, ${lift}px) rotateY(900deg) scale(1.65)`, opacity: 1, offset: 0.52 },
+        { transform: `translate(-50%, -50%) translate(${target.x - start.x}px, ${target.y - start.y}px) rotateY(1620deg) scale(0.82)`, opacity: 1 }
     ], {
-        duration: 1120,
+        duration: 2000,
         delay,
         easing: 'cubic-bezier(0.16, 0.9, 0.24, 1)',
         fill: 'forwards'
@@ -1275,6 +1310,23 @@ function animateRewardCoin(isPlayerReward, index = 0, label = MATCH_REWARD_LABEL
     };
 }
 
+function queueRewardCoinAnimation(isPlayerReward, amount, label) {
+    const side = isPlayerReward ? 'player' : 'opponent';
+    if(!window.matchRewardAnimationQueue) window.matchRewardAnimationQueue = { player: [], opponent: [] };
+    if(!window.matchRewardAnimationTimers) window.matchRewardAnimationTimers = { player: null, opponent: null };
+    window.matchRewardAnimationQueue[side].push({ amount, label });
+    if(window.matchRewardAnimationTimers[side]) clearTimeout(window.matchRewardAnimationTimers[side]);
+    window.matchRewardAnimationTimers[side] = setTimeout(() => {
+        const batch = window.matchRewardAnimationQueue[side] || [];
+        window.matchRewardAnimationQueue[side] = [];
+        window.matchRewardAnimationTimers[side] = null;
+        const total = batch.reduce((sum, item) => sum + Math.max(0, item.amount || 0), 0);
+        const labels = [...new Set(batch.map(item => item.label).filter(Boolean))];
+        animateRewardCoinLabel(isPlayerReward, labels);
+        for(let i = 0; i < total; i++) animateRewardCoin(isPlayerReward, i);
+    }, 90);
+}
+
 function awardMatchRewardGoldFor(u, amount = 1, label = MATCH_REWARD_LABELS.EFFECTIVE_ATTACK) {
     if(isFriendlyMatch()) return;
     if(!window.currentUser || amount <= 0) return;
@@ -1285,7 +1337,7 @@ function awardMatchRewardGoldFor(u, amount = 1, label = MATCH_REWARD_LABELS.EFFE
         window.opponentMatchRewardGold = (window.opponentMatchRewardGold || 0) + amount;
     }
     renderMatchRewardGold(isPlayerReward);
-    for(let i = 0; i < amount; i++) animateRewardCoin(isPlayerReward, i, label);
+    queueRewardCoinAnimation(isPlayerReward, amount, label);
 }
 
 function renderMatchRewardGold(isPlayerReward = true) {
@@ -1352,7 +1404,7 @@ function showEndPoints(points, goldReward = null) {
     const pointSign = points > 0 ? '+' : (points < 0 ? '-' : '');
     animateEndCounter(pointSpan, points, value => `${pointSign}${value} PTS`);
 
-    const reward = goldReward !== null ? Math.max(0, goldReward || 0) : (points > 0 ? (window.matchRewardGold || 0) + (window.opponentMatchRewardGold || 0) : 0);
+    const reward = goldReward !== null ? Math.max(0, goldReward || 0) : (points > 1 ? (window.matchRewardGold || 0) + (window.opponentMatchRewardGold || 0) : 0);
     const lostGold = points < 0 ? Math.min(window.currentGoldCoins || 0, window.opponentMatchRewardGold || 0) : 0;
     let goldEl = document.getElementById('end-gold-reward');
     if(reward > 0 || lostGold > 0) {
