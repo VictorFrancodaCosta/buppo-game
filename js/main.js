@@ -48,6 +48,8 @@ window.selectedFriendUid = null;
 window.pendingFriendInvite = null;
 window.friendlyRematchRound = 0;
 window.suppressFriendlyAbandon = false;
+window.fullscreenEnabled = false;
+window.cacheRefreshComplete = false;
 
 const ASSETS_TO_LOAD = {
     images: [
@@ -204,12 +206,13 @@ window.goToLobby = async function(isAutoLogin = false) {
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
         const gameId = await generateUniqueGameId(window.currentUser.uid);
-        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, friends: [], lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true } });
+        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, friends: [], lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
         window.currentPlayerGameId = gameId;
         renderLobbyIdentity(window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
         updateLobbyGoldWallet(0);
         window.updateVol('master', 0.5);
+        window.applyFullscreenPreference(false);
     } else {
         const d = userSnap.data();
         const gameId = await ensurePlayerGameId(userRef, d);
@@ -223,17 +226,23 @@ window.goToLobby = async function(isAutoLogin = false) {
             window.masterVol = d.settings.vol !== undefined ? d.settings.vol : 0.5;
             window.musicEnabled = d.settings.music !== undefined ? d.settings.music : true;
             window.sfxEnabled = d.settings.sfx !== undefined ? d.settings.sfx : true;
+            window.fullscreenEnabled = d.settings.fullscreen === true;
 
             let slider = document.getElementById('vol-slider'); if(slider) slider.value = window.masterVol;
             let chkM = document.getElementById('check-music'); if(chkM) chkM.checked = window.musicEnabled;
             let chkS = document.getElementById('check-sfx'); if(chkS) chkS.checked = window.sfxEnabled;
+            let chkF = document.getElementById('check-fullscreen'); if(chkF) chkF.checked = window.fullscreenEnabled;
 
             window.updateVol('master', window.masterVol);
+            window.applyFullscreenPreference(window.fullscreenEnabled);
             if (!window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
                 audios[MusicController.currentTrackId].pause();
             } else if (window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
                 audios[MusicController.currentTrackId].play().catch(()=>{});
             }
+        } else {
+            window.fullscreenEnabled = false;
+            let chkF = document.getElementById('check-fullscreen'); if(chkF) chkF.checked = false;
         }
     }
     startPresenceHeartbeat();
@@ -1552,11 +1561,37 @@ window.abandonMatch = function() {
 }
 
 function preloadGame() {
-    ASSETS_TO_LOAD.images.forEach(src => { let img = new Image(); img.src = src; window.gameAssets.push(img); img.onload = () => updateLoader(); img.onerror = () => updateLoader(); });
+    ASSETS_TO_LOAD.images.forEach(src => { let img = new Image(); img.src = withRuntimeVersion(src); window.gameAssets.push(img); img.onload = () => updateLoader(); img.onerror = () => updateLoader(); });
     ASSETS_TO_LOAD.audio.forEach(a => {
-        let s = new Audio(); s.src = a.src; s.preload = 'auto'; if(a.loop) s.loop = true; audios[a.id] = s; window.gameAssets.push(s);
+        let s = new Audio(); s.src = withRuntimeVersion(a.src); s.preload = 'auto'; if(a.loop) s.loop = true; audios[a.id] = s; window.gameAssets.push(s);
         s.onloadedmetadata = () => updateLoader(); s.onerror = () => updateLoader(); setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000);
     });
+}
+
+function withRuntimeVersion(src) {
+    const version = window.BUPPO_BUILD_VERSION || Date.now();
+    if(!src || /^(https?:|data:|blob:)/i.test(src)) return src;
+    return `${src}${src.includes('?') ? '&' : '?'}v=${encodeURIComponent(version)}`;
+}
+
+async function refreshRuntimeCaches() {
+    const loaderText = document.querySelector('.loader-txt');
+    try {
+        if(loaderText) loaderText.textContent = 'VERIFICANDO ATUALIZACOES...';
+        if('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(reg => reg.unregister().catch(()=>{})));
+        }
+        if(window.caches && caches.keys) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(key => caches.delete(key).catch(()=>{})));
+        }
+    } catch(e) {
+        console.warn('Atualizacao de cache ignorada:', e);
+    } finally {
+        if(loaderText) loaderText.textContent = 'CARREGANDO RECURSOS...';
+        window.cacheRefreshComplete = true;
+    }
 }
 
 function updateLoader() {
@@ -2189,9 +2224,37 @@ window.saveAudioSettings = async function() {
     if (!window.currentUser) return;
     try {
         const userRef = doc(db, "players", window.currentUser.uid);
-        await updateDoc(userRef, { settings: { vol: window.masterVol, music: window.musicEnabled, sfx: window.sfxEnabled } });
+        await updateDoc(userRef, { settings: { vol: window.masterVol, music: window.musicEnabled, sfx: window.sfxEnabled, fullscreen: window.fullscreenEnabled === true } });
     } catch(e) { console.error("Erro ao salvar config", e); }
 }
+
+window.applyFullscreenPreference = function(enabled) {
+    window.fullscreenEnabled = enabled === true;
+    const chk = document.getElementById('check-fullscreen');
+    if(chk) chk.checked = window.fullscreenEnabled;
+    try {
+        if(window.fullscreenEnabled) {
+            if(!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {
+                    document.addEventListener('click', () => {
+                        if(window.fullscreenEnabled && !document.fullscreenElement && document.documentElement.requestFullscreen) {
+                            document.documentElement.requestFullscreen().catch(()=>{});
+                        }
+                    }, { once: true });
+                });
+            }
+        } else if(document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(()=>{});
+        }
+    } catch(e) {}
+};
+
+window.toggleFullscreenPreference = function() {
+    window.playNavSound();
+    const chk = document.getElementById('check-fullscreen');
+    window.applyFullscreenPreference(chk ? chk.checked : !window.fullscreenEnabled);
+    if(window.saveAudioSettings) window.saveAudioSettings();
+};
 
 setTimeout(() => {
     if (assetsLoaded < totalAssets) {
@@ -2201,4 +2264,4 @@ setTimeout(() => {
     }
 }, 3000);
 
-preloadGame();
+refreshRuntimeCaches().finally(() => preloadGame());

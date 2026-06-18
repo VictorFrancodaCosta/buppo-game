@@ -77,7 +77,15 @@ window.openDeckSelector = function() {
 })();
 
 window.toggleFullScreen = function() {
-    if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } else { if (document.exitFullscreen) document.exitFullscreen(); }
+    const nextState = !document.fullscreenElement;
+    if (typeof window.applyFullscreenPreference === 'function') {
+        window.applyFullscreenPreference(nextState);
+        if (typeof window.saveAudioSettings === 'function') window.saveAudioSettings();
+    } else if (nextState) {
+        document.documentElement.requestFullscreen().catch(e => console.log(e));
+    } else if (document.exitFullscreen) {
+        document.exitFullscreen();
+    }
 }
 
 window.toggleConfig = function() {

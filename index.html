@@ -9,10 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="css/style.css?v=3">
-    <link rel="stylesheet" href="css/lobby.css?v=7">
-    <link rel="stylesheet" href="css/game.css?v=8">
-    <link rel="stylesheet" href="css/effects.css">
+    <link rel="stylesheet" href="css/style.css?v=2026.06.18.1">
+    <link rel="stylesheet" href="css/lobby.css?v=2026.06.18.1">
+    <link rel="stylesheet" href="css/game.css?v=2026.06.18.1">
+    <link rel="stylesheet" href="css/effects.css?v=2026.06.18.1">
 
     <link rel="icon" type="image/webp" href="assets/img/logo_buppo.webp">
     <link rel="manifest" href="manifest.json">
@@ -24,6 +24,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BUPPO">
+    <script>
+        window.BUPPO_BUILD_VERSION = '2026.06.18.1';
+    </script>
     <script>
         (function () {
             try {
@@ -246,6 +249,11 @@
                     <span class="checkmark" id="chk-sfx-mark"></span>
                     EFEITOS
                 </label>
+                <label class="cfg-check-container">
+                    <input type="checkbox" id="check-fullscreen" onchange="window.toggleFullscreenPreference()">
+                    <span class="checkmark" id="chk-fullscreen-mark"></span>
+                    TELA CHEIA
+                </label>
             </div>
             <div id="abandon-area" style="display: none; width: 100%;">
                 <hr class="cfg-hr">
@@ -265,7 +273,7 @@
     <div id="tooltip-box"><h3 id="tt-title"></h3><div id="tt-content"></div></div>
     <div id="modal-overlay" class="modal-overlay" onclick="cancelModal()"><div class="modal-box" onclick="event.stopPropagation()"><h2 id="modal-title"></h2><p id="modal-desc"></p><div class="modal-btns" id="modal-btns"></div></div></div>
 
-    <script src="js/effects.js?v=24"></script> 
-    <script type="module" src="js/main.js?v=7"></script> 
+    <script src="js/effects.js?v=2026.06.18.1"></script> 
+    <script type="module" src="js/main.js?v=2026.06.18.1"></script> 
 </body>
 </html>
