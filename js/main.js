@@ -1228,16 +1228,6 @@ function playRewardCoinSound(delay = 0) {
     }, delay);
 }
 
-function getRewardCoinStartRect(isPlayerReward) {
-    const cluster = document.getElementById(isPlayerReward ? 'p-stats-cluster' : 'm-stats-cluster');
-    if(!cluster) return null;
-    const rect = cluster.getBoundingClientRect();
-    return {
-        x: isPlayerReward ? rect.left + rect.width * 0.44 : rect.left + rect.width * 0.56,
-        y: isPlayerReward ? rect.top + rect.height * 0.62 : rect.top + rect.height * 0.42
-    };
-}
-
 function getRewardCoinTargetRect(isPlayerReward) {
     const reward = document.getElementById(isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold');
     const coin = reward ? reward.querySelector('img') : null;
@@ -1253,7 +1243,7 @@ function animateRewardCoinLabel(isPlayerReward, labels = []) {
     const labelFx = document.createElement('div');
     labelFx.className = 'reward-coin-label-fly';
     labelFx.style.left = `${target.x}px`;
-    labelFx.style.top = `${target.y + (isPlayerReward ? -48 : 48)}px`;
+    labelFx.style.top = `${target.y - 62}px`;
     labelFx.innerHTML = labels.map(label => `<span>${label}</span>`).join('');
     document.body.appendChild(labelFx);
 
@@ -1269,56 +1259,21 @@ function animateRewardCoinLabel(isPlayerReward, labels = []) {
     }).onfinish = () => labelFx.remove();
 }
 
-function animateRewardCoin(isPlayerReward, index = 0, onLand = null) {
-    const start = getRewardCoinStartRect(isPlayerReward);
-    const target = getRewardCoinTargetRect(isPlayerReward);
-    if(!start || !target) return;
-    const coinFx = document.createElement('img');
-    coinFx.className = 'reward-coin-fly';
-    coinFx.src = 'assets/img/moeda_ouro.png';
-    coinFx.alt = '';
-    coinFx.style.left = `${start.x}px`;
-    coinFx.style.top = `${start.y}px`;
-    const coinSize = Math.max(24, Math.round(target.size || 29));
-    coinFx.style.width = `${coinSize}px`;
-    coinFx.style.height = `${coinSize}px`;
-    document.body.appendChild(coinFx);
-
-    const delay = index * 160;
-    const lift = isPlayerReward ? -220 : 220;
-    const sideDrift = isPlayerReward ? 34 + (index % 2) * 12 : -34 - (index % 2) * 12;
-    const dropX = target.x - start.x;
-    const dropY = target.y - start.y;
-    const topX = sideDrift;
-    const topY = lift;
-    const fallX = dropX * 0.78;
-    const fallY = dropY + (isPlayerReward ? -42 : 42);
-    playRewardCoinSound(delay + 100);
-    setTimeout(() => coinFx.classList.add('coin-released'), delay + 90);
-    coinFx.animate([
-        { transform: 'translate(-50%, -50%) translate(0, 0) rotateY(0deg) scale(0.55)', opacity: 0 },
-        { transform: 'translate(-50%, -50%) translate(0, -10px) rotateY(180deg) scale(1.7)', opacity: 1, offset: 0.11 },
-        { transform: `translate(-50%, -50%) translate(${topX}px, ${topY}px) rotateY(720deg) scale(2.15)`, opacity: 1, offset: 0.36 },
-        { transform: `translate(-50%, -50%) translate(${fallX}px, ${fallY}px) rotateY(1260deg) scale(1.28)`, opacity: 1, offset: 0.78 },
-        { transform: `translate(-50%, -50%) translate(${dropX}px, ${dropY}px) rotateY(1620deg) scale(1)`, opacity: 1 }
-    ], {
-        duration: 1500,
-        delay,
-        easing: 'cubic-bezier(0.15, 0.82, 0.2, 1)',
-        fill: 'forwards'
-    }).onfinish = () => {
-        if(typeof onLand === 'function') onLand();
-        coinFx.remove();
+function animateRewardCoin(isPlayerReward, index = 0, onPop = null) {
+    const delay = index * 170;
+    setTimeout(() => {
+        if(typeof onPop === 'function') onPop();
+        playRewardCoinSound(0);
         const reward = document.getElementById(isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold');
-        if(reward) {
-            reward.classList.remove('coin-landed');
-            void reward.offsetWidth;
-            reward.classList.add('coin-landed');
-        }
-    };
+        if(!reward) return;
+        reward.classList.remove('coin-pop-active');
+        void reward.offsetWidth;
+        reward.classList.add('coin-pop-active');
+        setTimeout(() => reward.classList.remove('coin-pop-active'), 1050);
+    }, delay);
 }
 
-function setRewardWalletDisplay(isPlayerReward, amount, hidden = false, coinHidden = false) {
+function setRewardWalletDisplay(isPlayerReward, amount) {
     const cluster = document.getElementById(isPlayerReward ? 'p-stats-cluster' : 'm-stats-cluster');
     if(!cluster || amount <= 0) return null;
     const id = isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold';
@@ -1329,9 +1284,6 @@ function setRewardWalletDisplay(isPlayerReward, amount, hidden = false, coinHidd
         reward.className = `match-reward-gold ${isPlayerReward ? 'player-reward-gold' : 'enemy-reward-gold'}`;
         cluster.appendChild(reward);
     }
-    reward.classList.toggle('wallet-hidden', hidden);
-    reward.classList.toggle('wallet-coin-hidden', coinHidden);
-    reward.classList.toggle('wallet-targeting', coinHidden);
     reward.setAttribute('aria-label', `Ouro da partida: ${amount}`);
     reward.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span>x${amount}</span>`;
     return reward;
@@ -1351,11 +1303,10 @@ function queueRewardCoinAnimation(isPlayerReward, amount, label) {
         const total = batch.reduce((sum, item) => sum + Math.max(0, item.amount || 0), 0);
         const labels = [...new Set(batch.map(item => item.label).filter(Boolean))];
         const startAmount = batch.length ? Math.max(0, batch[0].previousAmount || 0) : 0;
-        const finalAmount = startAmount + total;
-        setRewardWalletDisplay(isPlayerReward, startAmount > 0 ? startAmount : finalAmount, startAmount <= 0, true);
+        setRewardWalletDisplay(isPlayerReward, startAmount + 1);
         animateRewardCoinLabel(isPlayerReward, labels);
         for(let i = 0; i < total; i++) {
-            animateRewardCoin(isPlayerReward, i, () => setRewardWalletDisplay(isPlayerReward, startAmount + i + 1, false, i < total - 1));
+            animateRewardCoin(isPlayerReward, i, () => setRewardWalletDisplay(isPlayerReward, startAmount + i + 1));
         }
     }, 90);
 }
