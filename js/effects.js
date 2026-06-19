@@ -514,14 +514,55 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-panel {
             position: relative !important;
             width: min(88vw, 980px) !important;
-            min-height: 100vh !important;
+            height: 100vh !important;
+            min-height: 0 !important;
+            box-sizing: border-box !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             padding: 4vh 4vw 14vh !important;
         }
 
+        .lobby-mode-overlay::before,
+        .lobby-mode-overlay::after {
+            content: "";
+            position: fixed !important;
+            inset: 0 !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transition: opacity 0.18s ease !important;
+        }
+
+        .lobby-mode-overlay::before {
+            background: radial-gradient(circle at 50% 50%, rgba(255, 204, 82, 0.08), transparent 22%),
+                        radial-gradient(circle at 50% 50%, transparent 22%, rgba(0, 0, 0, 0.44) 68%, rgba(0, 0, 0, 0.68) 100%) !important;
+            z-index: 0 !important;
+        }
+
+        .lobby-mode-overlay::after {
+            background: linear-gradient(115deg, transparent 0%, rgba(255, 230, 120, 0.12) 47%, transparent 58%) !important;
+            mix-blend-mode: screen !important;
+            z-index: 1 !important;
+            transform: translateX(-18%) !important;
+        }
+
+        .lobby-mode-overlay.cinematic-focus {
+            background: rgba(7, 2, 1, 0.62) !important;
+            backdrop-filter: blur(12px) saturate(0.78) contrast(1.08) !important;
+        }
+
+        .lobby-mode-overlay.cinematic-focus::before {
+            opacity: 1 !important;
+        }
+
+        .lobby-mode-overlay.cinematic-focus::after {
+            opacity: 1 !important;
+            animation: lobbyCinematicSweep 1.35s ease-in-out infinite alternate !important;
+        }
+
         .lobby-mode-choices {
+            position: relative !important;
+            z-index: 2 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -544,6 +585,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-btn {
             position: relative !important;
+            z-index: 2 !important;
             width: min(38vw, 430px) !important;
             aspect-ratio: 2048 / 650 !important;
             filter: drop-shadow(8px 12px 0 rgba(25, 10, 4, 0.72))
@@ -568,7 +610,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             filter: brightness(1.12)
                     drop-shadow(9px 14px 0 rgba(25, 10, 4, 0.74))
                     drop-shadow(0 21px 24px rgba(0, 0, 0, 0.34))
-                    drop-shadow(0 0 24px rgba(255, 223, 83, 0.34)) !important;
+                    drop-shadow(0 0 36px rgba(255, 223, 83, 0.58))
+                    drop-shadow(0 0 18px rgba(255, 78, 32, 0.28)) !important;
         }
 
         .lobby-mode-btn::before {
@@ -623,16 +666,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-history {
-            position: absolute !important;
+            position: fixed !important;
             left: 50% !important;
-            bottom: clamp(30px, 4.5vh, 52px) !important;
-            width: min(17vw, 230px) !important;
-            min-width: 180px !important;
+            bottom: clamp(64px, 8vh, 92px) !important;
+            width: min(14vw, 190px) !important;
+            min-width: 150px !important;
             aspect-ratio: 2048 / 560 !important;
             background-image: url('assets/img/botao_historico.webp') !important;
             filter: drop-shadow(5px 8px 0 rgba(16, 7, 3, 0.72))
                     drop-shadow(0 11px 14px rgba(0, 0, 0, 0.28)) !important;
             transform: translateX(-50%) !important;
+            z-index: 3 !important;
             animation: lobbyHistoryPop 0.32s cubic-bezier(0.12, 1.2, 0.22, 1) 0.12s backwards !important;
             transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease !important;
         }
@@ -661,6 +705,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         @keyframes lobbyModeFloat {
             0%, 100% { translate: 0 0; }
             50% { translate: 0 -8px; }
+        }
+
+        @keyframes lobbyCinematicSweep {
+            0% { transform: translateX(-22%); opacity: 0.28; }
+            100% { transform: translateX(18%); opacity: 0.58; }
         }
 
         @media (max-width: 980px) and (orientation: landscape) {
@@ -748,7 +797,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
             .lobby-mode-panel {
                 width: 94vw !important;
-                min-height: 100vh !important;
+                height: 100vh !important;
+                min-height: 0 !important;
                 padding: 5vh 4vw 12vh !important;
             }
 
@@ -762,9 +812,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-history {
-                width: min(46vw, 210px) !important;
-                min-width: 160px !important;
-                bottom: 24px !important;
+                width: min(36vw, 170px) !important;
+                min-width: 130px !important;
+                bottom: 52px !important;
             }
         }
 
@@ -937,8 +987,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         modeOverlay.innerHTML = `
             <div class="lobby-mode-panel" role="dialog" aria-modal="true" aria-label="Escolha o modo de jogo">
                 <div class="lobby-mode-choices">
-                    <button id="btn-mode-pvp" class="lobby-mode-btn lobby-mode-pvp" type="button" data-points="(+3 pontos)" aria-label="Partida PVP"></button>
                     <button id="btn-mode-pve" class="lobby-mode-btn lobby-mode-pve" type="button" data-points="(+1 ponto)" aria-label="Partida PVE"></button>
+                    <button id="btn-mode-pvp" class="lobby-mode-btn lobby-mode-pvp" type="button" data-points="(+3 pontos)" aria-label="Partida PVP"></button>
                 </div>
                 <button id="btn-mode-history" class="lobby-mode-history" type="button" aria-label="Hist\u00f3rico de partidas"></button>
             </div>
@@ -955,7 +1005,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         modeOverlay.onclick = (event) => {
-            if (event.target === modeOverlay) closeModeChooser();
+            if (!event.target.closest('.lobby-mode-btn, .lobby-mode-history')) closeModeChooser();
         };
 
         const startMode = (handlerName) => {
@@ -971,6 +1021,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             closeModeChooser();
             window.openHistory?.();
         };
+        modeOverlay.querySelectorAll('.lobby-mode-btn').forEach((button) => {
+            button.onmouseenter = () => modeOverlay.classList.add('cinematic-focus');
+            button.onfocus = () => modeOverlay.classList.add('cinematic-focus');
+            button.onmouseleave = () => modeOverlay.classList.remove('cinematic-focus');
+            button.onblur = () => modeOverlay.classList.remove('cinematic-focus');
+        });
     }
 });
 
