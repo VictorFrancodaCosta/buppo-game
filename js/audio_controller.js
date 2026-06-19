@@ -83,11 +83,12 @@ window.playUIHoverSound = function() {
 
 window.updateVol = function(type, val) {
     if(type==='master') window.masterVol = parseFloat(val);
-    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-mastery', 'sfx-deck-select', 'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'bgm-loop', 'sfx-nav', 'sfx-cine'].forEach(k => {
+    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-mastery', 'sfx-deck-select', 'sfx-coin', 'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'bgm-loop', 'sfx-nav', 'sfx-cine'].forEach(k => {
         if(audios[k]) {
             let baseVol = 0.8;
             if(k === 'sfx-ui-hover') baseVol = 0.3;
             else if (k === 'sfx-levelup') baseVol = 1.0;
+            else if (k === 'sfx-coin') baseVol = 1.0;
             else if (k === 'sfx-mastery') baseVol = 0.95;
             else if (k === 'sfx-train') baseVol = 0.5;
             else if (k.startsWith('bgm')) baseVol = 0.5;

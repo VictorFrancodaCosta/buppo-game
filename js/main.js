@@ -86,6 +86,7 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' },
         { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' },
         { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' },
+        { id: 'sfx-coin', src: 'assets/audio/sfx_coin.mp3' },
         { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' },
         { id: 'sfx-lose', src: 'assets/audio/sfx_derrota.mp3' },
         { id: 'sfx-tie', src: 'assets/audio/sfx_empate.mp3' }
@@ -1220,6 +1221,10 @@ function awardAttackRewardGold(u, damage) {
 function playRewardCoinSound(delay = 0) {
     if(!window.sfxEnabled) return;
     setTimeout(() => {
+        if(audios['sfx-coin']) {
+            playSound('sfx-coin');
+            return;
+        }
         try {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             if(!AudioCtx) return;

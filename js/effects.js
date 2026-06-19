@@ -584,7 +584,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: clamp(46px, 6vw, 104px) !important;
+            gap: clamp(34px, 3.6vw, 74px) !important;
             width: 100% !important;
         }
 
@@ -604,8 +604,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-btn {
             position: relative !important;
             z-index: 2 !important;
-            width: min(43vw, 560px) !important;
-            aspect-ratio: 2048 / 760 !important;
+            width: min(40vw, 760px) !important;
+            aspect-ratio: 2048 / 920 !important;
             filter: drop-shadow(8px 12px 0 rgba(25, 10, 4, 0.72))
                     drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)) !important;
             animation: lobbyModePop 0.36s cubic-bezier(0.12, 1.25, 0.22, 1) backwards,
@@ -649,8 +649,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             content: attr(data-points);
             position: absolute !important;
             left: 50% !important;
-            top: -54px !important;
-            transform: translateX(-50%) translateY(8px) scale(0.9) rotate(-2deg) !important;
+            top: calc(100% + 22px) !important;
+            bottom: auto !important;
+            transform: translateX(-50%) translateY(-8px) scale(0.9) rotate(-2deg) !important;
             min-width: 140px !important;
             padding: 11px 22px 10px !important;
             border: 4px solid #2a1004 !important;
@@ -672,7 +673,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             content: "";
             position: absolute !important;
             left: 50% !important;
-            top: -7px !important;
+            top: calc(100% + 10px) !important;
+            bottom: auto !important;
             width: 24px !important;
             height: 24px !important;
             background: #fff7d7 !important;
@@ -839,8 +841,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-btn {
-                width: min(86vw, 480px) !important;
-                aspect-ratio: 2048 / 760 !important;
+                width: min(90vw, 560px) !important;
+                aspect-ratio: 2048 / 920 !important;
             }
 
             .lobby-mode-history {
