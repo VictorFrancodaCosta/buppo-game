@@ -720,6 +720,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             overflow: hidden !important;
             pointer-events: none !important;
             opacity: 0 !important;
+            mix-blend-mode: screen !important;
             transition: opacity 0.2s ease !important;
         }
 
@@ -730,24 +731,24 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-flare {
             position: absolute !important;
             left: var(--flare-left, 50%) !important;
-            bottom: -12vh !important;
+            bottom: -16vh !important;
             width: var(--flare-size, 10px) !important;
             height: var(--flare-height, 52px) !important;
             border-radius: 999px !important;
             opacity: 0 !important;
-            filter: blur(0.15px) !important;
+            filter: blur(0.25px) brightness(1.45) !important;
             animation: lobbyModeFlareRise var(--flare-duration, 2.8s) linear var(--flare-delay, 0s) infinite !important;
             will-change: transform, opacity !important;
         }
 
         .lobby-mode-flare.pve {
-            background: linear-gradient(to top, rgba(255,255,255,0), rgba(255,255,255,0.95), rgba(77,190,255,0.9), rgba(255,255,255,0)) !important;
-            box-shadow: 0 0 14px rgba(94, 205, 255, 0.9), 0 0 24px rgba(255,255,255,0.42) !important;
+            background: linear-gradient(to top, rgba(255,255,255,0), rgba(255,255,255,1), rgba(67,198,255,0.98), rgba(255,255,255,0.62), rgba(255,255,255,0)) !important;
+            box-shadow: 0 0 18px rgba(94, 205, 255, 1), 0 0 34px rgba(255,255,255,0.6), 0 0 58px rgba(50,170,255,0.36) !important;
         }
 
         .lobby-mode-flare.pvp {
-            background: linear-gradient(to top, rgba(255,255,255,0), rgba(255,218,76,0.95), rgba(255,59,37,0.9), rgba(255,255,255,0)) !important;
-            box-shadow: 0 0 14px rgba(255, 65, 39, 0.9), 0 0 24px rgba(255,220,75,0.42) !important;
+            background: linear-gradient(to top, rgba(255,255,255,0), rgba(255,226,72,1), rgba(255,58,35,0.98), rgba(255,220,80,0.62), rgba(255,255,255,0)) !important;
+            box-shadow: 0 0 18px rgba(255, 65, 39, 1), 0 0 34px rgba(255,220,75,0.62), 0 0 58px rgba(255,40,24,0.34) !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-pve.selected {
@@ -972,10 +973,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         @keyframes lobbyModeFlareRise {
-            0% { opacity: 0; transform: translateY(0) scaleY(0.55) scaleX(0.8); }
-            12% { opacity: 0.95; }
-            78% { opacity: 0.75; }
-            100% { opacity: 0; transform: translateY(-116vh) scaleY(1.18) scaleX(1); }
+            0% { opacity: 0; transform: translateY(0) scaleY(0.48) scaleX(0.82); }
+            9% { opacity: 1; }
+            72% { opacity: 0.88; }
+            100% { opacity: 0; transform: translateY(-122vh) scaleY(1.28) scaleX(1.06); }
         }
 
         @keyframes lobbyDecksPop {
@@ -1379,15 +1380,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             if(flareLayer) {
                 flareLayer.innerHTML = '';
                 const flareClass = mode === 'pvp' ? 'pvp' : 'pve';
-                for(let i = 0; i < 54; i++) {
+                for(let i = 0; i < 84; i++) {
                     const flare = document.createElement('span');
                     flare.className = `lobby-mode-flare ${flareClass}`;
                     flare.style.setProperty('--flare-left', `${Math.random() * 100}%`);
-                    const flareSize = Math.random() * 10 + 6;
+                    const flareSize = Math.random() * 16 + 8;
+                    const flareDuration = Math.random() * 1.25 + 2.15;
                     flare.style.setProperty('--flare-size', `${flareSize}px`);
-                    flare.style.setProperty('--flare-height', `${flareSize * (Math.random() * 3 + 5.2)}px`);
-                    flare.style.setProperty('--flare-duration', `${Math.random() * 1.4 + 2.0}s`);
-                    flare.style.setProperty('--flare-delay', `${Math.random() * 2.2}s`);
+                    flare.style.setProperty('--flare-height', `${flareSize * (Math.random() * 3.6 + 6.4)}px`);
+                    flare.style.setProperty('--flare-duration', `${flareDuration}s`);
+                    flare.style.setProperty('--flare-delay', `${Math.random() < 0.72 ? -Math.random() * flareDuration : Math.random() * 0.45}s`);
                     flareLayer.appendChild(flare);
                 }
             }
