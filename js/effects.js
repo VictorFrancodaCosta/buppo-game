@@ -513,14 +513,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-panel {
             position: relative !important;
-            width: min(88vw, 980px) !important;
+            width: 100vw !important;
             height: 100vh !important;
             min-height: 0 !important;
             box-sizing: border-box !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            padding: 4vh 4vw 14vh !important;
+            padding: 4vh 2vw 14vh !important;
         }
 
         .lobby-mode-overlay::before,
@@ -584,7 +584,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: clamp(34px, 3.6vw, 74px) !important;
+            gap: clamp(24px, 2.8vw, 56px) !important;
             width: 100% !important;
         }
 
@@ -604,8 +604,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-btn {
             position: relative !important;
             z-index: 2 !important;
-            width: min(40vw, 760px) !important;
-            aspect-ratio: 2048 / 920 !important;
+            width: min(48vw, 940px) !important;
+            aspect-ratio: 2048 / 960 !important;
             filter: drop-shadow(8px 12px 0 rgba(25, 10, 4, 0.72))
                     drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)) !important;
             animation: lobbyModePop 0.36s cubic-bezier(0.12, 1.25, 0.22, 1) backwards,
@@ -670,20 +670,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-btn::after {
-            content: "";
-            position: absolute !important;
-            left: 50% !important;
-            top: calc(100% + 10px) !important;
-            bottom: auto !important;
-            width: 24px !important;
-            height: 24px !important;
-            background: #fff7d7 !important;
-            border-right: 4px solid #2a1004 !important;
-            border-bottom: 4px solid #2a1004 !important;
-            transform: translateX(-50%) rotate(45deg) scale(0.8) !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            transition: opacity 0.14s ease, transform 0.14s ease !important;
+            content: none !important;
+            display: none !important;
         }
 
         .lobby-mode-btn:hover::before,
@@ -694,8 +682,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-btn:hover::after,
         .lobby-mode-btn:focus-visible::after {
-            opacity: 1 !important;
-            transform: translateX(-50%) rotate(45deg) scale(1) !important;
+            content: none !important;
+            display: none !important;
         }
 
         .lobby-mode-history {
@@ -829,10 +817,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-panel {
-                width: 94vw !important;
+                width: 100vw !important;
                 height: 100vh !important;
                 min-height: 0 !important;
-                padding: 5vh 4vw 12vh !important;
+                padding: 5vh 3vw 12vh !important;
             }
 
             .lobby-mode-choices {
@@ -841,8 +829,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-btn {
-                width: min(90vw, 560px) !important;
-                aspect-ratio: 2048 / 920 !important;
+                width: min(94vw, 680px) !important;
+                aspect-ratio: 2048 / 960 !important;
             }
 
             .lobby-mode-history {
