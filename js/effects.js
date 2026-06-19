@@ -555,9 +555,27 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             opacity: 1 !important;
         }
 
+        .lobby-mode-overlay.cinematic-pve::before {
+            background: radial-gradient(circle at 36% 48%, rgba(255, 215, 86, 0.22), transparent 18%),
+                        radial-gradient(circle at 50% 50%, transparent 23%, rgba(32, 16, 5, 0.48) 68%, rgba(0, 0, 0, 0.72) 100%) !important;
+        }
+
+        .lobby-mode-overlay.cinematic-pvp::before {
+            background: radial-gradient(circle at 64% 48%, rgba(255, 74, 38, 0.2), transparent 18%),
+                        radial-gradient(circle at 50% 50%, transparent 22%, rgba(18, 3, 2, 0.52) 68%, rgba(0, 0, 0, 0.76) 100%) !important;
+        }
+
         .lobby-mode-overlay.cinematic-focus::after {
             opacity: 1 !important;
             animation: lobbyCinematicSweep 1.35s ease-in-out infinite alternate !important;
+        }
+
+        .lobby-mode-overlay.cinematic-pve::after {
+            background: linear-gradient(115deg, transparent 0%, rgba(255, 232, 130, 0.16) 47%, transparent 58%) !important;
+        }
+
+        .lobby-mode-overlay.cinematic-pvp::after {
+            background: linear-gradient(115deg, transparent 0%, rgba(255, 90, 48, 0.14) 47%, transparent 58%) !important;
         }
 
         .lobby-mode-choices {
@@ -566,7 +584,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: clamp(34px, 5vw, 80px) !important;
+            gap: clamp(46px, 6vw, 104px) !important;
             width: 100% !important;
         }
 
@@ -586,8 +604,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-btn {
             position: relative !important;
             z-index: 2 !important;
-            width: min(38vw, 430px) !important;
-            aspect-ratio: 2048 / 650 !important;
+            width: min(43vw, 560px) !important;
+            aspect-ratio: 2048 / 760 !important;
             filter: drop-shadow(8px 12px 0 rgba(25, 10, 4, 0.72))
                     drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)) !important;
             animation: lobbyModePop 0.36s cubic-bezier(0.12, 1.25, 0.22, 1) backwards,
@@ -606,12 +624,25 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-btn:hover,
         .lobby-mode-btn:focus-visible {
-            transform: translateY(-8px) scale(1.06) !important;
-            filter: brightness(1.12)
-                    drop-shadow(9px 14px 0 rgba(25, 10, 4, 0.74))
-                    drop-shadow(0 21px 24px rgba(0, 0, 0, 0.34))
-                    drop-shadow(0 0 36px rgba(255, 223, 83, 0.58))
-                    drop-shadow(0 0 18px rgba(255, 78, 32, 0.28)) !important;
+            transform: translateY(-10px) scale(1.09) !important;
+        }
+
+        .lobby-mode-pve:hover,
+        .lobby-mode-pve:focus-visible {
+            filter: brightness(1.14) saturate(1.12)
+                    drop-shadow(10px 15px 0 rgba(24, 12, 3, 0.76))
+                    drop-shadow(0 23px 25px rgba(0, 0, 0, 0.36))
+                    drop-shadow(0 0 36px rgba(255, 204, 75, 0.55))
+                    drop-shadow(0 0 18px rgba(83, 196, 255, 0.36)) !important;
+        }
+
+        .lobby-mode-pvp:hover,
+        .lobby-mode-pvp:focus-visible {
+            filter: brightness(1.16) saturate(1.18)
+                    drop-shadow(10px 15px 0 rgba(24, 8, 3, 0.78))
+                    drop-shadow(0 24px 27px rgba(0, 0, 0, 0.38))
+                    drop-shadow(0 0 42px rgba(255, 76, 40, 0.52))
+                    drop-shadow(0 0 22px rgba(255, 223, 87, 0.5)) !important;
         }
 
         .lobby-mode-btn::before {
@@ -804,11 +835,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
             .lobby-mode-choices {
                 flex-direction: column !important;
-                gap: 22px !important;
+                gap: 30px !important;
             }
 
             .lobby-mode-btn {
-                width: min(78vw, 360px) !important;
+                width: min(86vw, 480px) !important;
+                aspect-ratio: 2048 / 760 !important;
             }
 
             .lobby-mode-history {
@@ -1022,10 +1054,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             window.openHistory?.();
         };
         modeOverlay.querySelectorAll('.lobby-mode-btn').forEach((button) => {
-            button.onmouseenter = () => modeOverlay.classList.add('cinematic-focus');
-            button.onfocus = () => modeOverlay.classList.add('cinematic-focus');
-            button.onmouseleave = () => modeOverlay.classList.remove('cinematic-focus');
-            button.onblur = () => modeOverlay.classList.remove('cinematic-focus');
+            const modeClass = button.classList.contains('lobby-mode-pvp') ? 'cinematic-pvp' : 'cinematic-pve';
+            const enableFocus = () => {
+                modeOverlay.classList.remove('cinematic-pve', 'cinematic-pvp');
+                modeOverlay.classList.add('cinematic-focus', modeClass);
+            };
+            const disableFocus = () => {
+                modeOverlay.classList.remove('cinematic-focus', 'cinematic-pve', 'cinematic-pvp');
+            };
+            button.onmouseenter = enableFocus;
+            button.onfocus = enableFocus;
+            button.onmouseleave = disableFocus;
+            button.onblur = disableFocus;
         });
     }
 });
