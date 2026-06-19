@@ -442,8 +442,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             transform: translate(-50%, -50%) !important;
             z-index: 45 !important;
             display: flex !important;
+            flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
+            gap: 14px !important;
             pointer-events: auto !important;
         }
 
@@ -460,7 +462,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen #btn-play-pvp.lobby-main-play .btn-title {
             font-family: 'Bangers', cursive !important;
-            font-size: clamp(62px, 5.2vw, 98px) !important;
+            font-size: clamp(43px, 3.6vw, 69px) !important;
             color: #fff4a2 !important;
             letter-spacing: 1px !important;
             line-height: 0.84 !important;
@@ -483,6 +485,30 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen #btn-play-pvp.lobby-main-play:active {
             transform: translateY(3px) scale(0.985) !important;
+        }
+
+        #lobby-screen .lobby-main-history {
+            width: min(15vw, 240px) !important;
+            min-width: 170px !important;
+            aspect-ratio: 2048 / 560 !important;
+            border: 0 !important;
+            background: transparent url('assets/img/botao_historico.webp') center / 100% 100% no-repeat !important;
+            cursor: pointer !important;
+            appearance: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            filter: drop-shadow(5px 7px 0 rgba(16, 7, 3, 0.72))
+                    drop-shadow(0 10px 13px rgba(0, 0, 0, 0.28)) !important;
+            transform-origin: center center !important;
+            transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease !important;
+        }
+
+        #lobby-screen .lobby-main-history:hover,
+        #lobby-screen .lobby-main-history:focus-visible {
+            transform: translateY(-3px) scale(1.06) !important;
+            filter: brightness(1.12)
+                    drop-shadow(6px 8px 0 rgba(16, 7, 3, 0.74))
+                    drop-shadow(0 12px 14px rgba(0, 0, 0, 0.3))
+                    drop-shadow(0 0 16px rgba(255, 241, 160, 0.25)) !important;
         }
 
         .lobby-mode-overlay {
@@ -589,7 +615,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             width: 100% !important;
             position: absolute !important;
             left: 50% !important;
-            top: clamp(74px, 12vh, 132px) !important;
+            top: clamp(38px, 6vh, 78px) !important;
             transform: translateX(-50%) !important;
             transition: top 0.22s ease, transform 0.22s ease !important;
         }
@@ -683,7 +709,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             content: attr(data-points);
             position: absolute !important;
             left: 50% !important;
-            top: calc(100% + 22px) !important;
+            top: calc(100% + 12px) !important;
             bottom: auto !important;
             transform: translateX(-50%) translateY(-8px) scale(0.9) rotate(-2deg) !important;
             min-width: 140px !important;
@@ -723,7 +749,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-decks {
             position: absolute !important;
             left: 50% !important;
-            bottom: clamp(128px, 18vh, 206px) !important;
+            bottom: clamp(126px, 17vh, 190px) !important;
             z-index: 3 !important;
             display: flex !important;
             align-items: center !important;
@@ -738,18 +764,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-deck-title {
             position: absolute !important;
             left: 50% !important;
-            top: clamp(330px, 39vh, 420px) !important;
+            top: clamp(300px, 34vh, 356px) !important;
             z-index: 3 !important;
             color: #fff7bc !important;
             font-family: 'Bangers', cursive !important;
-            font-size: clamp(42px, 4.4vw, 78px) !important;
+            font-size: clamp(28px, 3vw, 48px) !important;
             line-height: 1 !important;
             letter-spacing: 1px !important;
             text-align: center !important;
             white-space: nowrap !important;
-            -webkit-text-stroke: 3px #120603 !important;
+            -webkit-text-stroke: 2px #120603 !important;
             paint-order: stroke fill !important;
-            text-shadow: 5px 5px 0 #120603, 0 0 22px rgba(255, 219, 73, 0.42) !important;
+            text-shadow: 3px 3px 0 #120603, 0 0 16px rgba(255, 219, 73, 0.38) !important;
             opacity: 0 !important;
             pointer-events: none !important;
             transform: translateX(-50%) translateY(20px) scale(0.86) rotate(-1deg) !important;
@@ -769,7 +795,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-deck {
             position: relative !important;
-            width: min(19vw, 310px) !important;
+            width: min(23vw, 375px) !important;
             border: 0 !important;
             padding: 0 !important;
             background: transparent !important;
@@ -947,7 +973,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             #lobby-screen #btn-play-pvp.lobby-main-play .btn-title {
-                font-size: clamp(48px, 12vw, 74px) !important;
+                font-size: clamp(34px, 8.4vw, 52px) !important;
+            }
+
+            #lobby-screen .lobby-main-history {
+                width: min(42vw, 210px) !important;
+                min-width: 150px !important;
             }
 
             .lobby-mode-panel {
@@ -958,7 +989,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-choices {
-                top: 5vh !important;
+                top: 3vh !important;
                 flex-direction: row !important;
                 gap: 30px !important;
             }
@@ -969,18 +1000,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-decks {
-                bottom: 112px !important;
+                bottom: 92px !important;
                 gap: 24px !important;
             }
 
             .lobby-mode-deck-title {
-                top: 38vh !important;
-                font-size: clamp(30px, 7vw, 46px) !important;
+                top: 33vh !important;
+                font-size: clamp(22px, 5vw, 34px) !important;
                 -webkit-text-stroke-width: 2px !important;
             }
 
             .lobby-mode-deck {
-                width: min(34vw, 190px) !important;
+                width: min(40vw, 230px) !important;
             }
 
             .lobby-mode-history {
@@ -1140,6 +1171,21 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             playCenter.appendChild(playButton);
         }
 
+        let lobbyHistoryButton = document.getElementById('btn-lobby-main-history');
+        if (!lobbyHistoryButton) {
+            lobbyHistoryButton = document.createElement('button');
+            lobbyHistoryButton.id = 'btn-lobby-main-history';
+            lobbyHistoryButton.type = 'button';
+        }
+        lobbyHistoryButton.className = 'lobby-main-history';
+        lobbyHistoryButton.setAttribute('aria-label', 'Hist\u00f3rico de partidas');
+        lobbyHistoryButton.removeAttribute('title');
+        lobbyHistoryButton.removeAttribute('data-tip');
+        lobbyHistoryButton.onclick = () => window.openHistory?.();
+        if (lobbyHistoryButton.parentElement !== playCenter) {
+            playCenter.appendChild(lobbyHistoryButton);
+        }
+
         if (historyButton) {
             historyButton.style.display = 'none';
             historyButton.removeAttribute('title');
@@ -1171,7 +1217,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                         <img src="assets/img/card_selecao_mago.webp" alt="Deck Mago">
                     </button>
                 </div>
-                <button id="btn-mode-history" class="lobby-mode-history" type="button" aria-label="Hist\u00f3rico de partidas"></button>
             </div>
         `;
 
@@ -1189,7 +1234,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         modeOverlay.onclick = (event) => {
-            if (!event.target.closest('.lobby-mode-btn, .lobby-mode-history, .lobby-mode-deck')) closeModeChooser();
+            if (!event.target.closest('.lobby-mode-btn, .lobby-mode-deck')) closeModeChooser();
         };
 
         const selectMode = (mode) => {
@@ -1209,11 +1254,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         modeOverlay.querySelector('#btn-mode-pve').onclick = (event) => {
             event.stopPropagation();
             selectMode('pve');
-        };
-        modeOverlay.querySelector('#btn-mode-history').onclick = (event) => {
-            event.stopPropagation();
-            closeModeChooser();
-            window.openHistory?.();
         };
         modeOverlay.querySelectorAll('.lobby-mode-deck').forEach((button) => {
             button.onclick = (event) => {
