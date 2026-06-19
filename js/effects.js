@@ -607,18 +607,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-choices {
-            position: relative !important;
-            z-index: 5 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: clamp(24px, 2.8vw, 56px) !important;
-            width: 100% !important;
             position: absolute !important;
-            left: 50% !important;
-            top: 40% !important;
-            transform: translate(-50%, -50%) !important;
-            transition: top 0.22s ease, transform 0.22s ease !important;
+            z-index: 5 !important;
+            inset: 0 !important;
+            display: block !important;
+            width: 100% !important;
+            height: 100% !important;
+            pointer-events: none !important;
         }
 
         .lobby-mode-btn,
@@ -635,15 +630,22 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-btn {
-            position: relative !important;
+            position: absolute !important;
             z-index: 5 !important;
+            top: 44% !important;
             width: min(29vw, 565px) !important;
             aspect-ratio: 2048 / 960 !important;
+            pointer-events: auto !important;
             filter: drop-shadow(8px 12px 0 rgba(25, 10, 4, 0.72))
                     drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)) !important;
+            transform: translate(-50%, -50%) translateY(var(--mode-lift, 0px)) scale(var(--mode-scale, 1)) !important;
             animation: lobbyModePop 0.36s cubic-bezier(0.12, 1.25, 0.22, 1) backwards,
                        lobbyModeFloat 2.9s ease-in-out 0.38s infinite !important;
-            transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease, opacity 0.16s ease, width 0.18s ease, margin 0.18s ease !important;
+            transition: left 0.42s cubic-bezier(0.17, 0.9, 0.18, 1),
+                        top 0.42s cubic-bezier(0.17, 0.9, 0.18, 1),
+                        transform 0.18s cubic-bezier(0.2, 1, 0.3, 1),
+                        filter 0.15s ease,
+                        opacity 0.16s ease !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-btn {
@@ -651,25 +653,24 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-btn:not(.selected) {
-            width: 0 !important;
-            margin-left: 0 !important;
-            margin-right: 0 !important;
             opacity: 0 !important;
             pointer-events: none !important;
             filter: grayscale(80%) brightness(0.35) !important;
-            transform: translateY(18px) scale(0.55) !important;
+            --mode-lift: 18px !important;
+            --mode-scale: 0.55 !important;
             transition: opacity 0.16s ease, transform 0.16s ease, filter 0.16s ease !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-btn.selected {
-            transform: translateY(-4px) scale(1.06) !important;
+            left: 50% !important;
+            top: clamp(92px, 14vh, 150px) !important;
+            --mode-lift: -4px !important;
+            --mode-scale: 1.06 !important;
             opacity: 1 !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-choices {
-            top: clamp(38px, 6vh, 78px) !important;
-            transform: translateX(-50%) !important;
-            justify-content: center !important;
+            pointer-events: none !important;
         }
 
         .lobby-mode-title,
@@ -769,16 +770,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-pvp {
             background-image: url('assets/img/botao_pvp.webp') !important;
+            left: 64% !important;
         }
 
         .lobby-mode-pve {
             background-image: url('assets/img/botao_pve.webp') !important;
+            left: 36% !important;
             animation-delay: 0.07s, 0.52s !important;
         }
 
         .lobby-mode-btn:hover,
         .lobby-mode-btn:focus-visible {
-            transform: translateY(-10px) scale(1.09) !important;
+            --mode-lift: -10px !important;
+            --mode-scale: 1.09 !important;
         }
 
         .lobby-mode-pve:hover,
@@ -1087,15 +1091,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-choices {
-                top: 38% !important;
-                transform: translate(-50%, -50%) !important;
-                flex-direction: row !important;
-                gap: 30px !important;
+                inset: 0 !important;
+                transform: none !important;
             }
 
             .lobby-mode-overlay.mode-selected .lobby-mode-choices {
-                top: 3vh !important;
-                transform: translateX(-50%) !important;
+                transform: none !important;
             }
 
             .lobby-mode-btn {
@@ -1352,8 +1353,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         const selectMode = (mode) => {
-            const selectedButton = modeOverlay.querySelector(`#btn-mode-${mode}`);
-            const firstRect = selectedButton ? selectedButton.getBoundingClientRect() : null;
             modeOverlay.dataset.selectedMode = mode;
             modeOverlay.classList.add('mode-selected');
             modeOverlay.classList.toggle('selected-pve', mode === 'pve');
@@ -1361,21 +1360,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             modeOverlay.querySelectorAll('.lobby-mode-btn').forEach(button => {
                 button.classList.toggle('selected', button.id === `btn-mode-${mode}`);
             });
-            if(selectedButton && firstRect) {
-                const lastRect = selectedButton.getBoundingClientRect();
-                const dx = firstRect.left - lastRect.left;
-                const dy = firstRect.top - lastRect.top;
-                const travelAnimation = selectedButton.animate([
-                    { transform: `translate(${dx}px, ${dy}px) scale(1)`, offset: 0 },
-                    { transform: `translate(${dx * 0.45}px, ${dy * 0.45}px) scale(1.03)`, offset: 0.58 },
-                    { transform: 'translateY(-4px) scale(1.06)', offset: 1 }
-                ], {
-                    duration: 390,
-                    easing: 'cubic-bezier(0.15, 0.9, 0.2, 1)',
-                    fill: 'both'
-                });
-                travelAnimation.onfinish = () => travelAnimation.cancel();
-            }
             const flareLayer = modeOverlay.querySelector('.lobby-mode-flares');
             if(flareLayer) {
                 flareLayer.innerHTML = '';
