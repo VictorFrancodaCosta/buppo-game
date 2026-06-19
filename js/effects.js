@@ -52,6 +52,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             aspect-ratio: 1 !important;
             transform: translate(-50%, -50%) !important;
             display: flex !important;
+            flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
             border-radius: 50% !important;
@@ -586,6 +587,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             justify-content: center !important;
             gap: clamp(24px, 2.8vw, 56px) !important;
             width: 100% !important;
+            position: absolute !important;
+            left: 50% !important;
+            top: clamp(74px, 12vh, 132px) !important;
+            transform: translateX(-50%) !important;
+            transition: top 0.22s ease, transform 0.22s ease !important;
         }
 
         .lobby-mode-btn,
@@ -611,6 +617,34 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             animation: lobbyModePop 0.36s cubic-bezier(0.12, 1.25, 0.22, 1) backwards,
                        lobbyModeFloat 2.9s ease-in-out 0.38s infinite !important;
             transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease !important;
+        }
+
+        .lobby-mode-overlay.mode-selected .lobby-mode-btn:not(.selected) {
+            filter: grayscale(45%) brightness(0.58)
+                    drop-shadow(5px 8px 0 rgba(12, 4, 2, 0.62)) !important;
+            transform: scale(0.92) !important;
+            opacity: 0.72 !important;
+        }
+
+        .lobby-mode-overlay.mode-selected .lobby-mode-btn.selected {
+            transform: translateY(-4px) scale(1.06) !important;
+            opacity: 1 !important;
+        }
+
+        .lobby-mode-overlay.mode-selected .lobby-mode-pve.selected {
+            filter: brightness(1.18) saturate(1.16)
+                    drop-shadow(9px 14px 0 rgba(24, 12, 3, 0.76))
+                    drop-shadow(0 22px 25px rgba(0, 0, 0, 0.34))
+                    drop-shadow(0 0 36px rgba(255, 204, 75, 0.62))
+                    drop-shadow(0 0 18px rgba(83, 196, 255, 0.42)) !important;
+        }
+
+        .lobby-mode-overlay.mode-selected .lobby-mode-pvp.selected {
+            filter: brightness(1.18) saturate(1.2)
+                    drop-shadow(9px 14px 0 rgba(24, 8, 3, 0.78))
+                    drop-shadow(0 22px 25px rgba(0, 0, 0, 0.36))
+                    drop-shadow(0 0 42px rgba(255, 76, 40, 0.58))
+                    drop-shadow(0 0 22px rgba(255, 223, 87, 0.54)) !important;
         }
 
         .lobby-mode-pvp {
@@ -684,6 +718,80 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-btn:focus-visible::after {
             content: none !important;
             display: none !important;
+        }
+
+        .lobby-mode-decks {
+            position: absolute !important;
+            left: 50% !important;
+            bottom: clamp(90px, 13vh, 148px) !important;
+            z-index: 3 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: clamp(42px, 6vw, 92px) !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateX(-50%) translateY(34px) scale(0.92) !important;
+            transition: opacity 0.22s ease, transform 0.25s cubic-bezier(0.15, 1, 0.22, 1) !important;
+        }
+
+        .lobby-mode-overlay.mode-selected .lobby-mode-decks {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            transform: translateX(-50%) translateY(0) scale(1) !important;
+        }
+
+        .lobby-mode-deck {
+            position: relative !important;
+            width: min(19vw, 310px) !important;
+            border: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            cursor: pointer !important;
+            transform-origin: center bottom !important;
+            transition: transform 0.22s cubic-bezier(0.2, 1, 0.3, 1), filter 0.18s ease !important;
+        }
+
+        .lobby-mode-deck img {
+            width: 100% !important;
+            height: auto !important;
+            display: block !important;
+            filter: grayscale(78%) brightness(0.72) drop-shadow(0 13px 13px rgba(0, 0, 0, 0.52)) !important;
+            transition: filter 0.2s ease, transform 0.22s cubic-bezier(0.2, 1, 0.3, 1) !important;
+        }
+
+        .lobby-mode-deck:hover,
+        .lobby-mode-deck:focus-visible {
+            transform: translateY(-14px) scale(1.08) !important;
+        }
+
+        .lobby-mode-deck:hover img,
+        .lobby-mode-deck:focus-visible img {
+            filter: grayscale(0%) brightness(1.12) drop-shadow(0 0 30px rgba(255, 215, 0, 0.54)) drop-shadow(0 18px 17px rgba(0, 0, 0, 0.48)) !important;
+        }
+
+        .lobby-mode-deck::after {
+            content: attr(data-name);
+            position: absolute !important;
+            left: 50% !important;
+            top: 100% !important;
+            width: 170% !important;
+            transform: translateX(-50%) translateY(12px) !important;
+            color: #fff6d0 !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            text-align: center !important;
+            text-shadow: 0 2px 4px #000, 0 0 12px rgba(255, 215, 0, 0.4) !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transition: opacity 0.16s ease, transform 0.16s ease !important;
+        }
+
+        .lobby-mode-deck:hover::after,
+        .lobby-mode-deck:focus-visible::after {
+            opacity: 1 !important;
+            transform: translateX(-50%) translateY(6px) !important;
         }
 
         .lobby-mode-history {
@@ -824,13 +932,23 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-choices {
-                flex-direction: column !important;
+                top: 5vh !important;
+                flex-direction: row !important;
                 gap: 30px !important;
             }
 
             .lobby-mode-btn {
-                width: min(56vw, 410px) !important;
+                width: min(42vw, 310px) !important;
                 aspect-ratio: 2048 / 960 !important;
+            }
+
+            .lobby-mode-decks {
+                bottom: 78px !important;
+                gap: 24px !important;
+            }
+
+            .lobby-mode-deck {
+                width: min(34vw, 190px) !important;
             }
 
             .lobby-mode-history {
@@ -1012,13 +1130,24 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     <button id="btn-mode-pve" class="lobby-mode-btn lobby-mode-pve" type="button" data-points="(+1 ponto)" aria-label="Partida PVE"></button>
                     <button id="btn-mode-pvp" class="lobby-mode-btn lobby-mode-pvp" type="button" data-points="(+3 pontos)" aria-label="Partida PVP"></button>
                 </div>
+                <div class="lobby-mode-decks" aria-label="Escolha seu deck">
+                    <button class="lobby-mode-deck" type="button" data-deck="knight" data-name="Forjado pela honra, guiado pela espada" aria-label="Deck Cavaleiro">
+                        <img src="assets/img/card_selecao_cavaleiro.webp" alt="Deck Cavaleiro">
+                    </button>
+                    <button class="lobby-mode-deck" type="button" data-deck="mage" data-name="Magia em estado puro" aria-label="Deck Mago">
+                        <img src="assets/img/card_selecao_mago.webp" alt="Deck Mago">
+                    </button>
+                </div>
                 <button id="btn-mode-history" class="lobby-mode-history" type="button" aria-label="Hist\u00f3rico de partidas"></button>
             </div>
         `;
 
         const closeModeChooser = () => {
             modeOverlay.classList.remove('visible');
+            modeOverlay.classList.remove('mode-selected', 'selected-pve', 'selected-pvp', 'cinematic-focus', 'cinematic-pve', 'cinematic-pvp');
+            modeOverlay.querySelectorAll('.lobby-mode-btn').forEach(button => button.classList.remove('selected'));
             document.body.classList.remove('lobby-mode-choice-open');
+            modeOverlay.dataset.selectedMode = '';
         };
         window.closeLobbyModeChooser = closeModeChooser;
         window.openLobbyModeChooser = () => {
@@ -1027,22 +1156,41 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         modeOverlay.onclick = (event) => {
-            if (!event.target.closest('.lobby-mode-btn, .lobby-mode-history')) closeModeChooser();
+            if (!event.target.closest('.lobby-mode-btn, .lobby-mode-history, .lobby-mode-deck')) closeModeChooser();
         };
 
-        const startMode = (handlerName) => {
-            closeModeChooser();
-            if (typeof window[handlerName] === 'function') {
-                window[handlerName]();
-            }
+        const selectMode = (mode) => {
+            modeOverlay.dataset.selectedMode = mode;
+            modeOverlay.classList.add('mode-selected');
+            modeOverlay.classList.toggle('selected-pve', mode === 'pve');
+            modeOverlay.classList.toggle('selected-pvp', mode === 'pvp');
+            modeOverlay.querySelectorAll('.lobby-mode-btn').forEach(button => {
+                button.classList.toggle('selected', button.id === `btn-mode-${mode}`);
+            });
         };
 
-        modeOverlay.querySelector('#btn-mode-pvp').onclick = () => startMode('startPvPSearch');
-        modeOverlay.querySelector('#btn-mode-pve').onclick = () => startMode('startPvE');
-        modeOverlay.querySelector('#btn-mode-history').onclick = () => {
+        modeOverlay.querySelector('#btn-mode-pvp').onclick = (event) => {
+            event.stopPropagation();
+            selectMode('pvp');
+        };
+        modeOverlay.querySelector('#btn-mode-pve').onclick = (event) => {
+            event.stopPropagation();
+            selectMode('pve');
+        };
+        modeOverlay.querySelector('#btn-mode-history').onclick = (event) => {
+            event.stopPropagation();
             closeModeChooser();
             window.openHistory?.();
         };
+        modeOverlay.querySelectorAll('.lobby-mode-deck').forEach((button) => {
+            button.onclick = (event) => {
+                event.stopPropagation();
+                const mode = modeOverlay.dataset.selectedMode;
+                const deckType = button.dataset.deck || 'knight';
+                if(!mode) return;
+                window.startLobbyModeWithDeck?.(mode, deckType);
+            };
+        });
         modeOverlay.querySelectorAll('.lobby-mode-btn').forEach((button) => {
             const modeClass = button.classList.contains('lobby-mode-pvp') ? 'cinematic-pvp' : 'cinematic-pve';
             const enableFocus = () => {

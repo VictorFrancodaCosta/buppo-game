@@ -146,6 +146,24 @@ window.selectDeck = function(deckType) {
     }, 400);
 };
 
+window.startLobbyModeWithDeck = function(mode, deckType) {
+    if(mode !== 'pvp' && mode !== 'pve') return;
+    if(mode === 'pvp' && !window.currentUser) return;
+    if(audios['sfx-deck-select'] && window.sfxEnabled) {
+        try {
+            audios['sfx-deck-select'].currentTime = 0;
+            audios['sfx-deck-select'].play().catch(()=>{});
+        } catch(e) {}
+    }
+    window.gameMode = mode;
+    window.applyDeckTheme(deckType);
+    window.closeLobbyModeChooser?.();
+    setTimeout(() => {
+        if(mode === 'pvp') initiateMatchmaking();
+        else window.transitionToGame();
+    }, 260);
+};
+
 window.transitionToGame = function() {
     if (window.gameMode === 'pvp' || window.gameMode === 'pve') document.body.classList.add('force-landscape');
     updatePresence();
