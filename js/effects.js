@@ -608,7 +608,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-choices {
             position: absolute !important;
-            z-index: 5 !important;
+            z-index: 7 !important;
             inset: 0 !important;
             display: block !important;
             width: 100% !important;
@@ -631,7 +631,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-btn {
             position: absolute !important;
-            z-index: 5 !important;
+            z-index: 7 !important;
             top: 44% !important;
             width: min(29vw, 565px) !important;
             aspect-ratio: 2048 / 960 !important;
@@ -677,7 +677,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-deck-title {
             position: absolute !important;
             left: 50% !important;
-            z-index: 5 !important;
+            z-index: 7 !important;
             color: #fff7bc !important;
             font-family: 'Bangers', cursive !important;
             line-height: 1 !important;
@@ -716,16 +716,69 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-flares {
             position: fixed !important;
             inset: 0 !important;
-            z-index: 3 !important;
+            z-index: 4 !important;
             overflow: hidden !important;
             pointer-events: none !important;
             opacity: 0 !important;
-            mix-blend-mode: screen !important;
+            mix-blend-mode: normal !important;
             transition: opacity 0.2s ease !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-flares {
             opacity: 1 !important;
+        }
+
+        .lobby-mode-flares::before,
+        .lobby-mode-flares::after {
+            content: "" !important;
+            position: absolute !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: -34vh !important;
+            height: 154vh !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            background-repeat: repeat-y !important;
+            background-size: 100% 72vh !important;
+            filter: blur(0.2px) brightness(1.35) !important;
+            animation: lobbyModeFlareSheet 2.25s linear infinite !important;
+            will-change: transform, opacity !important;
+        }
+
+        .lobby-mode-flares::after {
+            animation-duration: 3.1s !important;
+            animation-delay: -1.1s !important;
+            transform: translateY(16vh) !important;
+            opacity: 0 !important;
+        }
+
+        .lobby-mode-overlay.mode-selected .lobby-mode-flares::before,
+        .lobby-mode-overlay.mode-selected .lobby-mode-flares::after {
+            opacity: 1 !important;
+        }
+
+        .lobby-mode-overlay.selected-pve .lobby-mode-flares::before,
+        .lobby-mode-overlay.selected-pve .lobby-mode-flares::after {
+            background-image:
+                radial-gradient(ellipse 14px 82px at 6% 96%, rgba(255,255,255,0.95), rgba(82,198,255,0.66) 34%, transparent 72%),
+                radial-gradient(ellipse 20px 118px at 18% 102%, rgba(71,190,255,0.82), rgba(255,255,255,0.46) 38%, transparent 74%),
+                radial-gradient(ellipse 13px 96px at 31% 94%, rgba(255,255,255,0.8), rgba(58,168,255,0.58) 36%, transparent 73%),
+                radial-gradient(ellipse 24px 138px at 47% 100%, rgba(71,190,255,0.72), rgba(255,255,255,0.5) 34%, transparent 76%),
+                radial-gradient(ellipse 15px 92px at 63% 98%, rgba(255,255,255,0.9), rgba(80,203,255,0.64) 35%, transparent 72%),
+                radial-gradient(ellipse 22px 124px at 79% 103%, rgba(63,176,255,0.78), rgba(255,255,255,0.44) 36%, transparent 75%),
+                radial-gradient(ellipse 16px 104px at 93% 96%, rgba(255,255,255,0.88), rgba(74,190,255,0.6) 34%, transparent 74%) !important;
+        }
+
+        .lobby-mode-overlay.selected-pvp .lobby-mode-flares::before,
+        .lobby-mode-overlay.selected-pvp .lobby-mode-flares::after {
+            background-image:
+                radial-gradient(ellipse 14px 82px at 6% 96%, rgba(255,226,72,0.95), rgba(255,64,32,0.68) 34%, transparent 72%),
+                radial-gradient(ellipse 20px 118px at 18% 102%, rgba(255,69,37,0.84), rgba(255,220,73,0.48) 38%, transparent 74%),
+                radial-gradient(ellipse 13px 96px at 31% 94%, rgba(255,229,74,0.82), rgba(255,73,36,0.6) 36%, transparent 73%),
+                radial-gradient(ellipse 24px 138px at 47% 100%, rgba(255,72,36,0.74), rgba(255,219,70,0.52) 34%, transparent 76%),
+                radial-gradient(ellipse 15px 92px at 63% 98%, rgba(255,227,76,0.92), rgba(255,70,34,0.66) 35%, transparent 72%),
+                radial-gradient(ellipse 22px 124px at 79% 103%, rgba(255,65,34,0.8), rgba(255,218,76,0.46) 36%, transparent 75%),
+                radial-gradient(ellipse 16px 104px at 93% 96%, rgba(255,226,72,0.9), rgba(255,74,36,0.62) 34%, transparent 74%) !important;
         }
 
         .lobby-mode-flare {
@@ -769,12 +822,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-pvp {
             background-image: url('assets/img/botao_pvp.webp') !important;
-            left: 70% !important;
+            left: 74% !important;
         }
 
         .lobby-mode-pve {
             background-image: url('assets/img/botao_pve.webp') !important;
-            left: 30% !important;
+            left: 26% !important;
             animation-delay: 0.07s, 0.52s !important;
         }
 
@@ -847,7 +900,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             position: absolute !important;
             left: 50% !important;
             bottom: clamp(126px, 17vh, 190px) !important;
-            z-index: 5 !important;
+            z-index: 7 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -980,6 +1033,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             9% { opacity: 1; }
             72% { opacity: 0.95; }
             100% { opacity: 0; transform: translateY(-112vh) scaleY(1.28) scaleX(1.06); }
+        }
+
+        @keyframes lobbyModeFlareSheet {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-72vh); }
         }
 
         @keyframes lobbyDecksPop {
