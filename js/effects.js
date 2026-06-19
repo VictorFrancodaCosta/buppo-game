@@ -615,7 +615,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             width: 100% !important;
             position: absolute !important;
             left: 50% !important;
-            top: 44% !important;
+            top: 40% !important;
             transform: translate(-50%, -50%) !important;
             transform: translateX(-50%) !important;
             transition: top 0.22s ease, transform 0.22s ease !important;
@@ -691,6 +691,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-overlay.mode-selected .lobby-mode-title {
             opacity: 0 !important;
             transform: translateX(-50%) translateY(-12px) scale(0.9) rotate(-1deg) !important;
+        }
+
+        .lobby-mode-overlay.mode-selected {
+            background: rgba(2, 0, 0, 0.78) !important;
+            backdrop-filter: blur(13px) saturate(0.62) brightness(0.7) contrast(1.08) !important;
+        }
+
+        .lobby-mode-overlay.mode-selected::before {
+            opacity: 1 !important;
+            background: radial-gradient(circle at 50% 54%, rgba(255, 210, 80, 0.08), transparent 18%),
+                        radial-gradient(circle at 50% 50%, transparent 18%, rgba(0, 0, 0, 0.62) 58%, rgba(0, 0, 0, 0.9) 100%) !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-pve.selected {
@@ -1022,7 +1033,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-choices {
-                top: 44% !important;
+                top: 40% !important;
                 transform: translate(-50%, -50%) !important;
                 flex-direction: row !important;
                 gap: 30px !important;
