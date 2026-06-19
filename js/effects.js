@@ -583,8 +583,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-overlay.cinematic-pve::before {
-            background: radial-gradient(circle at 36% 48%, rgba(255, 215, 86, 0.22), transparent 18%),
-                        radial-gradient(circle at 50% 50%, transparent 23%, rgba(32, 16, 5, 0.48) 68%, rgba(0, 0, 0, 0.72) 100%) !important;
+            background: radial-gradient(circle at 36% 48%, rgba(80, 190, 255, 0.24), transparent 18%),
+                        radial-gradient(circle at 50% 50%, transparent 23%, rgba(5, 18, 36, 0.5) 68%, rgba(0, 0, 0, 0.72) 100%) !important;
         }
 
         .lobby-mode-overlay.cinematic-pvp::before {
@@ -598,7 +598,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-overlay.cinematic-pve::after {
-            background: linear-gradient(115deg, transparent 0%, rgba(255, 232, 130, 0.16) 47%, transparent 58%) !important;
+            background: linear-gradient(115deg, transparent 0%, rgba(92, 198, 255, 0.18) 47%, transparent 58%) !important;
         }
 
         .lobby-mode-overlay.cinematic-pvp::after {
@@ -615,9 +615,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             width: 100% !important;
             position: absolute !important;
             left: 50% !important;
-            top: 40% !important;
+            top: 36% !important;
             transform: translate(-50%, -50%) !important;
-            transform: translateX(-50%) !important;
             transition: top 0.22s ease, transform 0.22s ease !important;
         }
 
@@ -647,10 +646,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-btn:not(.selected) {
-            filter: grayscale(45%) brightness(0.58)
-                    drop-shadow(5px 8px 0 rgba(12, 4, 2, 0.62)) !important;
-            transform: scale(0.92) !important;
-            opacity: 0.72 !important;
+            position: absolute !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            filter: grayscale(80%) brightness(0.35) !important;
+            transform: translateY(18px) scale(0.72) !important;
+            transition: opacity 0.16s ease, transform 0.16s ease, filter 0.16s ease !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-btn.selected {
@@ -661,6 +662,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-overlay.mode-selected .lobby-mode-choices {
             top: clamp(38px, 6vh, 78px) !important;
             transform: translateX(-50%) !important;
+            justify-content: center !important;
         }
 
         .lobby-mode-title,
@@ -704,12 +706,48 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                         radial-gradient(circle at 50% 50%, transparent 18%, rgba(0, 0, 0, 0.62) 58%, rgba(0, 0, 0, 0.9) 100%) !important;
         }
 
+        .lobby-mode-flares {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 1 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+            transition: opacity 0.2s ease !important;
+        }
+
+        .lobby-mode-overlay.mode-selected .lobby-mode-flares {
+            opacity: 1 !important;
+        }
+
+        .lobby-mode-flare {
+            position: absolute !important;
+            left: var(--flare-left, 50%) !important;
+            bottom: -12vh !important;
+            width: var(--flare-size, 8px) !important;
+            height: calc(var(--flare-size, 8px) * 3.2) !important;
+            border-radius: 999px !important;
+            opacity: 0 !important;
+            filter: blur(0.4px) !important;
+            animation: lobbyModeFlareRise var(--flare-duration, 2.8s) linear var(--flare-delay, 0s) infinite !important;
+        }
+
+        .lobby-mode-flare.pve {
+            background: linear-gradient(to top, rgba(255,255,255,0), rgba(255,255,255,0.95), rgba(77,190,255,0.9), rgba(255,255,255,0)) !important;
+            box-shadow: 0 0 14px rgba(94, 205, 255, 0.9), 0 0 24px rgba(255,255,255,0.42) !important;
+        }
+
+        .lobby-mode-flare.pvp {
+            background: linear-gradient(to top, rgba(255,255,255,0), rgba(255,218,76,0.95), rgba(255,59,37,0.9), rgba(255,255,255,0)) !important;
+            box-shadow: 0 0 14px rgba(255, 65, 39, 0.9), 0 0 24px rgba(255,220,75,0.42) !important;
+        }
+
         .lobby-mode-overlay.mode-selected .lobby-mode-pve.selected {
-            filter: brightness(1.18) saturate(1.16)
-                    drop-shadow(9px 14px 0 rgba(24, 12, 3, 0.76))
+            filter: brightness(1.2) saturate(1.18)
+                    drop-shadow(9px 14px 0 rgba(7, 14, 30, 0.76))
                     drop-shadow(0 22px 25px rgba(0, 0, 0, 0.34))
-                    drop-shadow(0 0 36px rgba(255, 204, 75, 0.62))
-                    drop-shadow(0 0 18px rgba(83, 196, 255, 0.42)) !important;
+                    drop-shadow(0 0 42px rgba(74, 191, 255, 0.68))
+                    drop-shadow(0 0 22px rgba(255, 255, 255, 0.46)) !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-pvp.selected {
@@ -736,11 +774,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-pve:hover,
         .lobby-mode-pve:focus-visible {
-            filter: brightness(1.14) saturate(1.12)
-                    drop-shadow(10px 15px 0 rgba(24, 12, 3, 0.76))
+            filter: brightness(1.15) saturate(1.14)
+                    drop-shadow(10px 15px 0 rgba(7, 14, 30, 0.76))
                     drop-shadow(0 23px 25px rgba(0, 0, 0, 0.36))
-                    drop-shadow(0 0 36px rgba(255, 204, 75, 0.55))
-                    drop-shadow(0 0 18px rgba(83, 196, 255, 0.36)) !important;
+                    drop-shadow(0 0 40px rgba(74, 191, 255, 0.62))
+                    drop-shadow(0 0 20px rgba(255, 255, 255, 0.42)) !important;
         }
 
         .lobby-mode-pvp:hover,
@@ -925,6 +963,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             50% { translate: 0 -8px; }
         }
 
+        @keyframes lobbyModeFlareRise {
+            0% { opacity: 0; transform: translateY(0) scaleY(0.55) scaleX(0.8); }
+            12% { opacity: 0.95; }
+            78% { opacity: 0.75; }
+            100% { opacity: 0; transform: translateY(-116vh) scaleY(1.18) scaleX(1); }
+        }
+
         @keyframes lobbyDecksPop {
             0% { opacity: 0; transform: translateX(-50%) translateY(38px) scale(0.68); }
             58% { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.08); }
@@ -1033,7 +1078,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-choices {
-                top: 40% !important;
+                top: 36% !important;
                 transform: translate(-50%, -50%) !important;
                 flex-direction: row !important;
                 gap: 30px !important;
@@ -1260,6 +1305,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         modeOverlay.innerHTML = `
             <div class="lobby-mode-panel" role="dialog" aria-modal="true" aria-label="Escolha o modo de jogo">
+                <div class="lobby-mode-flares" aria-hidden="true"></div>
                 <div class="lobby-mode-title">SELECIONE SUA PARTIDA</div>
                 <div class="lobby-mode-choices">
                     <button id="btn-mode-pve" class="lobby-mode-btn lobby-mode-pve" type="button" data-points="(+1 ponto)" aria-label="Partida PVE"></button>
@@ -1281,6 +1327,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             modeOverlay.classList.remove('visible');
             modeOverlay.classList.remove('mode-selected', 'selected-pve', 'selected-pvp', 'cinematic-focus', 'cinematic-pve', 'cinematic-pvp');
             modeOverlay.querySelectorAll('.lobby-mode-btn').forEach(button => button.classList.remove('selected'));
+            const flareLayer = modeOverlay.querySelector('.lobby-mode-flares');
+            if(flareLayer) flareLayer.innerHTML = '';
             document.body.classList.remove('lobby-mode-choice-open');
             modeOverlay.dataset.selectedMode = '';
         };
@@ -1302,6 +1350,20 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             modeOverlay.querySelectorAll('.lobby-mode-btn').forEach(button => {
                 button.classList.toggle('selected', button.id === `btn-mode-${mode}`);
             });
+            const flareLayer = modeOverlay.querySelector('.lobby-mode-flares');
+            if(flareLayer) {
+                flareLayer.innerHTML = '';
+                const flareClass = mode === 'pvp' ? 'pvp' : 'pve';
+                for(let i = 0; i < 34; i++) {
+                    const flare = document.createElement('span');
+                    flare.className = `lobby-mode-flare ${flareClass}`;
+                    flare.style.setProperty('--flare-left', `${Math.random() * 100}%`);
+                    flare.style.setProperty('--flare-size', `${Math.random() * 7 + 4}px`);
+                    flare.style.setProperty('--flare-duration', `${Math.random() * 1.5 + 2.2}s`);
+                    flare.style.setProperty('--flare-delay', `${Math.random() * 2.2}s`);
+                    flareLayer.appendChild(flare);
+                }
+            }
         };
 
         modeOverlay.querySelector('#btn-mode-pvp').onclick = (event) => {
