@@ -191,7 +191,7 @@ window.goToLobby = async function(isAutoLogin = false) {
     if(!window.currentUser) { 
         window.showScreen('start-screen'); 
         document.body.classList.remove('theme-cavaleiro', 'theme-mago');
-        MusicController.play('bgm-menu'); 
+        MusicController.stopCurrent();
         return; 
     }
     window.cleanupMatchState(); window.isProcessing = false;
@@ -200,7 +200,7 @@ window.goToLobby = async function(isAutoLogin = false) {
     document.body.classList.remove('theme-cavaleiro', 'theme-mago');
     
     let bg = document.getElementById('game-background'); if(bg) bg.classList.add('lobby-mode');
-    MusicController.play('bgm-menu'); createLobbyFlares();
+    createLobbyFlares();
 
     const userRef = doc(db, "players", window.currentUser.uid);
     const userSnap = await getDoc(userRef);
@@ -211,8 +211,13 @@ window.goToLobby = async function(isAutoLogin = false) {
         renderLobbyIdentity(window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
         updateLobbyGoldWallet(0);
+        window.musicEnabled = true;
+        window.sfxEnabled = true;
+        let chkM = document.getElementById('check-music'); if(chkM) chkM.checked = true;
+        let chkS = document.getElementById('check-sfx'); if(chkS) chkS.checked = true;
         window.updateVol('master', 0.5);
         window.applyFullscreenPreference(false);
+        MusicController.play('bgm-menu');
     } else {
         const d = userSnap.data();
         const gameId = await ensurePlayerGameId(userRef, d);
@@ -237,12 +242,18 @@ window.goToLobby = async function(isAutoLogin = false) {
             window.applyFullscreenPreference(window.fullscreenEnabled);
             if (!window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
                 audios[MusicController.currentTrackId].pause();
-            } else if (window.musicEnabled && MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
-                audios[MusicController.currentTrackId].play().catch(()=>{});
+                MusicController.currentTrackId = null;
+            } else if (window.musicEnabled) {
+                MusicController.play('bgm-menu');
             }
         } else {
+            window.musicEnabled = true;
+            window.sfxEnabled = true;
             window.fullscreenEnabled = false;
             let chkF = document.getElementById('check-fullscreen'); if(chkF) chkF.checked = false;
+            let chkM = document.getElementById('check-music'); if(chkM) chkM.checked = true;
+            let chkS = document.getElementById('check-sfx'); if(chkS) chkS.checked = true;
+            MusicController.play('bgm-menu');
         }
     }
     startPresenceHeartbeat();
@@ -1432,7 +1443,9 @@ onAuthStateChanged(auth, (user) => {
         // FORÇA A REMOÇÃO DOS TEMAS AO DESLOGAR
         document.body.classList.remove('theme-cavaleiro', 'theme-mago');
         
-        MusicController.play('bgm-menu');
+        window.musicEnabled = false;
+        window.sfxEnabled = false;
+        MusicController.stopCurrent();
     }
 });
 
@@ -1604,7 +1617,6 @@ function updateLoader() {
             if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
             if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
         }, 800);
-        document.body.addEventListener('click', () => { if (!MusicController.currentTrackId || (audios['bgm-menu'] && audios['bgm-menu'].paused && window.musicEnabled)) { MusicController.play('bgm-menu'); } }, { once: true });
     }
 }
 

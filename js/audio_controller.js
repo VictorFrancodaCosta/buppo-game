@@ -2,8 +2,8 @@
 
 export const audios = {};
 window.masterVol = 0.5;
-window.musicEnabled = true;
-window.sfxEnabled = true;
+window.musicEnabled = false;
+window.sfxEnabled = false;
 
 let lastHoverTime = 0;
 let mixerInterval = null;
@@ -62,6 +62,7 @@ export const MusicController = {
 };
 
 window.playNavSound = function() {
+    if(!window.currentUser) return;
     if(!window.sfxEnabled) return;
     let s = audios['sfx-nav'];
     if(s) {
@@ -70,6 +71,7 @@ window.playNavSound = function() {
 };
 
 window.playUIHoverSound = function() {
+    if(!window.currentUser) return;
     if(!window.sfxEnabled) return;
     let now = Date.now();
     if (now - lastHoverTime < 50) return;
@@ -112,6 +114,7 @@ window.toggleSoundType = function(type) {
 };
 
 export function playSound(key) {
+    if(!window.currentUser) return;
     if (!window.sfxEnabled && !key.startsWith('bgm')) return;
     if(audios[key]) {
         try {
