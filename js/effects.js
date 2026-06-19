@@ -625,9 +625,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-history {
             position: absolute !important;
             left: 50% !important;
-            bottom: clamp(10px, 2.2vh, 24px) !important;
-            width: min(21vw, 280px) !important;
-            min-width: 210px !important;
+            bottom: clamp(30px, 4.5vh, 52px) !important;
+            width: min(17vw, 230px) !important;
+            min-width: 180px !important;
             aspect-ratio: 2048 / 560 !important;
             background-image: url('assets/img/botao_historico.webp') !important;
             filter: drop-shadow(5px 8px 0 rgba(16, 7, 3, 0.72))
@@ -762,9 +762,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-history {
-                width: min(54vw, 240px) !important;
-                min-width: 180px !important;
-                bottom: 10px !important;
+                width: min(46vw, 210px) !important;
+                min-width: 160px !important;
+                bottom: 24px !important;
             }
         }
 
