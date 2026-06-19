@@ -50,6 +50,7 @@ window.friendlyRematchRound = 0;
 window.suppressFriendlyAbandon = false;
 window.fullscreenEnabled = false;
 window.cacheRefreshComplete = false;
+window.desktopUpdateStatus = { state: 'idle' };
 
 const ASSETS_TO_LOAD = {
     images: [
@@ -1587,10 +1588,75 @@ function withRuntimeVersion(src) {
     return `${src}${src.includes('?') ? '&' : '?'}v=${encodeURIComponent(version)}`;
 }
 
-async function refreshRuntimeCaches() {
+let desktopUpdateWaiters = [];
+let desktopUpdateInitialTimer = null;
+let desktopUpdateDownloadTimer = null;
+
+function setLoaderText(text) {
     const loaderText = document.querySelector('.loader-txt');
+    if(loaderText) loaderText.textContent = text;
+}
+
+function resolveDesktopUpdateWaiters() {
+    desktopUpdateWaiters.forEach(resolve => resolve());
+    desktopUpdateWaiters = [];
+    if(desktopUpdateInitialTimer) {
+        clearTimeout(desktopUpdateInitialTimer);
+        desktopUpdateInitialTimer = null;
+    }
+    if(desktopUpdateDownloadTimer) {
+        clearTimeout(desktopUpdateDownloadTimer);
+        desktopUpdateDownloadTimer = null;
+    }
+}
+
+function setupDesktopUpdaterBridge() {
+    if(!window.buppoDesktopUpdater || typeof window.buppoDesktopUpdater.onStatus !== 'function') {
+        window.desktopUpdateStatus = { state: 'disabled' };
+        return;
+    }
+
+    window.buppoDesktopUpdater.onStatus((status = {}) => {
+        window.desktopUpdateStatus = status;
+        const percent = Math.round(status.percent || 0);
+        if(status.state === 'checking') {
+            setLoaderText('VERIFICANDO ATUALIZACOES...');
+        } else if(status.state === 'available') {
+            setLoaderText('BAIXANDO ATUALIZACAO...');
+            if(desktopUpdateInitialTimer) {
+                clearTimeout(desktopUpdateInitialTimer);
+                desktopUpdateInitialTimer = null;
+            }
+            if(!desktopUpdateDownloadTimer) {
+                desktopUpdateDownloadTimer = setTimeout(resolveDesktopUpdateWaiters, 300000);
+            }
+        } else if(status.state === 'progress') {
+            setLoaderText(`BAIXANDO ATUALIZACAO... ${percent}%`);
+        } else if(status.state === 'downloaded') {
+            setLoaderText('INSTALANDO ATUALIZACAO...');
+        } else if(status.state === 'not-available' || status.state === 'error' || status.state === 'disabled') {
+            resolveDesktopUpdateWaiters();
+        }
+    });
+}
+
+function waitForDesktopUpdateCheck() {
+    const state = window.desktopUpdateStatus?.state || 'idle';
+    if(!window.buppoDesktopUpdater || state === 'not-available' || state === 'error' || state === 'disabled') {
+        return Promise.resolve();
+    }
+    return new Promise(resolve => {
+        desktopUpdateWaiters.push(resolve);
+        if(state !== 'available' && state !== 'progress' && !desktopUpdateInitialTimer) {
+            desktopUpdateInitialTimer = setTimeout(resolveDesktopUpdateWaiters, 8000);
+        }
+    });
+}
+
+async function refreshRuntimeCaches() {
     try {
-        if(loaderText) loaderText.textContent = 'VERIFICANDO ATUALIZACOES...';
+        await waitForDesktopUpdateCheck();
+        setLoaderText('VERIFICANDO CACHE...');
         if('serviceWorker' in navigator) {
             const regs = await navigator.serviceWorker.getRegistrations();
             await Promise.all(regs.map(reg => reg.unregister().catch(()=>{})));
@@ -1602,7 +1668,7 @@ async function refreshRuntimeCaches() {
     } catch(e) {
         console.warn('Atualizacao de cache ignorada:', e);
     } finally {
-        if(loaderText) loaderText.textContent = 'CARREGANDO RECURSOS...';
+        setLoaderText('CARREGANDO RECURSOS...');
         window.cacheRefreshComplete = true;
     }
 }
@@ -2276,4 +2342,5 @@ setTimeout(() => {
     }
 }, 3000);
 
+setupDesktopUpdaterBridge();
 refreshRuntimeCaches().finally(() => preloadGame());

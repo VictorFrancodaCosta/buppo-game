@@ -2,10 +2,18 @@ const { app, BrowserWindow, shell } = require('electron');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+let autoUpdater = null;
+try {
+  ({ autoUpdater } = require('electron-updater'));
+} catch (e) {
+  autoUpdater = null;
+}
 
 const isDev = !app.isPackaged;
 let localServer = null;
 let appOrigin = '';
+let mainWindow = null;
+let updaterStarted = false;
 const authHosts = new Set([
   'accounts.google.com',
   'apis.google.com',
@@ -78,6 +86,67 @@ function startLocalServer() {
   });
 }
 
+function sendUpdateStatus(payload) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.send('buppo-update-status', payload);
+}
+
+function setupAutoUpdater(win) {
+  if (updaterStarted) return;
+  updaterStarted = true;
+
+  if (isDev || !autoUpdater) {
+    sendUpdateStatus({ state: 'disabled' });
+    return;
+  }
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('checking-for-update', () => {
+    sendUpdateStatus({ state: 'checking' });
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    sendUpdateStatus({ state: 'available', version: info && info.version });
+  });
+
+  autoUpdater.on('download-progress', (progress) => {
+    sendUpdateStatus({
+      state: 'progress',
+      percent: progress && Number.isFinite(progress.percent) ? progress.percent : 0
+    });
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    sendUpdateStatus({ state: 'not-available' });
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    sendUpdateStatus({ state: 'downloaded' });
+    setTimeout(() => {
+      try {
+        autoUpdater.quitAndInstall(false, true);
+      } catch (e) {
+        sendUpdateStatus({ state: 'error', message: e.message });
+      }
+    }, 900);
+  });
+
+  autoUpdater.on('error', (error) => {
+    sendUpdateStatus({ state: 'error', message: error && error.message });
+  });
+
+  win.webContents.once('did-finish-load', () => {
+    setTimeout(() => {
+      sendUpdateStatus({ state: 'checking' });
+      autoUpdater.checkForUpdates().catch((error) => {
+        sendUpdateStatus({ state: 'error', message: error && error.message });
+      });
+    }, 450);
+  });
+}
+
 async function createWindow() {
   const origin = appOrigin || await startLocalServer();
   const win = new BrowserWindow({
@@ -95,11 +164,14 @@ async function createWindow() {
       nodeIntegration: false,
       sandbox: false,
       nativeWindowOpen: true,
+      preload: path.join(__dirname, 'preload.cjs'),
       partition: 'persist:buppo'
     }
   });
+  mainWindow = win;
 
   win.loadURL(`${origin}/index.html`);
+  setupAutoUpdater(win);
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (isAuthUrl(url)) {
@@ -115,6 +187,7 @@ async function createWindow() {
             contextIsolation: true,
             nodeIntegration: false,
             sandbox: false,
+            preload: path.join(__dirname, 'preload.cjs'),
             partition: 'persist:buppo'
           }
         }

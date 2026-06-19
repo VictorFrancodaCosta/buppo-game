@@ -1,12 +1,12 @@
 {
   "name": "buppo-game",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "BUPPO desktop build",
   "main": "desktop/main.cjs",
   "private": true,
   "scripts": {
     "desktop": "electron .",
-    "dist:win": "electron-builder --win portable",
+    "dist:win": "electron-builder --win nsis portable",
     "dist:win:installer": "electron-builder --win nsis"
   },
   "build": {
@@ -25,6 +25,7 @@
     },
     "win": {
       "target": [
+        "nsis",
         "portable"
       ],
       "icon": "assets/img/pwa-icon-512.png",
@@ -37,7 +38,18 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "artifactName": "BUPPO-${version}-Setup.exe"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "VictorFrancodaCosta",
+        "repo": "buppo-game",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
   },
   "devDependencies": {
     "electron": "^31.7.7",
