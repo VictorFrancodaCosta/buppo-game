@@ -704,14 +704,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-overlay.mode-selected {
-            background: rgba(2, 0, 0, 0.78) !important;
-            backdrop-filter: blur(13px) saturate(0.62) brightness(0.7) contrast(1.08) !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(13px) saturate(1.02) brightness(1) contrast(1.02) !important;
         }
 
         .lobby-mode-overlay.mode-selected::before {
-            opacity: 1 !important;
-            background: radial-gradient(circle at 50% 54%, rgba(255, 210, 80, 0.08), transparent 18%),
-                        radial-gradient(circle at 50% 50%, transparent 18%, rgba(0, 0, 0, 0.62) 58%, rgba(0, 0, 0, 0.9) 100%) !important;
+            opacity: 0 !important;
+            background: none !important;
         }
 
         .lobby-mode-flares {
@@ -732,12 +731,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-flare {
             position: absolute !important;
             left: var(--flare-left, 50%) !important;
-            bottom: -16vh !important;
+            bottom: -8vh !important;
             width: var(--flare-size, 10px) !important;
             height: var(--flare-height, 52px) !important;
             border-radius: 999px !important;
             opacity: 0 !important;
-            filter: blur(0.25px) brightness(1.45) !important;
+            filter: blur(0.2px) brightness(1.7) !important;
             animation: lobbyModeFlareRise var(--flare-duration, 2.8s) linear var(--flare-delay, 0s) infinite !important;
             will-change: transform, opacity !important;
         }
@@ -770,12 +769,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-pvp {
             background-image: url('assets/img/botao_pvp.webp') !important;
-            left: 64% !important;
+            left: 70% !important;
         }
 
         .lobby-mode-pve {
             background-image: url('assets/img/botao_pve.webp') !important;
-            left: 36% !important;
+            left: 30% !important;
             animation-delay: 0.07s, 0.52s !important;
         }
 
@@ -979,8 +978,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         @keyframes lobbyModeFlareRise {
             0% { opacity: 0; transform: translateY(0) scaleY(0.48) scaleX(0.82); }
             9% { opacity: 1; }
-            72% { opacity: 0.88; }
-            100% { opacity: 0; transform: translateY(-122vh) scaleY(1.28) scaleX(1.06); }
+            72% { opacity: 0.95; }
+            100% { opacity: 0; transform: translateY(-112vh) scaleY(1.28) scaleX(1.06); }
         }
 
         @keyframes lobbyDecksPop {
