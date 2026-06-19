@@ -604,7 +604,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-btn {
             position: relative !important;
             z-index: 2 !important;
-            width: min(48vw, 940px) !important;
+            width: min(29vw, 565px) !important;
             aspect-ratio: 2048 / 960 !important;
             filter: drop-shadow(8px 12px 0 rgba(25, 10, 4, 0.72))
                     drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)) !important;
@@ -829,7 +829,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-btn {
-                width: min(94vw, 680px) !important;
+                width: min(56vw, 410px) !important;
                 aspect-ratio: 2048 / 960 !important;
             }
 
