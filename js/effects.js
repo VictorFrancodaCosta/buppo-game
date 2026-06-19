@@ -615,7 +615,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             width: 100% !important;
             position: absolute !important;
             left: 50% !important;
-            top: 50% !important;
+            top: 44% !important;
             transform: translate(-50%, -50%) !important;
             transform: translateX(-50%) !important;
             transition: top 0.22s ease, transform 0.22s ease !important;
@@ -661,6 +661,36 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-overlay.mode-selected .lobby-mode-choices {
             top: clamp(38px, 6vh, 78px) !important;
             transform: translateX(-50%) !important;
+        }
+
+        .lobby-mode-title,
+        .lobby-mode-deck-title {
+            position: absolute !important;
+            left: 50% !important;
+            z-index: 3 !important;
+            color: #fff7bc !important;
+            font-family: 'Bangers', cursive !important;
+            line-height: 1 !important;
+            letter-spacing: 1px !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+            paint-order: stroke fill !important;
+            pointer-events: none !important;
+        }
+
+        .lobby-mode-title {
+            top: clamp(58px, 8vh, 98px) !important;
+            font-size: clamp(30px, 3.2vw, 52px) !important;
+            -webkit-text-stroke: 2px #120603 !important;
+            text-shadow: 3px 3px 0 #120603, 0 0 16px rgba(255, 219, 73, 0.38) !important;
+            opacity: 1 !important;
+            transform: translateX(-50%) translateY(0) scale(1) rotate(-1deg) !important;
+            transition: opacity 0.16s ease, transform 0.18s ease !important;
+        }
+
+        .lobby-mode-overlay.mode-selected .lobby-mode-title {
+            opacity: 0 !important;
+            transform: translateX(-50%) translateY(-12px) scale(0.9) rotate(-1deg) !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-pve.selected {
@@ -768,22 +798,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-deck-title {
-            position: absolute !important;
-            left: 50% !important;
-            top: clamp(300px, 34vh, 356px) !important;
-            z-index: 3 !important;
-            color: #fff7bc !important;
-            font-family: 'Bangers', cursive !important;
+            top: clamp(332px, 38vh, 396px) !important;
             font-size: clamp(28px, 3vw, 48px) !important;
-            line-height: 1 !important;
-            letter-spacing: 1px !important;
-            text-align: center !important;
-            white-space: nowrap !important;
             -webkit-text-stroke: 2px #120603 !important;
-            paint-order: stroke fill !important;
             text-shadow: 3px 3px 0 #120603, 0 0 16px rgba(255, 219, 73, 0.38) !important;
             opacity: 0 !important;
-            pointer-events: none !important;
             transform: translateX(-50%) translateY(20px) scale(0.86) rotate(-1deg) !important;
             transition: opacity 0.2s ease, transform 0.24s cubic-bezier(0.15, 1, 0.22, 1) !important;
         }
@@ -1003,7 +1022,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-choices {
-                top: 50% !important;
+                top: 44% !important;
                 transform: translate(-50%, -50%) !important;
                 flex-direction: row !important;
                 gap: 30px !important;
@@ -1025,8 +1044,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-deck-title {
-                top: 33vh !important;
+                top: 37vh !important;
                 font-size: clamp(22px, 5vw, 34px) !important;
+                -webkit-text-stroke-width: 2px !important;
+            }
+
+            .lobby-mode-title {
+                top: 6vh !important;
+                font-size: clamp(24px, 5.4vw, 38px) !important;
                 -webkit-text-stroke-width: 2px !important;
             }
 
@@ -1224,6 +1249,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         modeOverlay.innerHTML = `
             <div class="lobby-mode-panel" role="dialog" aria-modal="true" aria-label="Escolha o modo de jogo">
+                <div class="lobby-mode-title">SELECIONE SUA PARTIDA</div>
                 <div class="lobby-mode-choices">
                     <button id="btn-mode-pve" class="lobby-mode-btn lobby-mode-pve" type="button" data-points="(+1 ponto)" aria-label="Partida PVE"></button>
                     <button id="btn-mode-pvp" class="lobby-mode-btn lobby-mode-pvp" type="button" data-points="(+3 pontos)" aria-label="Partida PVP"></button>
