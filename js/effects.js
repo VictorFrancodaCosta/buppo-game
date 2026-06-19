@@ -615,7 +615,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             width: 100% !important;
             position: absolute !important;
             left: 50% !important;
-            top: clamp(38px, 6vh, 78px) !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
             transform: translateX(-50%) !important;
             transition: top 0.22s ease, transform 0.22s ease !important;
         }
@@ -655,6 +656,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-overlay.mode-selected .lobby-mode-btn.selected {
             transform: translateY(-4px) scale(1.06) !important;
             opacity: 1 !important;
+        }
+
+        .lobby-mode-overlay.mode-selected .lobby-mode-choices {
+            top: clamp(38px, 6vh, 78px) !important;
+            transform: translateX(-50%) !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-pve.selected {
@@ -791,6 +797,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             opacity: 1 !important;
             pointer-events: auto !important;
             transform: translateX(-50%) translateY(0) scale(1) !important;
+            animation: lobbyDecksPop 0.36s cubic-bezier(0.12, 1.24, 0.24, 1) both !important;
         }
 
         .lobby-mode-deck {
@@ -886,6 +893,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         @keyframes lobbyModeFloat {
             0%, 100% { translate: 0 0; }
             50% { translate: 0 -8px; }
+        }
+
+        @keyframes lobbyDecksPop {
+            0% { opacity: 0; transform: translateX(-50%) translateY(38px) scale(0.68); }
+            58% { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.08); }
+            78% { opacity: 1; transform: translateX(-50%) translateY(4px) scale(0.97); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
         }
 
         @keyframes lobbyCinematicSweep {
@@ -989,9 +1003,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-choices {
-                top: 3vh !important;
+                top: 50% !important;
+                transform: translate(-50%, -50%) !important;
                 flex-direction: row !important;
                 gap: 30px !important;
+            }
+
+            .lobby-mode-overlay.mode-selected .lobby-mode-choices {
+                top: 3vh !important;
+                transform: translateX(-50%) !important;
             }
 
             .lobby-mode-btn {
