@@ -723,7 +723,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-decks {
             position: absolute !important;
             left: 50% !important;
-            bottom: clamp(90px, 13vh, 148px) !important;
+            bottom: clamp(128px, 18vh, 206px) !important;
             z-index: 3 !important;
             display: flex !important;
             align-items: center !important;
@@ -733,6 +733,32 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             pointer-events: none !important;
             transform: translateX(-50%) translateY(34px) scale(0.92) !important;
             transition: opacity 0.22s ease, transform 0.25s cubic-bezier(0.15, 1, 0.22, 1) !important;
+        }
+
+        .lobby-mode-deck-title {
+            position: absolute !important;
+            left: 50% !important;
+            top: clamp(330px, 39vh, 420px) !important;
+            z-index: 3 !important;
+            color: #fff7bc !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(42px, 4.4vw, 78px) !important;
+            line-height: 1 !important;
+            letter-spacing: 1px !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+            -webkit-text-stroke: 3px #120603 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 5px 5px 0 #120603, 0 0 22px rgba(255, 219, 73, 0.42) !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateX(-50%) translateY(20px) scale(0.86) rotate(-1deg) !important;
+            transition: opacity 0.2s ease, transform 0.24s cubic-bezier(0.15, 1, 0.22, 1) !important;
+        }
+
+        .lobby-mode-overlay.mode-selected .lobby-mode-deck-title {
+            opacity: 1 !important;
+            transform: translateX(-50%) translateY(0) scale(1) rotate(-1deg) !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-decks {
@@ -943,8 +969,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-decks {
-                bottom: 78px !important;
+                bottom: 112px !important;
                 gap: 24px !important;
+            }
+
+            .lobby-mode-deck-title {
+                top: 38vh !important;
+                font-size: clamp(30px, 7vw, 46px) !important;
+                -webkit-text-stroke-width: 2px !important;
             }
 
             .lobby-mode-deck {
@@ -1130,6 +1162,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     <button id="btn-mode-pve" class="lobby-mode-btn lobby-mode-pve" type="button" data-points="(+1 ponto)" aria-label="Partida PVE"></button>
                     <button id="btn-mode-pvp" class="lobby-mode-btn lobby-mode-pvp" type="button" data-points="(+3 pontos)" aria-label="Partida PVP"></button>
                 </div>
+                <div class="lobby-mode-deck-title">SELECIONE SEU DECK</div>
                 <div class="lobby-mode-decks" aria-label="Escolha seu deck">
                     <button class="lobby-mode-deck" type="button" data-deck="knight" data-name="Forjado pela honra, guiado pela espada" aria-label="Deck Cavaleiro">
                         <img src="assets/img/card_selecao_cavaleiro.webp" alt="Deck Cavaleiro">
