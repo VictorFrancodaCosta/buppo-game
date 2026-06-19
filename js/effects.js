@@ -61,7 +61,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background-position: center !important;
             border: none !important;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.46), 0 0 18px rgba(255,215,0,0.38) !important;
-            z-index: 4 !important;
+            z-index: 3 !important;
         }
 
         .lobby-avatar::after {
@@ -608,7 +608,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-choices {
             position: relative !important;
-            z-index: 4 !important;
+            z-index: 5 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -616,7 +616,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             width: 100% !important;
             position: absolute !important;
             left: 50% !important;
-            top: 38% !important;
+            top: 40% !important;
             transform: translate(-50%, -50%) !important;
             transition: top 0.22s ease, transform 0.22s ease !important;
         }
@@ -636,14 +636,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-btn {
             position: relative !important;
-            z-index: 4 !important;
+            z-index: 5 !important;
             width: min(29vw, 565px) !important;
             aspect-ratio: 2048 / 960 !important;
             filter: drop-shadow(8px 12px 0 rgba(25, 10, 4, 0.72))
                     drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)) !important;
             animation: lobbyModePop 0.36s cubic-bezier(0.12, 1.25, 0.22, 1) backwards,
                        lobbyModeFloat 2.9s ease-in-out 0.38s infinite !important;
-            transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease, opacity 0.16s ease, width 0.18s ease !important;
+            transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease, opacity 0.16s ease, width 0.18s ease, margin 0.18s ease !important;
         }
 
         .lobby-mode-overlay.mode-selected .lobby-mode-btn {
@@ -652,6 +652,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-overlay.mode-selected .lobby-mode-btn:not(.selected) {
             width: 0 !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
             opacity: 0 !important;
             pointer-events: none !important;
             filter: grayscale(80%) brightness(0.35) !important;
@@ -674,7 +676,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-deck-title {
             position: absolute !important;
             left: 50% !important;
-            z-index: 4 !important;
+            z-index: 5 !important;
             color: #fff7bc !important;
             font-family: 'Bangers', cursive !important;
             line-height: 1 !important;
@@ -714,7 +716,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-flares {
             position: fixed !important;
             inset: 0 !important;
-            z-index: 4 !important;
+            z-index: 3 !important;
             overflow: hidden !important;
             pointer-events: none !important;
             opacity: 0 !important;
@@ -730,11 +732,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             left: var(--flare-left, 50%) !important;
             bottom: -12vh !important;
             width: var(--flare-size, 10px) !important;
-            height: calc(var(--flare-size, 10px) * 4.8) !important;
+            height: var(--flare-height, 52px) !important;
             border-radius: 999px !important;
             opacity: 0 !important;
             filter: blur(0.15px) !important;
             animation: lobbyModeFlareRise var(--flare-duration, 2.8s) linear var(--flare-delay, 0s) infinite !important;
+            will-change: transform, opacity !important;
         }
 
         .lobby-mode-flare.pve {
@@ -840,7 +843,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             position: absolute !important;
             left: 50% !important;
             bottom: clamp(126px, 17vh, 190px) !important;
-            z-index: 4 !important;
+            z-index: 5 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -1348,6 +1351,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         const selectMode = (mode) => {
+            const selectedButton = modeOverlay.querySelector(`#btn-mode-${mode}`);
+            const firstRect = selectedButton ? selectedButton.getBoundingClientRect() : null;
             modeOverlay.dataset.selectedMode = mode;
             modeOverlay.classList.add('mode-selected');
             modeOverlay.classList.toggle('selected-pve', mode === 'pve');
@@ -1355,6 +1360,21 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             modeOverlay.querySelectorAll('.lobby-mode-btn').forEach(button => {
                 button.classList.toggle('selected', button.id === `btn-mode-${mode}`);
             });
+            if(selectedButton && firstRect) {
+                const lastRect = selectedButton.getBoundingClientRect();
+                const dx = firstRect.left - lastRect.left;
+                const dy = firstRect.top - lastRect.top;
+                const travelAnimation = selectedButton.animate([
+                    { transform: `translate(${dx}px, ${dy}px) scale(1)`, offset: 0 },
+                    { transform: `translate(${dx * 0.45}px, ${dy * 0.45}px) scale(1.03)`, offset: 0.58 },
+                    { transform: 'translateY(-4px) scale(1.06)', offset: 1 }
+                ], {
+                    duration: 390,
+                    easing: 'cubic-bezier(0.15, 0.9, 0.2, 1)',
+                    fill: 'both'
+                });
+                travelAnimation.onfinish = () => travelAnimation.cancel();
+            }
             const flareLayer = modeOverlay.querySelector('.lobby-mode-flares');
             if(flareLayer) {
                 flareLayer.innerHTML = '';
@@ -1363,7 +1383,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     const flare = document.createElement('span');
                     flare.className = `lobby-mode-flare ${flareClass}`;
                     flare.style.setProperty('--flare-left', `${Math.random() * 100}%`);
-                    flare.style.setProperty('--flare-size', `${Math.random() * 10 + 6}px`);
+                    const flareSize = Math.random() * 10 + 6;
+                    flare.style.setProperty('--flare-size', `${flareSize}px`);
+                    flare.style.setProperty('--flare-height', `${flareSize * (Math.random() * 3 + 5.2)}px`);
                     flare.style.setProperty('--flare-duration', `${Math.random() * 1.4 + 2.0}s`);
                     flare.style.setProperty('--flare-delay', `${Math.random() * 2.2}s`);
                     flareLayer.appendChild(flare);
