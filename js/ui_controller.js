@@ -237,20 +237,6 @@ export function triggerAttackSlash(targetIsPlayer) {
     setTimeout(() => spark.remove(), 520);
 }
 
-export function triggerKnightAttackSlash(targetIsPlayer) {
-    const slash = createCombatFxElement('knight-slash-fx');
-    slash.style.left = '50vw';
-    slash.style.top = '50vh';
-    slash.classList.add(targetIsPlayer ? 'target-player' : 'target-enemy');
-
-    const flash = createCombatFxElement('knight-slash-flash');
-    flash.style.left = '50vw';
-    flash.style.top = '50vh';
-
-    setTimeout(() => slash.remove(), 650);
-    setTimeout(() => flash.remove(), 360);
-}
-
 export function triggerBlockShield(blockerIsPlayer, anchor = 'center') {
     let midX, midY;
     if(anchor === 'cluster') {
