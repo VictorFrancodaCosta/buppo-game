@@ -502,7 +502,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-name {
             position: absolute !important;
-            left: 63.5% !important;
+            left: 62.6% !important;
             top: 31.8% !important;
             width: 50% !important;
             transform: translate(-50%, -50%) !important;
@@ -536,7 +536,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-xp-shell {
             position: absolute !important;
-            left: 61.3% !important;
+            left: 62.2% !important;
             top: 67.4% !important;
             width: 25.2% !important;
             height: 10.7% !important;
