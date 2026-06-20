@@ -623,6 +623,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background-position: center !important;
             background-repeat: no-repeat !important;
             background-size: contain !important;
+            position: relative !important;
             cursor: pointer !important;
             appearance: none !important;
             -webkit-tap-highlight-color: transparent !important;
@@ -658,6 +659,91 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             aspect-ratio: 1392 / 637 !important;
             background-image: url('assets/img/botao_jogar.webp') !important;
             margin-bottom: clamp(3px, 0.6vh, 8px) !important;
+        }
+
+        #lobby-screen:has(#btn-play-pvp.lobby-main-play:hover)::before,
+        #lobby-screen:has(#btn-play-pvp.lobby-main-play:focus-visible)::before {
+            content: "" !important;
+            position: fixed !important;
+            inset: 0 !important;
+            pointer-events: none !important;
+            z-index: 43 !important;
+            background:
+                radial-gradient(circle at 50% 49%, rgba(255, 230, 93, 0.24) 0 10%, rgba(255, 168, 22, 0.11) 18%, transparent 35%),
+                radial-gradient(circle at 50% 50%, transparent 0 22%, rgba(13, 4, 0, 0.22) 52%, rgba(0, 0, 0, 0.42) 100%) !important;
+            animation: lobbyPlayTensionVignette 1.15s ease-in-out infinite alternate !important;
+        }
+
+        #lobby-screen:has(#btn-play-pvp.lobby-main-play:hover)::after,
+        #lobby-screen:has(#btn-play-pvp.lobby-main-play:focus-visible)::after {
+            content: "" !important;
+            position: fixed !important;
+            left: 50% !important;
+            top: 50% !important;
+            width: min(64vw, 980px) !important;
+            height: min(42vw, 620px) !important;
+            transform: translate(-50%, -50%) rotate(-8deg) !important;
+            pointer-events: none !important;
+            z-index: 44 !important;
+            opacity: 0.7 !important;
+            background:
+                conic-gradient(from 0deg, transparent 0 12deg, rgba(255, 229, 98, 0.2) 16deg, transparent 27deg, transparent 45deg, rgba(255, 163, 38, 0.13) 54deg, transparent 66deg, transparent 100deg),
+                radial-gradient(ellipse at center, rgba(255, 222, 86, 0.18), transparent 62%) !important;
+            filter: blur(2px) !important;
+            animation: lobbyPlayRays 2.4s linear infinite !important;
+        }
+
+        #lobby-screen #btn-play-pvp.lobby-main-play:hover,
+        #lobby-screen #btn-play-pvp.lobby-main-play:focus-visible {
+            transform: translateY(-8px) scale(1.105) rotate(-1deg) !important;
+            filter:
+                brightness(1.24)
+                saturate(1.18)
+                drop-shadow(9px 14px 0 rgba(26, 11, 4, 0.86))
+                drop-shadow(0 22px 24px rgba(0, 0, 0, 0.38))
+                drop-shadow(0 0 26px rgba(255, 233, 92, 0.82))
+                drop-shadow(0 0 46px rgba(255, 132, 24, 0.5)) !important;
+            animation: lobbyPlayCallToAction 0.72s ease-in-out infinite !important;
+        }
+
+        #lobby-screen #btn-play-pvp.lobby-main-play::before {
+            content: "" !important;
+            display: block !important;
+            position: absolute !important;
+            inset: -26% -24% !important;
+            z-index: -1 !important;
+            pointer-events: none !important;
+            border-radius: 999px !important;
+            opacity: 0 !important;
+            background: radial-gradient(ellipse at center, rgba(255, 223, 74, 0.56), rgba(255, 130, 20, 0.2) 42%, transparent 70%) !important;
+            filter: blur(7px) !important;
+            transition: opacity 0.14s ease !important;
+        }
+
+        #lobby-screen #btn-play-pvp.lobby-main-play:hover::before,
+        #lobby-screen #btn-play-pvp.lobby-main-play:focus-visible::before {
+            opacity: 1 !important;
+            animation: lobbyPlayAuraPulse 0.95s ease-in-out infinite !important;
+        }
+
+        #lobby-screen #btn-play-pvp.lobby-main-play::after {
+            content: "" !important;
+            display: block !important;
+            position: absolute !important;
+            inset: 13% 11% 15% 11% !important;
+            z-index: 1 !important;
+            pointer-events: none !important;
+            border-radius: 18px !important;
+            opacity: 0 !important;
+            background: linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 34%, rgba(255,255,210,0.72) 48%, rgba(255,210,60,0.32) 56%, transparent 72%) !important;
+            transform: translateX(-78%) skewX(-12deg) !important;
+            mix-blend-mode: screen !important;
+        }
+
+        #lobby-screen #btn-play-pvp.lobby-main-play:hover::after,
+        #lobby-screen #btn-play-pvp.lobby-main-play:focus-visible::after {
+            opacity: 1 !important;
+            animation: lobbyPlayShineSweep 0.92s ease-in-out infinite !important;
         }
 
         #lobby-screen .lobby-menu-small {
@@ -735,6 +821,34 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         @keyframes lobbyMenuButtonFloat {
             0%, 100% { translate: 0 0; }
             50% { translate: 0 -4px; }
+        }
+
+        @keyframes lobbyPlayCallToAction {
+            0%, 100% { transform: translateY(-8px) scale(1.105) rotate(-1deg); }
+            42% { transform: translateY(-11px) scale(1.135) rotate(0.7deg); }
+            68% { transform: translateY(-7px) scale(1.115) rotate(-0.4deg); }
+        }
+
+        @keyframes lobbyPlayAuraPulse {
+            0%, 100% { transform: scale(0.96); opacity: 0.72; }
+            50% { transform: scale(1.08); opacity: 1; }
+        }
+
+        @keyframes lobbyPlayShineSweep {
+            0% { opacity: 0; transform: translateX(-88%) skewX(-12deg); }
+            18% { opacity: 0.95; }
+            100% { opacity: 0; transform: translateX(88%) skewX(-12deg); }
+        }
+
+        @keyframes lobbyPlayTensionVignette {
+            0% { opacity: 0.76; filter: saturate(1.02); }
+            100% { opacity: 1; filter: saturate(1.18); }
+        }
+
+        @keyframes lobbyPlayRays {
+            0% { transform: translate(-50%, -50%) rotate(-8deg) scale(0.98); opacity: 0.45; }
+            50% { opacity: 0.78; }
+            100% { transform: translate(-50%, -50%) rotate(352deg) scale(1.04); opacity: 0.45; }
         }
 
         @keyframes profileXpFlow {
