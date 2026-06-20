@@ -237,6 +237,21 @@ export function triggerAttackSlash(targetIsPlayer) {
     setTimeout(() => spark.remove(), 520);
 }
 
+export function triggerKnightAttackSlash(targetIsPlayer) {
+    const target = centerOfElement(targetIsPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
+    const slash = createCombatFxElement('knight-slash-fx');
+    slash.style.left = target.x + 'px';
+    slash.style.top = target.y + 'px';
+    slash.classList.add(targetIsPlayer ? 'target-player' : 'target-enemy');
+
+    const flash = createCombatFxElement('knight-slash-flash');
+    flash.style.left = target.x + 'px';
+    flash.style.top = target.y + 'px';
+
+    setTimeout(() => slash.remove(), 650);
+    setTimeout(() => flash.remove(), 360);
+}
+
 export function triggerBlockShield(blockerIsPlayer, anchor = 'center') {
     let midX, midY;
     if(anchor === 'cluster') {

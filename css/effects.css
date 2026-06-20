@@ -356,6 +356,44 @@ body.shake-screen-hard.critical-impact-negative #game-background {
     box-shadow: 0 0 28px #ff4757;
     animation: impactSparkPop 0.48s ease-out forwards;
 }
+
+.knight-slash-fx {
+    position: fixed;
+    width: min(62vw, 760px);
+    aspect-ratio: 640 / 360;
+    transform: translate(-50%, -50%) scale(0.86);
+    z-index: 12620;
+    pointer-events: none;
+    background-image: url('../assets/img/fx_cavaleiro_slash.png');
+    background-repeat: no-repeat;
+    background-size: 1400% 100%;
+    background-position: 0 0;
+    mix-blend-mode: screen;
+    filter: drop-shadow(0 0 15px rgba(255, 226, 83, 0.72)) drop-shadow(0 0 34px rgba(255, 255, 255, 0.35));
+    animation: knightSlashSprite 0.56s steps(14) forwards, knightSlashBody 0.56s cubic-bezier(0.11, 0.8, 0.2, 1) forwards;
+}
+
+.knight-slash-fx.target-enemy {
+    transform: translate(-50%, -50%) scale(0.88) rotate(-2deg);
+}
+
+.knight-slash-fx.target-player {
+    transform: translate(-50%, -50%) scale(0.88) rotate(178deg);
+}
+
+.knight-slash-flash {
+    position: fixed;
+    width: min(42vw, 560px);
+    height: min(22vw, 260px);
+    transform: translate(-50%, -50%) scale(0.4);
+    z-index: 12610;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.76) 0%, rgba(255,225,72,0.48) 24%, rgba(255,120,32,0.16) 48%, transparent 70%);
+    mix-blend-mode: screen;
+    animation: knightSlashFlash 0.34s ease-out forwards;
+}
+
 @keyframes attackSlashCut {
     0% { opacity: 0; transform: translate(-50%, -50%) rotate(-34deg) scaleX(0); }
     18% { opacity: 1; transform: translate(-50%, -50%) rotate(-34deg) scaleX(1); }
@@ -365,6 +403,21 @@ body.shake-screen-hard.critical-impact-negative #game-background {
     0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
     25% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); }
     100% { opacity: 0; transform: translate(-50%, -50%) scale(2.7); }
+}
+@keyframes knightSlashSprite {
+    from { background-position: 0 0; }
+    to { background-position: 100% 0; }
+}
+@keyframes knightSlashBody {
+    0% { opacity: 0; translate: -18px 10px; scale: 0.82; }
+    9% { opacity: 1; }
+    54% { opacity: 1; scale: 1.04; }
+    100% { opacity: 0; translate: 20px -8px; scale: 1.1; }
+}
+@keyframes knightSlashFlash {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.38); }
+    22% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.45); }
 }
 
 .block-shield-fx {
