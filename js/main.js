@@ -1,16 +1,16 @@
-// ARQUIVO: js/main.js
+﻿// ARQUIVO: js/main.js
 import { CARDS_DB, ACTION_KEYS } from './data.js';
 import { auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, registrarEmpateDB, notifyAbandonmentDB } from './firebase_network.js?v=2026.06.19.7';
 import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIMove, checkCardLethality, generateShuffledDeck } from './game_logic.js';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// IMPORTANDO OS NOVOS MÓDULOS
+// IMPORTANDO OS NOVOS MÃ“DULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js';
 import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=9';
 import { initiateMatchmaking } from './matchmaking.js';
 
-// --- VARIÁVEIS GLOBAIS DE ESTADO ---
+// --- VARIÃVEIS GLOBAIS DE ESTADO ---
 window.currentUser = null;
 let assetsLoaded = 0;
 window.gameAssets = [];
@@ -53,11 +53,13 @@ window.cacheRefreshComplete = false;
 window.desktopUpdateStatus = { state: 'idle' };
 window.currentProfileLevel = 1;
 window.currentProfileXp = 0;
+window.currentLobbyRank = null;
 
 const ASSETS_TO_LOAD = {
     images: [
         'assets/img/logo_buppo.webp', 'assets/img/mesa_cavaleiro.webp', 'assets/img/mesa_mago.webp',
-        'assets/img/bg_saguao.webp', 'assets/img/bg_saguao_cartas_teste.png', 'assets/img/profile_asset.webp', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
+        'assets/img/barra_profile.webp',
+        'assets/img/bg_saguao.webp', 'assets/img/bg_saguao_cartas_teste.png', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
         'assets/img/card_selecao_cavaleiro.webp', 'assets/img/card_selecao_mago.webp',
         'assets/img/deck_verso_cavaleiro.webp', 'assets/img/deck_verso_mago.webp',
         'assets/img/card_verso_padrao.webp', 'assets/img/ui_mesa_deck.webp', 'assets/img/ui_area_xp.webp',
@@ -95,7 +97,7 @@ const ASSETS_TO_LOAD = {
     ]
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
-let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
+let player = { id:'p', name:'VocÃª', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 
 window.cleanupMatchState = function() {
@@ -200,7 +202,7 @@ window.transitionToLobby = function(skipAnim = false) {
     else {
         const transScreen = document.getElementById('transition-overlay');
         const transText = transScreen.querySelector('.trans-text');
-        if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
+        if(transText) transText.innerText = "RETORNANDO AO SAGUÃƒO...";
         if(transScreen) transScreen.classList.add('active');
         setTimeout(() => {
             window.goToLobby(false);
@@ -218,7 +220,7 @@ window.goToLobby = async function(isAutoLogin = false) {
     }
     window.cleanupMatchState(); window.isProcessing = false;
     
-    // FORÇA A REMOÇÃO DAS MESAS DOS DECKS
+    // FORÃ‡A A REMOÃ‡ÃƒO DAS MESAS DOS DECKS
     document.body.classList.remove('theme-cavaleiro', 'theme-mago');
     
     let bg = document.getElementById('game-background'); if(bg) bg.classList.add('lobby-mode');
@@ -232,7 +234,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         window.currentPlayerGameId = gameId;
         updateLobbyProfileProgress(1, 0);
         renderLobbyIdentity(window.currentUser.displayName, gameId);
-        document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
+        document.getElementById('lobby-stats').innerText = `VITÃ“RIAS: 0 | PONTOS: 0`;
         updateLobbyGoldWallet(0);
         window.musicEnabled = true;
         window.sfxEnabled = true;
@@ -247,7 +249,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         window.currentPlayerGameId = gameId;
         updateLobbyProfileProgress(d.profileLevel || 1, d.profileXp || 0);
         renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
-        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+        document.getElementById('lobby-stats').innerText = `VITÃ“RIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
 
         updateLobbyGoldWallet(d.goldCoins || 0);
 
@@ -282,18 +284,24 @@ window.goToLobby = async function(isAutoLogin = false) {
     }
     startPresenceHeartbeat();
     startFriendsPanel();
-    const q = query(collection(db, "players"), orderBy("score", "desc"), limit(10));
+    const q = query(collection(db, "players"), orderBy("score", "desc"));
     onSnapshot(q, (snapshot) => {
         let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
         let pos = 1;
+        let myRank = null;
         snapshot.forEach((doc) => {
             const p = doc.data();
-            let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : ""));
-            html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
+            if(window.currentUser && doc.id === window.currentUser.uid) myRank = pos;
+            if(pos <= 10) {
+                let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : ""));
+                html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
+            }
             pos++;
         });
         html += '</tbody></table>';
         document.getElementById('ranking-content').innerHTML = html;
+        window.currentLobbyRank = myRank;
+        updateLobbyBottomProfileBar();
     });
     if(document.activeElement && document.activeElement.closest && document.activeElement.closest('#end-screen')) document.activeElement.blur();
     window.showScreen('lobby-screen'); document.getElementById('end-screen').classList.remove('visible');
@@ -304,20 +312,26 @@ function updateLobbyGoldWallet(amount = 0) {
     window.currentGoldCoins = Math.max(0, amount || 0);
     const count = document.getElementById('lobby-gold-count');
     if(count) count.innerText = window.currentGoldCoins;
-    const profileGold = document.getElementById('profile-asset-gold');
-    if(profileGold) profileGold.innerText = window.currentGoldCoins;
+    updateLobbyBottomProfileBar();
 }
 
 function updateLobbyProfileProgress(level = 1, xp = 0) {
     window.currentProfileLevel = Math.max(1, Number(level) || 1);
     window.currentProfileXp = Math.max(0, Math.min(99, Number(xp) || 0));
-    const levelEl = document.getElementById('profile-asset-level');
-    const xpFill = document.getElementById('profile-asset-xp-fill');
-    const xpText = document.getElementById('profile-asset-xp-text');
-    if(levelEl) levelEl.innerText = window.currentProfileLevel;
-    if(xpFill) xpFill.style.width = `${window.currentProfileXp}%`;
-    if(xpText) xpText.innerText = `${window.currentProfileXp}/100`;
 }
+
+function updateLobbyBottomProfileBar() {
+    const greeting = document.getElementById('profile-bar-greeting');
+    const ranking = document.getElementById('profile-bar-ranking');
+    const gold = document.getElementById('profile-bar-gold-count');
+    const name = getPlayerFirstName(window.currentLobbyPlayerName || (window.currentUser && window.currentUser.displayName) || 'JOGADOR');
+    const gameId = window.currentPlayerGameId || '----';
+    if(greeting) greeting.innerHTML = `OL\u00c1 ${escapeHTML(name)} <span class="profile-bar-id">#${escapeHTML(gameId)}</span>`;
+    if(ranking) ranking.textContent = `RANKING ${window.currentLobbyRank || '-'}`;
+    if(gold) gold.textContent = window.currentGoldCoins || 0;
+}
+
+window.updateLobbyBottomProfileBar = updateLobbyBottomProfileBar;
 
 function renderTurnDisplay() {
     const turnEl = document.getElementById('turn-txt');
@@ -433,11 +447,11 @@ function renderLobbyIdentity(name, gameId) {
     const el = document.getElementById('lobby-username');
     const safeName = escapeHTML(getPlayerFirstName(name));
     const safeId = escapeHTML(gameId || "----");
+    window.currentLobbyPlayerName = name || (window.currentUser && window.currentUser.displayName) || 'JOGADOR';
     setTimeout(() => renderLobbyAvatar(name), 0);
-    const profileName = document.getElementById('profile-asset-name');
-    if(profileName) profileName.textContent = safeName;
+    updateLobbyBottomProfileBar();
     if(!el) return;
-    el.innerHTML = `OLÁ, ${safeName} <span class="player-game-id">#${safeId}</span>`;
+    el.innerHTML = `OL\u00c1, ${safeName} <span class="player-game-id">#${safeId}</span>`;
 }
 
 function renderLobbyAvatar(name) {
@@ -452,17 +466,6 @@ function renderLobbyAvatar(name) {
         } else {
             avatar.style.removeProperty('background-image');
             avatar.classList.remove('has-photo');
-        }
-    }
-    const profileAvatar = document.getElementById('profile-asset-avatar');
-    if(profileAvatar) {
-        profileAvatar.textContent = photoURL ? '' : initial;
-        if(photoURL) {
-            profileAvatar.style.setProperty('background-image', `url("${photoURL}")`, 'important');
-            profileAvatar.classList.add('has-photo');
-        } else {
-            profileAvatar.style.removeProperty('background-image');
-            profileAvatar.classList.remove('has-photo');
         }
     }
 }
@@ -942,7 +945,7 @@ function startPvPListener() {
             if (matchData.abandonedBy && window.currentUser && matchData.abandonedBy !== window.currentUser.uid) {
                 monster.hp = 0; updateUI(); window.isProcessing = true; MusicController.stopCurrent();
                 setTimeout(() => {
-                    const title = document.getElementById('end-title'); title.innerText = "VITÓRIA"; title.className = "win-theme";
+                    const title = document.getElementById('end-title'); title.innerText = "VITÃ“RIA"; title.className = "win-theme";
                     showCenterText("OPONENTE DESISTIU!", "#ffd700"); playSound('sfx-win');
                     triggerEndScreenFx('win'); showEndPoints(8);
                     if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
@@ -1211,7 +1214,7 @@ function checkEndGame(){
                 else if(isWin) { title.innerText = "VITORIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
                 else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); }
                 const secondaryBtn = document.querySelector('#end-screen .secondary-btn');
-                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUÃO";
+                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUÃƒO";
                 if(window.currentMatchId && window.myRole === 'player1') {
                     updateDoc(doc(db, "matches", window.currentMatchId), { status: 'finished', player1Rematch: false, player2Rematch: false }).catch(() => {});
                 }
@@ -1220,9 +1223,9 @@ function checkEndGame(){
                 return;
             }
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
-            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃO";
+            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃƒO";
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
-            else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
+            else if(isWin) { title.innerText = "VITÃ“RIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
             else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
 
             if(isTie) { if(window.registrarEmpateOnline) window.registrarEmpateOnline(window.gameMode); }
@@ -1495,7 +1498,7 @@ onAuthStateChanged(auth, (user) => {
         window.currentUser = null; window.showScreen('start-screen');
         const bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode');
         
-        // FORÇA A REMOÇÃO DOS TEMAS AO DESLOGAR
+        // FORÃ‡A A REMOÃ‡ÃƒO DOS TEMAS AO DESLOGAR
         document.body.classList.remove('theme-cavaleiro', 'theme-mago');
         
         window.musicEnabled = false;
@@ -1615,7 +1618,7 @@ window.abandonMatch = function() {
     if(document.getElementById('game-screen').classList.contains('active')) {
         stopTurnTimer();
         window.toggleConfig();
-        window.openModal("ABANDONAR?", "Sair da partida contará como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], async (choice) => {
+        window.openModal("ABANDONAR?", "Sair da partida contarÃ¡ como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], async (choice) => {
                 if (choice === "SAIR") {
                     stopTurnTimer();
                     if (window.gameMode === 'pvp') await notifyAbandonment();
@@ -1822,7 +1825,7 @@ function onCardClick(index) {
     playSound('sfx-play'); clearHoverFocusState(true);
 
     if(cardKey === 'DESARMAR') {
-        window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => {
+        window.openModal('ALVO DO DESARME', 'Qual aÃ§Ã£o bloquear no inimigo?', ACTION_KEYS, (choice) => {
             if(window.gameMode === 'pvp') lockInPvPMove(index, choice); else playCardFlow(index, choice);
         });
     } else {
@@ -1833,11 +1836,11 @@ function onCardClick(index) {
 function showDisabledCardWarning(index) {
     const handContainer = document.getElementById('player-hand');
     const cardEl = handContainer && handContainer.children[index];
-    if(!cardEl) { showCenterText("NÃO PODE JOGAR", "#ff7675"); return; }
+    if(!cardEl) { showCenterText("NÃƒO PODE JOGAR", "#ff7675"); return; }
     cardEl.querySelectorAll('.disabled-card-warning').forEach(el => el.remove());
     const warning = document.createElement('div');
     warning.className = 'disabled-card-warning';
-    warning.innerText = "NÃO PODE JOGAR";
+    warning.innerText = "NÃƒO PODE JOGAR";
     cardEl.appendChild(warning);
     setTimeout(() => warning.remove(), 760);
 }
@@ -2170,8 +2173,8 @@ function checkLevelUp(u, doneCb) {
 
 function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
-    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
-    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
+    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÃTICA", "Bloquear qual aÃ§Ã£o?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
+    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÃTICA", "Bloquear qual aÃ§Ã£o?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
     else if(type === 'TREINAR' && u.id === 'm') {
         let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))];
         if(opts.length > 0) {
@@ -2232,7 +2235,7 @@ window.openHistory = async function() {
         let html = '';
         querySnapshot.forEach((doc) => {
             const h = doc.data(); const date = new Date(h.timestamp); const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-            const resultClass = h.result === 'WIN' ? 'win' : (h.result === 'TIE' ? 'tie' : 'loss'); const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : (h.result === 'TIE' ? 'EMPATE' : 'DERROTA'); const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
+            const resultClass = h.result === 'WIN' ? 'win' : (h.result === 'TIE' ? 'tie' : 'loss'); const resultTxt = h.result === 'WIN' ? 'VITÃ“RIA' : (h.result === 'TIE' ? 'EMPATE' : 'DERROTA'); const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
             let vsText = ""; if (h.opponent === 'PVE' || h.mode === 'pve') { vsText = `${resultTxt} PVE`; } else { vsText = `${resultTxt} vs ${h.opponent}`; }
             html += `<div class="history-item ${resultClass}"><div><div class="h-vs">${vsText}</div><div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div></div><div class="h-score">${scoreTxt} PTS</div></div>`;
         });
@@ -2312,7 +2315,7 @@ function bindMasteryTooltip(el, key, value, ownerId) {
     return {
         onmouseenter: (e) => {
             let db=CARDS_DB[key]; document.getElementById('tt-title').innerHTML = key;
-            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
+            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>BÃ´nus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
             const masteryLabel = key === 'ATAQUE' ? 'MAESTRIA EM ATAQUE' : 'MAESTRIA EM BLOQUEIO';
             document.getElementById('tt-title').innerHTML = `${masteryLabel} N\u00cdVEL ${value}`;
             document.getElementById('tt-content').innerHTML = '';
@@ -2349,7 +2352,7 @@ function showTT(k) {
         let content = db.customTooltip; let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
         content = content.replace('{PLAYER_LVL}', currentLvl); let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
         let reflectDmg = 1 + bonusBlock; content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg); document.getElementById('tt-content').innerHTML = content;
-    } else { document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; }
+    } else { document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>BÃ´nus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; }
     tt.style.display = 'block';
 }
 
@@ -2399,3 +2402,4 @@ setTimeout(() => {
 
 setupDesktopUpdaterBridge();
 refreshRuntimeCaches().finally(() => preloadGame());
+

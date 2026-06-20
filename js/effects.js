@@ -454,166 +454,77 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: none !important;
         }
 
-        #lobby-screen .lobby-profile-asset {
+        #lobby-screen .lobby-bottom-profile-bar {
             position: fixed !important;
-            left: calc(50% - 50vw + var(--lobby-side-gap, 70px)) !important;
-            top: 8vh !important;
-            width: min(37vw, 500px) !important;
-            aspect-ratio: 1394 / 581 !important;
+            left: 50% !important;
+            bottom: clamp(14px, 2.2vh, 28px) !important;
+            width: min(72vw, 1080px) !important;
+            aspect-ratio: 3232 / 158 !important;
+            transform: translateX(-50%) !important;
             z-index: 12000 !important;
-            background: url('assets/img/profile_asset.webp') center / contain no-repeat !important;
-            filter: drop-shadow(0 16px 24px rgba(0,0,0,0.62)) !important;
             pointer-events: none !important;
+            background: url('assets/img/barra_profile.webp') center / contain no-repeat !important;
+            filter: drop-shadow(0 10px 18px rgba(0,0,0,0.56)) !important;
+            font-family: 'Montserrat', Arial, sans-serif !important;
+            color: #ffffff !important;
+            text-shadow: 2px 2px 0 #090200, -1px -1px 0 #090200, 1px -1px 0 #090200, -1px 1px 0 #090200 !important;
         }
 
-        #lobby-screen .profile-asset-avatar {
+        #lobby-screen .profile-bar-greeting,
+        #lobby-screen .profile-bar-ranking,
+        #lobby-screen .profile-bar-gold {
             position: absolute !important;
-            left: 16.5% !important;
-            top: 52% !important;
-            width: 22.5% !important;
-            aspect-ratio: 1 !important;
-            transform: translate(-50%, -50%) !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
             display: flex !important;
             align-items: center !important;
-            justify-content: center !important;
-            border-radius: 50% !important;
-            overflow: visible !important;
-            background-color: #f1c40f !important;
-            background-image: radial-gradient(circle at 35% 25%, #fff7ba 0 12%, #f1c40f 35%, #9b4b10 100%) !important;
-            background-position: center !important;
-            background-size: cover !important;
-            background-repeat: no-repeat !important;
-            color: #3e2723 !important;
-            font-family: 'Russo One', sans-serif !important;
-            font-size: clamp(22px, 2.2vw, 38px) !important;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.46), 0 0 18px rgba(255,215,0,0.38) !important;
-            text-shadow: 1px 1px 0 rgba(255,255,255,0.45) !important;
-        }
-
-        #lobby-screen .profile-asset-avatar::after {
-            content: "" !important;
-            position: absolute !important;
-            inset: -23% !important;
-            pointer-events: none !important;
-            background: url('assets/img/avatar_moldura_madeira.png') center / contain no-repeat !important;
-            filter: drop-shadow(0 4px 5px rgba(0,0,0,0.62)) !important;
-            z-index: 2 !important;
-        }
-
-        #lobby-screen .profile-asset-name {
-            position: absolute !important;
-            left: 62.6% !important;
-            top: 31.8% !important;
-            width: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            color: #ffffff !important;
-            font-family: 'Bangers', cursive !important;
-            font-size: clamp(24px, 2.2vw, 38px) !important;
-            line-height: 1 !important;
-            letter-spacing: 1px !important;
-            text-align: center !important;
+            min-width: 0 !important;
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
-            -webkit-text-stroke: 1.8px #080200 !important;
-            paint-order: stroke fill !important;
-            text-shadow: 3px 3px 0 #080200, 0 0 8px rgba(255,255,255,0.3) !important;
-        }
-
-        #lobby-screen .profile-asset-level {
-            position: absolute !important;
-            left: 41.4% !important;
-            top: 68.9% !important;
-            width: 11.3% !important;
-            transform: translate(-50%, -50%) !important;
-            color: #ffd94a !important;
-            font-family: 'Russo One', sans-serif !important;
-            font-size: clamp(18px, 1.75vw, 31px) !important;
+            font-size: clamp(12px, 1.05vw, 18px) !important;
+            font-weight: 900 !important;
             line-height: 1 !important;
-            text-align: center !important;
-            text-shadow: 3px 3px 0 #130500, 0 0 10px rgba(255,215,0,0.55) !important;
+            letter-spacing: 0 !important;
         }
 
-        #lobby-screen .profile-asset-xp-shell {
-            position: absolute !important;
-            left: 62.2% !important;
-            top: 67.4% !important;
-            width: 25.2% !important;
-            height: 10.7% !important;
-            transform: translate(-50%, -50%) !important;
-            border-radius: 999px !important;
-            overflow: hidden !important;
-            background:
-                linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0) 38%),
-                linear-gradient(90deg, rgba(0,160,255,0.32), rgba(0,255,184,0.24)) !important;
-            box-shadow:
-                inset 0 2px 5px rgba(0,0,0,0.72),
-                inset 0 0 0 1px rgba(255,245,120,0.28),
-                0 0 8px rgba(0,230,255,0.32) !important;
+        #lobby-screen .profile-bar-greeting {
+            left: 7.8% !important;
+            width: 32% !important;
+            justify-content: flex-start !important;
+            text-align: left !important;
         }
 
-        #lobby-screen .profile-asset-xp-fill {
-            position: absolute !important;
-            inset: 0 auto 0 0 !important;
-            width: 0% !important;
-            border-radius: inherit !important;
-            min-width: 10px !important;
-            background:
-                linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.1) 34%, rgba(0,0,0,0.08) 100%),
-                linear-gradient(90deg, #00ff72 0%, #20f6ff 56%, #ffe94d 100%) !important;
-            box-shadow:
-                inset 0 2px 0 rgba(255,255,255,0.62),
-                inset 0 -2px 0 rgba(0,70,45,0.28),
-                0 0 16px rgba(0,255,160,0.75),
-                0 0 10px rgba(80,220,255,0.8) !important;
-            transition: width 0.38s cubic-bezier(0.2, 0.9, 0.2, 1) !important;
-            z-index: 1 !important;
+        #lobby-screen .profile-bar-id {
+            margin-left: 7px !important;
+            font-style: italic !important;
+            font-weight: 800 !important;
+            opacity: 0.92 !important;
         }
 
-        #lobby-screen .profile-asset-xp-fill::after {
-            content: "" !important;
-            position: absolute !important;
-            inset: 0 !important;
-            background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.34) 42%, transparent 64%) !important;
-            background-size: 42px 100% !important;
-            animation: profileXpFlow 1.15s linear infinite !important;
-            mix-blend-mode: screen !important;
-        }
-
-        #lobby-screen .profile-asset-xp-text {
-            position: absolute !important;
-            inset: 0 !important;
-            display: flex !important;
-            align-items: center !important;
+        #lobby-screen .profile-bar-ranking {
+            left: 50% !important;
+            width: 24% !important;
             justify-content: center !important;
-            color: #fff7d1 !important;
-            font-family: 'Russo One', sans-serif !important;
-            font-size: clamp(9px, 0.9vw, 14px) !important;
-            text-shadow: 2px 2px 0 #080200, 0 0 5px rgba(0,0,0,0.72) !important;
-            z-index: 2 !important;
-        }
-
-        #lobby-screen .profile-asset-gold {
-            position: absolute !important;
-            left: 89.2% !important;
-            top: 67.5% !important;
-            width: 9.8% !important;
-            transform: translate(-50%, -50%) !important;
-            color: #fff2a8 !important;
-            font-family: 'Russo One', sans-serif !important;
-            font-size: clamp(13px, 1.15vw, 21px) !important;
-            line-height: 1 !important;
             text-align: center !important;
-            text-shadow: 3px 3px 0 #1b0701, 0 0 10px rgba(255,215,0,0.62) !important;
+            transform: translate(-50%, -50%) !important;
         }
 
-        #lobby-screen .friends-panel {
-            left: calc(50% - 50vw + var(--lobby-side-gap, 70px)) !important;
-            right: auto !important;
-            top: calc(8vh + min(15.43vw, 208px) + 14px) !important;
-            width: min(37vw, 500px) !important;
-            min-height: 190px !important;
-            max-height: calc(92vh - (8vh + min(15.43vw, 208px) + 28px)) !important;
+        #lobby-screen .profile-bar-gold {
+            right: 7.7% !important;
+            width: 18% !important;
+            justify-content: flex-end !important;
+            color: #ffd62e !important;
+            text-align: right !important;
+            text-shadow: 2px 2px 0 #190700, -1px -1px 0 #190700, 1px -1px 0 #190700, -1px 1px 0 #190700, 0 0 10px rgba(255,214,46,0.42) !important;
+        }
+
+        #lobby-screen .profile-bar-gold img {
+            width: clamp(18px, 1.8vw, 30px) !important;
+            height: clamp(18px, 1.8vw, 30px) !important;
+            object-fit: contain !important;
+            margin-right: 7px !important;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.62)) !important;
         }
 
         #lobby-screen .lobby-menu-button {
@@ -849,12 +760,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             0% { transform: translate(-50%, -50%) rotate(-8deg) scale(0.98); opacity: 0.45; }
             50% { opacity: 0.78; }
             100% { transform: translate(-50%, -50%) rotate(352deg) scale(1.04); opacity: 0.45; }
-        }
-
-        @keyframes profileXpFlow {
-            0% { background-position: -42px 0; opacity: 0.42; }
-            50% { opacity: 0.72; }
-            100% { background-position: 42px 0; opacity: 0.42; }
         }
 
         .lobby-mode-overlay {
@@ -1665,23 +1570,22 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         logoutButton.removeAttribute('title');
     }
     if (lobbyScreen) {
-        let profileAsset = document.getElementById('lobby-profile-asset');
-        if (!profileAsset) {
-            profileAsset = document.createElement('section');
-            profileAsset.id = 'lobby-profile-asset';
-            profileAsset.className = 'lobby-profile-asset';
-            profileAsset.innerHTML = `
-                <div class="profile-asset-avatar" id="profile-asset-avatar">B</div>
-                <div class="profile-asset-name" id="profile-asset-name">JOGADOR</div>
-                <div class="profile-asset-level" id="profile-asset-level">1</div>
-                <div class="profile-asset-xp-shell">
-                    <div class="profile-asset-xp-fill" id="profile-asset-xp-fill"></div>
-                    <div class="profile-asset-xp-text" id="profile-asset-xp-text">0/100</div>
-                </div>
-                <div class="profile-asset-gold" id="profile-asset-gold">0</div>
+        const oldProfileAsset = document.getElementById('lobby-profile-asset');
+        if (oldProfileAsset) oldProfileAsset.remove();
+
+        let bottomProfileBar = document.getElementById('lobby-bottom-profile-bar');
+        if (!bottomProfileBar) {
+            bottomProfileBar = document.createElement('section');
+            bottomProfileBar.id = 'lobby-bottom-profile-bar';
+            bottomProfileBar.className = 'lobby-bottom-profile-bar';
+            bottomProfileBar.innerHTML = `
+                <div class="profile-bar-greeting" id="profile-bar-greeting">OL\u00c1 JOGADOR <span class="profile-bar-id">#----</span></div>
+                <div class="profile-bar-ranking" id="profile-bar-ranking">RANKING -</div>
+                <div class="profile-bar-gold"><img src="assets/img/moeda_ouro.png" alt=""><span id="profile-bar-gold-count">0</span></div>
             `;
-            lobbyScreen.appendChild(profileAsset);
+            lobbyScreen.appendChild(bottomProfileBar);
         }
+        window.updateLobbyBottomProfileBar?.();
 
         let playCenter = document.querySelector('.lobby-play-center');
         if (!playCenter) {
