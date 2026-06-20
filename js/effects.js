@@ -436,16 +436,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             position: fixed !important;
             left: 50% !important;
             top: 52% !important;
-            width: min(28vw, 470px) !important;
-            min-width: 340px !important;
-            max-width: 470px !important;
+            width: min(20vw, 340px) !important;
+            min-width: 270px !important;
+            max-width: 340px !important;
             transform: translate(-50%, -50%) !important;
             z-index: 45 !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: clamp(7px, 0.9vh, 12px) !important;
+            gap: clamp(12px, 1.45vh, 18px) !important;
             pointer-events: auto !important;
         }
 
@@ -459,7 +459,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background-color: transparent !important;
             background-position: center !important;
             background-repeat: no-repeat !important;
-            background-size: 100% 100% !important;
+            background-size: contain !important;
             cursor: pointer !important;
             appearance: none !important;
             -webkit-tap-highlight-color: transparent !important;
@@ -485,18 +485,23 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen #btn-play-pvp.lobby-main-play {
             width: 100% !important;
-            aspect-ratio: 2048 / 720 !important;
+            aspect-ratio: 1392 / 637 !important;
             background-image: url('assets/img/botao_jogar.webp') !important;
-            margin-bottom: clamp(5px, 0.8vh, 10px) !important;
+            margin-bottom: clamp(3px, 0.6vh, 8px) !important;
         }
 
         #lobby-screen .lobby-menu-small {
-            width: min(72%, 330px) !important;
-            min-width: 235px !important;
-            aspect-ratio: 2048 / 560 !important;
+            width: min(68%, 230px) !important;
+            min-width: 185px !important;
+            aspect-ratio: 1345 / 425 !important;
         }
 
-        #lobby-screen .lobby-main-history { background-image: url('assets/img/botao_historico.webp') !important; }
+        #lobby-screen .lobby-main-history {
+            width: min(70%, 235px) !important;
+            min-width: 195px !important;
+            aspect-ratio: 1345 / 471 !important;
+            background-image: url('assets/img/botao_historico.webp') !important;
+        }
         #lobby-screen .lobby-main-ranking { background-image: url('assets/img/botao_ranking.webp') !important; }
         #lobby-screen .lobby-main-shop { background-image: url('assets/img/botao_loja.webp') !important; }
         #lobby-screen .lobby-main-tutorial { background-image: url('assets/img/botao_tutorial.webp') !important; }
@@ -1163,24 +1168,32 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             #lobby-screen .lobby-play-center {
                 left: 50% !important;
                 top: 50% !important;
-                width: min(78vw, 430px) !important;
+                width: min(64vw, 330px) !important;
                 min-width: 0 !important;
                 transform: translate(-50%, -50%) !important;
+                gap: 10px !important;
             }
 
             #lobby-screen #btn-play-pvp.lobby-main-play {
                 width: 100% !important;
-                aspect-ratio: 2048 / 650 !important;
-                padding: 8px 38px 12px !important;
+                aspect-ratio: 1392 / 637 !important;
+                padding: 0 !important;
             }
 
             #lobby-screen #btn-play-pvp.lobby-main-play .btn-title {
                 font-size: clamp(34px, 8.4vw, 52px) !important;
             }
 
+            #lobby-screen .lobby-menu-small {
+                width: min(67%, 220px) !important;
+                min-width: 170px !important;
+                aspect-ratio: 1345 / 425 !important;
+            }
+
             #lobby-screen .lobby-main-history {
-                width: min(42vw, 210px) !important;
-                min-width: 150px !important;
+                width: min(70%, 225px) !important;
+                min-width: 180px !important;
+                aspect-ratio: 1345 / 471 !important;
             }
 
             .lobby-mode-panel {
