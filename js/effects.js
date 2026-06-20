@@ -435,80 +435,121 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .lobby-play-center {
             position: fixed !important;
             left: 50% !important;
-            top: 50% !important;
-            width: min(34vw, 590px) !important;
-            min-width: 390px !important;
-            max-width: 590px !important;
+            top: 52% !important;
+            width: min(28vw, 470px) !important;
+            min-width: 340px !important;
+            max-width: 470px !important;
             transform: translate(-50%, -50%) !important;
             z-index: 45 !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 14px !important;
+            gap: clamp(7px, 0.9vh, 12px) !important;
             pointer-events: auto !important;
+        }
+
+        #lobby-screen .lobby-frame-container {
+            display: none !important;
+        }
+
+        #lobby-screen .lobby-menu-button {
+            border: 0 !important;
+            padding: 0 !important;
+            background-color: transparent !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            background-size: 100% 100% !important;
+            cursor: pointer !important;
+            appearance: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            transform-origin: center center !important;
+            overflow: visible !important;
+            filter: drop-shadow(7px 10px 0 rgba(26, 11, 4, 0.78))
+                    drop-shadow(0 16px 20px rgba(0, 0, 0, 0.32)) !important;
+            transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease !important;
+        }
+
+        #lobby-screen .lobby-menu-button:hover,
+        #lobby-screen .lobby-menu-button:focus-visible {
+            transform: translateY(-4px) scale(1.055) !important;
+            filter: brightness(1.12)
+                    drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
+                    drop-shadow(0 20px 23px rgba(0, 0, 0, 0.34))
+                    drop-shadow(0 0 22px rgba(255, 221, 80, 0.34)) !important;
+        }
+
+        #lobby-screen .lobby-menu-button:active {
+            transform: translateY(3px) scale(0.985) !important;
         }
 
         #lobby-screen #btn-play-pvp.lobby-main-play {
             width: 100% !important;
-            aspect-ratio: 2048 / 650 !important;
-            padding: 10px 64px 14px !important;
-            background: transparent url('assets/img/btn_pvp_ranked.webp?v=2') center / 100% 100% no-repeat !important;
-            filter: drop-shadow(8px 11px 0 rgba(26, 11, 4, 0.82))
-                    drop-shadow(0 18px 22px rgba(0, 0, 0, 0.32)) !important;
-            overflow: visible !important;
-            transform-origin: center center !important;
+            aspect-ratio: 2048 / 720 !important;
+            background-image: url('assets/img/botao_jogar.webp') !important;
+            margin-bottom: clamp(5px, 0.8vh, 10px) !important;
         }
 
-        #lobby-screen #btn-play-pvp.lobby-main-play .btn-title {
-            font-family: 'Bangers', cursive !important;
-            font-size: clamp(43px, 3.6vw, 69px) !important;
-            color: #fff4a2 !important;
-            letter-spacing: 1px !important;
-            line-height: 0.84 !important;
-            transform: translateY(2px) !important;
-            -webkit-text-stroke: 3.4px #2b0b02 !important;
-            paint-order: stroke fill !important;
-            text-shadow: 5px 5px 0 #2b0b02,
-                         0 8px 13px rgba(28, 7, 0, 0.68),
-                         0 0 18px rgba(255, 220, 80, 0.42) !important;
-        }
-
-        #lobby-screen #btn-play-pvp.lobby-main-play:hover,
-        #lobby-screen #btn-play-pvp.lobby-main-play:focus-visible {
-            transform: translateY(-5px) scale(1.055) !important;
-            filter: brightness(1.11)
-                    drop-shadow(9px 13px 0 rgba(26, 11, 4, 0.84))
-                    drop-shadow(0 22px 24px rgba(0, 0, 0, 0.34))
-                    drop-shadow(0 0 28px rgba(255, 207, 53, 0.42)) !important;
-        }
-
-        #lobby-screen #btn-play-pvp.lobby-main-play:active {
-            transform: translateY(3px) scale(0.985) !important;
-        }
-
-        #lobby-screen .lobby-main-history {
-            width: min(15vw, 240px) !important;
-            min-width: 170px !important;
+        #lobby-screen .lobby-menu-small {
+            width: min(72%, 330px) !important;
+            min-width: 235px !important;
             aspect-ratio: 2048 / 560 !important;
-            border: 0 !important;
-            background: transparent url('assets/img/botao_historico.webp') center / 100% 100% no-repeat !important;
-            cursor: pointer !important;
-            appearance: none !important;
-            -webkit-tap-highlight-color: transparent !important;
-            filter: drop-shadow(5px 7px 0 rgba(16, 7, 3, 0.72))
-                    drop-shadow(0 10px 13px rgba(0, 0, 0, 0.28)) !important;
-            transform-origin: center center !important;
-            transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease !important;
         }
 
-        #lobby-screen .lobby-main-history:hover,
-        #lobby-screen .lobby-main-history:focus-visible {
-            transform: translateY(-3px) scale(1.06) !important;
-            filter: brightness(1.12)
-                    drop-shadow(6px 8px 0 rgba(16, 7, 3, 0.74))
-                    drop-shadow(0 12px 14px rgba(0, 0, 0, 0.3))
-                    drop-shadow(0 0 16px rgba(255, 241, 160, 0.25)) !important;
+        #lobby-screen .lobby-main-history { background-image: url('assets/img/botao_historico.webp') !important; }
+        #lobby-screen .lobby-main-ranking { background-image: url('assets/img/botao_ranking.webp') !important; }
+        #lobby-screen .lobby-main-shop { background-image: url('assets/img/botao_loja.webp') !important; }
+        #lobby-screen .lobby-main-tutorial { background-image: url('assets/img/botao_tutorial.webp') !important; }
+        #lobby-screen .lobby-main-exit { background-image: url('assets/img/botao_sair.webp') !important; }
+
+        .lobby-ranking-modal {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 86000 !important;
+            display: none !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: rgba(8, 3, 1, 0.64) !important;
+            backdrop-filter: blur(8px) saturate(0.82) !important;
+        }
+
+        .lobby-ranking-modal.visible {
+            display: flex !important;
+        }
+
+        .lobby-ranking-panel {
+            width: min(560px, 88vw) !important;
+            min-height: min(660px, 76vh) !important;
+            padding: 34px 42px 32px !important;
+            box-sizing: border-box !important;
+            background: rgba(87, 42, 16, 0.94) !important;
+            border: 5px solid #2a1004 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 18px 0 rgba(30, 11, 3, 0.9), 0 0 38px rgba(255, 201, 54, 0.28) !important;
+            color: #fff !important;
+        }
+
+        .lobby-ranking-title {
+            margin: 0 0 20px !important;
+            color: var(--gold) !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(42px, 4vw, 62px) !important;
+            letter-spacing: 1px !important;
+            text-align: center !important;
+            -webkit-text-stroke: 2px #210b03 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 4px 4px 0 #210b03, 0 0 18px rgba(255, 215, 0, 0.45) !important;
+        }
+
+        .lobby-ranking-modal .ranking-scroll {
+            max-height: min(470px, 52vh) !important;
+            overflow-y: auto !important;
+            margin: 0 0 22px !important;
+        }
+
+        .lobby-ranking-close {
+            display: block !important;
+            margin: 0 auto !important;
         }
 
         .lobby-mode-overlay {
@@ -704,13 +745,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-overlay.mode-selected {
-            background: rgba(255, 255, 255, 0.03) !important;
-            backdrop-filter: blur(13px) saturate(1.02) brightness(1) contrast(1.02) !important;
+            background: rgba(2, 0, 0, 0.78) !important;
+            backdrop-filter: blur(13px) saturate(0.62) brightness(0.7) contrast(1.08) !important;
         }
 
         .lobby-mode-overlay.mode-selected::before {
-            opacity: 0 !important;
-            background: none !important;
+            opacity: 1 !important;
+            background: radial-gradient(circle at 50% 54%, rgba(255, 210, 80, 0.08), transparent 18%),
+                        radial-gradient(circle at 50% 50%, transparent 18%, rgba(0, 0, 0, 0.62) 58%, rgba(0, 0, 0, 0.9) 100%) !important;
         }
 
         .lobby-mode-flares {
@@ -719,6 +761,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             z-index: 4 !important;
             overflow: hidden !important;
             pointer-events: none !important;
+            display: none !important;
             opacity: 0 !important;
             mix-blend-mode: normal !important;
             transition: opacity 0.2s ease !important;
@@ -1328,31 +1371,76 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             playButton.type = 'button';
         }
         playButton.className = 'lobby-main-play';
+        playButton.classList.add('lobby-menu-button');
         playButton.removeAttribute('data-tip');
         playButton.removeAttribute('title');
+        playButton.setAttribute('aria-label', 'Jogar');
         playButton.onclick = () => window.openLobbyModeChooser?.();
-        playButton.replaceChildren(Object.assign(document.createElement('span'), {
-            className: 'btn-title',
-            textContent: 'JOGAR'
-        }));
+        playButton.replaceChildren();
         if (playButton.parentElement !== playCenter) {
             playCenter.appendChild(playButton);
         }
 
-        let lobbyHistoryButton = document.getElementById('btn-lobby-main-history');
-        if (!lobbyHistoryButton) {
-            lobbyHistoryButton = document.createElement('button');
-            lobbyHistoryButton.id = 'btn-lobby-main-history';
-            lobbyHistoryButton.type = 'button';
+        const ensureLobbyMenuButton = (id, className, label, onClick) => {
+            let button = document.getElementById(id);
+            if (!button) {
+                button = document.createElement('button');
+                button.id = id;
+                button.type = 'button';
+            }
+            button.className = `lobby-menu-button lobby-menu-small ${className}`;
+            button.setAttribute('aria-label', label);
+            button.removeAttribute('title');
+            button.removeAttribute('data-tip');
+            button.onclick = onClick;
+            button.replaceChildren();
+            if (button.parentElement !== playCenter) {
+                playCenter.appendChild(button);
+            }
+            return button;
+        };
+
+        ensureLobbyMenuButton('btn-lobby-main-history', 'lobby-main-history', 'Hist\u00f3rico de partidas', () => window.openHistory?.());
+        ensureLobbyMenuButton('btn-lobby-main-ranking', 'lobby-main-ranking', 'Ranking', () => window.openLobbyRanking?.());
+        ensureLobbyMenuButton('btn-lobby-main-shop', 'lobby-main-shop', 'Loja', () => {});
+        ensureLobbyMenuButton('btn-lobby-main-tutorial', 'lobby-main-tutorial', 'Tutorial', () => {});
+        ensureLobbyMenuButton('btn-lobby-main-exit', 'lobby-main-exit', 'Sair', () => {
+            if (window.buppoDesktop?.quit) {
+                window.buppoDesktop.quit();
+            }
+        });
+
+        let rankingModal = document.getElementById('lobby-ranking-modal');
+        if (!rankingModal) {
+            rankingModal = document.createElement('div');
+            rankingModal.id = 'lobby-ranking-modal';
+            rankingModal.className = 'lobby-ranking-modal';
+            rankingModal.innerHTML = `
+                <div class="lobby-ranking-panel" role="dialog" aria-modal="true" aria-label="Ranking">
+                    <h2 class="lobby-ranking-title">RANKING</h2>
+                    <div class="ranking-scroll" id="lobby-ranking-modal-content"></div>
+                    <button class="mini-btn lobby-ranking-close" type="button">FECHAR</button>
+                </div>
+            `;
+            document.body.appendChild(rankingModal);
+            rankingModal.addEventListener('click', (event) => {
+                if (event.target === rankingModal) window.closeLobbyRanking?.();
+            });
+            rankingModal.querySelector('.lobby-ranking-close')?.addEventListener('click', () => window.closeLobbyRanking?.());
         }
-        lobbyHistoryButton.className = 'lobby-main-history';
-        lobbyHistoryButton.setAttribute('aria-label', 'Hist\u00f3rico de partidas');
-        lobbyHistoryButton.removeAttribute('title');
-        lobbyHistoryButton.removeAttribute('data-tip');
-        lobbyHistoryButton.onclick = () => window.openHistory?.();
-        if (lobbyHistoryButton.parentElement !== playCenter) {
-            playCenter.appendChild(lobbyHistoryButton);
-        }
+
+        window.openLobbyRanking = () => {
+            window.playNavSound?.();
+            const source = document.getElementById('ranking-content');
+            const target = document.getElementById('lobby-ranking-modal-content');
+            if (target) target.innerHTML = source?.innerHTML || '<div class="loading-text">Carregando ranking...</div>';
+            rankingModal.classList.add('visible');
+        };
+
+        window.closeLobbyRanking = () => {
+            window.playNavSound?.();
+            rankingModal.classList.remove('visible');
+        };
 
         if (historyButton) {
             historyButton.style.display = 'none';

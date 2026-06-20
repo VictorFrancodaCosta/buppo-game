@@ -8,3 +8,9 @@ contextBridge.exposeInMainWorld('buppoDesktopUpdater', {
     return () => ipcRenderer.removeListener('buppo-update-status', listener);
   }
 });
+
+contextBridge.exposeInMainWorld('buppoDesktop', {
+  quit() {
+    ipcRenderer.send('buppo-quit-app');
+  }
+});

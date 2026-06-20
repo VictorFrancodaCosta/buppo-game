@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -216,6 +216,9 @@ async function createWindow() {
 
 app.whenReady().then(async () => {
   app.setAppUserModelId('com.buppo.game');
+  ipcMain.on('buppo-quit-app', () => {
+    app.quit();
+  });
   await startLocalServer();
   await createWindow();
 
