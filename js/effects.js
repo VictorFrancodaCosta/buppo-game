@@ -435,7 +435,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .lobby-play-center {
             position: fixed !important;
             left: 50% !important;
-            top: 52% !important;
+            top: 59% !important;
             width: min(20vw, 340px) !important;
             min-width: 270px !important;
             max-width: 340px !important;
@@ -447,6 +447,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             justify-content: center !important;
             gap: clamp(12px, 1.45vh, 18px) !important;
             pointer-events: auto !important;
+            animation: lobbyMenuFloatGroup 4.2s ease-in-out infinite !important;
         }
 
         #lobby-screen .lobby-frame-container {
@@ -467,8 +468,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             overflow: visible !important;
             filter: drop-shadow(7px 10px 0 rgba(26, 11, 4, 0.78))
                     drop-shadow(0 16px 20px rgba(0, 0, 0, 0.32)) !important;
+            animation: lobbyMenuButtonFloat 3.1s ease-in-out infinite !important;
             transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease !important;
         }
+
+        #lobby-screen .lobby-menu-button:nth-child(2) { animation-delay: 0.16s !important; }
+        #lobby-screen .lobby-menu-button:nth-child(3) { animation-delay: 0.3s !important; }
+        #lobby-screen .lobby-menu-button:nth-child(4) { animation-delay: 0.44s !important; }
+        #lobby-screen .lobby-menu-button:nth-child(5) { animation-delay: 0.58s !important; }
+        #lobby-screen .lobby-menu-button:nth-child(6) { animation-delay: 0.72s !important; }
 
         #lobby-screen .lobby-menu-button:hover,
         #lobby-screen .lobby-menu-button:focus-visible {
@@ -555,6 +563,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-ranking-close {
             display: block !important;
             margin: 0 auto !important;
+        }
+
+        @keyframes lobbyMenuFloatGroup {
+            0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+            50% { transform: translate(-50%, -50%) translateY(-5px); }
+        }
+
+        @keyframes lobbyMenuButtonFloat {
+            0%, 100% { translate: 0 0; }
+            50% { translate: 0 -4px; }
         }
 
         .lobby-mode-overlay {

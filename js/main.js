@@ -55,7 +55,7 @@ window.desktopUpdateStatus = { state: 'idle' };
 const ASSETS_TO_LOAD = {
     images: [
         'assets/img/logo_buppo.webp', 'assets/img/mesa_cavaleiro.webp', 'assets/img/mesa_mago.webp',
-        'assets/img/bg_saguao.webp', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
+        'assets/img/bg_saguao.webp', 'assets/img/bg_saguao_cartas_teste.png', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
         'assets/img/card_selecao_cavaleiro.webp', 'assets/img/card_selecao_mago.webp',
         'assets/img/deck_verso_cavaleiro.webp', 'assets/img/deck_verso_mago.webp',
         'assets/img/card_verso_padrao.webp', 'assets/img/ui_mesa_deck.webp', 'assets/img/ui_area_xp.webp',
