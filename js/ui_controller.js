@@ -238,15 +238,14 @@ export function triggerAttackSlash(targetIsPlayer) {
 }
 
 export function triggerKnightAttackSlash(targetIsPlayer) {
-    const target = centerOfElement(targetIsPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
     const slash = createCombatFxElement('knight-slash-fx');
-    slash.style.left = target.x + 'px';
-    slash.style.top = target.y + 'px';
+    slash.style.left = '50vw';
+    slash.style.top = '50vh';
     slash.classList.add(targetIsPlayer ? 'target-player' : 'target-enemy');
 
     const flash = createCombatFxElement('knight-slash-flash');
-    flash.style.left = target.x + 'px';
-    flash.style.top = target.y + 'px';
+    flash.style.left = '50vw';
+    flash.style.top = '50vh';
 
     setTimeout(() => slash.remove(), 650);
     setTimeout(() => flash.remove(), 360);
