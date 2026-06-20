@@ -506,7 +506,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             top: 31.8% !important;
             width: 50% !important;
             transform: translate(-50%, -50%) !important;
-            color: #fff3c4 !important;
+            color: #ffffff !important;
             font-family: 'Bangers', cursive !important;
             font-size: clamp(24px, 2.2vw, 38px) !important;
             line-height: 1 !important;
@@ -515,9 +515,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
-            -webkit-text-stroke: 1.6px #1a0802 !important;
+            -webkit-text-stroke: 1.8px #080200 !important;
             paint-order: stroke fill !important;
-            text-shadow: 3px 3px 0 #1a0802, 0 0 12px rgba(255,215,0,0.28) !important;
+            text-shadow: 3px 3px 0 #080200, 0 0 8px rgba(255,255,255,0.3) !important;
         }
 
         #lobby-screen .profile-asset-level {
@@ -543,8 +543,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             transform: translate(-50%, -50%) !important;
             border-radius: 999px !important;
             overflow: hidden !important;
-            background: linear-gradient(180deg, rgba(10,3,1,0.72), rgba(42,18,5,0.52)) !important;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.72), inset 0 0 0 1px rgba(255,220,90,0.16) !important;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0) 38%),
+                linear-gradient(90deg, rgba(0,160,255,0.32), rgba(0,255,184,0.24)) !important;
+            box-shadow:
+                inset 0 2px 5px rgba(0,0,0,0.72),
+                inset 0 0 0 1px rgba(255,245,120,0.28),
+                0 0 8px rgba(0,230,255,0.32) !important;
         }
 
         #lobby-screen .profile-asset-xp-fill {
@@ -552,9 +557,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             inset: 0 auto 0 0 !important;
             width: 0% !important;
             border-radius: inherit !important;
-            background: linear-gradient(90deg, #19d1ff, #47f4ff 44%, #fff58a 100%) !important;
-            box-shadow: inset 0 2px 0 rgba(255,255,255,0.36), 0 0 12px rgba(60,220,255,0.62) !important;
+            min-width: 10px !important;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.1) 34%, rgba(0,0,0,0.08) 100%),
+                linear-gradient(90deg, #00ff72 0%, #20f6ff 56%, #ffe94d 100%) !important;
+            box-shadow:
+                inset 0 2px 0 rgba(255,255,255,0.62),
+                inset 0 -2px 0 rgba(0,70,45,0.28),
+                0 0 16px rgba(0,255,160,0.75),
+                0 0 10px rgba(80,220,255,0.8) !important;
             transition: width 0.38s cubic-bezier(0.2, 0.9, 0.2, 1) !important;
+            z-index: 1 !important;
         }
 
         #lobby-screen .profile-asset-xp-fill::after {
@@ -576,7 +589,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             color: #fff7d1 !important;
             font-family: 'Russo One', sans-serif !important;
             font-size: clamp(9px, 0.9vw, 14px) !important;
-            text-shadow: 2px 2px 0 #080200 !important;
+            text-shadow: 2px 2px 0 #080200, 0 0 5px rgba(0,0,0,0.72) !important;
+            z-index: 2 !important;
         }
 
         #lobby-screen .profile-asset-gold {
