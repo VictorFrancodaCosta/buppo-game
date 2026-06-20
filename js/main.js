@@ -58,7 +58,7 @@ window.currentLobbyRank = null;
 const ASSETS_TO_LOAD = {
     images: [
         'assets/img/logo_buppo.webp', 'assets/img/mesa_cavaleiro.webp', 'assets/img/mesa_mago.webp',
-        'assets/img/barra_profile.webp',
+        'assets/img/profile_asset.webp',
         'assets/img/bg_saguao.webp', 'assets/img/bg_saguao_cartas_teste.png', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
         'assets/img/card_selecao_cavaleiro.webp', 'assets/img/card_selecao_mago.webp',
         'assets/img/deck_verso_cavaleiro.webp', 'assets/img/deck_verso_mago.webp',
@@ -321,12 +321,14 @@ function updateLobbyProfileProgress(level = 1, xp = 0) {
 }
 
 function updateLobbyBottomProfileBar() {
-    const greeting = document.getElementById('profile-bar-greeting');
-    const ranking = document.getElementById('profile-bar-ranking');
-    const gold = document.getElementById('profile-bar-gold-count');
+    const nameEl = document.getElementById('profile-asset-name');
+    const idEl = document.getElementById('profile-asset-id');
+    const ranking = document.getElementById('profile-asset-ranking');
+    const gold = document.getElementById('profile-asset-gold-count');
     const name = getPlayerFirstName(window.currentLobbyPlayerName || (window.currentUser && window.currentUser.displayName) || 'JOGADOR');
     const gameId = window.currentPlayerGameId || '----';
-    if(greeting) greeting.innerHTML = `OL\u00c1 ${escapeHTML(name)} <span class="profile-bar-id">#${escapeHTML(gameId)}</span>`;
+    if(nameEl) nameEl.textContent = name;
+    if(idEl) idEl.textContent = `#${gameId}`;
     if(ranking) ranking.textContent = `RANKING ${window.currentLobbyRank || '-'}`;
     if(gold) gold.textContent = window.currentGoldCoins || 0;
 }
@@ -466,6 +468,17 @@ function renderLobbyAvatar(name) {
         } else {
             avatar.style.removeProperty('background-image');
             avatar.classList.remove('has-photo');
+        }
+    }
+    const profileAvatar = document.getElementById('profile-asset-avatar');
+    if(profileAvatar) {
+        profileAvatar.textContent = photoURL ? '' : initial;
+        if(photoURL) {
+            profileAvatar.style.setProperty('background-image', `url("${photoURL}")`, 'important');
+            profileAvatar.classList.add('has-photo');
+        } else {
+            profileAvatar.style.removeProperty('background-image');
+            profileAvatar.classList.remove('has-photo');
         }
     }
 }
