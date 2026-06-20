@@ -478,7 +478,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             justify-content: center !important;
             border-radius: 50% !important;
             overflow: visible !important;
-            background: radial-gradient(circle at 35% 25%, #fff7ba 0 12%, #f1c40f 35%, #9b4b10 100%) center / cover no-repeat !important;
+            background-color: #f1c40f !important;
+            background-image: radial-gradient(circle at 35% 25%, #fff7ba 0 12%, #f1c40f 35%, #9b4b10 100%) !important;
+            background-position: center !important;
+            background-size: cover !important;
+            background-repeat: no-repeat !important;
             color: #3e2723 !important;
             font-family: 'Russo One', sans-serif !important;
             font-size: clamp(22px, 2.2vw, 38px) !important;
@@ -499,7 +503,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .profile-asset-name {
             position: absolute !important;
             left: 63.5% !important;
-            top: 29% !important;
+            top: 31.8% !important;
             width: 50% !important;
             transform: translate(-50%, -50%) !important;
             color: #fff3c4 !important;
@@ -519,12 +523,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .profile-asset-level {
             position: absolute !important;
             left: 41.4% !important;
-            top: 69.8% !important;
+            top: 68.9% !important;
             width: 11.3% !important;
             transform: translate(-50%, -50%) !important;
             color: #ffd94a !important;
             font-family: 'Russo One', sans-serif !important;
-            font-size: clamp(24px, 2.3vw, 42px) !important;
+            font-size: clamp(18px, 1.75vw, 31px) !important;
             line-height: 1 !important;
             text-align: center !important;
             text-shadow: 3px 3px 0 #130500, 0 0 10px rgba(255,215,0,0.55) !important;
@@ -539,7 +543,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             transform: translate(-50%, -50%) !important;
             border-radius: 999px !important;
             overflow: hidden !important;
-            background: rgba(0,0,0,0.24) !important;
+            background: linear-gradient(180deg, rgba(10,3,1,0.72), rgba(42,18,5,0.52)) !important;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.72), inset 0 0 0 1px rgba(255,220,90,0.16) !important;
         }
 
         #lobby-screen .profile-asset-xp-fill {
@@ -550,6 +555,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background: linear-gradient(90deg, #19d1ff, #47f4ff 44%, #fff58a 100%) !important;
             box-shadow: inset 0 2px 0 rgba(255,255,255,0.36), 0 0 12px rgba(60,220,255,0.62) !important;
             transition: width 0.38s cubic-bezier(0.2, 0.9, 0.2, 1) !important;
+        }
+
+        #lobby-screen .profile-asset-xp-fill::after {
+            content: "" !important;
+            position: absolute !important;
+            inset: 0 !important;
+            background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.34) 42%, transparent 64%) !important;
+            background-size: 42px 100% !important;
+            animation: profileXpFlow 1.15s linear infinite !important;
+            mix-blend-mode: screen !important;
         }
 
         #lobby-screen .profile-asset-xp-text {
@@ -566,13 +581,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-gold {
             position: absolute !important;
-            left: 85.4% !important;
+            left: 89.2% !important;
             top: 67.5% !important;
-            width: 15.5% !important;
+            width: 9.8% !important;
             transform: translate(-50%, -50%) !important;
             color: #fff2a8 !important;
             font-family: 'Russo One', sans-serif !important;
-            font-size: clamp(17px, 1.55vw, 28px) !important;
+            font-size: clamp(13px, 1.15vw, 21px) !important;
             line-height: 1 !important;
             text-align: center !important;
             text-shadow: 3px 3px 0 #1b0701, 0 0 10px rgba(255,215,0,0.62) !important;
@@ -706,6 +721,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         @keyframes lobbyMenuButtonFloat {
             0%, 100% { translate: 0 0; }
             50% { translate: 0 -4px; }
+        }
+
+        @keyframes profileXpFlow {
+            0% { background-position: -42px 0; opacity: 0.42; }
+            50% { opacity: 0.72; }
+            100% { background-position: 42px 0; opacity: 0.42; }
         }
 
         .lobby-mode-overlay {

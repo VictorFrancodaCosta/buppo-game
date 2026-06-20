@@ -431,36 +431,37 @@ function escapeHTML(value = "") {
 
 function renderLobbyIdentity(name, gameId) {
     const el = document.getElementById('lobby-username');
-    if(!el) return;
     const safeName = escapeHTML(getPlayerFirstName(name));
     const safeId = escapeHTML(gameId || "----");
     setTimeout(() => renderLobbyAvatar(name), 0);
     const profileName = document.getElementById('profile-asset-name');
     if(profileName) profileName.textContent = safeName;
+    if(!el) return;
     el.innerHTML = `OLÁ, ${safeName} <span class="player-game-id">#${safeId}</span>`;
 }
 
 function renderLobbyAvatar(name) {
     const avatar = document.getElementById('lobby-avatar');
-    if(!avatar) return;
     const photoURL = window.currentUser && window.currentUser.photoURL ? window.currentUser.photoURL : '';
     const initial = getPlayerFirstName(name || (window.currentUser && window.currentUser.displayName) || 'JOGADOR').charAt(0) || 'B';
-    avatar.textContent = photoURL ? '' : initial;
-    if(photoURL) {
-        avatar.style.backgroundImage = `url("${photoURL}")`;
-        avatar.classList.add('has-photo');
-    } else {
-        avatar.style.backgroundImage = '';
-        avatar.classList.remove('has-photo');
+    if(avatar) {
+        avatar.textContent = photoURL ? '' : initial;
+        if(photoURL) {
+            avatar.style.setProperty('background-image', `url("${photoURL}")`, 'important');
+            avatar.classList.add('has-photo');
+        } else {
+            avatar.style.removeProperty('background-image');
+            avatar.classList.remove('has-photo');
+        }
     }
     const profileAvatar = document.getElementById('profile-asset-avatar');
     if(profileAvatar) {
         profileAvatar.textContent = photoURL ? '' : initial;
         if(photoURL) {
-            profileAvatar.style.backgroundImage = `url("${photoURL}")`;
+            profileAvatar.style.setProperty('background-image', `url("${photoURL}")`, 'important');
             profileAvatar.classList.add('has-photo');
         } else {
-            profileAvatar.style.backgroundImage = '';
+            profileAvatar.style.removeProperty('background-image');
             profileAvatar.classList.remove('has-photo');
         }
     }
