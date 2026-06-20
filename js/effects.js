@@ -454,6 +454,139 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: none !important;
         }
 
+        #lobby-screen .lobby-profile-asset {
+            position: fixed !important;
+            left: calc(50% - 50vw + var(--lobby-side-gap, 70px)) !important;
+            top: 8vh !important;
+            width: min(37vw, 500px) !important;
+            aspect-ratio: 1394 / 581 !important;
+            z-index: 12000 !important;
+            background: url('assets/img/profile_asset.webp') center / contain no-repeat !important;
+            filter: drop-shadow(0 16px 24px rgba(0,0,0,0.62)) !important;
+            pointer-events: none !important;
+        }
+
+        #lobby-screen .profile-asset-avatar {
+            position: absolute !important;
+            left: 16.5% !important;
+            top: 52% !important;
+            width: 22.5% !important;
+            aspect-ratio: 1 !important;
+            transform: translate(-50%, -50%) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 50% !important;
+            overflow: visible !important;
+            background: radial-gradient(circle at 35% 25%, #fff7ba 0 12%, #f1c40f 35%, #9b4b10 100%) center / cover no-repeat !important;
+            color: #3e2723 !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: clamp(22px, 2.2vw, 38px) !important;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.46), 0 0 18px rgba(255,215,0,0.38) !important;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.45) !important;
+        }
+
+        #lobby-screen .profile-asset-avatar::after {
+            content: "" !important;
+            position: absolute !important;
+            inset: -23% !important;
+            pointer-events: none !important;
+            background: url('assets/img/avatar_moldura_madeira.png') center / contain no-repeat !important;
+            filter: drop-shadow(0 4px 5px rgba(0,0,0,0.62)) !important;
+            z-index: 2 !important;
+        }
+
+        #lobby-screen .profile-asset-name {
+            position: absolute !important;
+            left: 63.5% !important;
+            top: 29% !important;
+            width: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            color: #fff3c4 !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(24px, 2.2vw, 38px) !important;
+            line-height: 1 !important;
+            letter-spacing: 1px !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            -webkit-text-stroke: 1.6px #1a0802 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 3px 3px 0 #1a0802, 0 0 12px rgba(255,215,0,0.28) !important;
+        }
+
+        #lobby-screen .profile-asset-level {
+            position: absolute !important;
+            left: 41.4% !important;
+            top: 69.8% !important;
+            width: 11.3% !important;
+            transform: translate(-50%, -50%) !important;
+            color: #ffd94a !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: clamp(24px, 2.3vw, 42px) !important;
+            line-height: 1 !important;
+            text-align: center !important;
+            text-shadow: 3px 3px 0 #130500, 0 0 10px rgba(255,215,0,0.55) !important;
+        }
+
+        #lobby-screen .profile-asset-xp-shell {
+            position: absolute !important;
+            left: 61.3% !important;
+            top: 67.4% !important;
+            width: 25.2% !important;
+            height: 10.7% !important;
+            transform: translate(-50%, -50%) !important;
+            border-radius: 999px !important;
+            overflow: hidden !important;
+            background: rgba(0,0,0,0.24) !important;
+        }
+
+        #lobby-screen .profile-asset-xp-fill {
+            position: absolute !important;
+            inset: 0 auto 0 0 !important;
+            width: 0% !important;
+            border-radius: inherit !important;
+            background: linear-gradient(90deg, #19d1ff, #47f4ff 44%, #fff58a 100%) !important;
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.36), 0 0 12px rgba(60,220,255,0.62) !important;
+            transition: width 0.38s cubic-bezier(0.2, 0.9, 0.2, 1) !important;
+        }
+
+        #lobby-screen .profile-asset-xp-text {
+            position: absolute !important;
+            inset: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            color: #fff7d1 !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: clamp(9px, 0.9vw, 14px) !important;
+            text-shadow: 2px 2px 0 #080200 !important;
+        }
+
+        #lobby-screen .profile-asset-gold {
+            position: absolute !important;
+            left: 85.4% !important;
+            top: 67.5% !important;
+            width: 15.5% !important;
+            transform: translate(-50%, -50%) !important;
+            color: #fff2a8 !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: clamp(17px, 1.55vw, 28px) !important;
+            line-height: 1 !important;
+            text-align: center !important;
+            text-shadow: 3px 3px 0 #1b0701, 0 0 10px rgba(255,215,0,0.62) !important;
+        }
+
+        #lobby-screen .friends-panel {
+            left: calc(50% - 50vw + var(--lobby-side-gap, 70px)) !important;
+            right: auto !important;
+            top: calc(8vh + min(15.43vw, 208px) + 14px) !important;
+            width: min(37vw, 500px) !important;
+            min-height: 190px !important;
+            max-height: calc(92vh - (8vh + min(15.43vw, 208px) + 28px)) !important;
+        }
+
         #lobby-screen .lobby-menu-button {
             border: 0 !important;
             padding: 0 !important;
@@ -1383,6 +1516,24 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         logoutButton.removeAttribute('title');
     }
     if (lobbyScreen) {
+        let profileAsset = document.getElementById('lobby-profile-asset');
+        if (!profileAsset) {
+            profileAsset = document.createElement('section');
+            profileAsset.id = 'lobby-profile-asset';
+            profileAsset.className = 'lobby-profile-asset';
+            profileAsset.innerHTML = `
+                <div class="profile-asset-avatar" id="profile-asset-avatar">B</div>
+                <div class="profile-asset-name" id="profile-asset-name">JOGADOR</div>
+                <div class="profile-asset-level" id="profile-asset-level">1</div>
+                <div class="profile-asset-xp-shell">
+                    <div class="profile-asset-xp-fill" id="profile-asset-xp-fill"></div>
+                    <div class="profile-asset-xp-text" id="profile-asset-xp-text">0/100</div>
+                </div>
+                <div class="profile-asset-gold" id="profile-asset-gold">0</div>
+            `;
+            lobbyScreen.appendChild(profileAsset);
+        }
+
         let playCenter = document.querySelector('.lobby-play-center');
         if (!playCenter) {
             playCenter = document.createElement('div');

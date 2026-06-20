@@ -1,6 +1,6 @@
 // ARQUIVO: js/main.js
 import { CARDS_DB, ACTION_KEYS } from './data.js';
-import { auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, registrarEmpateDB, notifyAbandonmentDB } from './firebase_network.js';
+import { auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, registrarEmpateDB, notifyAbandonmentDB } from './firebase_network.js?v=2026.06.19.7';
 import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIMove, checkCardLethality, generateShuffledDeck } from './game_logic.js';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -51,11 +51,13 @@ window.suppressFriendlyAbandon = false;
 window.fullscreenEnabled = false;
 window.cacheRefreshComplete = false;
 window.desktopUpdateStatus = { state: 'idle' };
+window.currentProfileLevel = 1;
+window.currentProfileXp = 0;
 
 const ASSETS_TO_LOAD = {
     images: [
         'assets/img/logo_buppo.webp', 'assets/img/mesa_cavaleiro.webp', 'assets/img/mesa_mago.webp',
-        'assets/img/bg_saguao.webp', 'assets/img/bg_saguao_cartas_teste.png', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
+        'assets/img/bg_saguao.webp', 'assets/img/bg_saguao_cartas_teste.png', 'assets/img/profile_asset.webp', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
         'assets/img/card_selecao_cavaleiro.webp', 'assets/img/card_selecao_mago.webp',
         'assets/img/deck_verso_cavaleiro.webp', 'assets/img/deck_verso_mago.webp',
         'assets/img/card_verso_padrao.webp', 'assets/img/ui_mesa_deck.webp', 'assets/img/ui_area_xp.webp',
@@ -226,8 +228,9 @@ window.goToLobby = async function(isAutoLogin = false) {
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
         const gameId = await generateUniqueGameId(window.currentUser.uid);
-        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, friends: [], lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
+        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
         window.currentPlayerGameId = gameId;
+        updateLobbyProfileProgress(1, 0);
         renderLobbyIdentity(window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
         updateLobbyGoldWallet(0);
@@ -242,6 +245,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         const d = userSnap.data();
         const gameId = await ensurePlayerGameId(userRef, d);
         window.currentPlayerGameId = gameId;
+        updateLobbyProfileProgress(d.profileLevel || 1, d.profileXp || 0);
         renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
 
@@ -300,6 +304,19 @@ function updateLobbyGoldWallet(amount = 0) {
     window.currentGoldCoins = Math.max(0, amount || 0);
     const count = document.getElementById('lobby-gold-count');
     if(count) count.innerText = window.currentGoldCoins;
+    const profileGold = document.getElementById('profile-asset-gold');
+    if(profileGold) profileGold.innerText = window.currentGoldCoins;
+}
+
+function updateLobbyProfileProgress(level = 1, xp = 0) {
+    window.currentProfileLevel = Math.max(1, Number(level) || 1);
+    window.currentProfileXp = Math.max(0, Math.min(99, Number(xp) || 0));
+    const levelEl = document.getElementById('profile-asset-level');
+    const xpFill = document.getElementById('profile-asset-xp-fill');
+    const xpText = document.getElementById('profile-asset-xp-text');
+    if(levelEl) levelEl.innerText = window.currentProfileLevel;
+    if(xpFill) xpFill.style.width = `${window.currentProfileXp}%`;
+    if(xpText) xpText.innerText = `${window.currentProfileXp}/100`;
 }
 
 function renderTurnDisplay() {
@@ -418,6 +435,8 @@ function renderLobbyIdentity(name, gameId) {
     const safeName = escapeHTML(getPlayerFirstName(name));
     const safeId = escapeHTML(gameId || "----");
     setTimeout(() => renderLobbyAvatar(name), 0);
+    const profileName = document.getElementById('profile-asset-name');
+    if(profileName) profileName.textContent = safeName;
     el.innerHTML = `OLÁ, ${safeName} <span class="player-game-id">#${safeId}</span>`;
 }
 
@@ -433,6 +452,17 @@ function renderLobbyAvatar(name) {
     } else {
         avatar.style.backgroundImage = '';
         avatar.classList.remove('has-photo');
+    }
+    const profileAvatar = document.getElementById('profile-asset-avatar');
+    if(profileAvatar) {
+        profileAvatar.textContent = photoURL ? '' : initial;
+        if(photoURL) {
+            profileAvatar.style.backgroundImage = `url("${photoURL}")`;
+            profileAvatar.classList.add('has-photo');
+        } else {
+            profileAvatar.style.backgroundImage = '';
+            profileAvatar.classList.remove('has-photo');
+        }
     }
 }
 
@@ -1519,6 +1549,7 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
     const reward = await registrarVitoriaDB(window.currentUser, modoAtual, window.matchRewardGold || 0, 0);
     if(Number.isFinite(reward.gold)) updateLobbyGoldWallet((window.currentGoldCoins || 0) + reward.gold);
+    if(Number.isFinite(reward.profileLevel) && Number.isFinite(reward.profileXp)) updateLobbyProfileProgress(reward.profileLevel, reward.profileXp);
     const pts = reward.points || 0;
     if(pts > 0) await saveMatchHistory('WIN', pts);
 };

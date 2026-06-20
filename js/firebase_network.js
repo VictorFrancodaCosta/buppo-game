@@ -50,24 +50,35 @@ export async function saveMatchHistoryDB(currentUser, enemyName, gameMode, curre
 }
 
 export async function registrarVitoriaDB(currentUser, gameMode, bonusGold = 0, stolenGold = 0) {
-    if(!currentUser) return { points: 0, gold: 0 };
+    if(!currentUser) return { points: 0, gold: 0, xpGained: 0, profileLevel: 1, profileXp: 0 };
     try {
         const userRef = doc(db, "players", currentUser.uid);
         const userSnap = await getDoc(userRef);
         let pontosGanhos = (gameMode === 'pvp') ? 8 : 3;
         let moedasGanhas = Math.max(0, bonusGold || 0) + Math.max(0, stolenGold || 0);
+        let xpGained = (gameMode === 'pvp') ? 16 : 5;
+        let profileLevel = 1;
+        let profileXp = 0;
         if(userSnap.exists()) {
             const data = userSnap.data();
+            profileLevel = Math.max(1, data.profileLevel || 1);
+            profileXp = Math.max(0, data.profileXp || 0) + xpGained;
+            while(profileXp >= 100) {
+                profileXp -= 100;
+                profileLevel += 1;
+            }
             await updateDoc(userRef, {
                 totalWins: (data.totalWins || 0) + 1,
                 score: (data.score || 0) + pontosGanhos,
-                goldCoins: (data.goldCoins || 0) + moedasGanhas
+                goldCoins: (data.goldCoins || 0) + moedasGanhas,
+                profileLevel,
+                profileXp
             });
         }
-        return { points: pontosGanhos, gold: moedasGanhas };
+        return { points: pontosGanhos, gold: moedasGanhas, xpGained, profileLevel, profileXp };
     } catch(e) { 
         console.error("Erro ao registrar vitoria:", e); 
-        return { points: 0, gold: 0 }; 
+        return { points: 0, gold: 0, xpGained: 0, profileLevel: 1, profileXp: 0 }; 
     }
 }
 
