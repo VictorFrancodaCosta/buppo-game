@@ -504,10 +504,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-name {
             position: absolute !important;
-            left: 54% !important;
-            top: 38% !important;
-            width: 45% !important;
-            font-size: clamp(15px, 1.25vw, 22px) !important;
+            left: 55.8% !important;
+            top: 35.8% !important;
+            width: 50% !important;
+            font-size: clamp(13px, 1.08vw, 19px) !important;
             font-weight: 950 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
@@ -518,10 +518,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-id {
             position: absolute !important;
-            left: 54% !important;
-            top: 52% !important;
-            width: 45% !important;
-            font-size: clamp(11px, 0.9vw, 16px) !important;
+            left: 55.8% !important;
+            top: 47.8% !important;
+            width: 50% !important;
+            font-size: clamp(10px, 0.82vw, 14px) !important;
             font-style: italic !important;
             font-weight: 850 !important;
             line-height: 1 !important;
@@ -531,11 +531,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-ranking {
             position: absolute !important;
-            left: 47.5% !important;
-            top: 66% !important;
-            width: 50% !important;
+            left: 55.8% !important;
+            top: 63.2% !important;
+            width: 44% !important;
             text-align: center !important;
-            font-size: clamp(10px, 0.82vw, 15px) !important;
+            font-size: clamp(9px, 0.74vw, 13px) !important;
             font-weight: 900 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
@@ -543,25 +543,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-gold {
             position: absolute !important;
-            left: 52% !important;
-            top: 83.5% !important;
-            width: 31% !important;
+            left: 50.5% !important;
+            top: 82.4% !important;
+            width: 24% !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             color: #ffd62e !important;
-            font-size: clamp(13px, 1.15vw, 20px) !important;
+            font-size: clamp(13px, 1.08vw, 19px) !important;
             font-weight: 950 !important;
             line-height: 1 !important;
             text-shadow: 2px 2px 0 #190700, -1px -1px 0 #190700, 1px -1px 0 #190700, -1px 1px 0 #190700, 0 0 9px rgba(255,214,46,0.4) !important;
-        }
-
-        #lobby-screen .profile-asset-gold img {
-            width: clamp(22px, 2.1vw, 34px) !important;
-            height: clamp(22px, 2.1vw, 34px) !important;
-            object-fit: contain !important;
-            margin-right: 7px !important;
-            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.62)) !important;
         }
 
         #lobby-screen .lobby-menu-button {
@@ -1620,7 +1612,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 <div class="profile-asset-name" id="profile-asset-name">JOGADOR</div>
                 <div class="profile-asset-id" id="profile-asset-id">#----</div>
                 <div class="profile-asset-ranking" id="profile-asset-ranking">RANKING -</div>
-                <div class="profile-asset-gold"><img src="assets/img/moeda_ouro.png" alt=""><span id="profile-asset-gold-count">0</span></div>
+                <div class="profile-asset-gold"><span id="profile-asset-gold-count">0</span></div>
             `;
             lobbyScreen.appendChild(profileAsset);
         }
@@ -1682,6 +1674,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             if (window.buppoDesktop?.quit) {
                 window.buppoDesktop.quit();
             }
+        });
+
+        playCenter.querySelectorAll('.lobby-menu-button').forEach((button) => {
+            if (button.dataset.hoverSoundBound === '1') return;
+            button.dataset.hoverSoundBound = '1';
+            button.addEventListener('mouseenter', () => window.playLobbyButtonHoverSound?.());
         });
 
         let rankingModal = document.getElementById('lobby-ranking-modal');

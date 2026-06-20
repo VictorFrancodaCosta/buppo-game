@@ -6,7 +6,7 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limi
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MÃ“DULOS
-import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js';
+import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.20.10';
 import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=9';
 import { initiateMatchmaking } from './matchmaking.js';
 
@@ -89,6 +89,7 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-cine', src: 'assets/audio/ambience_cine.mp3', loop: true },
         { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' },
         { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' },
+        { id: 'sfx-button', src: 'assets/audio/sfx_botao.mp3' },
         { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' },
         { id: 'sfx-coin', src: 'assets/audio/sfx_coin.mp3' },
         { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' },

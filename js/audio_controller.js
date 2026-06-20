@@ -81,12 +81,30 @@ window.playUIHoverSound = function() {
     }
 };
 
+let lastLobbyButtonHoverTime = 0;
+window.playLobbyButtonHoverSound = function() {
+    if(!window.currentUser) return;
+    if(!window.sfxEnabled) return;
+    let now = Date.now();
+    if(now - lastLobbyButtonHoverTime < 110) return;
+    let base = audios['sfx-button'];
+    if(base) {
+        try {
+            let s = base.cloneNode();
+            s.volume = 0.62 * (window.masterVol || 1.0);
+            s.play().catch(()=>{});
+            lastLobbyButtonHoverTime = now;
+        } catch(e) {}
+    }
+};
+
 window.updateVol = function(type, val) {
     if(type==='master') window.masterVol = parseFloat(val);
-    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-mastery', 'sfx-deck-select', 'sfx-coin', 'sfx-hover', 'sfx-ui-hover', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'bgm-loop', 'sfx-nav', 'sfx-cine'].forEach(k => {
+    ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-mastery', 'sfx-deck-select', 'sfx-coin', 'sfx-hover', 'sfx-ui-hover', 'sfx-button', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'bgm-loop', 'sfx-nav', 'sfx-cine'].forEach(k => {
         if(audios[k]) {
             let baseVol = 0.8;
             if(k === 'sfx-ui-hover') baseVol = 0.3;
+            else if(k === 'sfx-button') baseVol = 0.62;
             else if (k === 'sfx-levelup') baseVol = 1.0;
             else if (k === 'sfx-coin') baseVol = 1.0;
             else if (k === 'sfx-mastery') baseVol = 0.95;
