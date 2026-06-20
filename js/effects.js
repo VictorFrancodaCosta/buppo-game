@@ -435,7 +435,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .lobby-play-center {
             position: fixed !important;
             left: 50% !important;
-            top: 59% !important;
+            top: 63% !important;
             width: min(20vw, 340px) !important;
             min-width: 270px !important;
             max-width: 340px !important;
@@ -888,12 +888,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-pvp {
             background-image: url('assets/img/botao_pvp.webp') !important;
-            left: 74% !important;
+            left: 70% !important;
         }
 
         .lobby-mode-pve {
             background-image: url('assets/img/botao_pve.webp') !important;
-            left: 26% !important;
+            left: 30% !important;
             animation-delay: 0.07s, 0.52s !important;
         }
 
