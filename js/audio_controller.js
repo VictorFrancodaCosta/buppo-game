@@ -1,6 +1,7 @@
 // ARQUIVO: js/audio_controller.js
 
 export const audios = {};
+window.audios = audios;
 
 window.masterVol = 0.5;
 window.musicEnabled = false;
@@ -215,7 +216,8 @@ function bindAudioSettingsControls() {
     ].forEach(({ input, type }) => {
         if(!input || input.dataset.audioBound === '1') return;
         input.dataset.audioBound = '1';
-        input.addEventListener('change', () => {
+        input.addEventListener('change', (event) => {
+            event.stopImmediatePropagation();
             window.unlockGameAudio();
             window.toggleSoundType(type);
         });

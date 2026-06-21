@@ -9,10 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="css/style.css?v=2026.06.21.5">
+    <link rel="stylesheet" href="css/style.css?v=2026.06.21.6">
     <link rel="stylesheet" href="css/lobby.css?v=2026.06.20.1">
     <link rel="stylesheet" href="css/game.css?v=2026.06.20.1">
-    <link rel="stylesheet" href="css/effects.css?v=2026.06.21.5">
+    <link rel="stylesheet" href="css/effects.css?v=2026.06.21.6">
 
     <link rel="icon" type="image/webp" href="assets/img/logo_buppo.webp">
     <link rel="manifest" href="manifest.json">
@@ -25,7 +25,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BUPPO">
     <script>
-        window.BUPPO_BUILD_VERSION = '2026.06.21.5';
+        window.BUPPO_BUILD_VERSION = '2026.06.21.6';
     </script>
     <script>
         (function () {
@@ -236,16 +236,16 @@
             <h2 class="cfg-title">CONFIGURAÇÕES</h2>
             <div class="cfg-row">
                 <span class="cfg-label">VOLUME GERAL</span>
-                <input type="range" id="vol-slider" class="cfg-slider" min="0" max="1" step="0.1" value="0.5" oninput="window.updateVol('master', this.value)">
+                <input type="range" id="vol-slider" class="cfg-slider" min="0" max="1" step="0.1" value="0.5">
             </div>
             <div class="cfg-toggles">
                 <label class="cfg-check-container">
-                    <input type="checkbox" id="check-music" checked onchange="window.toggleSoundType('music')">
+                    <input type="checkbox" id="check-music" checked>
                     <span class="checkmark" id="chk-music-mark"></span>
                     MÚSICA
                 </label>
                 <label class="cfg-check-container">
-                    <input type="checkbox" id="check-sfx" checked onchange="window.toggleSoundType('sfx')">
+                    <input type="checkbox" id="check-sfx" checked>
                     <span class="checkmark" id="chk-sfx-mark"></span>
                     EFEITOS
                 </label>
@@ -273,8 +273,8 @@
     <div id="tooltip-box"><h3 id="tt-title"></h3><div id="tt-content"></div></div>
     <div id="modal-overlay" class="modal-overlay" onclick="cancelModal()"><div class="modal-box" onclick="event.stopPropagation()"><h2 id="modal-title"></h2><p id="modal-desc"></p><div class="modal-btns" id="modal-btns"></div></div></div>
 
-    <script src="js/effects.js?v=2026.06.21.5"></script> 
-    <script type="module" src="js/main.js?v=2026.06.21.5"></script> 
+    <script src="js/effects.js?v=2026.06.21.6"></script> 
+    <script type="module" src="js/main.js?v=2026.06.21.6"></script> 
 </body>
 </html>
 
