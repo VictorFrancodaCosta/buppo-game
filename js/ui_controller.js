@@ -383,7 +383,7 @@ export function triggerCriticalDamagePop(isPlayer) {
     const cluster = document.getElementById(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
     if(!cluster) return;
     const rect = cluster.getBoundingClientRect();
-    const pop = createCombatFxElement('critical-damage-pop', 'CRÃTICO!');
+    const pop = createCombatFxElement('critical-damage-pop', 'CRÍTICO!');
     pop.textContent = 'CR\u00cdTICO!';
     pop.classList.add(isPlayer ? 'from-player' : 'from-enemy');
     pop.style.left = (rect.left + rect.width * (isPlayer ? 0.72 : 0.28)) + 'px';

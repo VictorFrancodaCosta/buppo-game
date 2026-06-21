@@ -1793,10 +1793,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         modeOverlay.querySelector('#btn-mode-pvp').onclick = (event) => {
             event.stopPropagation();
+            window.playLobbyButtonSelectSound?.();
             selectMode('pvp');
         };
         modeOverlay.querySelector('#btn-mode-pve').onclick = (event) => {
             event.stopPropagation();
+            window.playLobbyButtonSelectSound?.();
             selectMode('pve');
         };
         modeOverlay.querySelectorAll('.lobby-mode-deck').forEach((button) => {

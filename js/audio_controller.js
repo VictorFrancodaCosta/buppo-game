@@ -26,7 +26,6 @@ const CORE_AUDIO_ASSETS = [
     { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' },
     { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' },
     { id: 'sfx-button', src: 'assets/audio/sfx_botao.mp3' },
-    { id: 'sfx-button-select', src: 'assets/audio/sfx_botao_select.mp3' },
     { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' },
     { id: 'sfx-coin', src: 'assets/audio/sfx_coin.mp3' },
     { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' },
@@ -46,7 +45,6 @@ const musicFadeTimers = new WeakMap();
 function baseVolume(key) {
     if(key === 'sfx-ui-hover') return 0.45;
     if(key === 'sfx-button') return 1.0;
-    if(key === 'sfx-button-select') return 1.0;
     if(key === 'sfx-levelup' || key === 'sfx-coin') return 1.0;
     if(key === 'sfx-mastery') return 0.95;
     if(key === 'sfx-train') return 0.5;
@@ -120,6 +118,29 @@ function fadeMusic(audio, targetVolume, durationMs, done = null) {
     musicFadeTimers.set(audio, timer);
 }
 
+function stopOtherMusicTracks(targetId, fadeOutMs = 0) {
+    Object.entries(audios).forEach(([key, audio]) => {
+        if(!key.startsWith('bgm') || key === targetId || !audio) return;
+        stopMusicFade(audio);
+        try {
+            if(fadeOutMs > 0 && !audio.paused && !audio.muted) {
+                fadeMusic(audio, 0, fadeOutMs, () => {
+                    try {
+                        audio.pause();
+                        audio.currentTime = 0;
+                        audio.muted = true;
+                    } catch(e) {}
+                });
+            } else {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.muted = true;
+                audio.volume = 0;
+            }
+        } catch(e) {}
+    });
+}
+
 window.applyAudioSettings = function({ persist = true } = {}) {
     ensureAudioRegistry();
     Object.entries(audios).forEach(([key, audio]) => setAudioVolume(key, audio));
@@ -135,8 +156,7 @@ window.applyAudioSettings = function({ persist = true } = {}) {
     });
 
     if(window.musicEnabled) {
-        const trackId = MusicController.currentTrackId || preferredMusicTrack();
-        MusicController.play(trackId);
+        MusicController.play(preferredMusicTrack());
     }
 
     if(persist) scheduleSaveSettings();
@@ -180,6 +200,7 @@ export const MusicController = {
                 stopMusicFade(audios[this.currentTrackId]);
                 audios[this.currentTrackId].pause();
             }
+            stopOtherMusicTracks(trackId);
             this.currentTrackId = trackId;
             setAudioVolume(trackId, next);
             if(window.musicEnabled) {
@@ -202,12 +223,7 @@ export const MusicController = {
         const next = audios[trackId];
 
         try {
-            if(previous) {
-                previous.muted = false;
-                fadeMusic(previous, 0, fadeOutMs, () => {
-                    try { previous.pause(); } catch(e) {}
-                });
-            }
+            stopOtherMusicTracks(trackId, fadeOutMs);
 
             this.currentTrackId = trackId;
             setAudioVolume(trackId, next);
@@ -223,10 +239,12 @@ export const MusicController = {
     },
     stopCurrent() {
         ensureAudioRegistry();
+        stopOtherMusicTracks(null);
         if(this.currentTrackId && audios[this.currentTrackId]) {
             try {
                 stopMusicFade(audios[this.currentTrackId]);
                 audios[this.currentTrackId].pause();
+                audios[this.currentTrackId].currentTime = 0;
             } catch(e) {}
         }
         this.currentTrackId = null;
@@ -295,7 +313,7 @@ window.playLobbyButtonHoverSound = function() {
 window.playLobbyButtonSelectSound = function() {
     const now = Date.now();
     if(now - lastLobbyButtonSelectTime < 80) return;
-    if(playSfx('sfx-button-select', 'sfx-nav')) lastLobbyButtonSelectTime = now;
+    if(playSfx('sfx-nav')) lastLobbyButtonSelectTime = now;
 };
 
 window.updateVol = function(type, val) {

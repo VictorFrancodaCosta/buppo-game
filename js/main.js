@@ -5,12 +5,12 @@ import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIM
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// IMPORTANDO OS NOVOS MÃ“DULOS
-import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.21.8';
+// IMPORTANDO OS NOVOS MÓDULOS
+import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.21.9';
 import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=9';
 import { initiateMatchmaking } from './matchmaking.js';
 
-// --- VARIÃVEIS GLOBAIS DE ESTADO ---
+// --- VARIÁVEIS GLOBAIS DE ESTADO ---
 window.currentUser = null;
 let assetsLoaded = 0;
 window.gameAssets = [];
@@ -90,7 +90,6 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' },
         { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' },
         { id: 'sfx-button', src: 'assets/audio/sfx_botao.mp3' },
-        { id: 'sfx-button-select', src: 'assets/audio/sfx_botao_select.mp3' },
         { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' },
         { id: 'sfx-coin', src: 'assets/audio/sfx_coin.mp3' },
         { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' },
@@ -99,7 +98,7 @@ const ASSETS_TO_LOAD = {
     ]
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
-let player = { id:'p', name:'VocÃª', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
+let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 
 window.cleanupMatchState = function() {
@@ -204,7 +203,7 @@ window.transitionToLobby = function(skipAnim = false) {
     else {
         const transScreen = document.getElementById('transition-overlay');
         const transText = transScreen.querySelector('.trans-text');
-        if(transText) transText.innerText = "RETORNANDO AO SAGUÃƒO...";
+        if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
         if(transScreen) transScreen.classList.add('active');
         setTimeout(() => {
             window.goToLobby(false);
@@ -222,7 +221,7 @@ window.goToLobby = async function(isAutoLogin = false) {
     }
     window.cleanupMatchState(); window.isProcessing = false;
     
-    // FORÃ‡A A REMOÃ‡ÃƒO DAS MESAS DOS DECKS
+    // FORÇA A REMOÇÃO DAS MESAS DOS DECKS
     document.body.classList.remove('theme-cavaleiro', 'theme-mago');
     
     let bg = document.getElementById('game-background'); if(bg) bg.classList.add('lobby-mode');
@@ -1226,10 +1225,10 @@ function checkEndGame(){
                 const existingGold = document.getElementById('end-gold-reward');
                 if(existingGold) existingGold.remove();
                 if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); }
-                else if(isWin) { title.innerText = "VITORIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
+                else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
                 else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); }
                 const secondaryBtn = document.querySelector('#end-screen .secondary-btn');
-                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUÃƒO";
+                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUÃO";
                 if(window.currentMatchId && window.myRole === 'player1') {
                     updateDoc(doc(db, "matches", window.currentMatchId), { status: 'finished', player1Rematch: false, player2Rematch: false }).catch(() => {});
                 }
@@ -1238,7 +1237,7 @@ function checkEndGame(){
                 return;
             }
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
-            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃƒO";
+            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃO";
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
             else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
             else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
@@ -1513,7 +1512,7 @@ onAuthStateChanged(auth, (user) => {
         window.currentUser = null; window.showScreen('start-screen');
         const bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode');
         
-        // FORÃ‡A A REMOÃ‡ÃƒO DOS TEMAS AO DESLOGAR
+        // FORÇA A REMOÇÃO DOS TEMAS AO DESLOGAR
         document.body.classList.remove('theme-cavaleiro', 'theme-mago');
         
         window.musicEnabled = false;
@@ -1844,7 +1843,7 @@ function onCardClick(index) {
     playSound('sfx-play'); clearHoverFocusState(true);
 
     if(cardKey === 'DESARMAR') {
-        window.openModal('ALVO DO DESARME', 'Qual aÃ§Ã£o bloquear no inimigo?', ACTION_KEYS, (choice) => {
+        window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => {
             if(window.gameMode === 'pvp') lockInPvPMove(index, choice); else playCardFlow(index, choice);
         });
     } else {
@@ -1855,11 +1854,11 @@ function onCardClick(index) {
 function showDisabledCardWarning(index) {
     const handContainer = document.getElementById('player-hand');
     const cardEl = handContainer && handContainer.children[index];
-    if(!cardEl) { showCenterText("NÃƒO PODE JOGAR", "#ff7675"); return; }
+    if(!cardEl) { showCenterText("NÃO PODE JOGAR", "#ff7675"); return; }
     cardEl.querySelectorAll('.disabled-card-warning').forEach(el => el.remove());
     const warning = document.createElement('div');
     warning.className = 'disabled-card-warning';
-    warning.innerText = "NÃƒO PODE JOGAR";
+    warning.innerText = "NÃO PODE JOGAR";
     cardEl.appendChild(warning);
     setTimeout(() => warning.remove(), 760);
 }
@@ -2192,8 +2191,8 @@ function checkLevelUp(u, doneCb) {
 
 function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
-    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÃTICA", "Bloquear qual aÃ§Ã£o?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
-    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÃTICA", "Bloquear qual aÃ§Ã£o?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
+    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
+    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
     else if(type === 'TREINAR' && u.id === 'm') {
         let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))];
         if(opts.length > 0) {
