@@ -10,6 +10,10 @@ let lastLobbyButtonHoverTime = 0;
 let mixerInterval = null;
 let audioUnlockAttempts = 0;
 const fadeTimers = new WeakMap();
+let uiAudioContext = null;
+const uiAudioBuffers = {};
+const uiAudioLoading = {};
+let lastLobbyHoverElement = null;
 
 function getBaseVolume(key) {
     if(key === 'sfx-ui-hover') return 0.3;
@@ -30,15 +34,66 @@ function clearAudioFade(audio) {
     }
 }
 
+function getUiAudioContext() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if(!AudioCtx) return null;
+    if(!uiAudioContext) uiAudioContext = new AudioCtx();
+    return uiAudioContext;
+}
+
+function loadUiBuffer(key) {
+    if(uiAudioBuffers[key]) return Promise.resolve(uiAudioBuffers[key]);
+    if(uiAudioLoading[key]) return uiAudioLoading[key];
+    const audio = audios[key];
+    const ctx = getUiAudioContext();
+    if(!audio || !ctx) return Promise.resolve(null);
+    const src = audio.currentSrc || audio.src;
+    uiAudioLoading[key] = fetch(src)
+        .then(response => response.arrayBuffer())
+        .then(buffer => ctx.decodeAudioData(buffer))
+        .then(decoded => {
+            uiAudioBuffers[key] = decoded;
+            return decoded;
+        })
+        .catch(() => null)
+        .finally(() => { delete uiAudioLoading[key]; });
+    return uiAudioLoading[key];
+}
+
+function warmUiAudioBuffers() {
+    ['sfx-button', 'sfx-ui-hover', 'sfx-nav'].forEach(key => loadUiBuffer(key));
+}
+
+function playUiBuffer(key, volumeMultiplier) {
+    const ctx = getUiAudioContext();
+    const buffer = uiAudioBuffers[key];
+    if(!ctx || !buffer || ctx.state !== 'running' || !window.sfxEnabled) return false;
+    try {
+        const source = ctx.createBufferSource();
+        const gain = ctx.createGain();
+        source.buffer = buffer;
+        gain.gain.value = volumeMultiplier * (window.masterVol || 1.0);
+        source.connect(gain);
+        gain.connect(ctx.destination);
+        source.start(0);
+        return true;
+    } catch(e) {
+        return false;
+    }
+}
+
 function playSfxClone(key, fallbackKey = null, volumeMultiplier = null) {
     const audioKey = audios[key] ? key : fallbackKey;
     const base = audioKey ? audios[audioKey] : null;
     if(!base || !window.sfxEnabled) return false;
+    const baseVolume = volumeMultiplier ?? getBaseVolume(audioKey);
+    if(playUiBuffer(audioKey, baseVolume)) return true;
     try {
         const s = base.cloneNode();
         s.muted = false;
-        s.volume = (volumeMultiplier ?? getBaseVolume(audioKey)) * (window.masterVol || 1.0);
+        s.volume = baseVolume * (window.masterVol || 1.0);
         s.play().catch(()=>{});
+        loadUiBuffer(audioKey);
         return true;
     } catch(e) {
         return false;
@@ -128,6 +183,10 @@ window.playLobbyButtonHoverSound = function() {
 
 window.unlockGameAudio = function() {
     const keys = Object.keys(audios);
+    const ctx = getUiAudioContext();
+    if(ctx) {
+        ctx.resume().then(() => warmUiAudioBuffers()).catch(()=>{});
+    }
     if(!keys.length || audioUnlockAttempts > 8) return;
     audioUnlockAttempts++;
     keys.forEach((key) => {
@@ -164,6 +223,74 @@ window.unlockGameAudio = function() {
 ['pointerdown', 'click', 'keydown', 'touchstart'].forEach((eventName) => {
     document.addEventListener(eventName, () => window.unlockGameAudio?.(), { capture: true, passive: true });
 });
+
+window.bindAudioSettingsControls = function() {
+    const slider = document.getElementById('vol-slider');
+    const music = document.getElementById('check-music');
+    const sfx = document.getElementById('check-sfx');
+    if(slider && slider.dataset.audioBound !== '1') {
+        slider.dataset.audioBound = '1';
+        const applySlider = () => {
+            window.unlockGameAudio?.();
+            window.updateVol('master', slider.value);
+        };
+        slider.addEventListener('input', applySlider);
+        slider.addEventListener('change', applySlider);
+        slider.addEventListener('pointerdown', () => window.unlockGameAudio?.());
+    }
+    if(music && music.dataset.audioBound !== '1') {
+        music.dataset.audioBound = '1';
+        const applyMusic = () => {
+            window.unlockGameAudio?.();
+            window.toggleSoundType('music');
+        };
+        music.addEventListener('input', applyMusic);
+        music.addEventListener('change', applyMusic);
+        const label = music.closest('label');
+        if(label) {
+            label.addEventListener('click', (event) => {
+                event.preventDefault();
+                music.checked = !music.checked;
+                applyMusic();
+            });
+        }
+    }
+    if(sfx && sfx.dataset.audioBound !== '1') {
+        sfx.dataset.audioBound = '1';
+        const applySfx = () => {
+            window.unlockGameAudio?.();
+            window.toggleSoundType('sfx');
+        };
+        sfx.addEventListener('input', applySfx);
+        sfx.addEventListener('change', applySfx);
+        const label = sfx.closest('label');
+        if(label) {
+            label.addEventListener('click', (event) => {
+                event.preventDefault();
+                sfx.checked = !sfx.checked;
+                applySfx();
+            });
+        }
+    }
+};
+
+if(document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => window.bindAudioSettingsControls?.());
+} else {
+    window.bindAudioSettingsControls?.();
+}
+
+document.addEventListener('pointerover', (event) => {
+    const button = event.target?.closest?.('#lobby-screen .lobby-menu-button');
+    if(!button || button === lastLobbyHoverElement) return;
+    lastLobbyHoverElement = button;
+    window.playLobbyButtonHoverSound?.();
+}, true);
+
+document.addEventListener('pointerout', (event) => {
+    const button = event.target?.closest?.('#lobby-screen .lobby-menu-button');
+    if(button && !button.contains(event.relatedTarget)) lastLobbyHoverElement = null;
+}, true);
 
 window.updateVol = function(type, val) {
     if(type==='master') {
