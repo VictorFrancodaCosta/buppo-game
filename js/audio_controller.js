@@ -9,6 +9,46 @@ let lastHoverTime = 0;
 let lastLobbyButtonHoverTime = 0;
 let mixerInterval = null;
 let audioUnlockAttempts = 0;
+const fadeTimers = new WeakMap();
+
+function getBaseVolume(key) {
+    if(key === 'sfx-ui-hover') return 0.3;
+    if(key === 'sfx-button') return 0.78;
+    if(key === 'sfx-levelup' || key === 'sfx-coin') return 1.0;
+    if(key === 'sfx-mastery') return 0.95;
+    if(key === 'sfx-train') return 0.5;
+    if(key && key.startsWith('bgm')) return 0.5;
+    if(key === 'sfx-cine') return 0.6;
+    return 0.8;
+}
+
+function clearAudioFade(audio) {
+    const timer = fadeTimers.get(audio);
+    if(timer) {
+        clearInterval(timer);
+        fadeTimers.delete(audio);
+    }
+}
+
+function playSfxClone(key, fallbackKey = null, volumeMultiplier = null) {
+    const audioKey = audios[key] ? key : fallbackKey;
+    const base = audioKey ? audios[audioKey] : null;
+    if(!base || !window.sfxEnabled) return false;
+    try {
+        const s = base.cloneNode();
+        s.muted = false;
+        s.volume = (volumeMultiplier ?? getBaseVolume(audioKey)) * (window.masterVol || 1.0);
+        s.play().catch(()=>{});
+        return true;
+    } catch(e) {
+        return false;
+    }
+}
+
+function getPreferredMusicTrack() {
+    if(document.getElementById('game-screen')?.classList.contains('active')) return 'bgm-loop';
+    return 'bgm-menu';
+}
 
 export const MusicController = {
     currentTrackId: null,
@@ -47,60 +87,43 @@ export const MusicController = {
     },
     fadeOut(audio) {
         if(!audio) return;
+        clearAudioFade(audio);
         let vol = audio.volume;
         const fadeOutInt = setInterval(() => {
             if (vol > 0.05) { vol -= 0.05; try { audio.volume = vol; } catch(e){ clearInterval(fadeOutInt); } }
-            else { try { audio.volume = 0; audio.pause(); } catch(e){} clearInterval(fadeOutInt); }
+            else { try { audio.volume = 0; audio.pause(); } catch(e){} clearInterval(fadeOutInt); fadeTimers.delete(audio); }
         }, 50);
+        fadeTimers.set(audio, fadeOutInt);
     },
     fadeIn(audio, targetVol) {
         if(!audio) return;
+        clearAudioFade(audio);
         let vol = 0; audio.volume = 0;
         const fadeInInt = setInterval(() => {
             if (vol < targetVol - 0.05) { vol += 0.05; try { audio.volume = vol; } catch(e){ clearInterval(fadeInInt); } }
-            else { try { audio.volume = targetVol; } catch(e){} clearInterval(fadeInInt); }
+            else { try { audio.volume = targetVol; } catch(e){} clearInterval(fadeInInt); fadeTimers.delete(audio); }
         }, 50);
+        fadeTimers.set(audio, fadeInInt);
     }
 };
 
 window.playNavSound = function() {
     if(!window.sfxEnabled) return;
-    window.unlockGameAudio?.();
-    let s = audios['sfx-nav'];
-    if(s) {
-        try {
-            let clone = s.cloneNode();
-            clone.volume = 0.8 * (window.masterVol || 1.0);
-            clone.play().catch(()=>{});
-        } catch(e) {}
-    }
+    playSfxClone('sfx-nav');
 };
 
 window.playUIHoverSound = function() {
     if(!window.sfxEnabled) return;
-    window.unlockGameAudio?.();
     let now = Date.now();
     if (now - lastHoverTime < 50) return;
-    let base = audios['sfx-ui-hover'];
-    if(base) {
-        try { let s = base.cloneNode(); s.volume = 0.3 * (window.masterVol || 1.0); s.play().catch(()=>{}); lastHoverTime = now; } catch(e){}
-    }
+    if(playSfxClone('sfx-ui-hover')) lastHoverTime = now;
 };
 
 window.playLobbyButtonHoverSound = function() {
     if(!window.sfxEnabled) return;
-    window.unlockGameAudio?.();
     let now = Date.now();
     if(now - lastLobbyButtonHoverTime < 110) return;
-    let base = audios['sfx-button'] || audios['sfx-ui-hover'] || audios['sfx-nav'];
-    if(base) {
-        try {
-            let s = base.cloneNode();
-            s.volume = 0.78 * (window.masterVol || 1.0);
-            s.play().catch(()=>{});
-            lastLobbyButtonHoverTime = now;
-        } catch(e) {}
-    }
+    if(playSfxClone('sfx-button', audios['sfx-ui-hover'] ? 'sfx-ui-hover' : 'sfx-nav')) lastLobbyButtonHoverTime = now;
 };
 
 window.unlockGameAudio = function() {
@@ -143,23 +166,24 @@ window.unlockGameAudio = function() {
 });
 
 window.updateVol = function(type, val) {
-    if(type==='master') window.masterVol = parseFloat(val);
+    if(type==='master') {
+        const parsed = parseFloat(val);
+        window.masterVol = Number.isFinite(parsed) ? parsed : 0.5;
+    }
     ['sfx-deal', 'sfx-play', 'sfx-hit', 'sfx-hit-mage', 'sfx-block', 'sfx-block-mage', 'sfx-heal', 'sfx-levelup', 'sfx-train', 'sfx-disarm', 'sfx-mastery', 'sfx-deck-select', 'sfx-coin', 'sfx-hover', 'sfx-ui-hover', 'sfx-button', 'sfx-win', 'sfx-lose', 'sfx-tie', 'bgm-menu', 'bgm-loop', 'sfx-nav', 'sfx-cine'].forEach(k => {
         if(audios[k]) {
-            let baseVol = 0.8;
-            if(k === 'sfx-ui-hover') baseVol = 0.3;
-            else if(k === 'sfx-button') baseVol = 0.62;
-            else if (k === 'sfx-levelup') baseVol = 1.0;
-            else if (k === 'sfx-coin') baseVol = 1.0;
-            else if (k === 'sfx-mastery') baseVol = 0.95;
-            else if (k === 'sfx-train') baseVol = 0.5;
-            else if (k.startsWith('bgm')) baseVol = 0.5;
-            else if (k === 'sfx-cine') baseVol = 0.6;
-            try { audios[k].volume = baseVol * window.masterVol; } catch(e){}
+            try {
+                if(k.startsWith('bgm') || k === MusicController.currentTrackId) clearAudioFade(audios[k]);
+                audios[k].muted = (k.startsWith('bgm') && !window.musicEnabled) || (!k.startsWith('bgm') && !window.sfxEnabled);
+                audios[k].volume = getBaseVolume(k) * window.masterVol;
+            } catch(e){}
         }
     });
     if(MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
-        try { audios[MusicController.currentTrackId].volume = 0.5 * window.masterVol; } catch(e) {}
+        try {
+            audios[MusicController.currentTrackId].muted = !window.musicEnabled;
+            audios[MusicController.currentTrackId].volume = getBaseVolume(MusicController.currentTrackId) * window.masterVol;
+        } catch(e) {}
     }
     if(window.saveAudioSettings) window.saveAudioSettings();
 }
@@ -168,16 +192,29 @@ window.toggleSoundType = function(type) {
     if (type === 'music') {
         window.musicEnabled = document.getElementById('check-music').checked;
         if (!window.musicEnabled) {
-            if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].pause();
+            Object.keys(audios).forEach((key) => {
+                if(!key.startsWith('bgm')) return;
+                try {
+                    clearAudioFade(audios[key]);
+                    audios[key].muted = true;
+                    audios[key].pause();
+                } catch(e) {}
+            });
         } else {
-            const targetTrack = MusicController.currentTrackId || (document.getElementById('game-screen')?.classList.contains('active') ? 'bgm-loop' : 'bgm-menu');
+            const targetTrack = MusicController.currentTrackId || getPreferredMusicTrack();
+            MusicController.currentTrackId = null;
+            if(audios[targetTrack]) audios[targetTrack].muted = false;
             MusicController.play(targetTrack);
             if (audios[targetTrack]) {
-                try { audios[targetTrack].volume = 0.5 * window.masterVol; } catch(e) {}
+                try { audios[targetTrack].volume = getBaseVolume(targetTrack) * window.masterVol; } catch(e) {}
             }
         }
     } else {
         window.sfxEnabled = document.getElementById('check-sfx').checked;
+        Object.keys(audios).forEach((key) => {
+            if(key.startsWith('bgm')) return;
+            try { audios[key].muted = !window.sfxEnabled; } catch(e) {}
+        });
         if(window.sfxEnabled) window.playLobbyButtonHoverSound();
     }
     if(type === 'music') window.playNavSound();

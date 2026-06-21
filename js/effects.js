@@ -504,9 +504,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-name {
             position: absolute !important;
-            left: 54.2% !important;
-            top: 30.6% !important;
-            width: 47% !important;
+            left: 48.8% !important;
+            top: 27.9% !important;
+            width: 52% !important;
             font-size: clamp(15px, 1.28vw, 22px) !important;
             font-weight: 950 !important;
             line-height: 1 !important;
@@ -518,9 +518,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-id {
             position: absolute !important;
-            left: 54.2% !important;
-            top: 42.5% !important;
-            width: 47% !important;
+            left: 48.8% !important;
+            top: 39.8% !important;
+            width: 52% !important;
             font-size: clamp(7px, 0.55vw, 10px) !important;
             font-style: italic !important;
             font-weight: 850 !important;
@@ -531,9 +531,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-ranking {
             position: absolute !important;
-            left: 54.2% !important;
-            top: 57.4% !important;
-            width: 41% !important;
+            left: 48.8% !important;
+            top: 54.2% !important;
+            width: 48% !important;
             text-align: left !important;
             font-size: clamp(8px, 0.7vw, 13px) !important;
             font-weight: 900 !important;
@@ -543,9 +543,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-gold {
             position: absolute !important;
-            left: 54.2% !important;
-            top: 75.8% !important;
-            width: 23% !important;
+            left: 48.8% !important;
+            top: 72.8% !important;
+            width: 28% !important;
             display: flex !important;
             align-items: center !important;
             justify-content: flex-start !important;
@@ -1673,6 +1673,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             const playHover = () => window.playLobbyButtonHoverSound?.();
             button.addEventListener('mouseenter', playHover);
             button.addEventListener('pointerenter', playHover);
+            button.addEventListener('mouseover', playHover);
+            button.addEventListener('focus', playHover);
         });
 
         let rankingModal = document.getElementById('lobby-ranking-modal');
