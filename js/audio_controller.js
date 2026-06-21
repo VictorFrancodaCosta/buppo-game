@@ -26,6 +26,7 @@ const CORE_AUDIO_ASSETS = [
     { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' },
     { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' },
     { id: 'sfx-button', src: 'assets/audio/sfx_botao.mp3' },
+    { id: 'sfx-button-select', src: 'assets/audio/sfx_botao_select.mp3' },
     { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' },
     { id: 'sfx-coin', src: 'assets/audio/sfx_coin.mp3' },
     { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' },
@@ -35,14 +36,17 @@ const CORE_AUDIO_ASSETS = [
 
 let lastHoverTime = 0;
 let lastLobbyButtonHoverTime = 0;
+let lastLobbyButtonSelectTime = 0;
 let lastLobbyHoverElement = null;
 let mixerInterval = null;
 let audioUnlocked = false;
 let saveTimer = null;
+const musicFadeTimers = new WeakMap();
 
 function baseVolume(key) {
     if(key === 'sfx-ui-hover') return 0.45;
     if(key === 'sfx-button') return 1.0;
+    if(key === 'sfx-button-select') return 1.0;
     if(key === 'sfx-levelup' || key === 'sfx-coin') return 1.0;
     if(key === 'sfx-mastery') return 0.95;
     if(key === 'sfx-train') return 0.5;
@@ -88,6 +92,32 @@ function setAudioVolume(key, audio) {
         audio.volume = Math.max(0, Math.min(1, baseVolume(key) * (window.masterVol || 0)));
         audio.muted = isMusic ? !window.musicEnabled : !window.sfxEnabled;
     } catch(e) {}
+}
+
+function stopMusicFade(audio) {
+    const timer = musicFadeTimers.get(audio);
+    if(timer) {
+        clearInterval(timer);
+        musicFadeTimers.delete(audio);
+    }
+}
+
+function fadeMusic(audio, targetVolume, durationMs, done = null) {
+    if(!audio) return;
+    stopMusicFade(audio);
+    const startVolume = Number.isFinite(audio.volume) ? audio.volume : 0;
+    const startedAt = performance.now();
+    const duration = Math.max(1, durationMs || 1);
+    const timer = setInterval(() => {
+        const t = Math.min(1, (performance.now() - startedAt) / duration);
+        try { audio.volume = startVolume + (targetVolume - startVolume) * t; } catch(e) {}
+        if(t >= 1) {
+            clearInterval(timer);
+            musicFadeTimers.delete(audio);
+            if(done) done();
+        }
+    }, 32);
+    musicFadeTimers.set(audio, timer);
 }
 
 window.applyAudioSettings = function({ persist = true } = {}) {
@@ -141,26 +171,63 @@ function playSfx(key, fallbackKey = null, volume = null) {
 
 export const MusicController = {
     currentTrackId: null,
-    play(trackId) {
+    play(trackId, options = {}) {
         ensureAudioRegistry();
         if(!trackId || !audios[trackId]) return;
         const next = audios[trackId];
         try {
             if(this.currentTrackId && this.currentTrackId !== trackId && audios[this.currentTrackId]) {
+                stopMusicFade(audios[this.currentTrackId]);
                 audios[this.currentTrackId].pause();
             }
             this.currentTrackId = trackId;
             setAudioVolume(trackId, next);
             if(window.musicEnabled) {
+                stopMusicFade(next);
                 next.muted = false;
+                if(options.restart && next.readyState >= 2) next.currentTime = 0;
+                if(options.fadeInMs) next.volume = 0;
                 if(next.paused) next.play().catch(() => {});
+                if(options.fadeInMs) fadeMusic(next, baseVolume(trackId) * (window.masterVol || 0), options.fadeInMs);
+            }
+        } catch(e) {}
+    },
+    transitionTo(trackId, options = {}) {
+        ensureAudioRegistry();
+        if(!trackId || !audios[trackId]) return;
+        const fadeOutMs = options.fadeOutMs ?? 700;
+        const fadeInMs = options.fadeInMs ?? 900;
+        const previousId = this.currentTrackId;
+        const previous = previousId && previousId !== trackId ? audios[previousId] : null;
+        const next = audios[trackId];
+
+        try {
+            if(previous) {
+                previous.muted = false;
+                fadeMusic(previous, 0, fadeOutMs, () => {
+                    try { previous.pause(); } catch(e) {}
+                });
+            }
+
+            this.currentTrackId = trackId;
+            setAudioVolume(trackId, next);
+            if(window.musicEnabled) {
+                stopMusicFade(next);
+                next.muted = false;
+                next.volume = 0;
+                if(options.restart !== false && next.readyState >= 2) next.currentTime = 0;
+                next.play().catch(() => {});
+                fadeMusic(next, baseVolume(trackId) * (window.masterVol || 0), fadeInMs);
             }
         } catch(e) {}
     },
     stopCurrent() {
         ensureAudioRegistry();
         if(this.currentTrackId && audios[this.currentTrackId]) {
-            try { audios[this.currentTrackId].pause(); } catch(e) {}
+            try {
+                stopMusicFade(audios[this.currentTrackId]);
+                audios[this.currentTrackId].pause();
+            } catch(e) {}
         }
         this.currentTrackId = null;
     },
@@ -223,6 +290,12 @@ window.playLobbyButtonHoverSound = function() {
     if(playSfx('sfx-button', audios['sfx-ui-hover'] ? 'sfx-ui-hover' : 'sfx-nav')) {
         lastLobbyButtonHoverTime = now;
     }
+};
+
+window.playLobbyButtonSelectSound = function() {
+    const now = Date.now();
+    if(now - lastLobbyButtonSelectTime < 80) return;
+    if(playSfx('sfx-button-select', 'sfx-nav')) lastLobbyButtonSelectTime = now;
 };
 
 window.updateVol = function(type, val) {
@@ -304,6 +377,12 @@ document.addEventListener('pointerover', (event) => {
     if(!button || button === lastLobbyHoverElement) return;
     lastLobbyHoverElement = button;
     window.playLobbyButtonHoverSound();
+}, true);
+
+document.addEventListener('click', (event) => {
+    const button = event.target?.closest?.('#lobby-screen .lobby-menu-button');
+    if(!button) return;
+    window.playLobbyButtonSelectSound();
 }, true);
 
 document.addEventListener('pointerout', (event) => {

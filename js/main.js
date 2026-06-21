@@ -6,7 +6,7 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limi
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MÃ“DULOS
-import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.21.7';
+import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.21.8';
 import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=9';
 import { initiateMatchmaking } from './matchmaking.js';
 
@@ -90,6 +90,7 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' },
         { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' },
         { id: 'sfx-button', src: 'assets/audio/sfx_botao.mp3' },
+        { id: 'sfx-button-select', src: 'assets/audio/sfx_botao_select.mp3' },
         { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' },
         { id: 'sfx-coin', src: 'assets/audio/sfx_coin.mp3' },
         { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' },
@@ -176,8 +177,8 @@ window.transitionToGame = function() {
     const transText = transScreen.querySelector('.trans-text');
     if(transText) transText.innerText = "PREPARANDO BATALHA...";
     if(transScreen) transScreen.classList.add('active');
+    MusicController.transitionTo?.('bgm-loop', { fadeOutMs: 780, fadeInMs: 980, restart: true });
     setTimeout(() => {
-        MusicController.play('bgm-loop');
         if (window.gameMode === 'pvp' || window.gameMode === 'pve') window.applyDeckTheme(window.currentDeck);
         let bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode');
         window.showScreen('game-screen');

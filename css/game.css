@@ -242,7 +242,8 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     #btn-fullscreen {
         bottom: 8px;
         right: 8px;
-        font-size: 20px;
+        width: 26px;
+        height: 26px;
     }
 
     #p-stats-cluster,
