@@ -7,6 +7,32 @@ window.masterVol = 0.5;
 window.musicEnabled = false;
 window.sfxEnabled = false;
 
+const CORE_AUDIO_ASSETS = [
+    { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true },
+    { id: 'bgm-loop', src: 'assets/audio/musica_batalha.mp3', loop: true },
+    { id: 'sfx-nav', src: 'assets/audio/sfx_click.mp3' },
+    { id: 'sfx-deal', src: 'assets/audio/sfx_dar_cartas.mp3' },
+    { id: 'sfx-play', src: 'assets/audio/sfx_jogar_carta.mp3' },
+    { id: 'sfx-hit', src: 'assets/audio/sfx_dano_fisico.mp3' },
+    { id: 'sfx-hit-mage', src: 'assets/audio/sfx_dano_magico.mp3' },
+    { id: 'sfx-block', src: 'assets/audio/sfx_bloqueio.mp3' },
+    { id: 'sfx-block-mage', src: 'assets/audio/sfx_bloqueio_magico.mp3' },
+    { id: 'sfx-heal', src: 'assets/audio/sfx_cura.mp3' },
+    { id: 'sfx-levelup', src: 'assets/audio/sfx_levelup.mp3' },
+    { id: 'sfx-train', src: 'assets/audio/sfx_treinar.mp3' },
+    { id: 'sfx-disarm', src: 'assets/audio/sfx_desarmar.mp3' },
+    { id: 'sfx-mastery', src: 'assets/audio/maestria_bonus.mp3' },
+    { id: 'sfx-cine', src: 'assets/audio/ambience_cine.mp3', loop: true },
+    { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' },
+    { id: 'sfx-ui-hover', src: 'assets/audio/sfx_hover_ui.mp3' },
+    { id: 'sfx-button', src: 'assets/audio/sfx_botao.mp3' },
+    { id: 'sfx-deck-select', src: 'assets/audio/sfx_selecionar_deck.mp3' },
+    { id: 'sfx-coin', src: 'assets/audio/sfx_coin.mp3' },
+    { id: 'sfx-win', src: 'assets/audio/sfx_vitoria.mp3' },
+    { id: 'sfx-lose', src: 'assets/audio/sfx_derrota.mp3' },
+    { id: 'sfx-tie', src: 'assets/audio/sfx_empate.mp3' }
+];
+
 let lastHoverTime = 0;
 let lastLobbyButtonHoverTime = 0;
 let lastLobbyHoverElement = null;
@@ -23,6 +49,26 @@ function baseVolume(key) {
     if(key === 'sfx-cine') return 0.6;
     if(key && key.startsWith('bgm')) return 0.5;
     return 0.8;
+}
+
+function withBuildVersion(src) {
+    const version = window.BUPPO_BUILD_VERSION || Date.now();
+    if(!src || /^(https?:|data:|blob:)/i.test(src)) return src;
+    return `${src}${src.includes('?') ? '&' : '?'}v=${encodeURIComponent(version)}`;
+}
+
+function ensureAudioRegistry() {
+    CORE_AUDIO_ASSETS.forEach(asset => {
+        if(audios[asset.id]) return;
+        const audio = new Audio();
+        audio.src = withBuildVersion(asset.src);
+        audio.preload = 'auto';
+        audio.loop = asset.loop === true;
+        audios[asset.id] = audio;
+        setAudioVolume(asset.id, audio);
+    });
+    window.audios = audios;
+    return audios;
 }
 
 function preferredMusicTrack() {
@@ -45,6 +91,7 @@ function setAudioVolume(key, audio) {
 }
 
 window.applyAudioSettings = function({ persist = true } = {}) {
+    ensureAudioRegistry();
     Object.entries(audios).forEach(([key, audio]) => setAudioVolume(key, audio));
 
     Object.entries(audios).forEach(([key, audio]) => {
@@ -66,6 +113,7 @@ window.applyAudioSettings = function({ persist = true } = {}) {
 };
 
 function playSfx(key, fallbackKey = null, volume = null) {
+    ensureAudioRegistry();
     if(!window.sfxEnabled) return false;
     const audioKey = audios[key] ? key : fallbackKey;
     const source = audioKey ? audios[audioKey] : null;
@@ -94,6 +142,7 @@ function playSfx(key, fallbackKey = null, volume = null) {
 export const MusicController = {
     currentTrackId: null,
     play(trackId) {
+        ensureAudioRegistry();
         if(!trackId || !audios[trackId]) return;
         const next = audios[trackId];
         try {
@@ -109,6 +158,7 @@ export const MusicController = {
         } catch(e) {}
     },
     stopCurrent() {
+        ensureAudioRegistry();
         if(this.currentTrackId && audios[this.currentTrackId]) {
             try { audios[this.currentTrackId].pause(); } catch(e) {}
         }
@@ -128,6 +178,7 @@ export const MusicController = {
 };
 
 window.unlockGameAudio = function() {
+    ensureAudioRegistry();
     audioUnlocked = true;
     Object.entries(audios).forEach(([key, audio]) => {
         if(!audio || key.startsWith('bgm')) return;
@@ -230,6 +281,13 @@ function bindAudioSettingsControls() {
 }
 
 window.bindAudioSettingsControls = bindAudioSettingsControls;
+window.repairBuppoAudio = function() {
+    ensureAudioRegistry();
+    window.applyAudioSettings({ persist: false });
+    return Object.keys(audios);
+};
+
+ensureAudioRegistry();
 
 if(document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bindAudioSettingsControls);
