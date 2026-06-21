@@ -504,10 +504,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-name {
             position: absolute !important;
-            left: 54.8% !important;
-            top: 31.8% !important;
+            left: 54.2% !important;
+            top: 30.6% !important;
             width: 47% !important;
-            font-size: clamp(12px, 1vw, 17px) !important;
+            font-size: clamp(15px, 1.28vw, 22px) !important;
             font-weight: 950 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
@@ -518,10 +518,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-id {
             position: absolute !important;
-            left: 54.8% !important;
-            top: 42.2% !important;
+            left: 54.2% !important;
+            top: 42.5% !important;
             width: 47% !important;
-            font-size: clamp(9px, 0.72vw, 13px) !important;
+            font-size: clamp(7px, 0.55vw, 10px) !important;
             font-style: italic !important;
             font-weight: 850 !important;
             line-height: 1 !important;
@@ -531,11 +531,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-ranking {
             position: absolute !important;
-            left: 53.2% !important;
-            top: 58.4% !important;
-            width: 38% !important;
-            text-align: center !important;
-            font-size: clamp(8px, 0.66vw, 12px) !important;
+            left: 54.2% !important;
+            top: 57.4% !important;
+            width: 41% !important;
+            text-align: left !important;
+            font-size: clamp(8px, 0.7vw, 13px) !important;
             font-weight: 900 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
@@ -543,14 +543,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-gold {
             position: absolute !important;
-            left: 47% !important;
-            top: 77.2% !important;
-            width: 16% !important;
+            left: 54.2% !important;
+            top: 75.8% !important;
+            width: 23% !important;
             display: flex !important;
             align-items: center !important;
-            justify-content: flex-end !important;
+            justify-content: flex-start !important;
             color: #ffd62e !important;
-            font-size: clamp(11px, 0.95vw, 17px) !important;
+            font-size: clamp(15px, 1.25vw, 23px) !important;
             font-weight: 950 !important;
             line-height: 1 !important;
             text-shadow: 2px 2px 0 #190700, -1px -1px 0 #190700, 1px -1px 0 #190700, -1px 1px 0 #190700, 0 0 9px rgba(255,214,46,0.4) !important;
@@ -602,48 +602,22 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         #lobby-screen:has(#btn-play-pvp.lobby-main-play:hover)::before,
-        #lobby-screen:has(#btn-play-pvp.lobby-main-play:focus-visible)::before {
-            content: "" !important;
-            position: fixed !important;
-            inset: 0 !important;
-            pointer-events: none !important;
-            z-index: 43 !important;
-            background:
-                radial-gradient(circle at 50% 49%, rgba(255, 230, 93, 0.24) 0 10%, rgba(255, 168, 22, 0.11) 18%, transparent 35%),
-                radial-gradient(circle at 50% 50%, transparent 0 22%, rgba(13, 4, 0, 0.22) 52%, rgba(0, 0, 0, 0.42) 100%) !important;
-            animation: lobbyPlayTensionVignette 1.15s ease-in-out infinite alternate !important;
-        }
-
+        #lobby-screen:has(#btn-play-pvp.lobby-main-play:focus-visible)::before,
         #lobby-screen:has(#btn-play-pvp.lobby-main-play:hover)::after,
         #lobby-screen:has(#btn-play-pvp.lobby-main-play:focus-visible)::after {
-            content: "" !important;
-            position: fixed !important;
-            left: 50% !important;
-            top: 50% !important;
-            width: min(64vw, 980px) !important;
-            height: min(42vw, 620px) !important;
-            transform: translate(-50%, -50%) rotate(-8deg) !important;
-            pointer-events: none !important;
-            z-index: 44 !important;
-            opacity: 0.7 !important;
-            background:
-                conic-gradient(from 0deg, transparent 0 12deg, rgba(255, 229, 98, 0.2) 16deg, transparent 27deg, transparent 45deg, rgba(255, 163, 38, 0.13) 54deg, transparent 66deg, transparent 100deg),
-                radial-gradient(ellipse at center, rgba(255, 222, 86, 0.18), transparent 62%) !important;
-            filter: blur(2px) !important;
-            animation: lobbyPlayRays 2.4s linear infinite !important;
+            content: none !important;
+            display: none !important;
         }
 
         #lobby-screen #btn-play-pvp.lobby-main-play:hover,
         #lobby-screen #btn-play-pvp.lobby-main-play:focus-visible {
-            transform: translateY(-8px) scale(1.105) rotate(-1deg) !important;
+            transform: translateY(-5px) scale(1.085) !important;
             filter:
-                brightness(1.24)
-                saturate(1.18)
-                drop-shadow(9px 14px 0 rgba(26, 11, 4, 0.86))
-                drop-shadow(0 22px 24px rgba(0, 0, 0, 0.38))
-                drop-shadow(0 0 26px rgba(255, 233, 92, 0.82))
-                drop-shadow(0 0 46px rgba(255, 132, 24, 0.5)) !important;
-            animation: lobbyPlayCallToAction 0.72s ease-in-out infinite !important;
+                brightness(1.16)
+                drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
+                drop-shadow(0 18px 22px rgba(0, 0, 0, 0.34))
+                drop-shadow(0 0 24px rgba(255, 222, 80, 0.78)) !important;
+            animation: lobbyMainPlayPulse 0.95s ease-in-out infinite !important;
         }
 
         #lobby-screen #btn-play-pvp.lobby-main-play::before {
@@ -667,8 +641,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         #lobby-screen #btn-play-pvp.lobby-main-play::after {
-            content: "" !important;
-            display: block !important;
+            content: none !important;
+            display: none !important;
             position: absolute !important;
             inset: 13% 11% 15% 11% !important;
             z-index: 1 !important;
@@ -682,8 +656,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen #btn-play-pvp.lobby-main-play:hover::after,
         #lobby-screen #btn-play-pvp.lobby-main-play:focus-visible::after {
-            opacity: 1 !important;
-            animation: lobbyPlayShineSweep 0.92s ease-in-out infinite !important;
+            opacity: 0 !important;
+            animation: none !important;
         }
 
         #lobby-screen .lobby-menu-small {
@@ -761,6 +735,23 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         @keyframes lobbyMenuButtonFloat {
             0%, 100% { translate: 0 0; }
             50% { translate: 0 -4px; }
+        }
+
+        @keyframes lobbyMainPlayPulse {
+            0%, 100% {
+                transform: translateY(-5px) scale(1.075);
+                filter: brightness(1.12)
+                        drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
+                        drop-shadow(0 18px 22px rgba(0, 0, 0, 0.34))
+                        drop-shadow(0 0 18px rgba(255, 222, 80, 0.58));
+            }
+            50% {
+                transform: translateY(-7px) scale(1.105);
+                filter: brightness(1.19)
+                        drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
+                        drop-shadow(0 20px 23px rgba(0, 0, 0, 0.36))
+                        drop-shadow(0 0 34px rgba(255, 222, 80, 0.92));
+            }
         }
 
         @keyframes lobbyPlayCallToAction {
