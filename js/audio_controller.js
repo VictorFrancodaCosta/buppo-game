@@ -6,6 +6,7 @@ window.musicEnabled = false;
 window.sfxEnabled = false;
 
 let lastHoverTime = 0;
+let lastLobbyButtonHoverTime = 0;
 let mixerInterval = null;
 
 export const MusicController = {
@@ -81,17 +82,16 @@ window.playUIHoverSound = function() {
     }
 };
 
-let lastLobbyButtonHoverTime = 0;
 window.playLobbyButtonHoverSound = function() {
     if(!window.currentUser) return;
     if(!window.sfxEnabled) return;
     let now = Date.now();
     if(now - lastLobbyButtonHoverTime < 110) return;
-    let base = audios['sfx-button'];
-    if(base) {
+    let s = audios['sfx-button'] || audios['sfx-ui-hover'] || audios['sfx-nav'];
+    if(s) {
         try {
-            let s = base.cloneNode();
-            s.volume = 0.62 * (window.masterVol || 1.0);
+            s.volume = 0.7 * (window.masterVol || 1.0);
+            if(s.readyState >= 2) s.currentTime = 0;
             s.play().catch(()=>{});
             lastLobbyButtonHoverTime = now;
         } catch(e) {}
@@ -114,21 +114,29 @@ window.updateVol = function(type, val) {
             try { audios[k].volume = baseVol * window.masterVol; } catch(e){}
         }
     });
+    if(MusicController.currentTrackId && audios[MusicController.currentTrackId]) {
+        try { audios[MusicController.currentTrackId].volume = 0.5 * window.masterVol; } catch(e) {}
+    }
     if(window.saveAudioSettings) window.saveAudioSettings();
 }
 
 window.toggleSoundType = function(type) {
-    window.playNavSound();
     if (type === 'music') {
         window.musicEnabled = document.getElementById('check-music').checked;
         if (!window.musicEnabled) {
             if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].pause();
         } else {
-            if (MusicController.currentTrackId && audios[MusicController.currentTrackId]) audios[MusicController.currentTrackId].play().catch(()=>{});
+            const targetTrack = MusicController.currentTrackId || (document.getElementById('game-screen')?.classList.contains('active') ? 'bgm-loop' : 'bgm-menu');
+            MusicController.play(targetTrack);
+            if (audios[targetTrack]) {
+                try { audios[targetTrack].volume = 0.5 * window.masterVol; } catch(e) {}
+            }
         }
     } else {
         window.sfxEnabled = document.getElementById('check-sfx').checked;
+        if(window.sfxEnabled) window.playLobbyButtonHoverSound();
     }
+    if(type === 'music') window.playNavSound();
     if(window.saveAudioSettings) window.saveAudioSettings();
 };
 

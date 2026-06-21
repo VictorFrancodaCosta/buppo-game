@@ -6,7 +6,7 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limi
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MÃ“DULOS
-import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.20.10';
+import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.20.12';
 import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=9';
 import { initiateMatchmaking } from './matchmaking.js';
 
@@ -235,7 +235,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         window.currentPlayerGameId = gameId;
         updateLobbyProfileProgress(1, 0);
         renderLobbyIdentity(window.currentUser.displayName, gameId);
-        document.getElementById('lobby-stats').innerText = `VITÃ“RIAS: 0 | PONTOS: 0`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
         updateLobbyGoldWallet(0);
         window.musicEnabled = true;
         window.sfxEnabled = true;
@@ -250,7 +250,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         window.currentPlayerGameId = gameId;
         updateLobbyProfileProgress(d.profileLevel || 1, d.profileXp || 0);
         renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
-        document.getElementById('lobby-stats').innerText = `VITÃ“RIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
 
         updateLobbyGoldWallet(d.goldCoins || 0);
 
@@ -959,7 +959,7 @@ function startPvPListener() {
             if (matchData.abandonedBy && window.currentUser && matchData.abandonedBy !== window.currentUser.uid) {
                 monster.hp = 0; updateUI(); window.isProcessing = true; MusicController.stopCurrent();
                 setTimeout(() => {
-                    const title = document.getElementById('end-title'); title.innerText = "VITÃ“RIA"; title.className = "win-theme";
+                    const title = document.getElementById('end-title'); title.innerText = "VITÓRIA"; title.className = "win-theme";
                     showCenterText("OPONENTE DESISTIU!", "#ffd700"); playSound('sfx-win');
                     triggerEndScreenFx('win'); showEndPoints(8);
                     if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
@@ -1239,7 +1239,7 @@ function checkEndGame(){
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
             if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃƒO";
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
-            else if(isWin) { title.innerText = "VITÃ“RIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
+            else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
             else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
 
             if(isTie) { if(window.registrarEmpateOnline) window.registrarEmpateOnline(window.gameMode); }
@@ -1632,7 +1632,7 @@ window.abandonMatch = function() {
     if(document.getElementById('game-screen').classList.contains('active')) {
         stopTurnTimer();
         window.toggleConfig();
-        window.openModal("ABANDONAR?", "Sair da partida contarÃ¡ como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], async (choice) => {
+        window.openModal("ABANDONAR?", "Sair da partida contará como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], async (choice) => {
                 if (choice === "SAIR") {
                     stopTurnTimer();
                     if (window.gameMode === 'pvp') await notifyAbandonment();
@@ -2249,7 +2249,7 @@ window.openHistory = async function() {
         let html = '';
         querySnapshot.forEach((doc) => {
             const h = doc.data(); const date = new Date(h.timestamp); const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-            const resultClass = h.result === 'WIN' ? 'win' : (h.result === 'TIE' ? 'tie' : 'loss'); const resultTxt = h.result === 'WIN' ? 'VITÃ“RIA' : (h.result === 'TIE' ? 'EMPATE' : 'DERROTA'); const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
+            const resultClass = h.result === 'WIN' ? 'win' : (h.result === 'TIE' ? 'tie' : 'loss'); const resultTxt = h.result === 'WIN' ? 'VIT\u00d3RIA' : (h.result === 'TIE' ? 'EMPATE' : 'DERROTA'); const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
             let vsText = ""; if (h.opponent === 'PVE' || h.mode === 'pve') { vsText = `${resultTxt} PVE`; } else { vsText = `${resultTxt} vs ${h.opponent}`; }
             html += `<div class="history-item ${resultClass}"><div><div class="h-vs">${vsText}</div><div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div></div><div class="h-score">${scoreTxt} PTS</div></div>`;
         });
@@ -2329,7 +2329,7 @@ function bindMasteryTooltip(el, key, value, ownerId) {
     return {
         onmouseenter: (e) => {
             let db=CARDS_DB[key]; document.getElementById('tt-title').innerHTML = key;
-            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>BÃ´nus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
+            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
             const masteryLabel = key === 'ATAQUE' ? 'MAESTRIA EM ATAQUE' : 'MAESTRIA EM BLOQUEIO';
             document.getElementById('tt-title').innerHTML = `${masteryLabel} N\u00cdVEL ${value}`;
             document.getElementById('tt-content').innerHTML = '';
@@ -2366,7 +2366,7 @@ function showTT(k) {
         let content = db.customTooltip; let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
         content = content.replace('{PLAYER_LVL}', currentLvl); let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
         let reflectDmg = 1 + bonusBlock; content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg); document.getElementById('tt-content').innerHTML = content;
-    } else { document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>BÃ´nus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; }
+    } else { document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; }
     tt.style.display = 'block';
 }
 
@@ -2416,4 +2416,5 @@ setTimeout(() => {
 
 setupDesktopUpdaterBridge();
 refreshRuntimeCaches().finally(() => preloadGame());
+
 

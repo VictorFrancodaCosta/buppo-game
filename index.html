@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
@@ -9,10 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="css/style.css?v=2026.06.20.10">
+    <link rel="stylesheet" href="css/style.css?v=2026.06.20.12">
     <link rel="stylesheet" href="css/lobby.css?v=2026.06.20.1">
     <link rel="stylesheet" href="css/game.css?v=2026.06.20.1">
-    <link rel="stylesheet" href="css/effects.css?v=2026.06.20.10">
+    <link rel="stylesheet" href="css/effects.css?v=2026.06.20.12">
 
     <link rel="icon" type="image/webp" href="assets/img/logo_buppo.webp">
     <link rel="manifest" href="manifest.json">
@@ -25,7 +25,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BUPPO">
     <script>
-        window.BUPPO_BUILD_VERSION = '2026.06.20.10';
+        window.BUPPO_BUILD_VERSION = '2026.06.20.12';
     </script>
     <script>
         (function () {
@@ -54,7 +54,7 @@
 </head>
 <body>
     <div id="rotate-overlay">
-        <div style="font-size: 50px; margin-bottom: 20px;">↻</div>
+        <div style="font-size: 50px; margin-bottom: 20px;">â†»</div>
         <div>GIRE O CELULAR<br>PARA JOGAR</div>
     </div>
     <div id="loading-screen">
@@ -82,12 +82,12 @@
     
     <div id="game-container">
         <div id="top-left-controls">
-            <div class="circle-btn" onclick="window.toggleConfig()" id="btn-config-toggle" title="Configurações">
+            <div class="circle-btn" onclick="window.toggleConfig()" id="btn-config-toggle" title="ConfiguraÃ§Ãµes">
                 <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.49l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c-0.24,0-0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
             </div>
         </div>
 
-        <div id="btn-fullscreen" onclick="toggleFullScreen()">⛶</div>
+        <div id="btn-fullscreen" onclick="toggleFullScreen()">â›¶</div>
 
         <div id="start-screen" class="screen active">
             <div class="start-bg-layer"></div>
@@ -127,14 +127,14 @@
                             <div class="lobby-xp-track"><span id="lobby-xp-fill"></span></div>
                         </div>
                     </div>
-                    <div class="user-welcome" id="lobby-username">OLÁ, JOGADOR</div>
+                    <div class="user-welcome" id="lobby-username">OLÃ, JOGADOR</div>
                     <div class="user-stats" id="lobby-stats">VITÓRIAS: 0 | PONTOS: 0</div>
                     <div class="gold-wallet" id="lobby-gold-wallet">
                         <img src="assets/img/moeda_ouro.png" alt="Moeda de ouro">
                         <span id="lobby-gold-count">0</span>
                     </div>
                     <div class="ranking-scroll" id="ranking-content" data-tip="Ranking dos melhores jogadores"></div>
-                    <button id="btn-history" onclick="window.openHistory()">📜 HISTÓRICO DE PARTIDAS</button>
+                    <button id="btn-history" onclick="window.openHistory()">ðŸ“œ HISTÃ“RICO DE PARTIDAS</button>
                     <button id="btn-logout" onclick="handleLogout()">TROCAR CONTA</button>
                 </div>
             </div>
@@ -144,7 +144,7 @@
             <div class="modal-box matchmaking-box">
                 <div class="radar-spinner"></div>
                 <div class="mm-title">PROCURANDO OPONENTE...</div>
-                <div class="mm-desc">Buscando jogadores com nível próximo ao seu</div>
+                <div class="mm-desc">Buscando jogadores com nÃ­vel prÃ³ximo ao seu</div>
                 <div class="mm-timer" id="mm-timer">00:00</div>
                 <button class="mini-btn cancel-btn" onclick="cancelPvPSearch()">CANCELAR BUSCA</button>
             </div>
@@ -171,7 +171,7 @@
         <div id="friend-invite-screen" class="modal-overlay">
             <div class="modal-box add-friend-box">
                 <h2 class="cfg-title">CONVITE</h2>
-                <p id="friend-invite-text" class="add-friend-copy">Jogador está te convidando para uma partida.</p>
+                <p id="friend-invite-text" class="add-friend-copy">Jogador estÃ¡ te convidando para uma partida.</p>
                 <div class="modal-btns">
                     <button class="mini-btn" onclick="window.acceptFriendInvite()">ACEITAR</button>
                     <button class="mini-btn cancel-btn" onclick="window.declineFriendInvite()">RECUSAR</button>
@@ -185,7 +185,7 @@
                 <div class="deck-option" onclick="selectDeck('knight')" data-name="Forjado pela honra, guiado pela espada"><img src="assets/img/card_selecao_cavaleiro.webp" alt="Deck Cavaleiro"></div>
                 <div class="deck-option" onclick="selectDeck('mage')" data-name="Magia em estado puro"><img src="assets/img/card_selecao_mago.webp" alt="Deck Mago"></div>
             </div>
-            <button class="return-btn" onclick="playNavSound(); window.goToLobby()">VOLTAR AO SAGUÃO</button>
+            <button class="return-btn" onclick="playNavSound(); window.goToLobby()">VOLTAR AO SAGUÃƒO</button>
         </div>
 
         <div id="end-screen">
@@ -193,7 +193,7 @@
                 <h1 id="end-title" class="win-theme">VITÓRIA</h1>
                 <div class="end-btn-row">
                     <button class="big-btn" onclick="this.blur(); window.playNavSound(); restartMatch()">JOGAR NOVAMENTE</button>
-                    <button class="big-btn secondary-btn" onclick="this.blur(); window.playNavSound(); transitionToLobby()">SAGUÃO</button>
+                    <button class="big-btn secondary-btn" onclick="this.blur(); window.playNavSound(); transitionToLobby()">SAGUÃƒO</button>
                 </div>
             </div>
         </div>
@@ -212,7 +212,7 @@
             <div class="avatar-cluster" id="p-stats-cluster">
                 <div class="lvl-circle" id="p-lvl">1</div>
                 <div class="unit-info">
-                    <span class="unit-name" style="color:var(--accent-blue)">VOCÊ</span>
+                    <span class="unit-name" style="color:var(--accent-blue)">VOCÃŠ</span>
                     <div class="hp-tube"><div class="hp-liquid" id="p-hp-fill" style="background: #00cec9;"></div><span class="hp-txt" id="p-hp-txt">6/6</span></div>
                     <div class="mastery-row" id="p-masteries"></div>
                 </div>
@@ -273,7 +273,9 @@
     <div id="tooltip-box"><h3 id="tt-title"></h3><div id="tt-content"></div></div>
     <div id="modal-overlay" class="modal-overlay" onclick="cancelModal()"><div class="modal-box" onclick="event.stopPropagation()"><h2 id="modal-title"></h2><p id="modal-desc"></p><div class="modal-btns" id="modal-btns"></div></div></div>
 
-    <script src="js/effects.js?v=2026.06.20.10"></script> 
-    <script type="module" src="js/main.js?v=2026.06.20.10"></script> 
+    <script src="js/effects.js?v=2026.06.20.12"></script> 
+    <script type="module" src="js/main.js?v=2026.06.20.12"></script> 
 </body>
 </html>
+
+

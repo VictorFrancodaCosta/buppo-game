@@ -504,10 +504,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-name {
             position: absolute !important;
-            left: 55.8% !important;
-            top: 35.8% !important;
-            width: 50% !important;
-            font-size: clamp(13px, 1.08vw, 19px) !important;
+            left: 54.8% !important;
+            top: 31.8% !important;
+            width: 47% !important;
+            font-size: clamp(12px, 1vw, 17px) !important;
             font-weight: 950 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
@@ -518,10 +518,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-id {
             position: absolute !important;
-            left: 55.8% !important;
-            top: 47.8% !important;
-            width: 50% !important;
-            font-size: clamp(10px, 0.82vw, 14px) !important;
+            left: 54.8% !important;
+            top: 42.2% !important;
+            width: 47% !important;
+            font-size: clamp(9px, 0.72vw, 13px) !important;
             font-style: italic !important;
             font-weight: 850 !important;
             line-height: 1 !important;
@@ -531,11 +531,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-ranking {
             position: absolute !important;
-            left: 55.8% !important;
-            top: 63.2% !important;
-            width: 44% !important;
+            left: 53.2% !important;
+            top: 58.4% !important;
+            width: 38% !important;
             text-align: center !important;
-            font-size: clamp(9px, 0.74vw, 13px) !important;
+            font-size: clamp(8px, 0.66vw, 12px) !important;
             font-weight: 900 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
@@ -543,14 +543,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-gold {
             position: absolute !important;
-            left: 50.5% !important;
-            top: 82.4% !important;
-            width: 24% !important;
+            left: 47% !important;
+            top: 77.2% !important;
+            width: 16% !important;
             display: flex !important;
             align-items: center !important;
-            justify-content: center !important;
+            justify-content: flex-end !important;
             color: #ffd62e !important;
-            font-size: clamp(13px, 1.08vw, 19px) !important;
+            font-size: clamp(11px, 0.95vw, 17px) !important;
             font-weight: 950 !important;
             line-height: 1 !important;
             text-shadow: 2px 2px 0 #190700, -1px -1px 0 #190700, 1px -1px 0 #190700, -1px 1px 0 #190700, 0 0 9px rgba(255,214,46,0.4) !important;
@@ -1679,7 +1679,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         playCenter.querySelectorAll('.lobby-menu-button').forEach((button) => {
             if (button.dataset.hoverSoundBound === '1') return;
             button.dataset.hoverSoundBound = '1';
-            button.addEventListener('mouseenter', () => window.playLobbyButtonHoverSound?.());
+            const playHover = () => window.playLobbyButtonHoverSound?.();
+            button.addEventListener('mouseenter', playHover);
+            button.addEventListener('pointerenter', playHover);
         });
 
         let rankingModal = document.getElementById('lobby-ranking-modal');
