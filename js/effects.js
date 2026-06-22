@@ -505,7 +505,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .profile-asset-name {
             position: absolute !important;
             left: 42.3% !important;
-            top: 23.2% !important;
+            top: 25.5% !important;
             width: 57% !important;
             font-size: clamp(18px, 1.62vw, 27px) !important;
             font-weight: 950 !important;
@@ -531,19 +531,25 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .profile-asset-ranking {
             position: absolute !important;
             left: 42.3% !important;
-            top: 48.2% !important;
+            top: 50.8% !important;
             width: 48% !important;
             text-align: left !important;
-            font-size: clamp(10px, 0.86vw, 15px) !important;
+            font-size: clamp(11px, 0.94vw, 17px) !important;
             font-weight: 900 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
         }
 
+        #lobby-screen .profile-asset-ranking.elo-madeira { color: #d0a06b !important; }
+        #lobby-screen .profile-asset-ranking.elo-bronze { color: #cd7f32 !important; }
+        #lobby-screen .profile-asset-ranking.elo-prata { color: #d9e4ea !important; }
+        #lobby-screen .profile-asset-ranking.elo-ouro { color: #ffd62e !important; }
+        #lobby-screen .profile-asset-ranking.elo-diamante { color: #7df6ff !important; text-shadow: 2px 2px 0 #061018, -1px -1px 0 #061018, 1px -1px 0 #061018, -1px 1px 0 #061018, 0 0 12px rgba(125,246,255,0.82) !important; }
+
         #lobby-screen .profile-asset-gold {
             position: absolute !important;
             left: 42.3% !important;
-            top: 66.8% !important;
+            top: 69.4% !important;
             width: 28% !important;
             display: flex !important;
             align-items: center !important;
@@ -593,6 +599,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             transform: translateY(3px) scale(0.985) !important;
         }
 
+        #lobby-screen .lobby-menu-button.lobby-button-press-juice {
+            animation: lobbyButtonPressJuice 0.26s cubic-bezier(0.16, 1.3, 0.32, 1) both !important;
+        }
+
         #lobby-screen #btn-play-pvp.lobby-main-play {
             width: 100% !important;
             aspect-ratio: 1392 / 637 !important;
@@ -617,6 +627,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 drop-shadow(0 18px 22px rgba(0, 0, 0, 0.34))
                 drop-shadow(0 0 24px rgba(255, 222, 80, 0.78)) !important;
             animation: lobbyMainPlayPulse 0.95s ease-in-out infinite !important;
+        }
+
+        @keyframes lobbyButtonPressJuice {
+            0% { transform: translateY(0) scale(1, 1) !important; }
+            32% { transform: translateY(5px) scale(1.09, 0.82) !important; filter: brightness(1.18) drop-shadow(4px 5px 0 rgba(26, 11, 4, 0.86)) !important; }
+            68% { transform: translateY(-3px) scale(0.94, 1.12) !important; }
+            100% { transform: translateY(0) scale(1, 1) !important; }
         }
 
         #lobby-screen #btn-play-pvp.lobby-main-play::before {
@@ -1234,6 +1251,20 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             filter: grayscale(0%) brightness(1.12) drop-shadow(0 0 30px rgba(255, 215, 0, 0.54)) drop-shadow(0 18px 17px rgba(0, 0, 0, 0.48)) !important;
         }
 
+        .lobby-mode-deck.deck-picked {
+            pointer-events: none !important;
+            z-index: 4 !important;
+        }
+
+        .lobby-mode-deck.deck-picked img {
+            animation: lobbyDeckPickZoom 0.44s cubic-bezier(0.17, 1.2, 0.28, 1) both !important;
+        }
+
+        .lobby-mode-deck.deck-not-picked {
+            pointer-events: none !important;
+            animation: lobbyDeckNotPickedFade 0.34s ease-out both !important;
+        }
+
         .lobby-mode-deck::after {
             content: attr(data-name);
             position: absolute !important;
@@ -1256,6 +1287,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-deck:focus-visible::after {
             opacity: 1 !important;
             transform: translateX(-50%) translateY(6px) !important;
+        }
+
+        @keyframes lobbyDeckPickZoom {
+            0% { opacity: 1; transform: scale(1) translateY(0); filter: grayscale(0%) brightness(1); }
+            38% { opacity: 1; transform: scale(1.22) translateY(-18px); filter: grayscale(0%) brightness(1.38) drop-shadow(0 0 32px rgba(255, 230, 120, 0.86)); }
+            100% { opacity: 0.18; transform: scale(1.45) translateY(-28px); filter: grayscale(0%) brightness(1.65) drop-shadow(0 0 42px rgba(255, 230, 120, 0.95)); }
+        }
+
+        @keyframes lobbyDeckNotPickedFade {
+            0% { opacity: 1; transform: scale(1); filter: grayscale(0); }
+            100% { opacity: 0.16; transform: scale(0.82) translateY(12px); filter: grayscale(1) brightness(0.65); }
         }
 
         .lobby-mode-history {
@@ -1666,13 +1708,23 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         });
 
         playCenter.querySelectorAll('.lobby-menu-button').forEach((button) => {
-            if (button.dataset.hoverSoundBound === '1') return;
-            button.dataset.hoverSoundBound = '1';
-            const playHover = () => window.playLobbyButtonHoverSound?.();
-            button.addEventListener('mouseenter', playHover);
-            button.addEventListener('pointerenter', playHover);
-            button.addEventListener('mouseover', playHover);
-            button.addEventListener('focus', playHover);
+            if (button.dataset.hoverSoundBound !== '1') {
+                button.dataset.hoverSoundBound = '1';
+                const playHover = () => window.playLobbyButtonHoverSound?.();
+                button.addEventListener('mouseenter', playHover);
+                button.addEventListener('pointerenter', playHover);
+                button.addEventListener('mouseover', playHover);
+                button.addEventListener('focus', playHover);
+            }
+            if (button.dataset.pressJuiceBound !== '1') {
+                button.dataset.pressJuiceBound = '1';
+                button.addEventListener('click', () => {
+                    button.classList.remove('lobby-button-press-juice');
+                    void button.offsetWidth;
+                    button.classList.add('lobby-button-press-juice');
+                    setTimeout(() => button.classList.remove('lobby-button-press-juice'), 280);
+                }, { capture: true });
+            }
         });
 
         let rankingModal = document.getElementById('lobby-ranking-modal');
@@ -1805,7 +1857,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 const mode = modeOverlay.dataset.selectedMode;
                 const deckType = button.dataset.deck || 'knight';
                 if(!mode) return;
-                window.startLobbyModeWithDeck?.(mode, deckType);
+                modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deck => {
+                    deck.classList.toggle('deck-picked', deck === button);
+                    deck.classList.toggle('deck-not-picked', deck !== button);
+                });
+                setTimeout(() => {
+                    window.startLobbyModeWithDeck?.(mode, deckType);
+                }, 360);
             };
         });
         modeOverlay.querySelectorAll('.lobby-mode-btn').forEach((button) => {

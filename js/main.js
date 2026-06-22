@@ -6,8 +6,8 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limi
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MÓDULOS
-import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.21.10';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.21.10';
+import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.21.11';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.21.11';
 import { initiateMatchmaking } from './matchmaking.js';
 
 // --- VARIÁVEIS GLOBAIS DE ESTADO ---
@@ -54,6 +54,7 @@ window.desktopUpdateStatus = { state: 'idle' };
 window.currentProfileLevel = 1;
 window.currentProfileXp = 0;
 window.currentLobbyRank = null;
+window.currentLobbyScore = 0;
 
 const ASSETS_TO_LOAD = {
     images: [
@@ -233,6 +234,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         const gameId = await generateUniqueGameId(window.currentUser.uid);
         await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
         window.currentPlayerGameId = gameId;
+        window.currentLobbyScore = 0;
         updateLobbyProfileProgress(1, 0);
         renderLobbyIdentity(window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
@@ -248,6 +250,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         const d = userSnap.data();
         const gameId = await ensurePlayerGameId(userRef, d);
         window.currentPlayerGameId = gameId;
+        window.currentLobbyScore = Math.max(0, Number(d.score) || 0);
         updateLobbyProfileProgress(d.profileLevel || 1, d.profileXp || 0);
         renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
@@ -327,12 +330,25 @@ function updateLobbyBottomProfileBar() {
     const gold = document.getElementById('profile-asset-gold-count');
     const name = getPlayerFirstName(window.currentLobbyPlayerName || (window.currentUser && window.currentUser.displayName) || 'JOGADOR');
     const gameId = window.currentPlayerGameId || '----';
+    const score = Math.max(0, Number(window.currentLobbyScore) || 0);
+    const elo = getLobbyElo(score);
     if(nameEl) nameEl.innerHTML = `${name} <span class="profile-asset-id-inline" id="profile-asset-id">#${gameId}</span>`;
-    if(ranking) ranking.textContent = `RANKING ${window.currentLobbyRank || '-'}`;
+    if(ranking) {
+        ranking.textContent = `${elo.label} #${score}`;
+        ranking.className = `profile-asset-ranking elo-${elo.key}`;
+    }
     if(gold) gold.textContent = window.currentGoldCoins || 0;
 }
 
 window.updateLobbyBottomProfileBar = updateLobbyBottomProfileBar;
+
+function getLobbyElo(score = 0) {
+    if(score > 700) return { key: 'diamante', label: 'DIAMANTE' };
+    if(score >= 401) return { key: 'ouro', label: 'OURO' };
+    if(score >= 201) return { key: 'prata', label: 'PRATA' };
+    if(score >= 101) return { key: 'bronze', label: 'BRONZE' };
+    return { key: 'madeira', label: 'MADEIRA' };
+}
 
 function renderTurnDisplay() {
     const turnEl = document.getElementById('turn-txt');
@@ -1567,6 +1583,10 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(Number.isFinite(reward.gold)) updateLobbyGoldWallet((window.currentGoldCoins || 0) + reward.gold);
     if(Number.isFinite(reward.profileLevel) && Number.isFinite(reward.profileXp)) updateLobbyProfileProgress(reward.profileLevel, reward.profileXp);
     const pts = reward.points || 0;
+    if(pts !== 0) {
+        window.currentLobbyScore = Math.max(0, (Number(window.currentLobbyScore) || 0) + pts);
+        updateLobbyBottomProfileBar();
+    }
     if(pts > 0) await saveMatchHistory('WIN', pts);
 };
 
@@ -1576,6 +1596,10 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
     const result = await registrarDerrotaDB(window.currentUser, modoAtual, window.opponentMatchRewardGold || 0);
     if(Number.isFinite(result.goldLost)) updateLobbyGoldWallet((window.currentGoldCoins || 0) - result.goldLost);
     const pts = result.points || 0;
+    if(pts !== 0) {
+        window.currentLobbyScore = Math.max(0, (Number(window.currentLobbyScore) || 0) + pts);
+        updateLobbyBottomProfileBar();
+    }
     if(pts !== 0) await saveMatchHistory('LOSS', pts);
 };
 
@@ -1583,6 +1607,10 @@ window.registrarEmpateOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
     const pts = await registrarEmpateDB(window.currentUser, modoAtual);
+    if(pts > 0) {
+        window.currentLobbyScore = Math.max(0, (Number(window.currentLobbyScore) || 0) + pts);
+        updateLobbyBottomProfileBar();
+    }
     if(pts > 0) await saveMatchHistory('TIE', pts);
 };
 
