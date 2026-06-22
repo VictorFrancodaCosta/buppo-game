@@ -607,17 +607,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             animation: lobbyButtonPressJuice 0.26s cubic-bezier(0.16, 1.3, 0.32, 1) both !important;
         }
 
-        body.lobby-play-hover-active::before {
-            content: "" !important;
-            position: fixed !important;
-            inset: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            z-index: 39 !important;
-            pointer-events: none !important;
-            background: rgba(0, 0, 0, 0.64) !important;
-            backdrop-filter: saturate(0.78) brightness(0.68) !important;
-            opacity: 1 !important;
+        body.lobby-play-hover-active #game-background,
+        body.lobby-play-hover-active #ambient-particles,
+        body.lobby-play-hover-active #lobby-particles,
+        body.lobby-play-hover-active .lobby-ambient-layer,
+        body.lobby-play-hover-active .lobby-logo-right,
+        body.lobby-play-hover-active .lobby-profile-asset,
+        body.lobby-play-hover-active .friends-panel,
+        body.lobby-play-hover-active #top-left-controls,
+        body.lobby-play-hover-active #btn-fullscreen,
+        body.lobby-play-hover-active #lobby-screen::after,
+        body.lobby-play-hover-active #lobby-screen .lobby-menu-button:not(#btn-play-pvp) {
+            filter: brightness(0.34) saturate(0.78) !important;
+            transition: filter 0.16s ease !important;
         }
 
         #lobby-screen #btn-play-pvp.lobby-main-play {
@@ -625,7 +627,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             aspect-ratio: 1392 / 637 !important;
             background-image: url('assets/img/botao_jogar.webp') !important;
             margin-bottom: clamp(3px, 0.6vh, 8px) !important;
-            z-index: 43 !important;
+            z-index: 13000 !important;
         }
 
         #lobby-screen #btn-play-pvp.lobby-main-play:hover,
@@ -640,7 +642,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         #lobby-screen #btn-play-pvp.lobby-main-play.lobby-button-press-juice {
-            animation: lobbyButtonPressJuice 0.26s cubic-bezier(0.16, 1.3, 0.32, 1) both !important;
+            animation: lobbyMainPlayPressJuice 0.32s cubic-bezier(0.16, 1.3, 0.32, 1) both !important;
             filter: drop-shadow(4px 5px 0 rgba(26, 11, 4, 0.86)) drop-shadow(0 0 18px rgba(255, 211, 38, 0.72)) !important;
         }
 
@@ -649,6 +651,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             32% { transform: translateY(7px) scale(1.12, 0.78); filter: drop-shadow(4px 5px 0 rgba(26, 11, 4, 0.86)) drop-shadow(0 0 18px rgba(255, 211, 38, 0.72)); }
             68% { transform: translateY(-4px) scale(0.94, 1.13); }
             100% { transform: translateY(0) scale(1, 1); }
+        }
+
+        @keyframes lobbyMainPlayPressJuice {
+            0% { transform: translateY(-5px) scale(1.085, 1.085); }
+            28% { transform: translateY(8px) scale(1.16, 0.76); }
+            62% { transform: translateY(-8px) scale(0.92, 1.18); }
+            100% { transform: translateY(-5px) scale(1.085, 1.085); }
         }
 
         #lobby-screen #btn-play-pvp.lobby-main-play::before {
@@ -1672,7 +1681,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             button.classList.remove('lobby-button-press-juice');
             void button.offsetWidth;
             button.classList.add('lobby-button-press-juice');
-            setTimeout(() => button.classList.remove('lobby-button-press-juice'), 300);
+            setTimeout(() => button.classList.remove('lobby-button-press-juice'), 360);
         };
 
         const runLobbyButtonAction = (button, action) => {
@@ -1689,7 +1698,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 } finally {
                     setTimeout(() => { button.dataset.lobbyActionBusy = '0'; }, 140);
                 }
-            }, 240);
+            }, 340);
         };
 
         let playButton = document.getElementById('btn-play-pvp');
