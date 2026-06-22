@@ -335,7 +335,12 @@ window.unlockGameAudio = function() {
 };
 
 window.playNavSound = function() {
+    if(window.__suppressNavSoundUntil && Date.now() < window.__suppressNavSoundUntil) return;
     playSfx('sfx-nav');
+};
+
+window.suppressNavSoundFor = function(durationMs = 220) {
+    window.__suppressNavSoundUntil = Date.now() + Math.max(0, durationMs || 0);
 };
 
 window.playUIHoverSound = function() {
@@ -437,12 +442,6 @@ document.addEventListener('pointerover', (event) => {
     if(!button || button === lastLobbyHoverElement) return;
     lastLobbyHoverElement = button;
     window.playLobbyButtonHoverSound();
-}, true);
-
-document.addEventListener('click', (event) => {
-    const button = event.target?.closest?.('#lobby-screen .lobby-menu-button');
-    if(!button) return;
-    window.playLobbyButtonSelectSound();
 }, true);
 
 document.addEventListener('pointerout', (event) => {

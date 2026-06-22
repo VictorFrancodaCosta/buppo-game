@@ -1656,6 +1656,30 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         if (oldPveButton) oldPveButton.remove();
         if (oldRow) oldRow.remove();
 
+        const playLobbyPressJuice = (button) => {
+            if(!button) return;
+            button.classList.remove('lobby-button-press-juice');
+            void button.offsetWidth;
+            button.classList.add('lobby-button-press-juice');
+            setTimeout(() => button.classList.remove('lobby-button-press-juice'), 300);
+        };
+
+        const runLobbyButtonAction = (button, action) => {
+            if(!button || button.dataset.lobbyActionBusy === '1') return;
+            button.dataset.lobbyActionBusy = '1';
+            window.playLobbyButtonSelectSound?.();
+            playLobbyPressJuice(button);
+            window.suppressNavSoundFor?.(520);
+            setTimeout(() => {
+                try {
+                    window.suppressNavSoundFor?.(180);
+                    action?.();
+                } finally {
+                    setTimeout(() => { button.dataset.lobbyActionBusy = '0'; }, 140);
+                }
+            }, 240);
+        };
+
         let playButton = document.getElementById('btn-play-pvp');
         if (!playButton) {
             playButton = document.createElement('button');
@@ -1667,7 +1691,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         playButton.removeAttribute('data-tip');
         playButton.removeAttribute('title');
         playButton.setAttribute('aria-label', 'Jogar');
-        playButton.onclick = () => window.openLobbyModeChooser?.();
+        playButton.onclick = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            runLobbyButtonAction(playButton, () => window.openLobbyModeChooser?.());
+        };
         playButton.replaceChildren();
         if (playButton.parentElement !== playCenter) {
             playCenter.appendChild(playButton);
@@ -1684,7 +1712,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             button.setAttribute('aria-label', label);
             button.removeAttribute('title');
             button.removeAttribute('data-tip');
-            button.onclick = onClick;
+            button.onclick = (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                runLobbyButtonAction(button, onClick);
+            };
             button.replaceChildren();
             if (button.parentElement !== playCenter) {
                 playCenter.appendChild(button);
@@ -1713,14 +1745,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
             if (button.dataset.pressJuiceBound !== '1') {
                 button.dataset.pressJuiceBound = '1';
-                const pressJuice = () => {
-                    button.classList.remove('lobby-button-press-juice');
-                    void button.offsetWidth;
-                    button.classList.add('lobby-button-press-juice');
-                    setTimeout(() => button.classList.remove('lobby-button-press-juice'), 280);
-                };
+                const pressJuice = () => playLobbyPressJuice(button);
                 button.addEventListener('pointerdown', pressJuice, { capture: true });
-                button.addEventListener('click', pressJuice, { capture: true });
             }
         });
 
