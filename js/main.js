@@ -6,8 +6,8 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limi
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MÓDULOS
-import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.21.11';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.21.11';
+import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.21.12';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.21.12';
 import { initiateMatchmaking } from './matchmaking.js';
 
 // --- VARIÁVEIS GLOBAIS DE ESTADO ---
@@ -1675,7 +1675,12 @@ window.abandonMatch = function() {
 function preloadGame() {
     ASSETS_TO_LOAD.images.forEach(src => { let img = new Image(); img.src = withRuntimeVersion(src); window.gameAssets.push(img); img.onload = () => updateLoader(); img.onerror = () => updateLoader(); });
     ASSETS_TO_LOAD.audio.forEach(a => {
-        let s = new Audio(); s.src = withRuntimeVersion(a.src); s.preload = 'auto'; if(a.loop) s.loop = true; audios[a.id] = s; window.gameAssets.push(s);
+        let s = audios[a.id] || new Audio();
+        s.src = s.src || withRuntimeVersion(a.src);
+        s.preload = 'auto';
+        if(a.loop) s.loop = true;
+        audios[a.id] = s;
+        window.gameAssets.push(s);
         s.onloadedmetadata = () => {
             if(window.applyAudioSettings) window.applyAudioSettings({ persist: false });
             updateLoader();

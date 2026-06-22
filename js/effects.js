@@ -505,7 +505,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .profile-asset-name {
             position: absolute !important;
             left: 42.3% !important;
-            top: 25.5% !important;
+            top: 27.8% !important;
             width: 57% !important;
             font-size: clamp(18px, 1.62vw, 27px) !important;
             font-weight: 950 !important;
@@ -531,11 +531,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .profile-asset-ranking {
             position: absolute !important;
             left: 42.3% !important;
-            top: 50.8% !important;
+            top: 53.1% !important;
             width: 48% !important;
             text-align: left !important;
             font-size: clamp(11px, 0.94vw, 17px) !important;
-            font-weight: 900 !important;
+            font-family: 'Montserrat', Arial, sans-serif !important;
+            font-weight: 650 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
         }
@@ -549,7 +550,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .profile-asset-gold {
             position: absolute !important;
             left: 42.3% !important;
-            top: 69.4% !important;
+            top: 71.2% !important;
             width: 28% !important;
             display: flex !important;
             align-items: center !important;
@@ -1251,20 +1252,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             filter: grayscale(0%) brightness(1.12) drop-shadow(0 0 30px rgba(255, 215, 0, 0.54)) drop-shadow(0 18px 17px rgba(0, 0, 0, 0.48)) !important;
         }
 
-        .lobby-mode-deck.deck-picked {
-            pointer-events: none !important;
-            z-index: 4 !important;
-        }
-
-        .lobby-mode-deck.deck-picked img {
-            animation: lobbyDeckPickZoom 0.44s cubic-bezier(0.17, 1.2, 0.28, 1) both !important;
-        }
-
-        .lobby-mode-deck.deck-not-picked {
-            pointer-events: none !important;
-            animation: lobbyDeckNotPickedFade 0.34s ease-out both !important;
-        }
-
         .lobby-mode-deck::after {
             content: attr(data-name);
             position: absolute !important;
@@ -1287,17 +1274,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-mode-deck:focus-visible::after {
             opacity: 1 !important;
             transform: translateX(-50%) translateY(6px) !important;
-        }
-
-        @keyframes lobbyDeckPickZoom {
-            0% { opacity: 1; transform: scale(1) translateY(0); filter: grayscale(0%) brightness(1); }
-            38% { opacity: 1; transform: scale(1.22) translateY(-18px); filter: grayscale(0%) brightness(1.38) drop-shadow(0 0 32px rgba(255, 230, 120, 0.86)); }
-            100% { opacity: 0.18; transform: scale(1.45) translateY(-28px); filter: grayscale(0%) brightness(1.65) drop-shadow(0 0 42px rgba(255, 230, 120, 0.95)); }
-        }
-
-        @keyframes lobbyDeckNotPickedFade {
-            0% { opacity: 1; transform: scale(1); filter: grayscale(0); }
-            100% { opacity: 0.16; transform: scale(0.82) translateY(12px); filter: grayscale(1) brightness(0.65); }
         }
 
         .lobby-mode-history {
@@ -1718,12 +1694,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
             if (button.dataset.pressJuiceBound !== '1') {
                 button.dataset.pressJuiceBound = '1';
-                button.addEventListener('click', () => {
+                const pressJuice = () => {
                     button.classList.remove('lobby-button-press-juice');
                     void button.offsetWidth;
                     button.classList.add('lobby-button-press-juice');
                     setTimeout(() => button.classList.remove('lobby-button-press-juice'), 280);
-                }, { capture: true });
+                };
+                button.addEventListener('pointerdown', pressJuice, { capture: true });
+                button.addEventListener('click', pressJuice, { capture: true });
             }
         });
 
@@ -1857,13 +1835,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 const mode = modeOverlay.dataset.selectedMode;
                 const deckType = button.dataset.deck || 'knight';
                 if(!mode) return;
-                modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deck => {
-                    deck.classList.toggle('deck-picked', deck === button);
-                    deck.classList.toggle('deck-not-picked', deck !== button);
-                });
-                setTimeout(() => {
-                    window.startLobbyModeWithDeck?.(mode, deckType);
-                }, 360);
+                window.startLobbyModeWithDeck?.(mode, deckType);
             };
         });
         modeOverlay.querySelectorAll('.lobby-mode-btn').forEach((button) => {
