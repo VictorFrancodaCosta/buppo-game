@@ -6,8 +6,8 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limi
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MÓDULOS
-import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.21.9';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=9';
+import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.21.10';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.21.10';
 import { initiateMatchmaking } from './matchmaking.js';
 
 // --- VARIÁVEIS GLOBAIS DE ESTADO ---
@@ -323,13 +323,11 @@ function updateLobbyProfileProgress(level = 1, xp = 0) {
 
 function updateLobbyBottomProfileBar() {
     const nameEl = document.getElementById('profile-asset-name');
-    const idEl = document.getElementById('profile-asset-id');
     const ranking = document.getElementById('profile-asset-ranking');
     const gold = document.getElementById('profile-asset-gold-count');
     const name = getPlayerFirstName(window.currentLobbyPlayerName || (window.currentUser && window.currentUser.displayName) || 'JOGADOR');
     const gameId = window.currentPlayerGameId || '----';
-    if(nameEl) nameEl.textContent = name;
-    if(idEl) idEl.textContent = `#${gameId}`;
+    if(nameEl) nameEl.innerHTML = `${name} <span class="profile-asset-id-inline" id="profile-asset-id">#${gameId}</span>`;
     if(ranking) ranking.textContent = `RANKING ${window.currentLobbyRank || '-'}`;
     if(gold) gold.textContent = window.currentGoldCoins || 0;
 }

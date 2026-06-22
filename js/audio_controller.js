@@ -74,7 +74,9 @@ function ensureAudioRegistry() {
 }
 
 function preferredMusicTrack() {
-    return document.getElementById('game-screen')?.classList.contains('active') ? 'bgm-loop' : 'bgm-menu';
+    const gameActive = document.getElementById('game-screen')?.classList.contains('active');
+    const endVisible = document.getElementById('end-screen')?.classList.contains('visible');
+    return gameActive && !endVisible ? 'bgm-loop' : 'bgm-menu';
 }
 
 function scheduleSaveSettings() {
@@ -141,6 +143,31 @@ function stopOtherMusicTracks(targetId, fadeOutMs = 0) {
     });
 }
 
+function enforceExclusiveMusic(trackId) {
+    Object.entries(audios).forEach(([key, audio]) => {
+        if(!key.startsWith('bgm') || !audio) return;
+        stopMusicFade(audio);
+        if(key !== trackId) {
+            try {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.muted = true;
+                audio.volume = 0;
+            } catch(e) {}
+        }
+    });
+}
+
+window.syncBuppoMusic = function(forceTrackId = null) {
+    ensureAudioRegistry();
+    if(forceTrackId === 'none' || !window.musicEnabled) {
+        enforceExclusiveMusic(null);
+        MusicController.currentTrackId = null;
+        return;
+    }
+    MusicController.play(forceTrackId || preferredMusicTrack());
+};
+
 window.applyAudioSettings = function({ persist = true } = {}) {
     ensureAudioRegistry();
     Object.entries(audios).forEach(([key, audio]) => setAudioVolume(key, audio));
@@ -155,9 +182,7 @@ window.applyAudioSettings = function({ persist = true } = {}) {
         } catch(e) {}
     });
 
-    if(window.musicEnabled) {
-        MusicController.play(preferredMusicTrack());
-    }
+    window.syncBuppoMusic();
 
     if(persist) scheduleSaveSettings();
 };
@@ -200,7 +225,7 @@ export const MusicController = {
                 stopMusicFade(audios[this.currentTrackId]);
                 audios[this.currentTrackId].pause();
             }
-            stopOtherMusicTracks(trackId);
+            enforceExclusiveMusic(trackId);
             this.currentTrackId = trackId;
             setAudioVolume(trackId, next);
             if(window.musicEnabled) {
@@ -216,14 +241,11 @@ export const MusicController = {
     transitionTo(trackId, options = {}) {
         ensureAudioRegistry();
         if(!trackId || !audios[trackId]) return;
-        const fadeOutMs = options.fadeOutMs ?? 700;
-        const fadeInMs = options.fadeInMs ?? 900;
-        const previousId = this.currentTrackId;
-        const previous = previousId && previousId !== trackId ? audios[previousId] : null;
-        const next = audios[trackId];
+            const fadeInMs = options.fadeInMs ?? 900;
+            const next = audios[trackId];
 
         try {
-            stopOtherMusicTracks(trackId, fadeOutMs);
+            enforceExclusiveMusic(trackId);
 
             this.currentTrackId = trackId;
             setAudioVolume(trackId, next);

@@ -504,10 +504,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-name {
             position: absolute !important;
-            left: 48.8% !important;
-            top: 27.9% !important;
-            width: 52% !important;
-            font-size: clamp(15px, 1.28vw, 22px) !important;
+            left: 42.3% !important;
+            top: 23.2% !important;
+            width: 57% !important;
+            font-size: clamp(18px, 1.62vw, 27px) !important;
             font-weight: 950 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
@@ -516,26 +516,25 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             letter-spacing: 0 !important;
         }
 
-        #lobby-screen .profile-asset-id {
-            position: absolute !important;
-            left: 48.8% !important;
-            top: 39.8% !important;
-            width: 52% !important;
-            font-size: clamp(7px, 0.55vw, 10px) !important;
+        #lobby-screen .profile-asset-id-inline {
+            display: inline-block !important;
+            margin-left: 0.32em !important;
+            font-size: 0.56em !important;
             font-style: italic !important;
             font-weight: 850 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
-            opacity: 0.95 !important;
+            opacity: 0.72 !important;
+            vertical-align: baseline !important;
         }
 
         #lobby-screen .profile-asset-ranking {
             position: absolute !important;
-            left: 48.8% !important;
-            top: 54.2% !important;
+            left: 42.3% !important;
+            top: 48.2% !important;
             width: 48% !important;
             text-align: left !important;
-            font-size: clamp(8px, 0.7vw, 13px) !important;
+            font-size: clamp(10px, 0.86vw, 15px) !important;
             font-weight: 900 !important;
             line-height: 1 !important;
             white-space: nowrap !important;
@@ -543,14 +542,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .profile-asset-gold {
             position: absolute !important;
-            left: 48.8% !important;
-            top: 72.8% !important;
+            left: 42.3% !important;
+            top: 66.8% !important;
             width: 28% !important;
             display: flex !important;
             align-items: center !important;
             justify-content: flex-start !important;
             color: #ffd62e !important;
-            font-size: clamp(15px, 1.25vw, 23px) !important;
+            font-size: clamp(20px, 1.75vw, 32px) !important;
             font-weight: 950 !important;
             line-height: 1 !important;
             text-shadow: 2px 2px 0 #190700, -1px -1px 0 #190700, 1px -1px 0 #190700, -1px 1px 0 #190700, 0 0 9px rgba(255,214,46,0.4) !important;
@@ -1600,8 +1599,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             profileAsset.className = 'lobby-profile-asset';
             profileAsset.innerHTML = `
                 <div class="profile-asset-avatar" id="profile-asset-avatar">B</div>
-                <div class="profile-asset-name" id="profile-asset-name">JOGADOR</div>
-                <div class="profile-asset-id" id="profile-asset-id">#----</div>
+                <div class="profile-asset-name" id="profile-asset-name">JOGADOR <span class="profile-asset-id-inline" id="profile-asset-id">#----</span></div>
                 <div class="profile-asset-ranking" id="profile-asset-ranking">RANKING -</div>
                 <div class="profile-asset-gold"><span id="profile-asset-gold-count">0</span></div>
             `;

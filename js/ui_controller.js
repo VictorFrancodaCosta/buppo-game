@@ -49,6 +49,10 @@ window.showScreen = function(screenId) {
     if (typeof window.syncResponsiveRuntimeLayout === 'function') {
         setTimeout(() => window.syncResponsiveRuntimeLayout(), 0);
     }
+    if (typeof window.syncBuppoMusic === 'function') {
+        const musicTrack = screenId === 'game-screen' ? 'bgm-loop' : (window.currentUser ? 'bgm-menu' : 'none');
+        setTimeout(() => window.syncBuppoMusic(musicTrack), 0);
+    }
     syncOrientationRequirement();
 }
 
