@@ -614,6 +614,28 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin-bottom: clamp(3px, 0.6vh, 8px) !important;
         }
 
+        #lobby-screen #btn-play-pvp.lobby-main-play:hover,
+        #lobby-screen #btn-play-pvp.lobby-main-play:focus-visible {
+            animation: lobbyPlayGoldGlow 0.95s ease-in-out infinite !important;
+        }
+
+        @keyframes lobbyPlayGoldGlow {
+            0%, 100% {
+                filter: brightness(1.12)
+                        drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
+                        drop-shadow(0 20px 23px rgba(0, 0, 0, 0.34))
+                        drop-shadow(0 0 18px rgba(255, 221, 80, 0.42))
+                        drop-shadow(0 0 28px rgba(255, 188, 18, 0.32)) !important;
+            }
+            50% {
+                filter: brightness(1.12)
+                        drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
+                        drop-shadow(0 20px 23px rgba(0, 0, 0, 0.34))
+                        drop-shadow(0 0 28px rgba(255, 225, 74, 0.8))
+                        drop-shadow(0 0 52px rgba(255, 176, 0, 0.58)) !important;
+            }
+        }
+
         @keyframes lobbyButtonPressJuice {
             0% { transform: translateY(0) scale(1, 1); }
             32% { transform: translateY(7px) scale(1.12, 0.78); filter: drop-shadow(4px 5px 0 rgba(26, 11, 4, 0.86)) drop-shadow(0 0 18px rgba(255, 211, 38, 0.72)); }
