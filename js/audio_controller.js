@@ -2,6 +2,7 @@
 
 export const audios = {};
 window.audios = audios;
+window.__buppoAudioNodes = window.__buppoAudioNodes || [];
 
 window.masterVol = 0.5;
 window.musicEnabled = false;
@@ -42,6 +43,13 @@ let audioUnlocked = false;
 let saveTimer = null;
 const musicFadeTimers = new WeakMap();
 
+function registerAudioNode(audio, key = '') {
+    if(!audio) return audio;
+    audio.datasetKey = key || audio.datasetKey || '';
+    if(!window.__buppoAudioNodes.includes(audio)) window.__buppoAudioNodes.push(audio);
+    return audio;
+}
+
 function baseVolume(key) {
     if(key === 'sfx-ui-hover') return 0.45;
     if(key === 'sfx-button') return 1.0;
@@ -61,12 +69,15 @@ function withBuildVersion(src) {
 
 function ensureAudioRegistry() {
     CORE_AUDIO_ASSETS.forEach(asset => {
-        if(audios[asset.id]) return;
+        if(audios[asset.id]) {
+            registerAudioNode(audios[asset.id], asset.id);
+            return;
+        }
         const audio = new Audio();
         audio.src = withBuildVersion(asset.src);
         audio.preload = 'auto';
         audio.loop = asset.loop === true;
-        audios[asset.id] = audio;
+        audios[asset.id] = registerAudioNode(audio, asset.id);
         setAudioVolume(asset.id, audio);
     });
     window.audios = audios;
@@ -144,10 +155,18 @@ function stopOtherMusicTracks(targetId, fadeOutMs = 0) {
 }
 
 function enforceExclusiveMusic(trackId) {
-    Object.entries(audios).forEach(([key, audio]) => {
-        if(!key.startsWith('bgm') || !audio) return;
+    const official = trackId ? audios[trackId] : null;
+    const tracked = [
+        ...Object.entries(audios).filter(([key]) => key.startsWith('bgm')).map(([key, audio]) => ({ key, audio })),
+        ...(window.__buppoAudioNodes || []).map(audio => ({ key: audio.datasetKey || '', audio }))
+    ];
+    tracked.forEach(({ key, audio }) => {
+        if(!audio) return;
+        const src = String(audio.currentSrc || audio.src || '');
+        const isMusic = key.startsWith('bgm') || src.includes('musica_menu') || src.includes('musica_batalha');
+        if(!isMusic) return;
         stopMusicFade(audio);
-        if(key !== trackId) {
+        if(audio !== official) {
             try {
                 audio.pause();
                 audio.currentTime = 0;
@@ -289,6 +308,7 @@ window.unlockGameAudio = function() {
     audioUnlocked = true;
     Object.entries(audios).forEach(([key, audio]) => {
         if(!audio || key.startsWith('bgm')) return;
+        registerAudioNode(audio, key);
         try {
             const previousMuted = audio.muted;
             const previousVolume = audio.volume;
