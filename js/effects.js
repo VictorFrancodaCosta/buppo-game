@@ -607,30 +607,38 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             animation: lobbyButtonPressJuice 0.26s cubic-bezier(0.16, 1.3, 0.32, 1) both !important;
         }
 
+        body.lobby-play-hover-active #lobby-screen::before {
+            content: "" !important;
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 40 !important;
+            pointer-events: none !important;
+            background: rgba(0, 0, 0, 0.56) !important;
+            backdrop-filter: saturate(0.82) brightness(0.78) !important;
+            opacity: 1 !important;
+        }
+
         #lobby-screen #btn-play-pvp.lobby-main-play {
             width: 100% !important;
             aspect-ratio: 1392 / 637 !important;
             background-image: url('assets/img/botao_jogar.webp') !important;
             margin-bottom: clamp(3px, 0.6vh, 8px) !important;
-        }
-
-        #lobby-screen:has(#btn-play-pvp.lobby-main-play:hover)::before,
-        #lobby-screen:has(#btn-play-pvp.lobby-main-play:focus-visible)::before,
-        #lobby-screen:has(#btn-play-pvp.lobby-main-play:hover)::after,
-        #lobby-screen:has(#btn-play-pvp.lobby-main-play:focus-visible)::after {
-            content: none !important;
-            display: none !important;
+            z-index: 43 !important;
         }
 
         #lobby-screen #btn-play-pvp.lobby-main-play:hover,
         #lobby-screen #btn-play-pvp.lobby-main-play:focus-visible {
             transform: translateY(-5px) scale(1.085) !important;
             filter:
-                brightness(1.16)
                 drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
                 drop-shadow(0 18px 22px rgba(0, 0, 0, 0.34))
-                drop-shadow(0 0 24px rgba(255, 222, 80, 0.78)) !important;
+                drop-shadow(0 0 18px rgba(255, 211, 38, 0.72))
+                drop-shadow(0 0 34px rgba(255, 174, 0, 0.46)) !important;
             animation: lobbyMainPlayPulse 0.95s ease-in-out infinite !important;
+        }
+
+        #lobby-screen #btn-play-pvp.lobby-main-play.lobby-button-press-juice {
+            animation: lobbyButtonPressJuice 0.26s cubic-bezier(0.16, 1.3, 0.32, 1) both !important;
         }
 
         @keyframes lobbyButtonPressJuice {
@@ -760,17 +768,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         @keyframes lobbyMainPlayPulse {
             0%, 100% {
                 transform: translateY(-5px) scale(1.075);
-                filter: brightness(1.12)
-                        drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
+                filter: drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
                         drop-shadow(0 18px 22px rgba(0, 0, 0, 0.34))
-                        drop-shadow(0 0 18px rgba(255, 222, 80, 0.58));
+                        drop-shadow(0 0 16px rgba(255, 211, 38, 0.68))
+                        drop-shadow(0 0 30px rgba(255, 174, 0, 0.38));
             }
             50% {
                 transform: translateY(-7px) scale(1.105);
-                filter: brightness(1.19)
-                        drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
+                filter: drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
                         drop-shadow(0 20px 23px rgba(0, 0, 0, 0.36))
-                        drop-shadow(0 0 34px rgba(255, 222, 80, 0.92));
+                        drop-shadow(0 0 30px rgba(255, 211, 38, 0.95))
+                        drop-shadow(0 0 52px rgba(255, 174, 0, 0.6));
             }
         }
 
@@ -1672,6 +1680,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             window.suppressNavSoundFor?.(520);
             setTimeout(() => {
                 try {
+                    document.body.classList.remove('lobby-play-hover-active');
                     window.suppressNavSoundFor?.(180);
                     action?.();
                 } finally {
@@ -1691,6 +1700,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         playButton.removeAttribute('data-tip');
         playButton.removeAttribute('title');
         playButton.setAttribute('aria-label', 'Jogar');
+        playButton.onmouseenter = () => {
+            document.body.classList.add('lobby-play-hover-active');
+        };
+        playButton.onfocus = () => document.body.classList.add('lobby-play-hover-active');
+        playButton.onmouseleave = () => document.body.classList.remove('lobby-play-hover-active');
+        playButton.onblur = () => document.body.classList.remove('lobby-play-hover-active');
         playButton.onclick = (event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -1881,6 +1896,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 const mode = modeOverlay.dataset.selectedMode;
                 const deckType = button.dataset.deck || 'knight';
                 if(!mode) return;
+                if(window.audios?.['sfx-deck-select'] && window.sfxEnabled) {
+                    try {
+                        window.audios['sfx-deck-select'].currentTime = 0;
+                        window.audios['sfx-deck-select'].play().catch(() => {});
+                    } catch(e) {}
+                }
                 modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deck => {
                     deck.classList.toggle('deck-selecting', deck === button);
                     deck.classList.toggle('deck-dimmed', deck !== button);
