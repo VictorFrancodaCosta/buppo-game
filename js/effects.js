@@ -607,14 +607,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             animation: lobbyButtonPressJuice 0.26s cubic-bezier(0.16, 1.3, 0.32, 1) both !important;
         }
 
-        body.lobby-play-hover-active #lobby-screen::before {
+        body.lobby-play-hover-active::before {
             content: "" !important;
             position: fixed !important;
             inset: 0 !important;
-            z-index: 40 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 39 !important;
             pointer-events: none !important;
-            background: rgba(0, 0, 0, 0.56) !important;
-            backdrop-filter: saturate(0.82) brightness(0.78) !important;
+            background: rgba(0, 0, 0, 0.64) !important;
+            backdrop-filter: saturate(0.78) brightness(0.68) !important;
             opacity: 1 !important;
         }
 
@@ -639,11 +641,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen #btn-play-pvp.lobby-main-play.lobby-button-press-juice {
             animation: lobbyButtonPressJuice 0.26s cubic-bezier(0.16, 1.3, 0.32, 1) both !important;
+            filter: drop-shadow(4px 5px 0 rgba(26, 11, 4, 0.86)) drop-shadow(0 0 18px rgba(255, 211, 38, 0.72)) !important;
         }
 
         @keyframes lobbyButtonPressJuice {
             0% { transform: translateY(0) scale(1, 1); }
-            32% { transform: translateY(7px) scale(1.12, 0.78); filter: brightness(1.22) drop-shadow(4px 5px 0 rgba(26, 11, 4, 0.86)); }
+            32% { transform: translateY(7px) scale(1.12, 0.78); filter: drop-shadow(4px 5px 0 rgba(26, 11, 4, 0.86)) drop-shadow(0 0 18px rgba(255, 211, 38, 0.72)); }
             68% { transform: translateY(-4px) scale(0.94, 1.13); }
             100% { transform: translateY(0) scale(1, 1); }
         }
@@ -1896,12 +1899,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 const mode = modeOverlay.dataset.selectedMode;
                 const deckType = button.dataset.deck || 'knight';
                 if(!mode) return;
-                if(window.audios?.['sfx-deck-select'] && window.sfxEnabled) {
-                    try {
-                        window.audios['sfx-deck-select'].currentTime = 0;
-                        window.audios['sfx-deck-select'].play().catch(() => {});
-                    } catch(e) {}
-                }
+                window.playBuppoSfx?.('sfx-deck-select');
                 modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deck => {
                     deck.classList.toggle('deck-selecting', deck === button);
                     deck.classList.toggle('deck-dimmed', deck !== button);

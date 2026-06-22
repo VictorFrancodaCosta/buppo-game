@@ -233,6 +233,10 @@ function playSfx(key, fallbackKey = null, volume = null) {
     }
 }
 
+window.playBuppoSfx = function(key, fallbackKey = null, volume = null) {
+    return playSfx(key, fallbackKey, volume);
+};
+
 export const MusicController = {
     currentTrackId: null,
     play(trackId, options = {}) {
