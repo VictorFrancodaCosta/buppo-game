@@ -317,6 +317,7 @@ function updateLobbyGoldWallet(amount = 0) {
     const count = document.getElementById('lobby-gold-count');
     if(count) count.innerText = window.currentGoldCoins;
     updateLobbyBottomProfileBar();
+    window.syncLobbyShopGold?.();
 }
 
 function updateLobbyProfileProgress(level = 1, xp = 0) {

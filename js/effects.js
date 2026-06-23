@@ -740,6 +740,133 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin: 0 auto !important;
         }
 
+        .lobby-shop-modal {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 87000 !important;
+            display: none !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: rgba(8, 3, 1, 0.64) !important;
+            backdrop-filter: blur(8px) saturate(0.82) !important;
+        }
+
+        .lobby-shop-modal.visible {
+            display: flex !important;
+        }
+
+        .lobby-shop-panel {
+            position: relative !important;
+            width: min(820px, 90vw) !important;
+            min-height: min(560px, 78vh) !important;
+            padding: 34px 42px 92px !important;
+            box-sizing: border-box !important;
+            background: linear-gradient(180deg, rgba(101, 52, 22, 0.96), rgba(55, 25, 11, 0.96)) !important;
+            border: 5px solid #2a1004 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 18px 0 rgba(30, 11, 3, 0.9), 0 0 38px rgba(255, 201, 54, 0.28), inset 0 0 0 2px rgba(255,255,255,0.1) !important;
+            color: #fff !important;
+        }
+
+        .lobby-shop-header {
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+            gap: 20px !important;
+            margin-bottom: 28px !important;
+        }
+
+        .lobby-shop-title {
+            margin: 0 !important;
+            color: var(--gold) !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(48px, 5vw, 72px) !important;
+            line-height: 0.9 !important;
+            letter-spacing: 1px !important;
+            -webkit-text-stroke: 2px #210b03 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 4px 4px 0 #210b03, 0 0 18px rgba(255, 215, 0, 0.45) !important;
+        }
+
+        .lobby-shop-gold {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 9px !important;
+            min-height: 42px !important;
+            padding: 5px 15px 5px 8px !important;
+            border: 2px solid rgba(255,215,0,0.72) !important;
+            border-radius: 999px !important;
+            background: linear-gradient(90deg, rgba(0,0,0,0.52), rgba(255,215,0,0.18), rgba(0,0,0,0.42)) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 6px 14px rgba(0,0,0,0.36), 0 0 14px rgba(255,215,0,0.18) !important;
+            color: #fff8c8 !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: clamp(18px, 2vw, 26px) !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+            text-shadow: 2px 2px 0 #1b0a03, 0 0 10px rgba(255,215,0,0.58) !important;
+        }
+
+        .lobby-shop-gold img {
+            width: 34px !important;
+            height: 34px !important;
+            object-fit: contain !important;
+            filter: drop-shadow(0 2px 0 rgba(0,0,0,0.58)) drop-shadow(0 0 7px rgba(255,215,0,0.62)) !important;
+        }
+
+        .lobby-shop-grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: clamp(14px, 2vw, 22px) !important;
+        }
+
+        .lobby-shop-slot {
+            aspect-ratio: 1 / 1 !important;
+            border: 3px solid rgba(255,215,0,0.55) !important;
+            border-radius: 8px !important;
+            background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.08), transparent 34%), rgba(0,0,0,0.36) !important;
+            box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.08), 0 8px 0 rgba(30, 11, 3, 0.54) !important;
+        }
+
+        .lobby-shop-close {
+            position: absolute !important;
+            right: 42px !important;
+            bottom: 28px !important;
+        }
+
+        @media (max-width: 680px) {
+            .lobby-shop-panel {
+                width: 92vw !important;
+                min-height: 0 !important;
+                padding: 26px 22px 82px !important;
+            }
+
+            .lobby-shop-header {
+                align-items: center !important;
+                gap: 12px !important;
+                margin-bottom: 20px !important;
+            }
+
+            .lobby-shop-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            .lobby-shop-gold {
+                font-size: 17px !important;
+                padding-right: 12px !important;
+            }
+
+            .lobby-shop-gold img {
+                width: 28px !important;
+                height: 28px !important;
+            }
+
+            .lobby-shop-close {
+                right: 22px !important;
+                bottom: 22px !important;
+            }
+        }
+
         @keyframes lobbyMenuFloatGroup {
             0%, 100% { transform: translate(-50%, -50%) translateY(0); }
             50% { transform: translate(-50%, -50%) translateY(-5px); }
@@ -1723,7 +1850,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         ensureLobbyMenuButton('btn-lobby-main-history', 'lobby-main-history', 'Hist\u00f3rico de partidas', () => window.openHistory?.());
         ensureLobbyMenuButton('btn-lobby-main-ranking', 'lobby-main-ranking', 'Ranking', () => window.openLobbyRanking?.());
-        ensureLobbyMenuButton('btn-lobby-main-shop', 'lobby-main-shop', 'Loja', () => {});
+        ensureLobbyMenuButton('btn-lobby-main-shop', 'lobby-main-shop', 'Loja', () => window.openLobbyShop?.());
         ensureLobbyMenuButton('btn-lobby-main-tutorial', 'lobby-main-tutorial', 'Tutorial', () => {});
         ensureLobbyMenuButton('btn-lobby-main-exit', 'lobby-main-exit', 'Sair', () => {
             if (window.buppoDesktop?.quit) {
@@ -1777,6 +1904,54 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         window.closeLobbyRanking = () => {
             window.playNavSound?.();
             rankingModal.classList.remove('visible');
+        };
+
+        let shopModal = document.getElementById('lobby-shop-modal');
+        if (!shopModal) {
+            shopModal = document.createElement('div');
+            shopModal.id = 'lobby-shop-modal';
+            shopModal.className = 'lobby-shop-modal';
+            shopModal.innerHTML = `
+                <div class="lobby-shop-panel" role="dialog" aria-modal="true" aria-label="Loja">
+                    <div class="lobby-shop-header">
+                        <h2 class="lobby-shop-title">LOJA</h2>
+                        <div class="lobby-shop-gold" aria-label="Ouro disponivel">
+                            <img src="assets/img/moeda_ouro.png" alt="Moeda de ouro">
+                            <span id="lobby-shop-gold-count">0</span>
+                        </div>
+                    </div>
+                    <div class="lobby-shop-grid" aria-label="Itens da loja">
+                        <div class="lobby-shop-slot" aria-hidden="true"></div>
+                        <div class="lobby-shop-slot" aria-hidden="true"></div>
+                        <div class="lobby-shop-slot" aria-hidden="true"></div>
+                        <div class="lobby-shop-slot" aria-hidden="true"></div>
+                        <div class="lobby-shop-slot" aria-hidden="true"></div>
+                        <div class="lobby-shop-slot" aria-hidden="true"></div>
+                    </div>
+                    <button class="mini-btn lobby-shop-close" type="button">SAIR</button>
+                </div>
+            `;
+            document.body.appendChild(shopModal);
+            shopModal.addEventListener('click', (event) => {
+                if (event.target === shopModal) window.closeLobbyShop?.();
+            });
+            shopModal.querySelector('.lobby-shop-close')?.addEventListener('click', () => window.closeLobbyShop?.());
+        }
+
+        window.syncLobbyShopGold = () => {
+            const count = document.getElementById('lobby-shop-gold-count');
+            if (count) count.textContent = window.currentGoldCoins || 0;
+        };
+
+        window.openLobbyShop = () => {
+            window.playNavSound?.();
+            window.syncLobbyShopGold?.();
+            shopModal.classList.add('visible');
+        };
+
+        window.closeLobbyShop = () => {
+            window.playNavSound?.();
+            shopModal.classList.remove('visible');
         };
 
         if (historyButton) {
