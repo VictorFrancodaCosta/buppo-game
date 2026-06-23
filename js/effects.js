@@ -900,34 +900,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .metallic-border-art {
-            position: relative !important;
             width: min(72%, 170px) !important;
             aspect-ratio: 5 / 7 !important;
             border-radius: 12px !important;
-            background: transparent !important;
+            background: url('assets/img/borda_metalica_card.png') center / contain no-repeat !important;
             box-shadow: 0 10px 18px rgba(0,0,0,0.45) !important;
-        }
-
-        .metallic-border-art::before {
-            content: "" !important;
-            position: absolute !important;
-            inset: 0 !important;
-            border-radius: inherit !important;
-            padding: 10px !important;
-            background: linear-gradient(135deg, #fbfbff 0%, #8f969f 18%, #f7f7ff 34%, #575f69 52%, #dfe8f4 72%, #727b85 100%) !important;
-            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
-            -webkit-mask-composite: xor !important;
-            mask-composite: exclude !important;
-            box-shadow: inset 0 0 18px rgba(255,255,255,0.92), 0 0 22px rgba(210,235,255,0.72) !important;
-        }
-
-        .metallic-border-art::after {
-            content: "" !important;
-            position: absolute !important;
-            inset: 7px !important;
-            border-radius: 8px !important;
-            border: 2px solid rgba(255,255,255,0.48) !important;
-            box-shadow: 0 0 16px rgba(225,245,255,0.7) !important;
+            filter: drop-shadow(0 0 12px rgba(210,235,255,0.58)) !important;
         }
 
         .shop-buy-btn,

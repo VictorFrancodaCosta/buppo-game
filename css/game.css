@@ -101,15 +101,11 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 .xp-mini.card-skin-metallic-border::before {
     content: "";
     position: absolute;
-    inset: -3px;
+    inset: -8px;
     z-index: 4;
     pointer-events: none;
     border-radius: 5px;
-    padding: 3px;
-    background: linear-gradient(135deg, #fbfbff, #858d97 22%, #ffffff 42%, #555d67 62%, #dfe8f4 82%, #7b858f);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
+    background: url('../assets/img/borda_metalica_card.png') center / 100% 100% no-repeat;
     filter: drop-shadow(0 0 5px rgba(225,245,255,0.92));
 }
 .xp-area.levelup-xp-consuming .xp-mini { opacity: 0 !important; visibility: hidden !important; }
@@ -143,15 +139,11 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 .flying-card.card-skin-metallic-border::before {
     content: "";
     position: absolute;
-    inset: -4px;
+    inset: -13px;
     z-index: 24;
     pointer-events: none;
-    border-radius: 13px;
-    padding: 5px;
-    background: linear-gradient(135deg, #fbfbff 0%, #858d97 18%, #ffffff 34%, #555d67 52%, #dfe8f4 72%, #7b858f 100%);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
+    border-radius: 16px;
+    background: url('../assets/img/borda_metalica_card.png') center / 100% 100% no-repeat;
     filter: drop-shadow(0 0 8px rgba(225,245,255,0.95));
 }
 .card::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 10px; pointer-events: none; z-index: 15; opacity: 0; transition: opacity 0.2s ease; background: linear-gradient(115deg, transparent 25%, rgba(255, 215, 0, 0.15) 35%, rgba(255, 0, 150, 0.15) 45%, rgba(0, 255, 255, 0.15) 55%, rgba(255, 255, 255, 0.25) 70%, transparent 80%); background-size: 300% 300%; background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%)); mix-blend-mode: color-dodge; }
