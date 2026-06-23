@@ -106,10 +106,10 @@ body.player-card-border-ice { --player-card-border-url: url('../assets/img/borda
 .xp-mini.card-skin-metallic-border::before {
     content: "";
     position: absolute;
-    inset: 0;
+    inset: -1px;
     z-index: 4;
     pointer-events: none;
-    border-radius: inherit;
+    border-radius: 4px;
     background: var(--player-card-border-url, url('../assets/img/borda_metalica_card.png')) center / 100% 100% no-repeat;
 }
 .xp-area.levelup-xp-consuming .xp-mini { opacity: 0 !important; visibility: hidden !important; }
@@ -142,11 +142,14 @@ body.player-card-border-ice { --player-card-border-url: url('../assets/img/borda
 .flying-card.card-skin-metallic-border::before {
     content: "";
     position: absolute;
-    inset: 0;
+    inset: -2px;
     z-index: 24;
     pointer-events: none;
-    border-radius: inherit;
+    border-radius: 12px;
     background: var(--player-card-border-url, url('../assets/img/borda_metalica_card.png')) center / 100% 100% no-repeat;
+}
+.slot .card.card-skin-metallic-border::before {
+    border-radius: 18px;
 }
 .card::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 10px; pointer-events: none; z-index: 15; opacity: 0; transition: opacity 0.2s ease; background: linear-gradient(115deg, transparent 25%, rgba(255, 215, 0, 0.15) 35%, rgba(255, 0, 150, 0.15) 45%, rgba(0, 255, 255, 0.15) 55%, rgba(255, 255, 255, 0.25) 70%, transparent 80%); background-size: 300% 300%; background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%)); mix-blend-mode: color-dodge; }
 .card:hover::after { opacity: 0.8; }
