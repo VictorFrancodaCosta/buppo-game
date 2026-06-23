@@ -784,9 +784,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-panel {
             position: relative !important;
-            width: min(1160px, 94vw) !important;
-            min-height: min(780px, 88vh) !important;
-            padding: 34px 56px 92px !important;
+            width: min(1420px, 97vw) !important;
+            min-height: min(880px, 92vh) !important;
+            padding: 34px 72px 96px !important;
             box-sizing: border-box !important;
             background: linear-gradient(180deg, rgba(101, 52, 22, 0.96), rgba(55, 25, 11, 0.96)) !important;
             border: 5px solid #2a1004 !important;
@@ -844,8 +844,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-grid {
             display: grid !important;
             grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-            gap: clamp(22px, 2.4vw, 34px) !important;
-            max-height: min(580px, 64vh) !important;
+            gap: clamp(26px, 2.6vw, 42px) !important;
+            max-height: min(690px, 72vh) !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             padding: 2px 10px 12px 2px !important;
@@ -892,7 +892,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .inventory-item-name {
             color: #fff8c8 !important;
             font-family: 'Russo One', sans-serif !important;
-            font-size: clamp(14px, 1.35vw, 20px) !important;
+            font-size: clamp(11px, 0.95vw, 15px) !important;
             line-height: 1.08 !important;
             text-align: center !important;
             text-transform: uppercase !important;
@@ -1059,9 +1059,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         @media (max-width: 680px) {
             .lobby-shop-panel {
-                width: 94vw !important;
+                width: 96vw !important;
                 min-height: 0 !important;
-                padding: 26px 24px 82px !important;
+                padding: 26px 28px 82px !important;
             }
 
             .lobby-shop-header {
