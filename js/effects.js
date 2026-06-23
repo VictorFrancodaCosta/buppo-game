@@ -757,9 +757,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-panel {
             position: relative !important;
-            width: min(820px, 90vw) !important;
-            min-height: min(560px, 78vh) !important;
-            padding: 34px 42px 92px !important;
+            width: min(1160px, 94vw) !important;
+            min-height: min(780px, 88vh) !important;
+            padding: 34px 56px 92px !important;
             box-sizing: border-box !important;
             background: linear-gradient(180deg, rgba(101, 52, 22, 0.96), rgba(55, 25, 11, 0.96)) !important;
             border: 5px solid #2a1004 !important;
@@ -817,8 +817,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-grid {
             display: grid !important;
             grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-            gap: clamp(14px, 2vw, 22px) !important;
-            max-height: min(360px, 46vh) !important;
+            gap: clamp(22px, 2.4vw, 34px) !important;
+            max-height: min(580px, 64vh) !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             padding: 2px 10px 12px 2px !important;
@@ -843,6 +843,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-slot {
             aspect-ratio: 1 / 1 !important;
+            min-height: 0 !important;
             border: 3px solid rgba(255,215,0,0.55) !important;
             border-radius: 8px !important;
             background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.08), transparent 34%), rgba(0,0,0,0.36) !important;
@@ -857,9 +858,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         @media (max-width: 680px) {
             .lobby-shop-panel {
-                width: 92vw !important;
+                width: 94vw !important;
                 min-height: 0 !important;
-                padding: 26px 22px 82px !important;
+                padding: 26px 24px 82px !important;
             }
 
             .lobby-shop-header {
