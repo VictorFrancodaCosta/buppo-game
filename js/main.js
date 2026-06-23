@@ -7,7 +7,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 
 // IMPORTANDO OS NOVOS MÓDULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.22.4';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.22.4';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.23.1';
 import { initiateMatchmaking } from './matchmaking.js';
 
 // --- VARIÁVEIS GLOBAIS DE ESTADO ---
@@ -22,6 +22,8 @@ let playerHistory = [];
 
 window.isMatchStarting = false;
 window.currentDeck = 'knight';
+window.playerInventory = [];
+window.equippedItems = {};
 window.myRole = null;
 window.currentMatchId = null;
 window.pvpSelectedCardIndex = null;
@@ -233,9 +235,10 @@ window.goToLobby = async function(isAutoLogin = false) {
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
         const gameId = await generateUniqueGameId(window.currentUser.uid);
-        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
+        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: [], equippedItems: {}, lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
         window.currentPlayerGameId = gameId;
         window.currentLobbyScore = 0;
+        updatePlayerInventoryState([], {});
         updateLobbyProfileProgress(1, 0);
         renderLobbyIdentity(window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
@@ -252,6 +255,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         const gameId = await ensurePlayerGameId(userRef, d);
         window.currentPlayerGameId = gameId;
         window.currentLobbyScore = Math.max(0, Number(d.score) || 0);
+        updatePlayerInventoryState(d.inventory || [], d.equippedItems || {});
         updateLobbyProfileProgress(d.profileLevel || 1, d.profileXp || 0);
         renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
@@ -289,6 +293,8 @@ window.goToLobby = async function(isAutoLogin = false) {
     }
     startPresenceHeartbeat();
     startFriendsPanel();
+    window.refreshShopInventoryState?.();
+    window.renderInventoryItems?.();
     const q = query(collection(db, "players"), orderBy("score", "desc"));
     onSnapshot(q, (snapshot) => {
         let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
@@ -320,6 +326,74 @@ function updateLobbyGoldWallet(amount = 0) {
     updateLobbyBottomProfileBar();
     window.syncLobbyShopGold?.();
 }
+
+const SHOP_ITEMS = {
+    metallic_border: {
+        id: 'metallic_border',
+        name: 'BORDA METÁLICA',
+        slot: 'cardBorder'
+    }
+};
+
+function updatePlayerInventoryState(inventory = [], equippedItems = {}) {
+    window.playerInventory = Array.isArray(inventory) ? [...new Set(inventory)] : [];
+    window.equippedItems = equippedItems && typeof equippedItems === 'object' ? { ...equippedItems } : {};
+    document.body.classList.toggle('player-metallic-card-border-equipped', window.equippedItems.cardBorder === 'metallic_border');
+    window.refreshShopInventoryState?.();
+    window.renderInventoryItems?.();
+}
+
+window.isPlayerCardSkinEquipped = function(itemId) {
+    return itemId === 'metallic_border' && window.equippedItems?.cardBorder === 'metallic_border';
+};
+
+window.confirmShopPurchase = function(itemId) {
+    const item = SHOP_ITEMS[itemId];
+    if(!item) return;
+    if(window.playerInventory?.includes(itemId)) {
+        window.openInventory?.();
+        return;
+    }
+    window.openModal(`COMPRAR ${item.name}?`, '', ['SIM', 'NÃO'], (choice) => {
+        if(choice === 'SIM') window.purchaseShopItem(itemId);
+    });
+};
+
+window.purchaseShopItem = async function(itemId) {
+    const item = SHOP_ITEMS[itemId];
+    if(!item || !window.currentUser) return;
+    const nextInventory = [...new Set([...(window.playerInventory || []), itemId])];
+    try {
+        const userRef = doc(db, "players", window.currentUser.uid);
+        await updateDoc(userRef, { inventory: nextInventory, equippedItems: window.equippedItems || {} });
+        updatePlayerInventoryState(nextInventory, window.equippedItems || {});
+        window.openInventory?.();
+    } catch(e) {
+        console.error("Erro ao comprar item:", e);
+    }
+};
+
+window.toggleInventoryEquip = async function(itemId) {
+    const item = SHOP_ITEMS[itemId];
+    if(!item || !window.currentUser || !window.playerInventory?.includes(itemId)) return;
+    const nextEquipped = { ...(window.equippedItems || {}) };
+    if(nextEquipped[item.slot] === itemId) delete nextEquipped[item.slot];
+    else nextEquipped[item.slot] = itemId;
+    try {
+        const userRef = doc(db, "players", window.currentUser.uid);
+        await updateDoc(userRef, { equippedItems: nextEquipped });
+        updatePlayerInventoryState(window.playerInventory || [], nextEquipped);
+        updateUI();
+    } catch(e) {
+        console.error("Erro ao equipar item:", e);
+    }
+};
+
+window.getShopItemState = function(itemId) {
+    const owned = window.playerInventory?.includes(itemId) === true;
+    const equipped = window.isPlayerCardSkinEquipped?.(itemId) === true;
+    return { owned, equipped };
+};
 
 function updateLobbyProfileProgress(level = 1, xp = 0) {
     window.currentProfileLevel = Math.max(1, Number(level) || 1);
@@ -2329,6 +2403,7 @@ function updateUnit(u) {
         const touchLayout = isTouchLayout();
         u.hand.forEach((k,i)=>{
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`; c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
+            if(window.isPlayerCardSkinEquipped?.('metallic_border')) c.classList.add('card-skin-metallic-border');
             if(u.disabled===k) c.classList.add('disabled-card');
             const isLocallySelected = (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i);
             if (isLocallySelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
@@ -2349,6 +2424,7 @@ function updateUnit(u) {
     let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
     u.xp.forEach(k=>{
         let d=document.createElement('div'); d.className='xp-mini'; d.dataset.cardKey = k; let imgUrl = getCardArt(k, (u === player)); d.style.backgroundImage = `url('${imgUrl}')`;
+        if(u === player && window.isPlayerCardSkinEquipped?.('metallic_border')) d.classList.add('card-skin-metallic-border');
         if(!isTouchLayout()) {
             d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); };
             d.onmouseleave = () => { document.body.classList.remove('focus-xp'); };

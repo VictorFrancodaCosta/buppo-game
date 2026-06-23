@@ -562,6 +562,33 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             text-shadow: 2px 2px 0 #190700, -1px -1px 0 #190700, 1px -1px 0 #190700, -1px 1px 0 #190700, 0 0 9px rgba(255,214,46,0.4) !important;
         }
 
+        #lobby-screen .lobby-inventory-button {
+            position: fixed !important;
+            left: calc(50% - 50vw + var(--lobby-side-gap, 70px) + min(18vw, 260px)) !important;
+            top: clamp(260px, 31vh, 330px) !important;
+            transform: translateX(-50%) !important;
+            z-index: 12010 !important;
+            min-width: 190px !important;
+            padding: 11px 24px !important;
+            border: 3px solid #2a1004 !important;
+            border-radius: 8px !important;
+            background: linear-gradient(180deg, #f3c14b, #8f4b16) !important;
+            color: #fff8c8 !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: 18px !important;
+            text-transform: uppercase !important;
+            text-shadow: 2px 2px 0 #1b0a03 !important;
+            box-shadow: 0 8px 0 rgba(30, 11, 3, 0.9), 0 0 16px rgba(255,215,0,0.24) !important;
+            cursor: pointer !important;
+            transition: transform 0.15s ease, filter 0.15s ease !important;
+        }
+
+        #lobby-screen .lobby-inventory-button:hover,
+        #lobby-screen .lobby-inventory-button:focus-visible {
+            transform: translateX(-50%) translateY(-3px) scale(1.04) !important;
+            filter: brightness(1.12) !important;
+        }
+
         #lobby-screen .lobby-menu-button {
             border: 0 !important;
             padding: 0 !important;
@@ -842,6 +869,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-shop-slot {
+            position: relative !important;
             aspect-ratio: 1 / 1 !important;
             min-height: 0 !important;
             border: 3px solid rgba(255,215,0,0.55) !important;
@@ -850,10 +878,183 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.08), 0 8px 0 rgba(30, 11, 3, 0.54) !important;
         }
 
+        .lobby-shop-product {
+            display: grid !important;
+            grid-template-rows: auto 1fr auto !important;
+            align-items: center !important;
+            justify-items: center !important;
+            gap: 10px !important;
+            padding: 18px 14px !important;
+            box-sizing: border-box !important;
+        }
+
+        .shop-product-name,
+        .inventory-item-name {
+            color: #fff8c8 !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: clamp(14px, 1.35vw, 20px) !important;
+            line-height: 1.08 !important;
+            text-align: center !important;
+            text-transform: uppercase !important;
+            text-shadow: 2px 2px 0 #1b0a03 !important;
+        }
+
+        .metallic-border-art {
+            position: relative !important;
+            width: min(72%, 170px) !important;
+            aspect-ratio: 5 / 7 !important;
+            border-radius: 12px !important;
+            background: transparent !important;
+            box-shadow: 0 10px 18px rgba(0,0,0,0.45) !important;
+        }
+
+        .metallic-border-art::before {
+            content: "" !important;
+            position: absolute !important;
+            inset: 0 !important;
+            border-radius: inherit !important;
+            padding: 10px !important;
+            background: linear-gradient(135deg, #fbfbff 0%, #8f969f 18%, #f7f7ff 34%, #575f69 52%, #dfe8f4 72%, #727b85 100%) !important;
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) !important;
+            -webkit-mask-composite: xor !important;
+            mask-composite: exclude !important;
+            box-shadow: inset 0 0 18px rgba(255,255,255,0.92), 0 0 22px rgba(210,235,255,0.72) !important;
+        }
+
+        .metallic-border-art::after {
+            content: "" !important;
+            position: absolute !important;
+            inset: 7px !important;
+            border-radius: 8px !important;
+            border: 2px solid rgba(255,255,255,0.48) !important;
+            box-shadow: 0 0 16px rgba(225,245,255,0.7) !important;
+        }
+
+        .shop-buy-btn,
+        .inventory-equip-btn {
+            min-width: 118px !important;
+            padding: 10px 16px !important;
+            border: 2px solid #fff4ad !important;
+            border-radius: 999px !important;
+            background: linear-gradient(180deg, #f1c40f, #b96714) !important;
+            color: #321204 !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: 13px !important;
+            text-transform: uppercase !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 0 rgba(42,16,4,0.8) !important;
+        }
+
+        .shop-buy-btn:disabled {
+            filter: grayscale(80%) brightness(0.75) !important;
+            cursor: default !important;
+        }
+
         .lobby-shop-close {
             position: absolute !important;
             right: 42px !important;
             bottom: 28px !important;
+        }
+
+        .lobby-inventory-modal {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 87500 !important;
+            display: none !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: rgba(8, 3, 1, 0.64) !important;
+            backdrop-filter: blur(8px) saturate(0.82) !important;
+        }
+
+        .lobby-inventory-modal.visible {
+            display: flex !important;
+        }
+
+        .lobby-inventory-panel {
+            position: relative !important;
+            width: min(820px, 90vw) !important;
+            min-height: min(520px, 76vh) !important;
+            padding: 34px 42px 86px !important;
+            box-sizing: border-box !important;
+            background: linear-gradient(180deg, rgba(101, 52, 22, 0.96), rgba(55, 25, 11, 0.96)) !important;
+            border: 5px solid #2a1004 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 18px 0 rgba(30, 11, 3, 0.9), 0 0 38px rgba(255, 201, 54, 0.28), inset 0 0 0 2px rgba(255,255,255,0.1) !important;
+        }
+
+        .lobby-inventory-title {
+            margin: 0 0 24px !important;
+            color: var(--gold) !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(44px, 4.5vw, 66px) !important;
+            line-height: 0.9 !important;
+            text-align: center !important;
+            letter-spacing: 1px !important;
+            -webkit-text-stroke: 2px #210b03 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 4px 4px 0 #210b03, 0 0 18px rgba(255, 215, 0, 0.45) !important;
+        }
+
+        .lobby-inventory-grid {
+            display: grid !important;
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            gap: 20px !important;
+            max-height: min(350px, 48vh) !important;
+            overflow-y: auto !important;
+            padding-right: 8px !important;
+        }
+
+        .inventory-item {
+            position: relative !important;
+            min-height: 210px !important;
+            display: grid !important;
+            grid-template-rows: auto 1fr auto !important;
+            align-items: center !important;
+            justify-items: center !important;
+            gap: 10px !important;
+            padding: 14px !important;
+            border: 3px solid rgba(255,215,0,0.55) !important;
+            border-radius: 8px !important;
+            background: rgba(0,0,0,0.36) !important;
+            box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), 0 8px 0 rgba(30, 11, 3, 0.54) !important;
+            cursor: pointer !important;
+        }
+
+        .inventory-item.selected {
+            border-color: rgba(255,245,180,0.95) !important;
+            box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), 0 8px 0 rgba(30, 11, 3, 0.54), 0 0 24px rgba(255,215,0,0.38) !important;
+        }
+
+        .inventory-equipped-ribbon {
+            position: absolute !important;
+            left: 8px !important;
+            right: 8px !important;
+            top: 48% !important;
+            transform: translateY(-50%) rotate(-8deg) !important;
+            padding: 8px 10px !important;
+            background: rgba(255, 215, 0, 0.92) !important;
+            color: #2a1004 !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: 14px !important;
+            text-align: center !important;
+            text-transform: uppercase !important;
+            box-shadow: 0 4px 0 rgba(42,16,4,0.62) !important;
+            pointer-events: none !important;
+        }
+
+        .inventory-empty {
+            grid-column: 1 / -1 !important;
+            color: rgba(255,255,255,0.72) !important;
+            font-family: 'Russo One', sans-serif !important;
+            text-align: center !important;
+            padding: 70px 10px !important;
+        }
+
+        .lobby-inventory-close {
+            position: absolute !important;
+            right: 42px !important;
+            bottom: 24px !important;
         }
 
         @media (max-width: 680px) {
@@ -870,6 +1071,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-shop-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            #lobby-screen .lobby-inventory-button {
+                left: 50% !important;
+                top: auto !important;
+                bottom: 54px !important;
+                min-width: 160px !important;
+                font-size: 15px !important;
+            }
+
+            .lobby-inventory-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             }
 
@@ -1784,6 +1997,21 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             `;
             lobbyScreen.appendChild(profileAsset);
         }
+        let inventoryButton = document.getElementById('btn-lobby-inventory');
+        if (!inventoryButton) {
+            inventoryButton = document.createElement('button');
+            inventoryButton.id = 'btn-lobby-inventory';
+            inventoryButton.type = 'button';
+            inventoryButton.className = 'lobby-inventory-button';
+            inventoryButton.textContent = 'MOCHILA';
+            lobbyScreen.appendChild(inventoryButton);
+        }
+        inventoryButton.onclick = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            window.playNavSound?.();
+            window.openInventory?.();
+        };
         window.updateLobbyBottomProfileBar?.();
 
         let playCenter = document.querySelector('.lobby-play-center');
@@ -1943,7 +2171,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                         </div>
                     </div>
                     <div class="lobby-shop-grid" aria-label="Itens da loja">
-                        <div class="lobby-shop-slot" aria-hidden="true"></div>
+                        <div class="lobby-shop-slot lobby-shop-product" data-shop-item="metallic_border">
+                            <div class="shop-product-name">BORDA METÁLICA</div>
+                            <div class="metallic-border-art" aria-label="Arte da Borda Metálica"></div>
+                            <button class="shop-buy-btn" type="button" data-buy-item="metallic_border">COMPRAR</button>
+                        </div>
                         <div class="lobby-shop-slot" aria-hidden="true"></div>
                         <div class="lobby-shop-slot" aria-hidden="true"></div>
                         <div class="lobby-shop-slot" aria-hidden="true"></div>
@@ -1960,6 +2192,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 if (event.target === shopModal) window.closeLobbyShop?.();
             });
             shopModal.querySelector('.lobby-shop-close')?.addEventListener('click', () => window.closeLobbyShop?.());
+            shopModal.querySelector('[data-buy-item="metallic_border"]')?.addEventListener('click', () => window.confirmShopPurchase?.('metallic_border'));
         }
 
         window.syncLobbyShopGold = () => {
@@ -1967,15 +2200,83 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             if (count) count.textContent = window.currentGoldCoins || 0;
         };
 
+        window.refreshShopInventoryState = () => {
+            const state = window.getShopItemState?.('metallic_border') || { owned: false, equipped: false };
+            const button = document.querySelector('[data-buy-item="metallic_border"]');
+            if (!button) return;
+            button.textContent = state.owned ? 'COMPRADO' : 'COMPRAR';
+            button.disabled = state.owned;
+        };
+
         window.openLobbyShop = () => {
             window.playNavSound?.();
             window.syncLobbyShopGold?.();
+            window.refreshShopInventoryState?.();
             shopModal.classList.add('visible');
         };
 
         window.closeLobbyShop = () => {
             window.playNavSound?.();
             shopModal.classList.remove('visible');
+        };
+
+        let inventoryModal = document.getElementById('lobby-inventory-modal');
+        if (!inventoryModal) {
+            inventoryModal = document.createElement('div');
+            inventoryModal.id = 'lobby-inventory-modal';
+            inventoryModal.className = 'lobby-inventory-modal';
+            inventoryModal.innerHTML = `
+                <div class="lobby-inventory-panel" role="dialog" aria-modal="true" aria-label="Mochila">
+                    <h2 class="lobby-inventory-title">MOCHILA</h2>
+                    <div class="lobby-inventory-grid" id="lobby-inventory-grid"></div>
+                    <button class="mini-btn lobby-inventory-close" type="button">SAIR</button>
+                </div>
+            `;
+            document.body.appendChild(inventoryModal);
+            inventoryModal.addEventListener('click', (event) => {
+                if (event.target === inventoryModal) window.closeInventory?.();
+            });
+            inventoryModal.querySelector('.lobby-inventory-close')?.addEventListener('click', () => window.closeInventory?.());
+        }
+
+        window.renderInventoryItems = () => {
+            const grid = document.getElementById('lobby-inventory-grid');
+            if (!grid) return;
+            const owned = window.playerInventory || [];
+            if (!owned.includes('metallic_border')) {
+                grid.innerHTML = '<div class="inventory-empty">Sua mochila está vazia.</div>';
+                return;
+            }
+            const equipped = window.getShopItemState?.('metallic_border')?.equipped === true;
+            const selected = window.selectedInventoryItem === 'metallic_border';
+            grid.innerHTML = `
+                <button class="inventory-item ${selected ? 'selected' : ''}" type="button" data-inventory-item="metallic_border">
+                    <div class="inventory-item-name">BORDA METÁLICA</div>
+                    <div class="metallic-border-art" aria-hidden="true"></div>
+                    ${selected ? `<span class="inventory-equip-btn" data-equip-item="metallic_border">${equipped ? 'DESEQUIPAR' : 'EQUIPAR'}</span>` : '<span></span>'}
+                    ${equipped ? '<span class="inventory-equipped-ribbon">EQUIPADO</span>' : ''}
+                </button>
+            `;
+            grid.querySelector('[data-inventory-item="metallic_border"]')?.addEventListener('click', () => {
+                window.selectedInventoryItem = 'metallic_border';
+                window.renderInventoryItems?.();
+            });
+            grid.querySelector('[data-equip-item="metallic_border"]')?.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                window.toggleInventoryEquip?.('metallic_border');
+            });
+        };
+
+        window.openInventory = () => {
+            window.selectedInventoryItem = null;
+            window.renderInventoryItems?.();
+            inventoryModal.classList.add('visible');
+        };
+
+        window.closeInventory = () => {
+            window.playNavSound?.();
+            inventoryModal.classList.remove('visible');
         };
 
         if (historyButton) {
