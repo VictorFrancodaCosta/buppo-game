@@ -903,7 +903,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             width: min(72%, 170px) !important;
             aspect-ratio: 5 / 7 !important;
             border-radius: 12px !important;
-            background: url('assets/img/borda_metalica_card.png') center / contain no-repeat !important;
+            background-position: center !important;
+            background-size: contain !important;
+            background-repeat: no-repeat !important;
             box-shadow: 0 10px 18px rgba(0,0,0,0.45) !important;
         }
 
@@ -2133,6 +2135,22 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             rankingModal.classList.remove('visible');
         };
 
+        const lobbyCardBorderItems = [
+            { id: 'metallic_border', name: 'BORDA - GUARDA REAL', asset: 'assets/img/borda_metalica_card.png' },
+            { id: 'elven_forest_border', name: 'BORDA - BOSQUE ÉLFICO', asset: 'assets/img/borda_bosque_elfico_card.png' },
+            { id: 'volcanic_forge_border', name: 'BORDA - FORJA VULCÂNICA', asset: 'assets/img/borda_forja_vulcanica_card.png' }
+        ];
+
+        const renderBorderPreview = (item) => `<div class="metallic-border-art" style="background-image: url('${item.asset}')" aria-label="Arte de ${item.name}"></div>`;
+        const shopProductsHtml = lobbyCardBorderItems.map(item => `
+                        <div class="lobby-shop-slot lobby-shop-product" data-shop-item="${item.id}">
+                            <div class="shop-product-name">${item.name}</div>
+                            ${renderBorderPreview(item)}
+                            <button class="shop-buy-btn" type="button" data-buy-item="${item.id}">COMPRAR</button>
+                        </div>`).join('');
+        const emptyShopSlotsHtml = Array.from({ length: 5 }, () => `
+                        <div class="lobby-shop-slot" aria-hidden="true"></div>`).join('');
+
         let shopModal = document.getElementById('lobby-shop-modal');
         if (!shopModal) {
             shopModal = document.createElement('div');
@@ -2148,18 +2166,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                         </div>
                     </div>
                     <div class="lobby-shop-grid" aria-label="Itens da loja">
-                        <div class="lobby-shop-slot lobby-shop-product" data-shop-item="metallic_border">
-                            <div class="shop-product-name">BORDA METÁLICA</div>
-                            <div class="metallic-border-art" aria-label="Arte da Borda Metálica"></div>
-                            <button class="shop-buy-btn" type="button" data-buy-item="metallic_border">COMPRAR</button>
-                        </div>
-                        <div class="lobby-shop-slot" aria-hidden="true"></div>
-                        <div class="lobby-shop-slot" aria-hidden="true"></div>
-                        <div class="lobby-shop-slot" aria-hidden="true"></div>
-                        <div class="lobby-shop-slot" aria-hidden="true"></div>
-                        <div class="lobby-shop-slot" aria-hidden="true"></div>
-                        <div class="lobby-shop-slot" aria-hidden="true"></div>
-                        <div class="lobby-shop-slot" aria-hidden="true"></div>
+${shopProductsHtml}${emptyShopSlotsHtml}
                     </div>
                     <button class="mini-btn lobby-shop-close" type="button">SAIR</button>
                 </div>
@@ -2169,7 +2176,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 if (event.target === shopModal) window.closeLobbyShop?.();
             });
             shopModal.querySelector('.lobby-shop-close')?.addEventListener('click', () => window.closeLobbyShop?.());
-            shopModal.querySelector('[data-buy-item="metallic_border"]')?.addEventListener('click', () => window.confirmShopPurchase?.('metallic_border'));
+            shopModal.querySelectorAll('[data-buy-item]').forEach((button) => {
+                button.addEventListener('click', () => window.confirmShopPurchase?.(button.dataset.buyItem));
+            });
         }
 
         window.syncLobbyShopGold = () => {
@@ -2178,11 +2187,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         window.refreshShopInventoryState = () => {
-            const state = window.getShopItemState?.('metallic_border') || { owned: false, equipped: false };
-            const button = document.querySelector('[data-buy-item="metallic_border"]');
-            if (!button) return;
-            button.textContent = state.owned ? 'COMPRADO' : 'COMPRAR';
-            button.disabled = state.owned;
+            document.querySelectorAll('[data-buy-item]').forEach((button) => {
+                const state = window.getShopItemState?.(button.dataset.buyItem) || { owned: false, equipped: false };
+                button.textContent = state.owned ? 'COMPRADO' : 'COMPRAR';
+                button.disabled = state.owned;
+            });
         };
 
         window.openLobbyShop = () => {
@@ -2220,28 +2229,34 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             const grid = document.getElementById('lobby-inventory-grid');
             if (!grid) return;
             const owned = window.playerInventory || [];
-            if (!owned.includes('metallic_border')) {
+            const ownedItems = lobbyCardBorderItems.filter(item => owned.includes(item.id));
+            if (ownedItems.length === 0) {
                 grid.innerHTML = '<div class="inventory-empty">Sua mochila está vazia.</div>';
                 return;
             }
-            const equipped = window.getShopItemState?.('metallic_border')?.equipped === true;
-            const selected = window.selectedInventoryItem === 'metallic_border';
-            grid.innerHTML = `
-                <button class="inventory-item ${selected ? 'selected' : ''}" type="button" data-inventory-item="metallic_border">
-                    <div class="inventory-item-name">BORDA METÁLICA</div>
-                    <div class="metallic-border-art" aria-hidden="true"></div>
-                    ${selected ? `<span class="inventory-equip-btn" data-equip-item="metallic_border">${equipped ? 'DESEQUIPAR' : 'EQUIPAR'}</span>` : '<span></span>'}
+            grid.innerHTML = ownedItems.map(item => {
+                const equipped = window.getShopItemState?.(item.id)?.equipped === true;
+                const selected = window.selectedInventoryItem === item.id;
+                return `
+                <button class="inventory-item ${selected ? 'selected' : ''}" type="button" data-inventory-item="${item.id}">
+                    <div class="inventory-item-name">${item.name}</div>
+                    ${renderBorderPreview(item)}
+                    ${selected ? `<span class="inventory-equip-btn" data-equip-item="${item.id}">${equipped ? 'DESEQUIPAR' : 'EQUIPAR'}</span>` : '<span></span>'}
                     ${equipped ? '<span class="inventory-equipped-ribbon">EQUIPADO</span>' : ''}
-                </button>
-            `;
-            grid.querySelector('[data-inventory-item="metallic_border"]')?.addEventListener('click', () => {
-                window.selectedInventoryItem = 'metallic_border';
-                window.renderInventoryItems?.();
+                </button>`;
+            }).join('');
+            grid.querySelectorAll('[data-inventory-item]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    window.selectedInventoryItem = button.dataset.inventoryItem;
+                    window.renderInventoryItems?.();
+                });
             });
-            grid.querySelector('[data-equip-item="metallic_border"]')?.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                window.toggleInventoryEquip?.('metallic_border');
+            grid.querySelectorAll('[data-equip-item]').forEach((button) => {
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    window.toggleInventoryEquip?.(button.dataset.equipItem);
+                });
             });
         };
 

@@ -72,7 +72,8 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_bloqueio_mago.webp', 'assets/img/carta_descansar_mago.webp',
         'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
-        'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.png'
+        'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.png',
+        'assets/img/borda_bosque_elfico_card.png', 'assets/img/borda_forja_vulcanica_card.png'
     ],
     audio: [
         { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true },
@@ -330,21 +331,44 @@ function updateLobbyGoldWallet(amount = 0) {
 const SHOP_ITEMS = {
     metallic_border: {
         id: 'metallic_border',
-        name: 'BORDA METÁLICA',
-        slot: 'cardBorder'
+        name: 'BORDA - GUARDA REAL',
+        slot: 'cardBorder',
+        cssClass: 'royal',
+        asset: 'assets/img/borda_metalica_card.png'
+    },
+    elven_forest_border: {
+        id: 'elven_forest_border',
+        name: 'BORDA - BOSQUE ÉLFICO',
+        slot: 'cardBorder',
+        cssClass: 'elven',
+        asset: 'assets/img/borda_bosque_elfico_card.png'
+    },
+    volcanic_forge_border: {
+        id: 'volcanic_forge_border',
+        name: 'BORDA - FORJA VULCÂNICA',
+        slot: 'cardBorder',
+        cssClass: 'forge',
+        asset: 'assets/img/borda_forja_vulcanica_card.png'
     }
 };
+window.SHOP_ITEMS = SHOP_ITEMS;
 
 function updatePlayerInventoryState(inventory = [], equippedItems = {}) {
     window.playerInventory = Array.isArray(inventory) ? [...new Set(inventory)] : [];
     window.equippedItems = equippedItems && typeof equippedItems === 'object' ? { ...equippedItems } : {};
-    document.body.classList.toggle('player-metallic-card-border-equipped', window.equippedItems.cardBorder === 'metallic_border');
+    document.body.classList.remove('player-card-border-royal', 'player-card-border-elven', 'player-card-border-forge');
+    const equippedBorder = SHOP_ITEMS[window.equippedItems.cardBorder];
+    if(equippedBorder?.cssClass) document.body.classList.add(`player-card-border-${equippedBorder.cssClass}`);
     window.refreshShopInventoryState?.();
     window.renderInventoryItems?.();
 }
 
 window.isPlayerCardSkinEquipped = function(itemId) {
-    return itemId === 'metallic_border' && window.equippedItems?.cardBorder === 'metallic_border';
+    return !!itemId && window.equippedItems?.cardBorder === itemId;
+};
+
+window.getEquippedCardBorderItem = function() {
+    return SHOP_ITEMS[window.equippedItems?.cardBorder] || null;
 };
 
 window.confirmShopPurchase = function(itemId) {
@@ -2403,7 +2427,7 @@ function updateUnit(u) {
         const touchLayout = isTouchLayout();
         u.hand.forEach((k,i)=>{
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`; c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
-            if(window.isPlayerCardSkinEquipped?.('metallic_border')) c.classList.add('card-skin-metallic-border');
+            if(window.getEquippedCardBorderItem?.()) c.classList.add('card-skin-metallic-border');
             if(u.disabled===k) c.classList.add('disabled-card');
             const isLocallySelected = (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i);
             if (isLocallySelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
@@ -2424,7 +2448,7 @@ function updateUnit(u) {
     let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
     u.xp.forEach(k=>{
         let d=document.createElement('div'); d.className='xp-mini'; d.dataset.cardKey = k; let imgUrl = getCardArt(k, (u === player)); d.style.backgroundImage = `url('${imgUrl}')`;
-        if(u === player && window.isPlayerCardSkinEquipped?.('metallic_border')) d.classList.add('card-skin-metallic-border');
+        if(u === player && window.getEquippedCardBorderItem?.()) d.classList.add('card-skin-metallic-border');
         if(!isTouchLayout()) {
             d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); };
             d.onmouseleave = () => { document.body.classList.remove('focus-xp'); };
