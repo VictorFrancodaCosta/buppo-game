@@ -106,7 +106,7 @@ body.player-card-border-ice { --player-card-border-url: url('../assets/img/borda
 .xp-mini.card-skin-metallic-border::before {
     content: "";
     position: absolute;
-    inset: -7%;
+    inset: -7% -7% -4.5% -7%;
     z-index: 4;
     pointer-events: none;
     border-radius: 8%;
@@ -142,7 +142,7 @@ body.player-card-border-ice { --player-card-border-url: url('../assets/img/borda
 .flying-card.card-skin-metallic-border::before {
     content: "";
     position: absolute;
-    inset: -7%;
+    inset: -7% -7% -4.5% -7%;
     z-index: 24;
     pointer-events: none;
     border-radius: 8%;
