@@ -94,11 +94,8 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 #m-xp { top: 25px; } #p-xp { bottom: 180px; }
 @keyframes hudFloatCentered { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-6px); } }
 .xp-mini { width: 38px; height: 53px; margin: 0 2px; position: relative; border: 1px solid #111; border-radius: 3px; box-shadow: 0 4px 8px rgba(0,0,0,0.6); cursor: default; transition: transform 0.2s; background-size: cover; background-position: center; }
-body.player-card-border-royal { --player-card-border-url: url('../assets/img/borda_metalica_card.png'); }
-body.player-card-border-elven { --player-card-border-url: url('../assets/img/borda_bosque_elfico_card.png'); }
-body.player-card-border-forge { --player-card-border-url: url('../assets/img/borda_forja_vulcanica_card.png'); }
 .xp-mini.card-skin-metallic-border {
-    border-color: #eaf4ff !important;
+    border-color: transparent !important;
 }
 .xp-mini.card-skin-metallic-border::before {
     content: "";
@@ -133,7 +130,7 @@ body.player-card-border-forge { --player-card-border-url: url('../assets/img/bor
 .card { --rx: 0; --ry: 0; transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; transform-style: preserve-3d; background-color: #111; opacity: 1; visibility: visible; }
 .card.card-skin-metallic-border,
 .flying-card.card-skin-metallic-border {
-    border-color: #eaf4ff !important;
+    border-color: transparent !important;
 }
 .card.card-skin-metallic-border::before,
 .flying-card.card-skin-metallic-border::before {

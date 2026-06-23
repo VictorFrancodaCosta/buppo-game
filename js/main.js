@@ -73,7 +73,9 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.png',
-        'assets/img/borda_bosque_elfico_card.png', 'assets/img/borda_forja_vulcanica_card.png'
+        'assets/img/borda_bosque_elfico_card.png', 'assets/img/borda_forja_vulcanica_card.png',
+        'assets/img/borda_cristal_arcano_card.png', 'assets/img/borda_tesouro_pirata_card.png',
+        'assets/img/borda_gelo_nordico_card.png'
     ],
     audio: [
         { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true },
@@ -333,22 +335,37 @@ const SHOP_ITEMS = {
         id: 'metallic_border',
         name: 'BORDA - GUARDA REAL',
         slot: 'cardBorder',
-        cssClass: 'royal',
         asset: 'assets/img/borda_metalica_card.png'
     },
     elven_forest_border: {
         id: 'elven_forest_border',
         name: 'BORDA - BOSQUE ÉLFICO',
         slot: 'cardBorder',
-        cssClass: 'elven',
         asset: 'assets/img/borda_bosque_elfico_card.png'
     },
     volcanic_forge_border: {
         id: 'volcanic_forge_border',
         name: 'BORDA - FORJA VULCÂNICA',
         slot: 'cardBorder',
-        cssClass: 'forge',
         asset: 'assets/img/borda_forja_vulcanica_card.png'
+    },
+    arcane_crystal_border: {
+        id: 'arcane_crystal_border',
+        name: 'BORDA - CRISTAL ARCANO',
+        slot: 'cardBorder',
+        asset: 'assets/img/borda_cristal_arcano_card.png'
+    },
+    pirate_treasure_border: {
+        id: 'pirate_treasure_border',
+        name: 'BORDA - TESOURO PIRATA',
+        slot: 'cardBorder',
+        asset: 'assets/img/borda_tesouro_pirata_card.png'
+    },
+    northern_ice_border: {
+        id: 'northern_ice_border',
+        name: 'BORDA - GELO NÓRDICO',
+        slot: 'cardBorder',
+        asset: 'assets/img/borda_gelo_nordico_card.png'
     }
 };
 window.SHOP_ITEMS = SHOP_ITEMS;
@@ -356,9 +373,9 @@ window.SHOP_ITEMS = SHOP_ITEMS;
 function updatePlayerInventoryState(inventory = [], equippedItems = {}) {
     window.playerInventory = Array.isArray(inventory) ? [...new Set(inventory)] : [];
     window.equippedItems = equippedItems && typeof equippedItems === 'object' ? { ...equippedItems } : {};
-    document.body.classList.remove('player-card-border-royal', 'player-card-border-elven', 'player-card-border-forge');
     const equippedBorder = SHOP_ITEMS[window.equippedItems.cardBorder];
-    if(equippedBorder?.cssClass) document.body.classList.add(`player-card-border-${equippedBorder.cssClass}`);
+    if(equippedBorder?.asset) document.body.style.setProperty('--player-card-border-url', `url('${equippedBorder.asset}')`);
+    else document.body.style.removeProperty('--player-card-border-url');
     window.refreshShopInventoryState?.();
     window.renderInventoryItems?.();
 }
