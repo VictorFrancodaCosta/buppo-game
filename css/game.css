@@ -96,7 +96,6 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 .xp-mini { width: 38px; height: 53px; margin: 0 2px; position: relative; border: 1px solid #111; border-radius: 3px; box-shadow: 0 4px 8px rgba(0,0,0,0.6); cursor: default; transition: transform 0.2s; background-size: cover; background-position: center; }
 .xp-mini.card-skin-metallic-border {
     border-color: #eaf4ff !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.6), 0 0 9px rgba(220,240,255,0.9) !important;
 }
 .xp-mini.card-skin-metallic-border::before {
     content: "";
@@ -106,7 +105,6 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
     pointer-events: none;
     border-radius: 5px;
     background: url('../assets/img/borda_metalica_card.png') center / 100% 100% no-repeat;
-    filter: drop-shadow(0 0 5px rgba(225,245,255,0.92));
 }
 .xp-area.levelup-xp-consuming .xp-mini { opacity: 0 !important; visibility: hidden !important; }
 #m-xp .xp-mini:hover { transform: scale(3.0) translateY(15px); z-index: 3000; } #p-xp .xp-mini:hover { transform: scale(3.0) translateY(-15px); z-index: 3000; }
@@ -133,7 +131,6 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 .card.card-skin-metallic-border,
 .flying-card.card-skin-metallic-border {
     border-color: #eaf4ff !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.7), 0 0 18px rgba(220,240,255,0.82), inset 0 0 0 2px rgba(255,255,255,0.7) !important;
 }
 .card.card-skin-metallic-border::before,
 .flying-card.card-skin-metallic-border::before {
@@ -144,7 +141,6 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
     pointer-events: none;
     border-radius: 16px;
     background: url('../assets/img/borda_metalica_card.png') center / 100% 100% no-repeat;
-    filter: drop-shadow(0 0 8px rgba(225,245,255,0.95));
 }
 .card::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 10px; pointer-events: none; z-index: 15; opacity: 0; transition: opacity 0.2s ease; background: linear-gradient(115deg, transparent 25%, rgba(255, 215, 0, 0.15) 35%, rgba(255, 0, 150, 0.15) 45%, rgba(0, 255, 255, 0.15) 55%, rgba(255, 255, 255, 0.25) 70%, transparent 80%); background-size: 300% 300%; background-position: calc(50% + (var(--rx) * -200%)) calc(50% + (var(--ry) * -200%)); mix-blend-mode: color-dodge; }
 .card:hover::after { opacity: 0.8; }

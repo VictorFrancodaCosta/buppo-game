@@ -905,7 +905,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             border-radius: 12px !important;
             background: url('assets/img/borda_metalica_card.png') center / contain no-repeat !important;
             box-shadow: 0 10px 18px rgba(0,0,0,0.45) !important;
-            filter: drop-shadow(0 0 12px rgba(210,235,255,0.58)) !important;
         }
 
         .shop-buy-btn,
