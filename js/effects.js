@@ -816,8 +816,29 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-grid {
             display: grid !important;
-            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
             gap: clamp(14px, 2vw, 22px) !important;
+            max-height: min(360px, 46vh) !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            padding: 2px 10px 12px 2px !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: var(--gold) rgba(0,0,0,0.28) !important;
+        }
+
+        .lobby-shop-grid::-webkit-scrollbar {
+            width: 10px !important;
+        }
+
+        .lobby-shop-grid::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.28) !important;
+            border-radius: 999px !important;
+        }
+
+        .lobby-shop-grid::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #ffe680, #c58b10) !important;
+            border: 2px solid rgba(42, 16, 4, 0.95) !important;
+            border-radius: 999px !important;
         }
 
         .lobby-shop-slot {
@@ -1921,6 +1942,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                         </div>
                     </div>
                     <div class="lobby-shop-grid" aria-label="Itens da loja">
+                        <div class="lobby-shop-slot" aria-hidden="true"></div>
+                        <div class="lobby-shop-slot" aria-hidden="true"></div>
                         <div class="lobby-shop-slot" aria-hidden="true"></div>
                         <div class="lobby-shop-slot" aria-hidden="true"></div>
                         <div class="lobby-shop-slot" aria-hidden="true"></div>
