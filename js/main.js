@@ -86,6 +86,7 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-levelup', src: 'assets/audio/sfx_levelup.mp3' },
         { id: 'sfx-train', src: 'assets/audio/sfx_treinar.mp3' },
         { id: 'sfx-disarm', src: 'assets/audio/sfx_desarmar.mp3' },
+        { id: 'sfx-clusterbreak', src: 'assets/audio/sfx_clusterbreak.mp3' },
         { id: 'sfx-mastery', src: 'assets/audio/maestria_bonus.mp3' },
         { id: 'sfx-cine', src: 'assets/audio/ambience_cine.mp3', loop: true },
         { id: 'sfx-hover', src: 'assets/audio/sfx_hover_carta.mp3' },

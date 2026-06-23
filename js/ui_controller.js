@@ -422,6 +422,7 @@ export function triggerClusterExplosion(isPlayer) {
     const cluster = document.getElementById(isPlayer ? 'p-stats-cluster' : 'm-stats-cluster');
     if(!cluster || cluster.dataset.exploded === '1') return;
     cluster.dataset.exploded = '1';
+    playSound('sfx-clusterbreak');
     const rect = cluster.getBoundingClientRect();
     const source = isPlayer ? "url('assets/img/cluster_jogador.webp')" : "url('assets/img/cluster_inimigo.webp')";
     const cols = 4;
