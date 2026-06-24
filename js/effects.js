@@ -566,7 +566,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             position: fixed !important;
             left: calc(50% - 50vw + var(--lobby-side-gap, 70px) + clamp(76px, 6.4vw, 116px)) !important;
             top: auto !important;
-            bottom: 48px !important;
+            bottom: 78px !important;
             transform: translateX(-50%) !important;
             z-index: 12010 !important;
             width: clamp(158px, 12.5vw, 220px) !important;
@@ -939,7 +939,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             min-height: 0 !important;
             border: 3px solid rgba(255,215,0,0.55) !important;
             border-radius: 8px !important;
-            background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.08), transparent 34%), rgba(0,0,0,0.36) !important;
+            background: #050505 !important;
             box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.08), 0 8px 0 rgba(30, 11, 3, 0.54) !important;
         }
 
@@ -967,11 +967,31 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .metallic-border-art {
             width: min(72%, 170px) !important;
             aspect-ratio: 5 / 7 !important;
-            border-radius: 12px !important;
             background-position: center !important;
             background-size: contain !important;
             background-repeat: no-repeat !important;
-            box-shadow: 0 10px 18px rgba(0,0,0,0.45) !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            filter: drop-shadow(0 8px 10px rgba(0,0,0,0.58)) !important;
+        }
+
+        .shop-owned-ribbon {
+            position: absolute !important;
+            left: 8px !important;
+            right: 8px !important;
+            top: 50% !important;
+            transform: translateY(-50%) rotate(-12deg) !important;
+            z-index: 4 !important;
+            color: var(--gold) !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(32px, 2.9vw, 50px) !important;
+            line-height: 0.9 !important;
+            text-align: center !important;
+            letter-spacing: 0 !important;
+            -webkit-text-stroke: 2px #160602 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 3px 3px 0 #160602, 0 0 12px rgba(255,215,0,0.42) !important;
+            pointer-events: none !important;
         }
 
         .shop-buy-btn,
@@ -1136,7 +1156,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             #lobby-screen .lobby-inventory-button {
                 left: calc(50% - 50vw + var(--lobby-side-gap, 24px) + 66px) !important;
                 top: auto !important;
-                bottom: 42px !important;
+                bottom: 66px !important;
                 width: clamp(118px, 24vw, 152px) !important;
             }
 
@@ -2240,11 +2260,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         const lobbyCardBorderItems = [
-            { id: 'metallic_border', name: 'BORDA - GUARDA REAL', asset: 'assets/img/borda_metalica_card.webp' },
-            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.1' },
-            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.1' },
-            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.1' },
-            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.1' }
+            { id: 'metallic_border', name: 'BORDA - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/borda_metalica_card.webp' },
+            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.2' },
+            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.2' },
+            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.2' },
+            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.2' }
         ];
         const lobbyShopItemsByCategory = {
             decks: [],
@@ -2255,13 +2275,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
         const lobbyShopSlotCount = 5;
 
+        const getItemDisplayName = (item) => item.displayName || item.name.replace(/^BORDA\s*-\s*/i, '');
         const renderBorderPreview = (item) => `<div class="metallic-border-art" style="background-image: url('${item.asset}')" aria-label="Arte de ${item.name}"></div>`;
         const renderShopProducts = (category = 'borders') => {
             const items = lobbyShopItemsByCategory[category] || [];
             const productsHtml = items.slice(0, lobbyShopSlotCount).map(item => `
                         <div class="lobby-shop-slot lobby-shop-product" data-shop-item="${item.id}">
-                            <div class="shop-product-name">${item.name}</div>
+                            <div class="shop-product-name">${getItemDisplayName(item)}</div>
                             ${renderBorderPreview(item)}
+                            <span class="shop-owned-ribbon" data-owned-ribbon="${item.id}" hidden>COMPRADO</span>
                             <button class="shop-buy-btn" type="button" data-buy-item="${item.id}">COMPRAR</button>
                         </div>`).join('');
             const emptyCount = Math.max(0, lobbyShopSlotCount - Math.min(items.length, lobbyShopSlotCount));
@@ -2330,8 +2352,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         window.refreshShopInventoryState = () => {
             document.querySelectorAll('[data-buy-item]').forEach((button) => {
                 const state = window.getShopItemState?.(button.dataset.buyItem) || { owned: false, equipped: false };
-                button.textContent = state.owned ? 'COMPRADO' : 'COMPRAR';
+                button.textContent = 'COMPRAR';
+                button.hidden = state.owned;
                 button.disabled = state.owned;
+                const product = button.closest('[data-shop-item]');
+                const ribbon = product?.querySelector(`[data-owned-ribbon="${button.dataset.buyItem}"]`);
+                if (ribbon) ribbon.hidden = !state.owned;
             });
         };
 
@@ -2382,7 +2408,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 const selected = window.selectedInventoryItem === item.id;
                 return `
                 <button class="inventory-item ${selected ? 'selected' : ''}" type="button" data-inventory-item="${item.id}">
-                    <div class="inventory-item-name">${item.name}</div>
+                    <div class="inventory-item-name">${getItemDisplayName(item)}</div>
                     ${renderBorderPreview(item)}
                     ${selected ? `<span class="inventory-equip-btn" data-equip-item="${item.id}">${equipped ? 'DESEQUIPAR' : 'EQUIPAR'}</span>` : '<span></span>'}
                     ${equipped ? '<span class="inventory-equipped-ribbon">EQUIPADO</span>' : ''}

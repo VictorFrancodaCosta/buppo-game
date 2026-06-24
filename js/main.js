@@ -5,12 +5,12 @@ import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIM
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// IMPORTANDO OS NOVOS MÃƒâ€œDULOS
+// IMPORTANDO OS NOVOS MÃƒÆ’Ã¢â‚¬Å“DULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.22.4';
 import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.23.1';
 import { initiateMatchmaking } from './matchmaking.js';
 
-// --- VARIÃƒÂVEIS GLOBAIS DE ESTADO ---
+// --- VARIÃƒÆ’Ã‚ÂVEIS GLOBAIS DE ESTADO ---
 window.currentUser = null;
 let assetsLoaded = 0;
 window.gameAssets = [];
@@ -73,8 +73,8 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp', 'assets/img/mochila.webp',
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.webp',
-        'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.1', 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.1',
-        'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.1', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.1'
+        'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.2', 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.2',
+        'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.2', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.2'
     ],
     audio: [
         { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true },
@@ -104,7 +104,7 @@ const ASSETS_TO_LOAD = {
     ]
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
-let player = { id:'p', name:'VocÃƒÂª', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
+let player = { id:'p', name:'VocÃƒÆ’Ã‚Âª', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 
 window.cleanupMatchState = function() {
@@ -209,7 +209,7 @@ window.transitionToLobby = function(skipAnim = false) {
     else {
         const transScreen = document.getElementById('transition-overlay');
         const transText = transScreen.querySelector('.trans-text');
-        if(transText) transText.innerText = "RETORNANDO AO SAGUÃƒÆ’O...";
+        if(transText) transText.innerText = "RETORNANDO AO SAGUÃƒÆ’Ã†â€™O...";
         if(transScreen) transScreen.classList.add('active');
         setTimeout(() => {
             window.goToLobby(false);
@@ -227,7 +227,7 @@ window.goToLobby = async function(isAutoLogin = false) {
     }
     window.cleanupMatchState(); window.isProcessing = false;
     
-    // FORÃƒâ€¡A A REMOÃƒâ€¡ÃƒÆ’O DAS MESAS DOS DECKS
+    // FORÃƒÆ’Ã¢â‚¬Â¡A A REMOÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã†â€™O DAS MESAS DOS DECKS
     document.body.classList.remove('theme-cavaleiro', 'theme-mago');
     
     let bg = document.getElementById('game-background'); if(bg) bg.classList.add('lobby-mode');
@@ -243,7 +243,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         updatePlayerInventoryState([], {});
         updateLobbyProfileProgress(1, 0);
         renderLobbyIdentity(window.currentUser.displayName, gameId);
-        document.getElementById('lobby-stats').innerText = `VITÃƒâ€œRIAS: 0 | PONTOS: 0`;
+        document.getElementById('lobby-stats').innerText = `VITÃƒÆ’Ã¢â‚¬Å“RIAS: 0 | PONTOS: 0`;
         updateLobbyGoldWallet(0);
         window.musicEnabled = true;
         window.sfxEnabled = true;
@@ -260,7 +260,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         updatePlayerInventoryState(d.inventory || [], d.equippedItems || {});
         updateLobbyProfileProgress(d.profileLevel || 1, d.profileXp || 0);
         renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
-        document.getElementById('lobby-stats').innerText = `VITÃƒâ€œRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+        document.getElementById('lobby-stats').innerText = `VITÃƒÆ’Ã¢â‚¬Å“RIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
 
         updateLobbyGoldWallet(d.goldCoins || 0);
 
@@ -342,28 +342,28 @@ const SHOP_ITEMS = {
         name: 'BORDA - SENTINELA VERDE',
         slot: 'cardBorder',
         cssClass: 'elven',
-        asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.1'
+        asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.2'
     },
     mage_fire_border: {
         id: 'mage_fire_border',
         name: 'BORDA - CHAMA ARCANA',
         slot: 'cardBorder',
         cssClass: 'mage',
-        asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.1'
+        asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.2'
     },
     rogue_gold_border: {
         id: 'rogue_gold_border',
-        name: 'BORDA - MÃƒÆ’O DOURADA',
+        name: 'BORDA - MÃƒÆ’Ã†â€™O DOURADA',
         slot: 'cardBorder',
         cssClass: 'rogue',
-        asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.1'
+        asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.2'
     },
     oracle_border: {
         id: 'oracle_border',
-        name: 'BORDA - VISÃƒÆ’O ASTRAL',
+        name: 'BORDA - VISÃƒÆ’Ã†â€™O ASTRAL',
         slot: 'cardBorder',
         cssClass: 'oracle',
-        asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.1'
+        asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.2'
     }
 };
 window.SHOP_ITEMS = SHOP_ITEMS;
@@ -394,7 +394,7 @@ window.confirmShopPurchase = function(itemId) {
         window.openInventory?.();
         return;
     }
-    window.openModal(`COMPRAR ${item.name}?`, '', ['SIM', 'NÃƒÆ’O'], (choice) => {
+    window.openModal(`COMPRAR ${item.name}?`, '', ['SIM', 'NÃƒÆ’Ã†â€™O'], (choice) => {
         if(choice === 'SIM') window.purchaseShopItem(itemId);
     });
 };
@@ -1089,7 +1089,7 @@ function startPvPListener() {
             if (matchData.abandonedBy && window.currentUser && matchData.abandonedBy !== window.currentUser.uid) {
                 monster.hp = 0; updateUI(); window.isProcessing = true; MusicController.stopCurrent();
                 setTimeout(() => {
-                    const title = document.getElementById('end-title'); title.innerText = "VITÃƒâ€œRIA"; title.className = "win-theme";
+                    const title = document.getElementById('end-title'); title.innerText = "VITÃƒÆ’Ã¢â‚¬Å“RIA"; title.className = "win-theme";
                     showCenterText("OPONENTE DESISTIU!", "#ffd700"); playSound('sfx-win');
                     triggerEndScreenFx('win'); showEndPoints(8);
                     if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
@@ -1355,10 +1355,10 @@ function checkEndGame(){
                 const existingGold = document.getElementById('end-gold-reward');
                 if(existingGold) existingGold.remove();
                 if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); }
-                else if(isWin) { title.innerText = "VITÃƒâ€œRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
+                else if(isWin) { title.innerText = "VITÃƒÆ’Ã¢â‚¬Å“RIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
                 else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); }
                 const secondaryBtn = document.querySelector('#end-screen .secondary-btn');
-                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUÃƒÆ’O";
+                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUÃƒÆ’Ã†â€™O";
                 if(window.currentMatchId && window.myRole === 'player1') {
                     updateDoc(doc(db, "matches", window.currentMatchId), { status: 'finished', player1Rematch: false, player2Rematch: false }).catch(() => {});
                 }
@@ -1367,9 +1367,9 @@ function checkEndGame(){
                 return;
             }
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
-            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃƒÆ’O";
+            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃƒÆ’Ã†â€™O";
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
-            else if(isWin) { title.innerText = "VITÃƒâ€œRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
+            else if(isWin) { title.innerText = "VITÃƒÆ’Ã¢â‚¬Å“RIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
             else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
 
             if(isTie) { if(window.registrarEmpateOnline) window.registrarEmpateOnline(window.gameMode); }
@@ -1642,7 +1642,7 @@ onAuthStateChanged(auth, (user) => {
         window.currentUser = null; window.showScreen('start-screen');
         const bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode');
         
-        // FORÃƒâ€¡A A REMOÃƒâ€¡ÃƒÆ’O DOS TEMAS AO DESLOGAR
+        // FORÃƒÆ’Ã¢â‚¬Â¡A A REMOÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã†â€™O DOS TEMAS AO DESLOGAR
         document.body.classList.remove('theme-cavaleiro', 'theme-mago');
         
         window.musicEnabled = false;
@@ -1774,7 +1774,7 @@ window.abandonMatch = function() {
     if(document.getElementById('game-screen').classList.contains('active')) {
         stopTurnTimer();
         window.toggleConfig();
-        window.openModal("ABANDONAR?", "Sair da partida contarÃƒÂ¡ como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], async (choice) => {
+        window.openModal("ABANDONAR?", "Sair da partida contarÃƒÆ’Ã‚Â¡ como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], async (choice) => {
                 if (choice === "SAIR") {
                     stopTurnTimer();
                     if (window.gameMode === 'pvp') await notifyAbandonment();
@@ -1992,7 +1992,7 @@ function onCardClick(index) {
     playSound('sfx-play'); clearHoverFocusState(true);
 
     if(cardKey === 'DESARMAR') {
-        window.openModal('ALVO DO DESARME', 'Qual aÃƒÂ§ÃƒÂ£o bloquear no inimigo?', ACTION_KEYS, (choice) => {
+        window.openModal('ALVO DO DESARME', 'Qual aÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o bloquear no inimigo?', ACTION_KEYS, (choice) => {
             if(window.gameMode === 'pvp') lockInPvPMove(index, choice); else playCardFlow(index, choice);
         });
     } else {
@@ -2003,11 +2003,11 @@ function onCardClick(index) {
 function showDisabledCardWarning(index) {
     const handContainer = document.getElementById('player-hand');
     const cardEl = handContainer && handContainer.children[index];
-    if(!cardEl) { showCenterText("NÃƒÆ’O PODE JOGAR", "#ff7675"); return; }
+    if(!cardEl) { showCenterText("NÃƒÆ’Ã†â€™O PODE JOGAR", "#ff7675"); return; }
     cardEl.querySelectorAll('.disabled-card-warning').forEach(el => el.remove());
     const warning = document.createElement('div');
     warning.className = 'disabled-card-warning';
-    warning.innerText = "NÃƒÆ’O PODE JOGAR";
+    warning.innerText = "NÃƒÆ’Ã†â€™O PODE JOGAR";
     cardEl.appendChild(warning);
     setTimeout(() => warning.remove(), 760);
 }
@@ -2340,8 +2340,8 @@ function checkLevelUp(u, doneCb) {
 
 function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
-    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÃƒÂTICA", "Bloquear qual aÃƒÂ§ÃƒÂ£o?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
-    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÃƒÂTICA", "Bloquear qual aÃƒÂ§ÃƒÂ£o?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
+    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÃƒÆ’Ã‚ÂTICA", "Bloquear qual aÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
+    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÃƒÆ’Ã‚ÂTICA", "Bloquear qual aÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
     else if(type === 'TREINAR' && u.id === 'm') {
         let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))];
         if(opts.length > 0) {
@@ -2484,7 +2484,7 @@ function bindMasteryTooltip(el, key, value, ownerId) {
     return {
         onmouseenter: (e) => {
             let db=CARDS_DB[key]; document.getElementById('tt-title').innerHTML = key;
-            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>BÃƒÂ´nus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
+            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>BÃƒÆ’Ã‚Â´nus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
             const masteryLabel = key === 'ATAQUE' ? 'MAESTRIA EM ATAQUE' : 'MAESTRIA EM BLOQUEIO';
             document.getElementById('tt-title').innerHTML = `${masteryLabel} N\u00cdVEL ${value}`;
             document.getElementById('tt-content').innerHTML = '';
@@ -2521,7 +2521,7 @@ function showTT(k) {
         let content = db.customTooltip; let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
         content = content.replace('{PLAYER_LVL}', currentLvl); let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
         let reflectDmg = 1 + bonusBlock; content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg); document.getElementById('tt-content').innerHTML = content;
-    } else { document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>BÃƒÂ´nus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; }
+    } else { document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>BÃƒÆ’Ã‚Â´nus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; }
     tt.style.display = 'block';
 }
 
