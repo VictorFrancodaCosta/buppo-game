@@ -884,9 +884,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-grid {
             display: grid !important;
-            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
             gap: clamp(26px, 2.6vw, 42px) !important;
-            max-height: min(690px, 72vh) !important;
+            max-height: min(650px, 68vh) !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             padding: 2px 10px 12px 2px !important;
@@ -993,9 +993,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-inventory-panel {
             position: relative !important;
-            width: min(820px, 90vw) !important;
-            min-height: min(520px, 76vh) !important;
-            padding: 34px 42px 86px !important;
+            width: min(1180px, 96vw) !important;
+            min-height: min(760px, 90vh) !important;
+            padding: 38px 58px 98px !important;
             box-sizing: border-box !important;
             background: linear-gradient(180deg, rgba(101, 52, 22, 0.96), rgba(55, 25, 11, 0.96)) !important;
             border: 5px solid #2a1004 !important;
@@ -1018,16 +1018,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-inventory-grid {
             display: grid !important;
-            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-            gap: 20px !important;
-            max-height: min(350px, 48vh) !important;
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            gap: 26px !important;
+            max-height: min(560px, 66vh) !important;
             overflow-y: auto !important;
             padding-right: 8px !important;
         }
 
         .inventory-item {
             position: relative !important;
-            min-height: 210px !important;
+            min-height: 260px !important;
             display: grid !important;
             grid-template-rows: auto 1fr auto !important;
             align-items: center !important;
@@ -1039,6 +1039,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background: rgba(0,0,0,0.36) !important;
             box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), 0 8px 0 rgba(30, 11, 3, 0.54) !important;
             cursor: pointer !important;
+        }
+
+        .lobby-inventory-panel .metallic-border-art {
+            width: min(76%, 210px) !important;
         }
 
         .inventory-item.selected {
@@ -2189,21 +2193,34 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         const lobbyCardBorderItems = [
             { id: 'metallic_border', name: 'BORDA - GUARDA REAL', asset: 'assets/img/borda_metalica_card.png' },
-            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.png?v=2026.06.23.21' },
-            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.21' },
-            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.png?v=2026.06.23.21' },
-            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.png?v=2026.06.23.21' }
+            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.png?v=2026.06.23.22' },
+            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.22' },
+            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.png?v=2026.06.23.22' },
+            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.png?v=2026.06.23.22' }
         ];
+        const lobbyShopItemsByCategory = {
+            decks: [],
+            borders: lobbyCardBorderItems,
+            clusters: [],
+            xpAreas: [],
+            pets: []
+        };
+        const lobbyShopSlotCount = 5;
 
         const renderBorderPreview = (item) => `<div class="metallic-border-art" style="background-image: url('${item.asset}')" aria-label="Arte de ${item.name}"></div>`;
-        const shopProductsHtml = lobbyCardBorderItems.map(item => `
+        const renderShopProducts = (category = 'borders') => {
+            const items = lobbyShopItemsByCategory[category] || [];
+            const productsHtml = items.slice(0, lobbyShopSlotCount).map(item => `
                         <div class="lobby-shop-slot lobby-shop-product" data-shop-item="${item.id}">
                             <div class="shop-product-name">${item.name}</div>
                             ${renderBorderPreview(item)}
                             <button class="shop-buy-btn" type="button" data-buy-item="${item.id}">COMPRAR</button>
                         </div>`).join('');
-        const emptyShopSlotsHtml = Array.from({ length: 3 }, () => `
+            const emptyCount = Math.max(0, lobbyShopSlotCount - Math.min(items.length, lobbyShopSlotCount));
+            const emptySlotsHtml = Array.from({ length: emptyCount }, () => `
                         <div class="lobby-shop-slot" aria-hidden="true"></div>`).join('');
+            return `${productsHtml}${emptySlotsHtml}`;
+        };
 
         let shopModal = document.getElementById('lobby-shop-modal');
         if (!shopModal) {
@@ -2216,21 +2233,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                         <div class="lobby-shop-title-stack">
                             <h2 class="lobby-shop-title">LOJA</h2>
                             <div class="lobby-shop-categories" aria-label="Categorias da loja">
-                                <button class="lobby-shop-category" type="button">DECKS</button>
-                                <button class="lobby-shop-category active" type="button">BORDAS</button>
-                                <button class="lobby-shop-category" type="button">CLUSTERS</button>
-                                <button class="lobby-shop-category" type="button">\u00c1REAS DE XP</button>
-                                <button class="lobby-shop-category" type="button">MASCOTES</button>
+                                <button class="lobby-shop-category" type="button" data-shop-category="decks">DECKS</button>
+                                <button class="lobby-shop-category active" type="button" data-shop-category="borders">BORDAS</button>
+                                <button class="lobby-shop-category" type="button" data-shop-category="clusters">CLUSTERS</button>
+                                <button class="lobby-shop-category" type="button" data-shop-category="xpAreas">\u00c1REAS DE XP</button>
+                                <button class="lobby-shop-category" type="button" data-shop-category="pets">MASCOTES</button>
                             </div>
                         </div>
-                        <div class="lobby-shop-gold" aria-label="Ouro disponivel">
+                        <div class="lobby-shop-gold" aria-label="Ouro dispon\u00edvel">
                             <img src="assets/img/moeda_ouro.png" alt="Moeda de ouro">
                             <span id="lobby-shop-gold-count">0</span>
                         </div>
                     </div>
-                    <div class="lobby-shop-grid" aria-label="Itens da loja">
-${shopProductsHtml}${emptyShopSlotsHtml}
-                    </div>
+                    <div class="lobby-shop-grid" aria-label="Itens da loja"></div>
                     <button class="mini-btn lobby-shop-close" type="button">SAIR</button>
                 </div>
             `;
@@ -2243,12 +2258,21 @@ ${shopProductsHtml}${emptyShopSlotsHtml}
                 button.addEventListener('click', () => {
                     shopModal.querySelectorAll('.lobby-shop-category').forEach((category) => category.classList.remove('active'));
                     button.classList.add('active');
+                    window.currentShopCategory = button.dataset.shopCategory || 'borders';
+                    window.renderLobbyShopItems?.();
                 });
             });
-            shopModal.querySelectorAll('[data-buy-item]').forEach((button) => {
+        }
+
+        window.renderLobbyShopItems = () => {
+            const grid = document.querySelector('#lobby-shop-modal .lobby-shop-grid');
+            if (!grid) return;
+            grid.innerHTML = renderShopProducts(window.currentShopCategory || 'borders');
+            grid.querySelectorAll('[data-buy-item]').forEach((button) => {
                 button.addEventListener('click', () => window.confirmShopPurchase?.(button.dataset.buyItem));
             });
-        }
+            window.refreshShopInventoryState?.();
+        };
 
         window.syncLobbyShopGold = () => {
             const count = document.getElementById('lobby-shop-gold-count');
@@ -2265,6 +2289,8 @@ ${shopProductsHtml}${emptyShopSlotsHtml}
 
         window.openLobbyShop = () => {
             window.playNavSound?.();
+            window.currentShopCategory = window.currentShopCategory || 'borders';
+            window.renderLobbyShopItems?.();
             window.syncLobbyShopGold?.();
             window.refreshShopInventoryState?.();
             shopModal.classList.add('visible');
@@ -2300,7 +2326,7 @@ ${shopProductsHtml}${emptyShopSlotsHtml}
             const owned = window.playerInventory || [];
             const ownedItems = lobbyCardBorderItems.filter(item => owned.includes(item.id));
             if (ownedItems.length === 0) {
-                grid.innerHTML = '<div class="inventory-empty">Sua mochila está vazia.</div>';
+                grid.innerHTML = '<div class="inventory-empty">Sua mochila est\u00e1 vazia.</div>';
                 return;
             }
             grid.innerHTML = ownedItems.map(item => {

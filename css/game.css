@@ -19,7 +19,7 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 @keyframes tableLivingLight { 0%, 100% { filter: brightness(1); transform: scale(1); } 50% { filter: brightness(1.12); transform: scale(1.01); } }
 @keyframes tableDustFloat { 0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.5); } 15% { opacity: 0.55; } 80% { opacity: 0.35; } 100% { opacity: 0; transform: translate3d(var(--mx), -105vh, 0) scale(1.2); } }
 
-/* TELA DE FIM (VITÓRIA/DERROTA) */
+/* TELA DE FIM (VITORIA/DERROTA) */
 #end-screen { position: fixed; top: 0; left: calc(50% - 50vw); width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 90000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; backdrop-filter: blur(5px); }
 #end-screen.visible { opacity: 1; pointer-events: auto; }
 .end-content { text-align: center; transform: scale(0.8); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -95,17 +95,18 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 @keyframes hudFloatCentered { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-6px); } }
 .xp-mini { width: 38px; height: 53px; margin: 0 2px; position: relative; border: 1px solid #111; border-radius: 3px; box-shadow: 0 4px 8px rgba(0,0,0,0.6); cursor: default; transition: transform 0.2s; background-size: cover; background-position: center; }
 body.player-card-border-royal { --player-card-border-url: url('../assets/img/borda_metalica_card.png'); }
-body.player-card-border-elven { --player-card-border-url: url('../assets/img/borda_bosque_elfico_card.png?v=2026.06.23.21'); }
-body.player-card-border-mage { --player-card-border-url: url('../assets/img/borda_chama_arcana_card.png?v=2026.06.23.21'); }
-body.player-card-border-rogue { --player-card-border-url: url('../assets/img/borda_mao_dourada_card.png?v=2026.06.23.21'); }
-body.player-card-border-oracle { --player-card-border-url: url('../assets/img/borda_visao_astral_card.png?v=2026.06.23.21'); }
+body.player-card-border-elven { --player-card-border-url: url('../assets/img/borda_bosque_elfico_card.png?v=2026.06.23.22'); }
+body.player-card-border-mage { --player-card-border-url: url('../assets/img/borda_chama_arcana_card.png?v=2026.06.23.22'); }
+body.player-card-border-rogue { --player-card-border-url: url('../assets/img/borda_mao_dourada_card.png?v=2026.06.23.22'); }
+body.player-card-border-oracle { --player-card-border-url: url('../assets/img/borda_visao_astral_card.png?v=2026.06.23.22'); }
+body.player-card-border-oracle { --player-card-border-inset: -7% -7% -6.7% -7%; }
 .xp-mini.card-skin-metallic-border {
     border-color: transparent !important;
 }
 .xp-mini.card-skin-metallic-border::before {
     content: "";
     position: absolute;
-    inset: -7% -7% -5.8% -7%;
+    inset: var(--player-card-border-inset, -7% -7% -5.8% -7%);
     z-index: 4;
     pointer-events: none;
     border-radius: 8%;
@@ -118,7 +119,7 @@ body.player-card-border-oracle { --player-card-border-url: url('../assets/img/bo
 @keyframes ghostUp { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(1.5); opacity: 1; } 100% { transform: translateY(-150px) scale(2.0); opacity: 0; } }
 @keyframes ghostDown { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(1.5); opacity: 1; } 100% { transform: translateY(150px) scale(2.0); opacity: 0; } }
 
-/* MESAS DE COLISÃO E SLOTS */
+/* MESAS DE COLISAO E SLOTS */
 .middle-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; gap: 80px; perspective: 1200px; pointer-events: none; z-index: 10; padding-bottom: 120px; box-sizing: border-box; }
 .turn-display { position: absolute; top: 50%; left: calc(50% - 50vw + 40px); transform: translateY(-50%) rotate(-90deg); transform-origin: left center; font-family: 'Russo One', sans-serif; font-size: 24px; color: var(--gold); opacity: 0.95; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
 .turn-label { letter-spacing: 6px; }
@@ -129,7 +130,7 @@ body.player-card-border-oracle { --player-card-border-url: url('../assets/img/bo
 .slot .card { width: 100% !important; height: 100% !important; margin: 0; border-radius: 16px !important; box-shadow: none; cursor: default; transform: translateZ(0px); border-width: 2px; }
 .card-on-table { box-shadow: 0 18px 28px rgba(0,0,0,0.58), 0 7px 0 rgba(0,0,0,0.42) !important; transform: translateY(-2px); }
 
-/* SISTEMA DE CARTAS DA MÃO */
+/* SISTEMA DE CARTAS DA MAO */
 .hand-wrapper { position: absolute; bottom: -25px; left: 0; width: 100%; height: 170px; display: flex; justify-content: center; align-items: flex-end; z-index: 500; pointer-events: none; transform-style: flat; }
 #player-hand.preparing .card { opacity: 0 !important; visibility: hidden !important; }
 .card { --rx: 0; --ry: 0; transition: margin 0.1s, box-shadow 0.1s, transform 0.05s linear, filter 0.1s, opacity 0.5s ease; pointer-events: auto; width: 110px; height: 155px; border-radius: 10px; color: white; border: 2px solid #111; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; box-shadow: 0 10px 30px rgba(0,0,0,0.7); cursor: pointer; position: relative; margin: 0 -8px; transform-style: preserve-3d; background-color: #111; opacity: 1; visibility: visible; }
@@ -141,7 +142,7 @@ body.player-card-border-oracle { --player-card-border-url: url('../assets/img/bo
 .flying-card.card-skin-metallic-border::before {
     content: "";
     position: absolute;
-    inset: -7% -7% -5.8% -7%;
+    inset: var(--player-card-border-inset, -7% -7% -5.8% -7%);
     z-index: 24;
     pointer-events: none;
     border-radius: 8%;
@@ -242,7 +243,7 @@ body.tension-active #game-background, body.tension-active .middle-area, body.ten
 body.focus-hand .hand-wrapper .card:not(:hover) { transform: scale(0.95); filter: brightness(0.8); }
 body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-area, body.focus-xp #p-deck-container, body.focus-xp .hand-wrapper { filter: blur(5px) brightness(0.5); opacity: 0.6; }
 
-/* ANIMAÇÃO DE IMPACTO NA MESA (SLAM) */
+/* ANIMACAO DE IMPACTO NA MESA (SLAM) */
 @keyframes cardSlam {
     0% { transform: scale(1.15); box-shadow: 0 20px 40px rgba(0,0,0,0.6); opacity: 0.8; }
     50% { transform: scale(0.95) translateY(5px); box-shadow: 0 2px 5px rgba(0,0,0,0.8); opacity: 1; }
