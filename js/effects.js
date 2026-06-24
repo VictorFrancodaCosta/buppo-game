@@ -813,7 +813,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             min-height: min(820px, 90vh) !important;
             padding: 110px 104px 90px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_loja.webp?v=2026.06.24.18') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_loja.webp?v=2026.06.24.19') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -839,7 +839,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin: 0 !important;
             width: clamp(210px, 23vw, 340px) !important;
             aspect-ratio: 1413 / 614 !important;
-            background: url('assets/img/titulo_loja.webp?v=2026.06.24.18') center / contain no-repeat !important;
+            background: url('assets/img/titulo_loja.webp?v=2026.06.24.19') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
@@ -931,7 +931,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             max-height: none !important;
             margin: 46px auto 0 !important;
             overflow: visible !important;
-            padding: 18px 10px 12px 10px !important;
+            padding: 28px 10px 12px 10px !important;
             scrollbar-width: thin !important;
             scrollbar-color: var(--gold) rgba(0,0,0,0.28) !important;
         }
@@ -980,7 +980,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: block !important;
             padding: 0 !important;
             box-sizing: border-box !important;
-            overflow: hidden !important;
+            overflow: visible !important;
             background:
                 radial-gradient(circle at 50% 22%, rgba(160, 83, 18, 0.96), rgba(98, 43, 5, 0.98) 56%, rgba(61, 25, 2, 0.99) 100%) !important;
         }
