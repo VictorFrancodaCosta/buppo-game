@@ -813,7 +813,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             min-height: min(820px, 90vh) !important;
             padding: 110px 104px 90px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_loja.webp?v=2026.06.24.10') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_loja.webp?v=2026.06.24.11') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -825,6 +825,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             align-items: flex-start !important;
             justify-content: space-between !important;
             gap: 20px !important;
+            margin-top: 26px !important;
             margin-bottom: 12px !important;
             position: relative !important;
         }
@@ -838,7 +839,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin: 0 !important;
             width: clamp(210px, 23vw, 340px) !important;
             aspect-ratio: 1413 / 614 !important;
-            background: url('assets/img/titulo_loja.webp?v=2026.06.24.10') center / contain no-repeat !important;
+            background: url('assets/img/titulo_loja.webp?v=2026.06.24.11') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
@@ -908,8 +909,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             white-space: nowrap !important;
             text-shadow: 2px 2px 0 #1b0a03, 0 0 10px rgba(255,215,0,0.58) !important;
             position: absolute !important;
-            right: 0 !important;
-            top: -10px !important;
+            right: 34px !important;
+            top: 8px !important;
         }
 
         .lobby-shop-gold img {
@@ -928,7 +929,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             row-gap: clamp(26px, 2.8vw, 42px) !important;
             width: min(780px, 72%) !important;
             max-height: none !important;
-            margin: 28px auto 0 !important;
+            margin: 46px auto 0 !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             padding: 2px 10px 12px 2px !important;
@@ -960,6 +961,20 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             border-radius: 8px !important;
             background: #050505 !important;
             box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.08), 0 8px 0 rgba(30, 11, 3, 0.54) !important;
+            animation: lobbyShopSlotFloat 3.4s ease-in-out infinite !important;
+            will-change: transform !important;
+        }
+
+        .lobby-shop-slot:nth-child(2n) {
+            animation-delay: -0.85s !important;
+        }
+
+        .lobby-shop-slot:nth-child(3n) {
+            animation-delay: -1.55s !important;
+        }
+
+        .lobby-shop-slot:nth-child(5n) {
+            animation-delay: -2.25s !important;
         }
 
         .lobby-shop-product {
@@ -1263,6 +1278,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             .lobby-shop-header {
                 align-items: center !important;
                 gap: 12px !important;
+                margin-top: 16px !important;
                 margin-bottom: 20px !important;
             }
 
@@ -1327,6 +1343,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             .lobby-shop-gold {
                 font-size: 17px !important;
                 padding-right: 12px !important;
+                right: 18px !important;
+                top: 4px !important;
             }
 
             .lobby-shop-gold img {
@@ -1345,6 +1363,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         @keyframes lobbyMenuFloatGroup {
             0%, 100% { transform: translate(-50%, -50%) translateY(0); }
             50% { transform: translate(-50%, -50%) translateY(-5px); }
+        }
+
+        @keyframes lobbyShopSlotFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-7px); }
         }
 
         @keyframes lobbyMenuButtonFloat {
