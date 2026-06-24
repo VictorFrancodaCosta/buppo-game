@@ -1083,11 +1083,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-inventory-panel {
             position: relative !important;
+            z-index: 1 !important;
             width: min(1180px, 96vw) !important;
             min-height: min(700px, 82vh) !important;
             padding: 112px 92px 92px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_mochila.webp?v=2026.06.24.6') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_mochila.webp?v=2026.06.24.7') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -1098,10 +1099,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             left: 50% !important;
             top: calc(50% - min(350px, 41vh) - 72px) !important;
             transform: translateX(-50%) !important;
+            z-index: 4 !important;
             margin: 0 !important;
-            width: clamp(270px, 32vw, 470px) !important;
-            aspect-ratio: 649 / 208 !important;
-            background: url('assets/img/titulo_mochila.webp?v=2026.06.24.6') center / contain no-repeat !important;
+            width: clamp(330px, 39vw, 570px) !important;
+            aspect-ratio: 1712 / 461 !important;
+            background: url('assets/img/titulo_mochila.webp?v=2026.06.24.7') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
