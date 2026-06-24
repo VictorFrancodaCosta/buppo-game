@@ -833,7 +833,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-title {
             position: absolute !important;
             left: 50% !important;
-            top: calc(50% - min(410px, 45vh) - 34px) !important;
+            top: calc(50% - min(410px, 45vh) - 18px) !important;
             transform: translateX(-50%) !important;
             z-index: 4 !important;
             margin: 0 !important;
@@ -860,7 +860,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             align-items: center !important;
             justify-content: center !important;
             flex-wrap: wrap !important;
-            gap: clamp(24px, 2.4vw, 42px) !important;
+            gap: clamp(34px, 3.4vw, 62px) !important;
             width: min(820px, 74%) !important;
             max-width: 100% !important;
             margin: 0 auto !important;
@@ -875,12 +875,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background: transparent !important;
             color: rgba(255,248,200,0.84) !important;
             cursor: pointer !important;
-            font-family: 'Bangers', cursive !important;
-            font-size: clamp(17px, 1.25vw, 24px) !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: clamp(12px, 0.92vw, 16px) !important;
+            font-weight: 900 !important;
             line-height: 1 !important;
-            letter-spacing: 0 !important;
+            letter-spacing: 0.8px !important;
             text-transform: uppercase !important;
-            -webkit-text-stroke: 1.7px #050100 !important;
+            -webkit-text-stroke: 1.25px #050100 !important;
             paint-order: stroke fill !important;
             text-shadow: 2px 2px 0 #050100, -1px -1px 0 #050100, 0 0 9px rgba(0,0,0,0.56) !important;
             box-shadow: none !important;
@@ -1090,8 +1091,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             top: 50% !important;
             transform: translate(-50%, -50%) !important;
             z-index: 4 !important;
-            width: 98% !important;
-            height: 44% !important;
+            width: 116% !important;
+            height: 52% !important;
             background: url('assets/img/comprado_title.webp') center / contain no-repeat !important;
             color: transparent !important;
             font-size: 0 !important;
@@ -1117,6 +1118,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             text-transform: uppercase !important;
             cursor: pointer !important;
             box-shadow: 0 4px 0 rgba(42,16,4,0.8) !important;
+            display: none !important;
         }
 
         .shop-info-tooltip {
@@ -1168,6 +1170,99 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             vertical-align: -5px !important;
             margin: 0 2px !important;
             filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 5px rgba(255,215,0,0.45)) !important;
+        }
+
+        .purchase-confirm-overlay {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 99500 !important;
+            display: none !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: rgba(0, 0, 0, 0.58) !important;
+            backdrop-filter: blur(7px) saturate(0.86) !important;
+            -webkit-backdrop-filter: blur(7px) saturate(0.86) !important;
+        }
+
+        .purchase-confirm-overlay.visible {
+            display: flex !important;
+        }
+
+        .purchase-confirm-box {
+            position: relative !important;
+            width: min(780px, 88vw) !important;
+            aspect-ratio: 1337 / 833 !important;
+            background: url('assets/img/box_compra.webp') center / 100% 100% no-repeat !important;
+            filter: drop-shadow(0 18px 22px rgba(0,0,0,0.68)) !important;
+            animation: purchaseBoxPop 0.2s cubic-bezier(0.16, 0.9, 0.28, 1.25) both !important;
+        }
+
+        .purchase-confirm-question {
+            position: absolute !important;
+            left: 13% !important;
+            right: 13% !important;
+            top: 27% !important;
+            height: 30% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            color: #fff7b0 !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(28px, 4.1vw, 58px) !important;
+            line-height: 0.96 !important;
+            text-align: center !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0 !important;
+            -webkit-text-stroke: 2.2px #090200 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 4px 4px 0 #090200, 0 0 14px rgba(255,215,0,0.28) !important;
+        }
+
+        .purchase-confirm-actions {
+            position: absolute !important;
+            left: 10.8% !important;
+            right: 10.8% !important;
+            bottom: 12.4% !important;
+            height: 15.7% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 5.2% !important;
+        }
+
+        .purchase-confirm-choice {
+            appearance: none !important;
+            flex: 1 1 0 !important;
+            align-self: stretch !important;
+            border: 0 !important;
+            background: transparent !important;
+            color: #ffd81f !important;
+            cursor: pointer !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(27px, 3.5vw, 52px) !important;
+            line-height: 1 !important;
+            text-align: center !important;
+            letter-spacing: 0 !important;
+            -webkit-text-stroke: 2px #090200 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 4px 4px 0 #090200, 0 0 12px rgba(255,216,31,0.46) !important;
+            transition: transform 0.13s ease, filter 0.13s ease !important;
+        }
+
+        .purchase-confirm-choice:hover,
+        .purchase-confirm-choice:focus-visible {
+            transform: scale(1.12) !important;
+            filter: brightness(1.2) saturate(1.15) !important;
+            outline: none !important;
+        }
+
+        .purchase-confirm-choice:active {
+            transform: scale(0.94) !important;
+        }
+
+        @keyframes purchaseBoxPop {
+            from { opacity: 0; transform: scale(0.9) translateY(14px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
         .inventory-action-menu {
@@ -1309,7 +1404,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             align-items: center !important;
             justify-content: center !important;
             flex-wrap: wrap !important;
-            gap: clamp(24px, 2.4vw, 42px) !important;
+            gap: clamp(34px, 3.4vw, 62px) !important;
             width: min(820px, 74%) !important;
             z-index: 2 !important;
         }
@@ -1448,19 +1543,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-shop-title {
-                top: 28px !important;
+                top: 42px !important;
                 width: clamp(170px, 42vw, 260px) !important;
             }
 
             .lobby-shop-categories {
                 max-width: 100% !important;
-                gap: 18px !important;
+                gap: 24px !important;
             }
 
             .lobby-shop-category {
                 min-height: auto !important;
                 padding: 0 !important;
-                font-size: 17px !important;
+                font-size: 13px !important;
             }
 
             .lobby-shop-grid {
@@ -1504,7 +1599,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             .lobby-inventory-categories {
                 top: 88px !important;
                 width: 84% !important;
-                gap: 18px !important;
+                gap: 24px !important;
             }
 
             .lobby-inventory-close {
@@ -2704,7 +2799,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         const renderShopProducts = (category = 'borders') => {
             const items = lobbyShopItemsByCategory[category] || [];
             const productsHtml = items.slice(0, lobbyShopSlotCount).map(item => `
-                        <div class="lobby-shop-slot lobby-shop-product" data-shop-item="${item.id}">
+                        <div class="lobby-shop-slot lobby-shop-product" role="button" tabindex="0" data-shop-item="${item.id}">
                             <div class="shop-product-name">${getItemDisplayName(item)}</div>
                             ${renderBorderPreview(item, 'shop')}
                             <span class="shop-owned-ribbon" data-owned-ribbon="${item.id}" hidden>COMPRADO</span>
@@ -2767,8 +2862,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             if ((window.currentShopCategory || 'borders') === 'borders') {
                 bindBorderInfoTooltips(grid, '[data-shop-item]', (product) => product.dataset.shopItem);
             }
-            grid.querySelectorAll('[data-buy-item]').forEach((button) => {
-                button.addEventListener('click', () => window.confirmShopPurchase?.(button.dataset.buyItem));
+            grid.querySelectorAll('[data-shop-item]').forEach((product) => {
+                product.addEventListener('click', () => {
+                    const state = window.getShopItemState?.(product.dataset.shopItem) || { owned: false };
+                    if (!state.owned) window.confirmShopPurchase?.(product.dataset.shopItem);
+                });
+                product.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    const state = window.getShopItemState?.(product.dataset.shopItem) || { owned: false };
+                    if (!state.owned) window.confirmShopPurchase?.(product.dataset.shopItem);
+                });
             });
             window.refreshShopInventoryState?.();
         };
@@ -2862,51 +2966,28 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
             grid.innerHTML = ownedItems.map(item => {
                 const equipped = window.getShopItemState?.(item.id)?.equipped === true;
-                const selected = window.selectedInventoryItem === item.id;
                 return `
-                <div class="inventory-item ${selected ? 'selected' : ''}" role="button" tabindex="0" data-inventory-item="${item.id}">
+                <div class="inventory-item" role="button" tabindex="0" data-inventory-item="${item.id}">
                     <div class="inventory-item-name">${getItemDisplayName(item)}</div>
                     ${renderBorderPreview(item, 'shop')}
-                    ${selected ? `
-                    <span class="inventory-action-menu" role="menu" aria-label="Op\u00e7\u00f5es de ${getItemDisplayName(item)}">
-                        <span class="inventory-action-option" role="button" tabindex="0" data-inventory-action="equip" data-equip-item="${item.id}" ${equipped ? 'aria-disabled="true" data-disabled="true"' : ''}>EQUIPAR</span>
-                        <span class="inventory-action-option" role="button" tabindex="0" data-inventory-action="unequip" data-equip-item="${item.id}" ${equipped ? '' : 'aria-disabled="true" data-disabled="true"'}>DESEQUIPAR</span>
-                    </span>` : '<span></span>'}
                     ${equipped ? '<span class="inventory-equipped-ribbon">EQUIPADO</span>' : ''}
                 </div>`;
             }).join('');
             grid.querySelectorAll('[data-inventory-item]').forEach((button) => {
                 button.addEventListener('click', () => {
-                    window.selectedInventoryItem = button.dataset.inventoryItem;
-                    window.renderInventoryItems?.();
+                    window.selectedInventoryItem = null;
+                    window.toggleInventoryEquip?.(button.dataset.inventoryItem);
                 });
                 button.addEventListener('keydown', (event) => {
                     if (event.key !== 'Enter' && event.key !== ' ') return;
                     event.preventDefault();
-                    window.selectedInventoryItem = button.dataset.inventoryItem;
-                    window.renderInventoryItems?.();
+                    window.selectedInventoryItem = null;
+                    window.toggleInventoryEquip?.(button.dataset.inventoryItem);
                 });
             });
             if ((window.currentInventoryCategory || 'borders') === 'borders') {
                 bindBorderInfoTooltips(grid, '[data-inventory-item]', (button) => button.dataset.inventoryItem);
             }
-            grid.querySelectorAll('[data-equip-item]').forEach((button) => {
-                button.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    if (button.dataset.disabled === 'true') return;
-                    window.selectedInventoryItem = null;
-                    window.toggleInventoryEquip?.(button.dataset.equipItem);
-                });
-                button.addEventListener('keydown', (event) => {
-                    if (event.key !== 'Enter' && event.key !== ' ') return;
-                    event.preventDefault();
-                    event.stopPropagation();
-                    if (button.dataset.disabled === 'true') return;
-                    window.selectedInventoryItem = null;
-                    window.toggleInventoryEquip?.(button.dataset.equipItem);
-                });
-            });
         };
 
         window.openInventory = () => {

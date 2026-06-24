@@ -400,6 +400,13 @@ const BORDER_REWARD_RULES = {
     }
 };
 
+const DECK_REWARD_RULES = {
+    knight: {
+        play: { BLOQUEIO: 2 },
+        mastery: { BLOQUEIO: 1 }
+    }
+};
+
 function updatePlayerInventoryState(inventory = [], equippedItems = {}) {
     window.playerInventory = Array.isArray(inventory) ? [...new Set(inventory)] : [];
     window.equippedItems = equippedItems && typeof equippedItems === 'object' ? { ...equippedItems } : {};
@@ -419,6 +426,38 @@ window.getEquippedCardBorderItem = function() {
     return SHOP_ITEMS[window.equippedItems?.cardBorder] || null;
 };
 
+window.openPurchaseConfirm = function(itemName, onConfirm) {
+    let overlay = document.getElementById('purchase-confirm-overlay');
+    if(!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'purchase-confirm-overlay';
+        overlay.className = 'purchase-confirm-overlay';
+        overlay.innerHTML = `
+            <div class="purchase-confirm-box" role="dialog" aria-modal="true" aria-label="Confirmar compra">
+                <div class="purchase-confirm-question"></div>
+                <div class="purchase-confirm-actions">
+                    <button class="purchase-confirm-choice" type="button" data-purchase-choice="SIM">SIM</button>
+                    <button class="purchase-confirm-choice" type="button" data-purchase-choice="NÃO">NÃO</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (event) => {
+            if(event.target === overlay) overlay.classList.remove('visible');
+        });
+        overlay.querySelectorAll('[data-purchase-choice]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const choice = button.dataset.purchaseChoice;
+                overlay.classList.remove('visible');
+                if(choice === 'SIM' && typeof overlay.confirmHandler === 'function') overlay.confirmHandler();
+            });
+        });
+    }
+    const question = overlay.querySelector('.purchase-confirm-question');
+    if(question) question.textContent = `COMPRAR ${itemName}?`;
+    overlay.confirmHandler = onConfirm;
+    overlay.classList.add('visible');
+};
+
 window.confirmShopPurchase = function(itemId) {
     const item = SHOP_ITEMS[itemId];
     if(!item) return;
@@ -426,10 +465,7 @@ window.confirmShopPurchase = function(itemId) {
         window.openInventory?.();
         return;
     }
-    const price = Math.max(0, item.price || 0);
-    window.openModal(`COMPRAR ${item.name}?`, price ? `CUSTO: ${price} OURO` : '', ['SIM', 'NÃO'], (choice) => {
-        if(choice === 'SIM') window.purchaseShopItem(itemId);
-    });
+    window.openPurchaseConfirm(item.name, () => window.purchaseShopItem(itemId));
 };
 
 window.purchaseShopItem = async function(itemId) {
@@ -1073,6 +1109,8 @@ function startGameFlow() {
         if (window.myRole === 'player1') {
             window.applyDeckTheme(window.pvpStartData.player1.deckType);
             resetUnit(player, window.pvpStartData.player1.deck, 'player1'); resetUnit(monster, window.pvpStartData.player2.deck, 'player2');
+            player.deckType = window.pvpStartData.player1.deckType || 'knight';
+            monster.deckType = window.pvpStartData.player2.deckType || 'knight';
             player.equippedItems = { ...(window.pvpStartData.player1.equippedItems || window.equippedItems || {}) };
             monster.equippedItems = { ...(window.pvpStartData.player2.equippedItems || {}) };
             hydrateInitialPvPHand(player, window.pvpStartData.player1);
@@ -1080,6 +1118,8 @@ function startGameFlow() {
         } else {
             window.applyDeckTheme(window.pvpStartData.player2.deckType);
             resetUnit(player, window.pvpStartData.player2.deck, 'player2'); resetUnit(monster, window.pvpStartData.player1.deck, 'player1');
+            player.deckType = window.pvpStartData.player2.deckType || 'knight';
+            monster.deckType = window.pvpStartData.player1.deckType || 'knight';
             player.equippedItems = { ...(window.pvpStartData.player2.equippedItems || window.equippedItems || {}) };
             monster.equippedItems = { ...(window.pvpStartData.player1.equippedItems || {}) };
             hydrateInitialPvPHand(player, window.pvpStartData.player2);
@@ -1088,6 +1128,8 @@ function startGameFlow() {
     } else {
         window.applyDeckTheme(window.currentDeck);
         resetUnit(player, null, 'pve'); resetUnit(monster, null, 'pve');
+        player.deckType = window.currentDeck || 'knight';
+        monster.deckType = 'knight';
         player.equippedItems = { ...(window.equippedItems || {}) };
         monster.equippedItems = {};
         baseDraw(monster, 6); baseDraw(player, 6);
@@ -1315,6 +1357,7 @@ function syncUnitFromServer(u, data, showPlayerDamage = false, syncXp = true) {
     if(data.bonusBlock !== undefined) u.bonusBlock = data.bonusBlock;
     if(data.disabled !== undefined) u.disabled = data.disabled;
     if(data.equippedItems !== undefined) u.equippedItems = { ...(data.equippedItems || {}) };
+    if(data.deckType !== undefined) u.deckType = data.deckType || 'knight';
     updateUI();
     if (showPlayerDamage) checkEndGame();
 }
@@ -1329,6 +1372,7 @@ function serializeUnitState(u) {
         disabled: u.disabled || null,
         bonusAtk: u.bonusAtk || 0,
         bonusBlock: u.bonusBlock || 0,
+        deckType: u.deckType || 'knight',
         equippedItems: { ...(u.equippedItems || {}) }
     };
 }
@@ -1451,6 +1495,7 @@ const MATCH_REWARD_LABELS = {
     EFFECTIVE_ATTACK: 'ATAQUE EFETIVO',
     LEVEL_UP: 'MAIS FORTE',
     PERFECT_DEFENSE: 'DEFESA PERFEITA',
+    PLAY_BLOCK: 'BLOQUEIO',
     PLAY_RESTORE: 'RESTAURAR',
     PLAY_DISARM: 'DESARMAR',
     PLAY_TRAIN: 'TREINAR',
@@ -1474,31 +1519,40 @@ function getUnitBorderRewardRules(u) {
     return BORDER_REWARD_RULES[getUnitEquippedBorderId(u)] || null;
 }
 
+function getUnitDeckRewardRules(u) {
+    return DECK_REWARD_RULES[u?.deckType || 'knight'] || null;
+}
+
+function sumRewardRules(u, getter) {
+    return [getUnitDeckRewardRules(u), getUnitBorderRewardRules(u)]
+        .reduce((total, rules) => total + Math.max(0, Number(getter(rules) || 0)), 0);
+}
+
 function awardBorderPlayRewardGold(u, cardKey) {
-    const amount = getUnitBorderRewardRules(u)?.play?.[cardKey] || 0;
+    const amount = sumRewardRules(u, rules => rules?.play?.[cardKey]);
     if(amount <= 0) return;
-    const label = cardKey === 'DESCANSAR' ? MATCH_REWARD_LABELS.PLAY_RESTORE : (cardKey === 'DESARMAR' ? MATCH_REWARD_LABELS.PLAY_DISARM : MATCH_REWARD_LABELS.PLAY_TRAIN);
+    const label = cardKey === 'BLOQUEIO' ? MATCH_REWARD_LABELS.PLAY_BLOCK : (cardKey === 'DESCANSAR' ? MATCH_REWARD_LABELS.PLAY_RESTORE : (cardKey === 'DESARMAR' ? MATCH_REWARD_LABELS.PLAY_DISARM : MATCH_REWARD_LABELS.PLAY_TRAIN));
     awardMatchRewardGoldFor(u, amount, label);
 }
 
 function awardAttackRewardGold(u, damage) {
     if(damage <= 0) return;
-    const amount = getUnitBorderRewardRules(u)?.attackEffective || 0;
+    const amount = sumRewardRules(u, rules => rules?.attackEffective);
     if(amount > 0) awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.EFFECTIVE_ATTACK);
 }
 
 function awardBlockRewardGold(u) {
-    const amount = getUnitBorderRewardRules(u)?.blockEffective || 0;
+    const amount = sumRewardRules(u, rules => rules?.blockEffective);
     if(amount > 0) awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.PERFECT_DEFENSE);
 }
 
 function awardLevelRewardGold(u) {
-    const amount = getUnitBorderRewardRules(u)?.levelUp || 0;
+    const amount = sumRewardRules(u, rules => rules?.levelUp);
     if(amount > 0) awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.LEVEL_UP);
 }
 
 function awardMasteryRewardGold(u, masteryKey) {
-    const amount = getUnitBorderRewardRules(u)?.mastery?.[masteryKey] || 0;
+    const amount = sumRewardRules(u, rules => rules?.mastery?.[masteryKey]);
     if(amount <= 0) return;
     const labels = {
         ATAQUE: MATCH_REWARD_LABELS.MASTERY_ATTACK,
@@ -1694,9 +1748,10 @@ function showEndPoints(points, goldReward = null) {
     const pointSign = points > 0 ? '+' : (points < 0 ? '-' : '');
     animateEndCounter(pointSpan, points, value => `${pointSign}${value} PTS`);
 
-    const reward = goldReward !== null ? Math.max(0, goldReward || 0) : (window.matchRewardGold || 0);
+    const reward = goldReward !== null ? Math.max(0, goldReward || 0) : (points >= 0 ? (window.matchRewardGold || 0) : 0);
+    const lostGold = points < 0 ? Math.min(window.currentGoldCoins || 0, window.opponentMatchRewardGold || 0) : 0;
     let goldEl = document.getElementById('end-gold-reward');
-    if(reward > 0) {
+    if(reward > 0 || lostGold > 0) {
         if(!goldEl) {
             goldEl = document.createElement('div');
             goldEl.id = 'end-gold-reward';
@@ -1705,10 +1760,12 @@ function showEndPoints(points, goldReward = null) {
         } else if(goldEl.parentElement !== rewardStack) {
             rewardStack.appendChild(goldEl);
         }
-        goldEl.classList.remove('gold-loss');
+        goldEl.classList.toggle('gold-loss', lostGold > 0);
         goldEl.innerHTML = `<img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"><span></span>`;
         const goldSpan = goldEl.querySelector('span');
-        animateEndCounter(goldSpan, reward, value => `+${value} OURO`);
+        const goldSign = lostGold > 0 ? '-' : '+';
+        const goldValue = lostGold > 0 ? lostGold : reward;
+        animateEndCounter(goldSpan, goldValue, value => `${goldSign}${value} OURO`);
     } else if(goldEl) {
         goldEl.remove();
     }
@@ -1794,8 +1851,8 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
 window.registrarDerrotaOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
-    const result = await registrarDerrotaDB(window.currentUser, modoAtual, 0);
-    await persistMatchRewardGoldOnly();
+    const result = await registrarDerrotaDB(window.currentUser, modoAtual, window.opponentMatchRewardGold || 0);
+    if(Number.isFinite(result.goldLost)) updateLobbyGoldWallet((window.currentGoldCoins || 0) - result.goldLost);
     const pts = result.points || 0;
     if(pts !== 0) {
         window.currentLobbyScore = Math.max(0, (Number(window.currentLobbyScore) || 0) + pts);
@@ -2278,6 +2335,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         if(mAct === 'TREINAR') triggerTrainDeckGlow(false);
         if(pBlocks) { triggerBlockShield(true); triggerBlockEffect(true); }
         else if(mBlocks) { triggerBlockShield(false); triggerBlockEffect(false); }
+        if(pAct === 'BLOQUEIO') awardBorderPlayRewardGold(player, 'BLOQUEIO');
+        if(mAct === 'BLOQUEIO') awardBorderPlayRewardGold(monster, 'BLOQUEIO');
         if(pBlocks) awardBlockRewardGold(player);
         else if(mBlocks) awardBlockRewardGold(monster);
         if(mAct === 'DESARMAR') awardBorderPlayRewardGold(monster, 'DESARMAR');
