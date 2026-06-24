@@ -337,6 +337,7 @@ const SHOP_ITEMS = {
         id: 'metallic_border',
         name: 'BORDA - GUARDA REAL',
         slot: 'cardBorder',
+        price: 600,
         cssClass: 'royal',
         asset: 'assets/img/borda_metalica_card.webp'
     },
@@ -344,6 +345,7 @@ const SHOP_ITEMS = {
         id: 'elven_forest_border',
         name: 'BORDA - SENTINELA VERDE',
         slot: 'cardBorder',
+        price: 600,
         cssClass: 'elven',
         asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5'
     },
@@ -351,6 +353,7 @@ const SHOP_ITEMS = {
         id: 'mage_fire_border',
         name: 'BORDA - CHAMA ARCANA',
         slot: 'cardBorder',
+        price: 600,
         cssClass: 'mage',
         asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5'
     },
@@ -358,6 +361,7 @@ const SHOP_ITEMS = {
         id: 'rogue_gold_border',
         name: 'BORDA - M?O DOURADA',
         slot: 'cardBorder',
+        price: 600,
         cssClass: 'rogue',
         asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5'
     },
@@ -365,6 +369,7 @@ const SHOP_ITEMS = {
         id: 'oracle_border',
         name: 'BORDA - VIS?O ASTRAL',
         slot: 'cardBorder',
+        price: 600,
         cssClass: 'oracle',
         asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5'
     }
@@ -397,7 +402,8 @@ window.confirmShopPurchase = function(itemId) {
         window.openInventory?.();
         return;
     }
-    window.openModal(`COMPRAR ${item.name}?`, '', ['SIM', 'N?O'], (choice) => {
+    const price = Math.max(0, item.price || 0);
+    window.openModal(`COMPRAR ${item.name}?`, price ? `CUSTO: ${price} OURO` : '', ['SIM', 'N?O'], (choice) => {
         if(choice === 'SIM') window.purchaseShopItem(itemId);
     });
 };
@@ -405,10 +411,17 @@ window.confirmShopPurchase = function(itemId) {
 window.purchaseShopItem = async function(itemId) {
     const item = SHOP_ITEMS[itemId];
     if(!item || !window.currentUser) return;
+    const price = Math.max(0, item.price || 0);
+    if((window.currentGoldCoins || 0) < price) {
+        window.openModal('OURO INSUFICIENTE', `VOCÊ PRECISA DE ${price} OURO.`, ['OK']);
+        return;
+    }
     const nextInventory = [...new Set([...(window.playerInventory || []), itemId])];
+    const nextGold = Math.max(0, (window.currentGoldCoins || 0) - price);
     try {
         const userRef = doc(db, "players", window.currentUser.uid);
-        await updateDoc(userRef, { inventory: nextInventory, equippedItems: window.equippedItems || {} });
+        await updateDoc(userRef, { goldCoins: nextGold, inventory: nextInventory, equippedItems: window.equippedItems || {} });
+        updateLobbyGoldWallet(nextGold);
         updatePlayerInventoryState(nextInventory, window.equippedItems || {});
         window.openInventory?.();
     } catch(e) {
