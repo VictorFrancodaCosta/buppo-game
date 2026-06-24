@@ -813,7 +813,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             min-height: min(820px, 90vh) !important;
             padding: 110px 104px 90px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_loja.webp?v=2026.06.24.12') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_loja.webp?v=2026.06.24.14') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -839,7 +839,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin: 0 !important;
             width: clamp(210px, 23vw, 340px) !important;
             aspect-ratio: 1413 / 614 !important;
-            background: url('assets/img/titulo_loja.webp?v=2026.06.24.12') center / contain no-repeat !important;
+            background: url('assets/img/titulo_loja.webp?v=2026.06.24.14') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
@@ -978,13 +978,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-shop-product {
-            display: grid !important;
-            grid-template-rows: auto 1fr auto !important;
-            align-items: center !important;
-            justify-items: center !important;
-            gap: 8px !important;
-            padding: 14px 12px !important;
+            display: block !important;
+            padding: 0 !important;
             box-sizing: border-box !important;
+            overflow: hidden !important;
+            background:
+                radial-gradient(circle at 50% 22%, rgba(160, 83, 18, 0.96), rgba(98, 43, 5, 0.98) 56%, rgba(61, 25, 2, 0.99) 100%) !important;
         }
 
         .shop-product-name,
@@ -996,6 +995,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             text-align: center !important;
             text-transform: uppercase !important;
             text-shadow: 2px 2px 0 #1b0a03 !important;
+        }
+
+        .lobby-shop-product .shop-product-name {
+            position: absolute !important;
+            left: 8px !important;
+            right: 8px !important;
+            top: clamp(10px, 1.1vw, 15px) !important;
+            z-index: 3 !important;
+            color: #ffd51d !important;
+            font-size: clamp(13px, 1.12vw, 17px) !important;
+            line-height: 1 !important;
+            letter-spacing: 2px !important;
+            text-shadow: 2px 2px 0 #2a1004, 0 0 8px rgba(255, 198, 24, 0.38) !important;
         }
 
         .metallic-border-art {
@@ -1010,8 +1022,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-shop-panel .metallic-border-art {
-            width: min(76%, 150px) !important;
-            aspect-ratio: 1 / 1 !important;
+            position: absolute !important;
+            inset: 0 !important;
+            z-index: 1 !important;
+            width: 100% !important;
+            height: 100% !important;
+            aspect-ratio: auto !important;
+            background-size: cover !important;
+            background-position: center center !important;
+            filter: drop-shadow(0 8px 9px rgba(0,0,0,0.58)) !important;
         }
 
         .shop-owned-ribbon {
@@ -1034,6 +1053,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .shop-buy-btn {
+            position: absolute !important;
+            left: 50% !important;
+            bottom: 10px !important;
+            z-index: 3 !important;
+            transform: translateX(-50%) !important;
             min-width: 104px !important;
             padding: 8px 14px !important;
             border: 2px solid #fff4ad !important;
@@ -1155,7 +1179,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             min-height: min(700px, 82vh) !important;
             padding: 112px 92px 92px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_mochila.webp?v=2026.06.24.12') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_mochila.webp?v=2026.06.24.14') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -1170,7 +1194,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin: 0 !important;
             width: clamp(330px, 39vw, 570px) !important;
             aspect-ratio: 1712 / 461 !important;
-            background: url('assets/img/titulo_mochila.webp?v=2026.06.24.12') center / contain no-repeat !important;
+            background: url('assets/img/titulo_mochila.webp?v=2026.06.24.14') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
@@ -2450,11 +2474,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         const lobbyCardBorderItems = [
-            { id: 'metallic_border', name: 'BORDA - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/borda_metalica_card.webp', shopAsset: 'assets/img/borda_cavaleiro_loja.webp?v=2026.06.24.13' },
-            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_mago_loja.webp?v=2026.06.24.13' },
-            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_arqueiro_loja.webp?v=2026.06.24.13' },
-            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_ladino_loja.webp?v=2026.06.24.13' },
-            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_oraculo_loja.webp?v=2026.06.24.13' }
+            { id: 'metallic_border', name: 'BORDA - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/borda_metalica_card.webp', shopAsset: 'assets/img/borda_cavaleiro_loja.webp?v=2026.06.24.14' },
+            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_mago_loja.webp?v=2026.06.24.14' },
+            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_arqueiro_loja.webp?v=2026.06.24.14' },
+            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_ladino_loja.webp?v=2026.06.24.14' },
+            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_oraculo_loja.webp?v=2026.06.24.14' }
         ];
         const lobbyShopItemsByCategory = {
             decks: [],
