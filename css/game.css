@@ -95,17 +95,17 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 @keyframes hudFloatCentered { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-6px); } }
 .xp-mini { width: 38px; height: 53px; margin: 0 2px; position: relative; border: 1px solid #111; border-radius: 3px; box-shadow: 0 4px 8px rgba(0,0,0,0.6); cursor: default; transition: transform 0.2s; background-size: cover; background-position: center; }
 body.player-card-border-royal { --player-card-border-url: url('../assets/img/borda_metalica_card.png'); }
-body.player-card-border-elven { --player-card-border-url: url('../assets/img/borda_bosque_elfico_card.png?v=2026.06.23.16'); }
-body.player-card-border-mage { --player-card-border-url: url('../assets/img/borda_chama_arcana_card.png?v=2026.06.23.16'); }
-body.player-card-border-rogue { --player-card-border-url: url('../assets/img/borda_mao_dourada_card.png?v=2026.06.23.16'); }
-body.player-card-border-oracle { --player-card-border-url: url('../assets/img/borda_visao_astral_card.png?v=2026.06.23.16'); }
+body.player-card-border-elven { --player-card-border-url: url('../assets/img/borda_bosque_elfico_card.png?v=2026.06.23.18'); }
+body.player-card-border-mage { --player-card-border-url: url('../assets/img/borda_chama_arcana_card.png?v=2026.06.23.18'); }
+body.player-card-border-rogue { --player-card-border-url: url('../assets/img/borda_mao_dourada_card.png?v=2026.06.23.18'); }
+body.player-card-border-oracle { --player-card-border-url: url('../assets/img/borda_visao_astral_card.png?v=2026.06.23.18'); }
 .xp-mini.card-skin-metallic-border {
     border-color: transparent !important;
 }
 .xp-mini.card-skin-metallic-border::before {
     content: "";
     position: absolute;
-    inset: -5.5% -7% -3.8% -7%;
+    inset: -7% -7% -7% -7%;
     z-index: 4;
     pointer-events: none;
     border-radius: 8%;
@@ -141,7 +141,7 @@ body.player-card-border-oracle { --player-card-border-url: url('../assets/img/bo
 .flying-card.card-skin-metallic-border::before {
     content: "";
     position: absolute;
-    inset: -5.5% -7% -3.8% -7%;
+    inset: -7% -7% -7% -7%;
     z-index: 24;
     pointer-events: none;
     border-radius: 8%;

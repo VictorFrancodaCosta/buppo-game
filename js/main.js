@@ -73,8 +73,8 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.png',
-        'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.16', 'assets/img/borda_chama_arcana_card.png?v=2026.06.23.16',
-        'assets/img/borda_mao_dourada_card.png?v=2026.06.23.16', 'assets/img/borda_visao_astral_card.png?v=2026.06.23.16'
+        'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.18', 'assets/img/borda_chama_arcana_card.png?v=2026.06.23.18',
+        'assets/img/borda_mao_dourada_card.png?v=2026.06.23.18', 'assets/img/borda_visao_astral_card.png?v=2026.06.23.18'
     ],
     audio: [
         { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true },
@@ -342,28 +342,28 @@ const SHOP_ITEMS = {
         name: 'BORDA - SENTINELA VERDE',
         slot: 'cardBorder',
         cssClass: 'elven',
-        asset: 'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.16'
+        asset: 'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.18'
     },
     mage_fire_border: {
         id: 'mage_fire_border',
         name: 'BORDA - CHAMA ARCANA',
         slot: 'cardBorder',
         cssClass: 'mage',
-        asset: 'assets/img/borda_chama_arcana_card.png?v=2026.06.23.16'
+        asset: 'assets/img/borda_chama_arcana_card.png?v=2026.06.23.18'
     },
     rogue_gold_border: {
         id: 'rogue_gold_border',
         name: 'BORDA - MÃO DOURADA',
         slot: 'cardBorder',
         cssClass: 'rogue',
-        asset: 'assets/img/borda_mao_dourada_card.png?v=2026.06.23.16'
+        asset: 'assets/img/borda_mao_dourada_card.png?v=2026.06.23.18'
     },
     oracle_border: {
         id: 'oracle_border',
         name: 'BORDA - VISÃO ASTRAL',
         slot: 'cardBorder',
         cssClass: 'oracle',
-        asset: 'assets/img/borda_visao_astral_card.png?v=2026.06.23.16'
+        asset: 'assets/img/borda_visao_astral_card.png?v=2026.06.23.18'
     }
 };
 window.SHOP_ITEMS = SHOP_ITEMS;
