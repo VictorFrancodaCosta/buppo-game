@@ -833,7 +833,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-title {
             position: absolute !important;
             left: 50% !important;
-            top: calc(50% - min(410px, 45vh) - 64px) !important;
+            top: calc(50% - min(410px, 45vh) - 50px) !important;
             transform: translateX(-50%) !important;
             z-index: 4 !important;
             margin: 0 !important;
@@ -860,7 +860,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             align-items: center !important;
             justify-content: center !important;
             flex-wrap: wrap !important;
-            gap: 8px !important;
+            gap: clamp(16px, 1.5vw, 24px) !important;
             width: min(820px, 74%) !important;
             max-width: 100% !important;
             margin: 0 auto !important;
@@ -868,27 +868,32 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-category {
             appearance: none !important;
-            min-height: 34px !important;
-            padding: 7px 12px !important;
-            border: 2px solid rgba(255,215,0,0.58) !important;
-            border-radius: 999px !important;
-            background: rgba(0,0,0,0.36) !important;
-            color: #fff8c8 !important;
+            min-height: auto !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            color: rgba(255,248,200,0.84) !important;
             cursor: pointer !important;
-            font-family: 'Russo One', sans-serif !important;
-            font-size: 11px !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(16px, 1.15vw, 21px) !important;
             line-height: 1 !important;
             letter-spacing: 0 !important;
-            text-shadow: 1px 1px 0 #1b0a03 !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 10px rgba(0,0,0,0.28) !important;
+            text-transform: uppercase !important;
+            -webkit-text-stroke: 1px #160602 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 2px 2px 0 #160602, 0 0 8px rgba(0,0,0,0.5) !important;
+            box-shadow: none !important;
+            transform-origin: center !important;
+            transition: transform 0.14s ease, color 0.14s ease, filter 0.14s ease, text-shadow 0.14s ease !important;
         }
 
         .lobby-shop-category:hover,
         .lobby-shop-category.active {
-            border-color: #fff4ad !important;
-            background: linear-gradient(180deg, #ffe48a, #d9901e) !important;
-            color: #2a1004 !important;
-            text-shadow: 1px 1px 0 rgba(255,255,255,0.38) !important;
+            color: #ffd81f !important;
+            transform: scale(1.14) !important;
+            filter: brightness(1.12) saturate(1.18) !important;
+            text-shadow: 2px 2px 0 #160602, 0 0 10px rgba(255,216,31,0.62), 0 0 18px rgba(255,122,24,0.36) !important;
         }
 
         .lobby-shop-gold {
@@ -929,7 +934,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             row-gap: clamp(26px, 2.8vw, 42px) !important;
             width: min(780px, 72%) !important;
             max-height: none !important;
-            margin: 30px auto 0 !important;
+            margin: 18px auto 0 !important;
             overflow: visible !important;
             padding: 28px 10px 12px 10px !important;
             scrollbar-width: thin !important;
@@ -1055,8 +1060,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             top: 50% !important;
             transform: translate(-50%, -50%) !important;
             z-index: 4 !important;
-            width: 78% !important;
-            height: 30% !important;
+            width: 84% !important;
+            height: 34% !important;
             background: url('assets/img/comprado_title.webp') center / contain no-repeat !important;
             color: transparent !important;
             font-size: 0 !important;
@@ -1088,15 +1093,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             position: fixed !important;
             z-index: 98000 !important;
             display: none !important;
-            width: min(320px, 82vw) !important;
-            padding: 14px 16px 13px !important;
+            width: min(420px, 88vw) !important;
+            padding: 18px 20px 17px !important;
             border: 2px solid rgba(255, 215, 0, 0.62) !important;
             border-radius: 8px !important;
             background: rgba(4, 4, 4, 0.94) !important;
             color: #fff !important;
             font-family: 'Montserrat', sans-serif !important;
-            font-size: 13px !important;
-            line-height: 1.32 !important;
+            font-size: 15px !important;
+            line-height: 1.42 !important;
             pointer-events: none !important;
             box-shadow: 0 12px 28px rgba(0,0,0,0.66), inset 0 1px 0 rgba(255,255,255,0.08) !important;
         }
@@ -1106,19 +1111,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .shop-info-title {
-            margin-bottom: 9px !important;
+            margin-bottom: 12px !important;
             color: #fff !important;
             font-family: 'Bangers', cursive !important;
-            font-size: 25px !important;
+            font-size: 34px !important;
             line-height: 0.95 !important;
             letter-spacing: 0 !important;
-            -webkit-text-stroke: 1.3px #000 !important;
+            -webkit-text-stroke: 1.6px #000 !important;
             paint-order: stroke fill !important;
             text-shadow: 3px 3px 0 #000 !important;
         }
 
         .shop-info-tooltip p {
-            margin: 7px 0 0 !important;
+            margin: 10px 0 0 !important;
         }
 
         .shop-info-tooltip strong {
@@ -1127,10 +1132,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .shop-info-coin {
-            width: 18px !important;
-            height: 18px !important;
+            width: 22px !important;
+            height: 22px !important;
             object-fit: contain !important;
-            vertical-align: -4px !important;
+            vertical-align: -5px !important;
             margin: 0 2px !important;
             filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 5px rgba(255,215,0,0.45)) !important;
         }
@@ -1268,13 +1273,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-inventory-categories {
             position: absolute !important;
             left: 50% !important;
-            top: 94px !important;
+            top: 108px !important;
             transform: translateX(-50%) !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             flex-wrap: wrap !important;
-            gap: 8px !important;
+            gap: clamp(16px, 1.5vw, 24px) !important;
             width: min(820px, 74%) !important;
             z-index: 2 !important;
         }
@@ -1358,8 +1363,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             top: 48% !important;
             transform: translate(-50%, -50%) !important;
             z-index: 6 !important;
-            width: 76% !important;
-            height: 29% !important;
+            width: 84% !important;
+            height: 34% !important;
             background: url('assets/img/equipado_title.webp') center / contain no-repeat !important;
             color: transparent !important;
             font-size: 0 !important;
@@ -1419,13 +1424,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
             .lobby-shop-categories {
                 max-width: 100% !important;
-                gap: 6px !important;
+                gap: 12px !important;
             }
 
             .lobby-shop-category {
-                min-height: 30px !important;
-                padding: 6px 9px !important;
-                font-size: 10px !important;
+                min-height: auto !important;
+                padding: 0 !important;
+                font-size: 15px !important;
             }
 
             .lobby-shop-grid {
@@ -1467,9 +1472,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-inventory-categories {
-                top: 76px !important;
+                top: 88px !important;
                 width: 84% !important;
-                gap: 6px !important;
+                gap: 12px !important;
             }
 
             .lobby-inventory-close {
