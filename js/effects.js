@@ -2137,11 +2137,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         const lobbyCardBorderItems = [
             { id: 'metallic_border', name: 'BORDA - GUARDA REAL', asset: 'assets/img/borda_metalica_card.png' },
-            { id: 'elven_forest_border', name: 'BORDA - BOSQUE \u00c9LFICO', asset: 'assets/img/borda_bosque_elfico_card.png' },
-            { id: 'volcanic_forge_border', name: 'BORDA - FORJA VULC\u00c2NICA', asset: 'assets/img/borda_forja_vulcanica_card.png' },
-            { id: 'arcane_crystal_border', name: 'BORDA - CRISTAL ARCANO', asset: 'assets/img/borda_cristal_arcano_card.png' },
-            { id: 'pirate_treasure_border', name: 'BORDA - TESOURO PIRATA', asset: 'assets/img/borda_tesouro_pirata_card.png' },
-            { id: 'northern_ice_border', name: 'BORDA - GELO N\u00d3RDICO', asset: 'assets/img/borda_gelo_nordico_card.png' }
+            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.png' },
+            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.png' },
+            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.png' },
+            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.png' }
         ];
 
         const renderBorderPreview = (item) => `<div class="metallic-border-art" style="background-image: url('${item.asset}')" aria-label="Arte de ${item.name}"></div>`;
@@ -2151,7 +2150,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                             ${renderBorderPreview(item)}
                             <button class="shop-buy-btn" type="button" data-buy-item="${item.id}">COMPRAR</button>
                         </div>`).join('');
-        const emptyShopSlotsHtml = Array.from({ length: 2 }, () => `
+        const emptyShopSlotsHtml = Array.from({ length: 3 }, () => `
                         <div class="lobby-shop-slot" aria-hidden="true"></div>`).join('');
 
         let shopModal = document.getElementById('lobby-shop-modal');
