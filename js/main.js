@@ -71,10 +71,10 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_treinar_cavaleiro.webp', 'assets/img/carta_ataque_mago.webp',
         'assets/img/carta_bloqueio_mago.webp', 'assets/img/carta_descansar_mago.webp',
         'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
-        'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp', 'assets/img/mochila.webp',
+        'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp', 'assets/img/mochila.webp', 'assets/img/janela_mochila.webp',
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.webp',
-        'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.3', 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.3',
-        'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.3', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.3'
+        'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.4', 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.4',
+        'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.4', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.4'
     ],
     audio: [
         { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true },
@@ -342,28 +342,28 @@ const SHOP_ITEMS = {
         name: 'BORDA - SENTINELA VERDE',
         slot: 'cardBorder',
         cssClass: 'elven',
-        asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.3'
+        asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.4'
     },
     mage_fire_border: {
         id: 'mage_fire_border',
         name: 'BORDA - CHAMA ARCANA',
         slot: 'cardBorder',
         cssClass: 'mage',
-        asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.3'
+        asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.4'
     },
     rogue_gold_border: {
         id: 'rogue_gold_border',
         name: 'BORDA - M?O DOURADA',
         slot: 'cardBorder',
         cssClass: 'rogue',
-        asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.3'
+        asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.4'
     },
     oracle_border: {
         id: 'oracle_border',
         name: 'BORDA - VIS?O ASTRAL',
         slot: 'cardBorder',
         cssClass: 'oracle',
-        asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.3'
+        asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.4'
     }
 };
 window.SHOP_ITEMS = SHOP_ITEMS;

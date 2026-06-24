@@ -95,10 +95,10 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 @keyframes hudFloatCentered { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-6px); } }
 .xp-mini { width: 38px; height: 53px; margin: 0 2px; position: relative; border: 1px solid #111; border-radius: 3px; box-shadow: 0 4px 8px rgba(0,0,0,0.6); cursor: default; transition: transform 0.2s; background-size: cover; background-position: center; }
 body.player-card-border-royal { --player-card-border-url: url('../assets/img/borda_metalica_card.webp'); }
-body.player-card-border-elven { --player-card-border-url: url('../assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.3'); }
-body.player-card-border-mage { --player-card-border-url: url('../assets/img/borda_chama_arcana_card.webp?v=2026.06.24.3'); }
-body.player-card-border-rogue { --player-card-border-url: url('../assets/img/borda_mao_dourada_card.webp?v=2026.06.24.3'); }
-body.player-card-border-oracle { --player-card-border-url: url('../assets/img/borda_visao_astral_card.webp?v=2026.06.24.3'); }
+body.player-card-border-elven { --player-card-border-url: url('../assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.4'); }
+body.player-card-border-mage { --player-card-border-url: url('../assets/img/borda_chama_arcana_card.webp?v=2026.06.24.4'); }
+body.player-card-border-rogue { --player-card-border-url: url('../assets/img/borda_mao_dourada_card.webp?v=2026.06.24.4'); }
+body.player-card-border-oracle { --player-card-border-url: url('../assets/img/borda_visao_astral_card.webp?v=2026.06.24.4'); }
 body.player-card-border-oracle { --player-card-border-inset: -7% -7% -6.7% -7%; }
 .xp-mini.card-skin-metallic-border {
     border-color: transparent !important;
