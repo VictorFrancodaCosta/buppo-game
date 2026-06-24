@@ -808,14 +808,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-panel {
             position: relative !important;
-            width: min(1420px, 97vw) !important;
-            min-height: min(880px, 92vh) !important;
-            padding: 34px 72px 96px !important;
+            z-index: 1 !important;
+            width: min(1180px, 96vw) !important;
+            min-height: min(700px, 82vh) !important;
+            padding: 106px 92px 88px !important;
             box-sizing: border-box !important;
-            background: linear-gradient(180deg, rgba(101, 52, 22, 0.96), rgba(55, 25, 11, 0.96)) !important;
-            border: 5px solid #2a1004 !important;
+            background: url('assets/img/janela_loja.webp?v=2026.06.24.8') center / 100% 100% no-repeat !important;
+            border: 0 !important;
             border-radius: 8px !important;
-            box-shadow: 0 18px 0 rgba(30, 11, 3, 0.9), 0 0 38px rgba(255, 201, 54, 0.28), inset 0 0 0 2px rgba(255,255,255,0.1) !important;
+            box-shadow: none !important;
             color: #fff !important;
         }
 
@@ -824,19 +825,23 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             align-items: flex-start !important;
             justify-content: space-between !important;
             gap: 20px !important;
-            margin-bottom: 28px !important;
+            margin-bottom: 18px !important;
         }
 
         .lobby-shop-title {
+            position: absolute !important;
+            left: 50% !important;
+            top: calc(50% - min(350px, 41vh) - 64px) !important;
+            transform: translateX(-50%) !important;
+            z-index: 4 !important;
             margin: 0 !important;
-            color: var(--gold) !important;
-            font-family: 'Bangers', cursive !important;
-            font-size: clamp(48px, 5vw, 72px) !important;
-            line-height: 0.9 !important;
-            letter-spacing: 1px !important;
-            -webkit-text-stroke: 2px #210b03 !important;
-            paint-order: stroke fill !important;
-            text-shadow: 4px 4px 0 #210b03, 0 0 18px rgba(255, 215, 0, 0.45) !important;
+            width: clamp(210px, 23vw, 340px) !important;
+            aspect-ratio: 1413 / 614 !important;
+            background: url('assets/img/titulo_loja.webp?v=2026.06.24.8') center / contain no-repeat !important;
+            filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
+            pointer-events: none !important;
+            text-indent: -9999px !important;
+            overflow: hidden !important;
         }
 
         .lobby-shop-title-stack {
@@ -909,8 +914,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-grid {
             display: grid !important;
             grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-            gap: clamp(26px, 2.6vw, 42px) !important;
-            max-height: min(650px, 68vh) !important;
+            gap: clamp(18px, 1.8vw, 26px) !important;
+            width: min(870px, 84%) !important;
+            max-height: min(455px, 54vh) !important;
+            margin: 24px auto 0 !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             padding: 2px 10px 12px 2px !important;
@@ -948,8 +955,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             grid-template-rows: auto 1fr auto !important;
             align-items: center !important;
             justify-items: center !important;
-            gap: 10px !important;
-            padding: 18px 14px !important;
+            gap: 8px !important;
+            padding: 14px 12px !important;
             box-sizing: border-box !important;
         }
 
@@ -965,7 +972,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .metallic-border-art {
-            width: min(72%, 170px) !important;
+            width: min(68%, 145px) !important;
             aspect-ratio: 5 / 7 !important;
             background-position: center !important;
             background-size: contain !important;
@@ -984,7 +991,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             z-index: 4 !important;
             color: var(--gold) !important;
             font-family: 'Bangers', cursive !important;
-            font-size: clamp(32px, 2.9vw, 50px) !important;
+            font-size: clamp(26px, 2.4vw, 42px) !important;
             line-height: 0.9 !important;
             text-align: center !important;
             letter-spacing: 0 !important;
@@ -995,14 +1002,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .shop-buy-btn {
-            min-width: 118px !important;
-            padding: 10px 16px !important;
+            min-width: 104px !important;
+            padding: 8px 14px !important;
             border: 2px solid #fff4ad !important;
             border-radius: 999px !important;
             background: linear-gradient(180deg, #f1c40f, #b96714) !important;
             color: #321204 !important;
             font-family: 'Russo One', sans-serif !important;
-            font-size: 13px !important;
+            font-size: 12px !important;
             text-transform: uppercase !important;
             cursor: pointer !important;
             box-shadow: 0 4px 0 rgba(42,16,4,0.8) !important;
@@ -1210,13 +1217,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             .lobby-shop-panel {
                 width: 96vw !important;
                 min-height: 0 !important;
-                padding: 26px 28px 82px !important;
+                padding: 88px 28px 82px !important;
             }
 
             .lobby-shop-header {
                 align-items: center !important;
                 gap: 12px !important;
                 margin-bottom: 20px !important;
+            }
+
+            .lobby-shop-title {
+                top: 18px !important;
+                width: clamp(170px, 42vw, 260px) !important;
             }
 
             .lobby-shop-categories {
@@ -1232,6 +1244,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
             .lobby-shop-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                width: min(560px, 88%) !important;
+                margin-top: 18px !important;
             }
 
             #lobby-screen .lobby-inventory-button {
@@ -2399,10 +2413,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             shopModal.id = 'lobby-shop-modal';
             shopModal.className = 'lobby-shop-modal';
             shopModal.innerHTML = `
+                <div class="lobby-shop-title" role="img" aria-label="LOJA">LOJA</div>
                 <div class="lobby-shop-panel" role="dialog" aria-modal="true" aria-label="Loja">
                     <div class="lobby-shop-header">
                         <div class="lobby-shop-title-stack">
-                            <h2 class="lobby-shop-title">LOJA</h2>
                             <div class="lobby-shop-categories" aria-label="Categorias da loja">
                                 <button class="lobby-shop-category" type="button" data-shop-category="decks">DECKS</button>
                                 <button class="lobby-shop-category active" type="button" data-shop-category="borders">BORDAS</button>
