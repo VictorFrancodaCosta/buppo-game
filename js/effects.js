@@ -929,7 +929,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             row-gap: clamp(26px, 2.8vw, 42px) !important;
             width: min(780px, 72%) !important;
             max-height: none !important;
-            margin: 46px auto 0 !important;
+            margin: 30px auto 0 !important;
             overflow: visible !important;
             padding: 28px 10px 12px 10px !important;
             scrollbar-width: thin !important;
@@ -1050,22 +1050,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .shop-owned-ribbon {
             position: absolute !important;
-            left: 8px !important;
-            right: 8px !important;
+            left: 50% !important;
+            right: auto !important;
             top: 50% !important;
-            transform: translateY(-50%) rotate(-12deg) !important;
+            transform: translate(-50%, -50%) !important;
             z-index: 4 !important;
-            color: var(--gold) !important;
-            font-family: 'Bangers', cursive !important;
-            font-size: clamp(26px, 2.4vw, 42px) !important;
-            line-height: 0.9 !important;
-            text-align: center !important;
-            letter-spacing: 0 !important;
-            -webkit-text-stroke: 2px #160602 !important;
-            paint-order: stroke fill !important;
-            text-shadow: 3px 3px 0 #160602, 0 0 12px rgba(255,215,0,0.42) !important;
+            width: 78% !important;
+            height: 30% !important;
+            background: url('assets/img/comprado_title.webp') center / contain no-repeat !important;
+            color: transparent !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
             pointer-events: none !important;
-            z-index: 4 !important;
+            filter: drop-shadow(0 4px 0 rgba(0,0,0,0.62)) drop-shadow(0 0 8px rgba(255,215,0,0.26)) !important;
         }
 
         .shop-buy-btn {
@@ -1356,19 +1353,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .inventory-equipped-ribbon {
             position: absolute !important;
-            left: 8px !important;
-            right: 8px !important;
+            left: 50% !important;
+            right: auto !important;
             top: 48% !important;
-            transform: translateY(-50%) rotate(-8deg) !important;
-            padding: 8px 10px !important;
+            transform: translate(-50%, -50%) !important;
             z-index: 6 !important;
-            background: rgba(255, 215, 0, 0.92) !important;
-            color: #2a1004 !important;
-            font-family: 'Russo One', sans-serif !important;
-            font-size: 14px !important;
-            text-align: center !important;
-            text-transform: uppercase !important;
-            box-shadow: 0 4px 0 rgba(42,16,4,0.62) !important;
+            width: 76% !important;
+            height: 29% !important;
+            background: url('assets/img/equipado_title.webp') center / contain no-repeat !important;
+            color: transparent !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+            filter: drop-shadow(0 4px 0 rgba(0,0,0,0.62)) drop-shadow(0 0 8px rgba(255,215,0,0.26)) !important;
             pointer-events: none !important;
         }
 
@@ -2626,11 +2622,45 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         const getItemDisplayName = (item) => item.displayName || item.name.replace(/^BORDA\s*-\s*/i, '');
         const getShopItemById = (itemId) => lobbyCardBorderItems.find(item => item.id === itemId) || null;
+        const ensureShopInfoTooltip = () => {
+            let tooltip = document.getElementById('shop-info-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.className = 'shop-info-tooltip';
+                tooltip.id = 'shop-info-tooltip';
+                document.body.appendChild(tooltip);
+            }
+            return tooltip;
+        };
         const renderShopInfo = (item) => {
             const lines = shopBorderInfo[item.id] || [];
             return `
                 <div class="shop-info-title">${item.name}</div>
                 ${lines.map(line => `<p>${line.replaceAll('{coin}', shopInfoCoin)}</p>`).join('')}`;
+        };
+        const bindBorderInfoTooltips = (root, selector, getItemId) => {
+            const tooltip = ensureShopInfoTooltip();
+            const moveTooltip = (event) => {
+                const gap = 18;
+                const rect = tooltip.getBoundingClientRect();
+                let left = event.clientX + gap;
+                let top = event.clientY + gap;
+                if (left + rect.width > window.innerWidth - 12) left = event.clientX - rect.width - gap;
+                if (top + rect.height > window.innerHeight - 12) top = event.clientY - rect.height - gap;
+                tooltip.style.left = `${Math.max(12, left)}px`;
+                tooltip.style.top = `${Math.max(12, top)}px`;
+            };
+            root.querySelectorAll(selector).forEach((element) => {
+                element.addEventListener('mouseenter', (event) => {
+                    const item = getShopItemById(getItemId(element));
+                    if (!item) return;
+                    tooltip.innerHTML = renderShopInfo(item);
+                    tooltip.classList.add('visible');
+                    moveTooltip(event);
+                });
+                element.addEventListener('mousemove', moveTooltip);
+                element.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+            });
         };
         const renderBorderPreview = (item, location = 'inventory') => {
             const asset = location === 'shop' ? (item.shopAsset || item.asset) : item.asset;
@@ -2679,10 +2709,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 <button class="mini-btn lobby-shop-close" type="button">SAIR</button>
             `;
             document.body.appendChild(shopModal);
-            const shopInfoTooltip = document.createElement('div');
-            shopInfoTooltip.className = 'shop-info-tooltip';
-            shopInfoTooltip.id = 'shop-info-tooltip';
-            document.body.appendChild(shopInfoTooltip);
+            ensureShopInfoTooltip();
             shopModal.addEventListener('click', (event) => {
                 if (event.target === shopModal) window.closeLobbyShop?.();
             });
@@ -2700,30 +2727,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         window.renderLobbyShopItems = () => {
             const grid = document.querySelector('#lobby-shop-modal .lobby-shop-grid');
             if (!grid) return;
+            document.getElementById('shop-info-tooltip')?.classList.remove('visible');
             grid.innerHTML = renderShopProducts(window.currentShopCategory || 'borders');
-            const tooltip = document.getElementById('shop-info-tooltip');
-            const moveTooltip = (event) => {
-                if (!tooltip) return;
-                const gap = 18;
-                const rect = tooltip.getBoundingClientRect();
-                let left = event.clientX + gap;
-                let top = event.clientY + gap;
-                if (left + rect.width > window.innerWidth - 12) left = event.clientX - rect.width - gap;
-                if (top + rect.height > window.innerHeight - 12) top = event.clientY - rect.height - gap;
-                tooltip.style.left = `${Math.max(12, left)}px`;
-                tooltip.style.top = `${Math.max(12, top)}px`;
-            };
-            grid.querySelectorAll('[data-shop-item]').forEach((product) => {
-                product.addEventListener('mouseenter', (event) => {
-                    const item = getShopItemById(product.dataset.shopItem);
-                    if (!tooltip || !item || (window.currentShopCategory || 'borders') !== 'borders') return;
-                    tooltip.innerHTML = renderShopInfo(item);
-                    tooltip.classList.add('visible');
-                    moveTooltip(event);
-                });
-                product.addEventListener('mousemove', moveTooltip);
-                product.addEventListener('mouseleave', () => tooltip?.classList.remove('visible'));
-            });
+            if ((window.currentShopCategory || 'borders') === 'borders') {
+                bindBorderInfoTooltips(grid, '[data-shop-item]', (product) => product.dataset.shopItem);
+            }
             grid.querySelectorAll('[data-buy-item]').forEach((button) => {
                 button.addEventListener('click', () => window.confirmShopPurchase?.(button.dataset.buyItem));
             });
@@ -2809,6 +2817,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         window.renderInventoryItems = () => {
             const grid = document.getElementById('lobby-inventory-grid');
             if (!grid) return;
+            document.getElementById('shop-info-tooltip')?.classList.remove('visible');
             const owned = window.playerInventory || [];
             const categoryItems = (window.currentInventoryCategory || 'borders') === 'borders' ? lobbyCardBorderItems : [];
             const ownedItems = categoryItems.filter(item => owned.includes(item.id));
@@ -2843,6 +2852,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     window.renderInventoryItems?.();
                 });
             });
+            if ((window.currentInventoryCategory || 'borders') === 'borders') {
+                bindBorderInfoTooltips(grid, '[data-inventory-item]', (button) => button.dataset.inventoryItem);
+            }
             grid.querySelectorAll('[data-equip-item]').forEach((button) => {
                 button.addEventListener('click', (event) => {
                     event.preventDefault();
@@ -2872,6 +2884,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         window.closeInventory = () => {
             window.playNavSound?.();
             window.selectedInventoryItem = null;
+            document.getElementById('shop-info-tooltip')?.classList.remove('visible');
             inventoryModal.classList.remove('visible');
         };
 
