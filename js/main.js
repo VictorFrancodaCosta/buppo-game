@@ -423,7 +423,8 @@ window.purchaseShopItem = async function(itemId) {
         await updateDoc(userRef, { goldCoins: nextGold, inventory: nextInventory, equippedItems: window.equippedItems || {} });
         updateLobbyGoldWallet(nextGold);
         updatePlayerInventoryState(nextInventory, window.equippedItems || {});
-        window.openInventory?.();
+        window.syncLobbyShopGold?.();
+        window.refreshShopInventoryState?.();
     } catch(e) {
         console.error("Erro ao comprar item:", e);
     }
