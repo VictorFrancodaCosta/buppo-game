@@ -1015,9 +1015,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             z-index: 8 !important;
             display: flex !important;
             flex-direction: column !important;
-            gap: 4px !important;
-            min-width: 112px !important;
-            padding: 6px !important;
+            gap: 3px !important;
+            min-width: 96px !important;
+            padding: 4px !important;
             border: 1px solid rgba(255, 215, 0, 0.64) !important;
             border-radius: 6px !important;
             background: rgba(12, 5, 2, 0.94) !important;
@@ -1028,14 +1028,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .inventory-action-option {
             position: relative !important;
             z-index: 1 !important;
-            min-height: 26px !important;
-            padding: 5px 8px !important;
+            min-height: 20px !important;
+            padding: 3px 6px !important;
             border: 0 !important;
             border-radius: 4px !important;
             background: rgba(255, 215, 0, 0.16) !important;
             color: #fff4ad !important;
             font-family: 'Russo One', sans-serif !important;
-            font-size: 10px !important;
+            font-size: 9px !important;
+            line-height: 1 !important;
+            text-align: center !important;
             text-transform: uppercase !important;
             cursor: pointer !important;
             box-shadow: none !important;
@@ -1079,17 +1081,21 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-inventory-panel {
             position: relative !important;
             width: min(1180px, 96vw) !important;
-            min-height: min(760px, 90vh) !important;
-            padding: 78px 92px 112px !important;
+            min-height: min(700px, 82vh) !important;
+            padding: 112px 92px 92px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_mochila.webp?v=2026.06.24.4') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_mochila.webp?v=2026.06.24.5') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
-            box-shadow: 0 24px 38px rgba(0,0,0,0.52), 0 0 38px rgba(255, 201, 54, 0.2) !important;
+            box-shadow: none !important;
         }
 
         .lobby-inventory-title {
-            margin: 0 0 24px !important;
+            position: absolute !important;
+            left: 50% !important;
+            top: calc(50% - min(350px, 41vh) - 72px) !important;
+            transform: translateX(-50%) !important;
+            margin: 0 !important;
             color: var(--gold) !important;
             font-family: 'Bangers', cursive !important;
             font-size: clamp(44px, 4.5vw, 66px) !important;
@@ -1101,11 +1107,25 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             text-shadow: 4px 4px 0 #210b03, 0 0 18px rgba(255, 215, 0, 0.45) !important;
         }
 
+        .lobby-inventory-categories {
+            position: absolute !important;
+            left: 50% !important;
+            top: 78px !important;
+            transform: translateX(-50%) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            width: min(820px, 74%) !important;
+            z-index: 2 !important;
+        }
+
         .lobby-inventory-grid {
             display: grid !important;
             grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
             gap: 26px !important;
-            max-height: min(560px, 66vh) !important;
+            max-height: min(480px, 58vh) !important;
             overflow-y: auto !important;
             padding-right: 8px !important;
         }
@@ -1121,8 +1141,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             padding: 14px !important;
             border: 3px solid rgba(255,215,0,0.55) !important;
             border-radius: 8px !important;
-            background: rgba(0,0,0,0.36) !important;
-            box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), 0 8px 0 rgba(30, 11, 3, 0.54) !important;
+            background: rgba(0,0,0,0.68) !important;
+            box-shadow: inset 0 8px 18px rgba(0,0,0,0.78), 0 8px 0 rgba(30, 11, 3, 0.62) !important;
             cursor: pointer !important;
         }
 
@@ -1132,7 +1152,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .inventory-item.selected {
             border-color: rgba(255,245,180,0.95) !important;
-            box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), 0 8px 0 rgba(30, 11, 3, 0.54), 0 0 24px rgba(255,215,0,0.38) !important;
+            box-shadow: inset 0 8px 18px rgba(0,0,0,0.78), 0 8px 0 rgba(30, 11, 3, 0.62), 0 0 24px rgba(255,215,0,0.38) !important;
         }
 
         .inventory-equipped-ribbon {
@@ -1162,8 +1182,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-inventory-close {
             position: absolute !important;
-            right: 42px !important;
-            bottom: 24px !important;
+            left: 50% !important;
+            right: auto !important;
+            bottom: calc(50% - min(350px, 41vh) - 70px) !important;
+            transform: translateX(-50%) !important;
             min-width: 122px !important;
             padding: 9px 24px !important;
             border: 3px solid #2a1004 !important;
@@ -1217,6 +1239,26 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
             .lobby-inventory-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            .lobby-inventory-title {
+                top: 18px !important;
+            }
+
+            .lobby-inventory-panel {
+                width: 96vw !important;
+                min-height: 74vh !important;
+                padding: 92px 30px 76px !important;
+            }
+
+            .lobby-inventory-categories {
+                top: 62px !important;
+                width: 84% !important;
+                gap: 6px !important;
+            }
+
+            .lobby-inventory-close {
+                bottom: 16px !important;
             }
 
             .lobby-shop-gold {
@@ -2316,10 +2358,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         const lobbyCardBorderItems = [
             { id: 'metallic_border', name: 'BORDA - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/borda_metalica_card.webp' },
-            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.4' },
-            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.4' },
-            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.4' },
-            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.4' }
+            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5' },
+            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5' },
+            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5' },
+            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5' }
         ];
         const lobbyShopItemsByCategory = {
             decks: [],
@@ -2436,11 +2478,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             inventoryModal.id = 'lobby-inventory-modal';
             inventoryModal.className = 'lobby-inventory-modal';
             inventoryModal.innerHTML = `
+                <h2 class="lobby-inventory-title">MOCHILA</h2>
                 <div class="lobby-inventory-panel" role="dialog" aria-modal="true" aria-label="Mochila">
-                    <h2 class="lobby-inventory-title">MOCHILA</h2>
+                    <div class="lobby-inventory-categories" aria-label="Categorias da mochila">
+                        <button class="lobby-shop-category" type="button" data-inventory-category="decks">DECKS</button>
+                        <button class="lobby-shop-category active" type="button" data-inventory-category="borders">BORDAS</button>
+                        <button class="lobby-shop-category" type="button" data-inventory-category="clusters">CLUSTERS</button>
+                        <button class="lobby-shop-category" type="button" data-inventory-category="xpAreas">\u00c1REAS DE XP</button>
+                        <button class="lobby-shop-category" type="button" data-inventory-category="pets">MASCOTES</button>
+                    </div>
                     <div class="lobby-inventory-grid" id="lobby-inventory-grid"></div>
-                    <button class="mini-btn lobby-inventory-close" type="button">SAIR</button>
                 </div>
+                <button class="mini-btn lobby-inventory-close" type="button">SAIR</button>
             `;
             document.body.appendChild(inventoryModal);
             inventoryModal.addEventListener('click', (event) => {
@@ -2454,13 +2503,25 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 }
             });
             inventoryModal.querySelector('.lobby-inventory-close')?.addEventListener('click', () => window.closeInventory?.());
+            inventoryModal.querySelectorAll('[data-inventory-category]').forEach((button) => {
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    inventoryModal.querySelectorAll('[data-inventory-category]').forEach((category) => category.classList.remove('active'));
+                    button.classList.add('active');
+                    window.currentInventoryCategory = button.dataset.inventoryCategory || 'borders';
+                    window.selectedInventoryItem = null;
+                    window.renderInventoryItems?.();
+                });
+            });
         }
 
         window.renderInventoryItems = () => {
             const grid = document.getElementById('lobby-inventory-grid');
             if (!grid) return;
             const owned = window.playerInventory || [];
-            const ownedItems = lobbyCardBorderItems.filter(item => owned.includes(item.id));
+            const categoryItems = (window.currentInventoryCategory || 'borders') === 'borders' ? lobbyCardBorderItems : [];
+            const ownedItems = categoryItems.filter(item => owned.includes(item.id));
             if (ownedItems.length === 0) {
                 grid.innerHTML = '<div class="inventory-empty">Sua mochila est\u00e1 vazia.</div>';
                 return;
@@ -2512,6 +2573,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         window.openInventory = () => {
+            window.currentInventoryCategory = 'borders';
             window.selectedInventoryItem = null;
             window.renderInventoryItems?.();
             inventoryModal.classList.add('visible');
