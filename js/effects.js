@@ -809,11 +809,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-panel {
             position: relative !important;
             z-index: 1 !important;
-            width: min(1180px, 96vw) !important;
-            min-height: min(700px, 82vh) !important;
-            padding: 106px 92px 88px !important;
+            width: min(1280px, 96vw) !important;
+            min-height: min(780px, 88vh) !important;
+            padding: 104px 96px 86px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_loja.webp?v=2026.06.24.8') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_loja.webp?v=2026.06.24.9') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -825,19 +825,20 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             align-items: flex-start !important;
             justify-content: space-between !important;
             gap: 20px !important;
-            margin-bottom: 18px !important;
+            margin-bottom: 12px !important;
+            position: relative !important;
         }
 
         .lobby-shop-title {
             position: absolute !important;
             left: 50% !important;
-            top: calc(50% - min(350px, 41vh) - 64px) !important;
+            top: calc(50% - min(390px, 44vh) - 64px) !important;
             transform: translateX(-50%) !important;
             z-index: 4 !important;
             margin: 0 !important;
             width: clamp(210px, 23vw, 340px) !important;
             aspect-ratio: 1413 / 614 !important;
-            background: url('assets/img/titulo_loja.webp?v=2026.06.24.8') center / contain no-repeat !important;
+            background: url('assets/img/titulo_loja.webp?v=2026.06.24.9') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
@@ -847,17 +848,21 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-title-stack {
             display: flex !important;
             flex-direction: column !important;
-            align-items: flex-start !important;
+            align-items: center !important;
             gap: 12px !important;
+            width: 100% !important;
             min-width: 0 !important;
         }
 
         .lobby-shop-categories {
             display: flex !important;
             align-items: center !important;
+            justify-content: center !important;
             flex-wrap: wrap !important;
             gap: 8px !important;
-            max-width: min(780px, 68vw) !important;
+            width: min(820px, 74%) !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
         }
 
         .lobby-shop-category {
@@ -902,6 +907,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             line-height: 1 !important;
             white-space: nowrap !important;
             text-shadow: 2px 2px 0 #1b0a03, 0 0 10px rgba(255,215,0,0.58) !important;
+            position: absolute !important;
+            right: 0 !important;
+            top: -10px !important;
         }
 
         .lobby-shop-gold img {
@@ -914,10 +922,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-grid {
             display: grid !important;
             grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-            gap: clamp(18px, 1.8vw, 26px) !important;
-            width: min(870px, 84%) !important;
-            max-height: min(455px, 54vh) !important;
-            margin: 24px auto 0 !important;
+            gap: clamp(16px, 1.5vw, 22px) !important;
+            width: min(760px, 76%) !important;
+            max-height: none !important;
+            margin: 18px auto 0 !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             padding: 2px 10px 12px 2px !important;
@@ -1069,8 +1077,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-close {
             position: absolute !important;
-            right: 42px !important;
-            bottom: 28px !important;
+            left: 50% !important;
+            right: auto !important;
+            bottom: calc(50% - min(390px, 44vh) - 70px) !important;
+            transform: translateX(-50%) !important;
+            z-index: 4 !important;
         }
 
         .lobby-inventory-modal {
@@ -2431,8 +2442,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                         </div>
                     </div>
                     <div class="lobby-shop-grid" aria-label="Itens da loja"></div>
-                    <button class="mini-btn lobby-shop-close" type="button">SAIR</button>
                 </div>
+                <button class="mini-btn lobby-shop-close" type="button">SAIR</button>
             `;
             document.body.appendChild(shopModal);
             shopModal.addEventListener('click', (event) => {
