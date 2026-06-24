@@ -73,6 +73,8 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp', 'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
         'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp',
+        'assets/img/borda_cavaleiro_loja.webp', 'assets/img/borda_mago_loja.webp', 'assets/img/borda_arqueiro_loja.webp',
+        'assets/img/borda_ladino_loja.webp', 'assets/img/borda_oraculo_loja.webp',
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.webp',
         'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5', 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5',
         'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5'

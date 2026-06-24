@@ -1009,6 +1009,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             filter: drop-shadow(0 8px 10px rgba(0,0,0,0.58)) !important;
         }
 
+        .lobby-shop-panel .metallic-border-art {
+            width: min(76%, 150px) !important;
+            aspect-ratio: 1 / 1 !important;
+        }
+
         .shop-owned-ribbon {
             position: absolute !important;
             left: 8px !important;
@@ -2445,11 +2450,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         const lobbyCardBorderItems = [
-            { id: 'metallic_border', name: 'BORDA - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/borda_metalica_card.webp' },
-            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5' },
-            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5' },
-            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5' },
-            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5' }
+            { id: 'metallic_border', name: 'BORDA - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/borda_metalica_card.webp', shopAsset: 'assets/img/borda_cavaleiro_loja.webp?v=2026.06.24.13' },
+            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_mago_loja.webp?v=2026.06.24.13' },
+            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_arqueiro_loja.webp?v=2026.06.24.13' },
+            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_ladino_loja.webp?v=2026.06.24.13' },
+            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_oraculo_loja.webp?v=2026.06.24.13' }
         ];
         const lobbyShopItemsByCategory = {
             decks: [],
@@ -2461,13 +2466,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         const lobbyShopSlotCount = 5;
 
         const getItemDisplayName = (item) => item.displayName || item.name.replace(/^BORDA\s*-\s*/i, '');
-        const renderBorderPreview = (item) => `<div class="metallic-border-art" style="background-image: url('${item.asset}')" aria-label="Arte de ${item.name}"></div>`;
+        const renderBorderPreview = (item, location = 'inventory') => {
+            const asset = location === 'shop' ? (item.shopAsset || item.asset) : item.asset;
+            return `<div class="metallic-border-art" style="background-image: url('${asset}')" aria-label="Arte de ${item.name}"></div>`;
+        };
         const renderShopProducts = (category = 'borders') => {
             const items = lobbyShopItemsByCategory[category] || [];
             const productsHtml = items.slice(0, lobbyShopSlotCount).map(item => `
                         <div class="lobby-shop-slot lobby-shop-product" data-shop-item="${item.id}">
                             <div class="shop-product-name">${getItemDisplayName(item)}</div>
-                            ${renderBorderPreview(item)}
+                            ${renderBorderPreview(item, 'shop')}
                             <span class="shop-owned-ribbon" data-owned-ribbon="${item.id}" hidden>COMPRADO</span>
                             <button class="shop-buy-btn" type="button" data-buy-item="${item.id}">COMPRAR</button>
                         </div>`).join('');
