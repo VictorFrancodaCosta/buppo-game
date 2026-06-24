@@ -961,6 +961,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background: #050505 !important;
             box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.08), 0 8px 0 rgba(30, 11, 3, 0.54) !important;
             animation: lobbyShopSlotFloat 3.4s ease-in-out infinite !important;
+            transition: transform 0.16s ease, filter 0.16s ease, box-shadow 0.16s ease !important;
             will-change: transform !important;
         }
 
@@ -974,6 +975,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-slot:nth-child(5n) {
             animation-delay: -2.25s !important;
+        }
+
+        .lobby-shop-slot:hover,
+        .lobby-shop-slot:focus-within {
+            animation-play-state: paused !important;
+            transform: translateY(-4px) scale(1.055) !important;
+            z-index: 9 !important;
+            box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.1), 0 10px 0 rgba(30, 11, 3, 0.54), 0 0 22px rgba(255,215,0,0.28) !important;
         }
 
         .lobby-shop-product {
@@ -1076,6 +1085,57 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             text-transform: uppercase !important;
             cursor: pointer !important;
             box-shadow: 0 4px 0 rgba(42,16,4,0.8) !important;
+        }
+
+        .shop-info-tooltip {
+            position: fixed !important;
+            z-index: 98000 !important;
+            display: none !important;
+            width: min(320px, 82vw) !important;
+            padding: 14px 16px 13px !important;
+            border: 2px solid rgba(255, 215, 0, 0.62) !important;
+            border-radius: 8px !important;
+            background: rgba(4, 4, 4, 0.94) !important;
+            color: #fff !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: 13px !important;
+            line-height: 1.32 !important;
+            pointer-events: none !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.66), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+        }
+
+        .shop-info-tooltip.visible {
+            display: block !important;
+        }
+
+        .shop-info-title {
+            margin-bottom: 9px !important;
+            color: #fff !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: 25px !important;
+            line-height: 0.95 !important;
+            letter-spacing: 0 !important;
+            -webkit-text-stroke: 1.3px #000 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 3px 3px 0 #000 !important;
+        }
+
+        .shop-info-tooltip p {
+            margin: 7px 0 0 !important;
+        }
+
+        .shop-info-tooltip strong {
+            color: #fff4ad !important;
+            font-weight: 900 !important;
+        }
+
+        .shop-info-coin {
+            width: 18px !important;
+            height: 18px !important;
+            object-fit: contain !important;
+            vertical-align: -4px !important;
+            margin: 0 2px !important;
+            filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 5px rgba(255,215,0,0.45)) !important;
         }
 
         .inventory-action-menu {
@@ -1252,6 +1312,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             box-shadow: inset 0 8px 18px rgba(0,0,0,0.78), 0 8px 0 rgba(30, 11, 3, 0.62) !important;
             cursor: pointer !important;
             overflow: visible !important;
+            transition: transform 0.16s ease, filter 0.16s ease, box-shadow 0.16s ease !important;
         }
 
         .lobby-inventory-panel .metallic-border-art {
@@ -1284,6 +1345,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .inventory-item.selected {
             border-color: rgba(255,245,180,0.95) !important;
             box-shadow: inset 0 8px 18px rgba(0,0,0,0.78), 0 8px 0 rgba(30, 11, 3, 0.62), 0 0 24px rgba(255,215,0,0.38) !important;
+        }
+
+        .inventory-item:hover,
+        .inventory-item:focus-visible {
+            transform: translateY(-4px) scale(1.055) !important;
+            z-index: 8 !important;
+            box-shadow: inset 0 8px 18px rgba(0,0,0,0.78), 0 10px 0 rgba(30, 11, 3, 0.62), 0 0 22px rgba(255,215,0,0.28) !important;
         }
 
         .inventory-equipped-ribbon {
@@ -2531,8 +2599,39 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             pets: []
         };
         const lobbyShopSlotCount = 5;
+        const shopBorderInfo = {
+            metallic_border: [
+                'Seus Bloqueios efetivos geram 2 {coin}.',
+                'Realizar uma <strong>Maestria em Bloqueio</strong> gera 1 {coin}.'
+            ],
+            mage_fire_border: [
+                'Seus Ataques efetivos geram 1 {coin}.',
+                'Realizar uma <strong>Maestria em Ataque</strong> gera 1 {coin}.'
+            ],
+            elven_forest_border: [
+                'Jogar Restaurar gera 3 {coin}.',
+                'Realizar uma <strong>Maestria em Restaurar</strong> gera 5 {coin}.'
+            ],
+            rogue_gold_border: [
+                'Jogar Desarmar gera 4 {coin}.',
+                'Realizar uma <strong>Maestria em Desarmar</strong> gera 7 {coin}.'
+            ],
+            oracle_border: [
+                'Jogar Treinar gera 1 {coin}.',
+                'Subir de nível gera 1 {coin}.',
+                'Realizar uma <strong>Maestria em Treinar</strong> gera 5 {coin}.'
+            ]
+        };
+        const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';
 
         const getItemDisplayName = (item) => item.displayName || item.name.replace(/^BORDA\s*-\s*/i, '');
+        const getShopItemById = (itemId) => lobbyCardBorderItems.find(item => item.id === itemId) || null;
+        const renderShopInfo = (item) => {
+            const lines = shopBorderInfo[item.id] || [];
+            return `
+                <div class="shop-info-title">${item.name}</div>
+                ${lines.map(line => `<p>${line.replaceAll('{coin}', shopInfoCoin)}</p>`).join('')}`;
+        };
         const renderBorderPreview = (item, location = 'inventory') => {
             const asset = location === 'shop' ? (item.shopAsset || item.asset) : item.asset;
             return `<div class="metallic-border-art" style="background-image: url('${asset}')" aria-label="Arte de ${item.name}"></div>`;
@@ -2580,6 +2679,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 <button class="mini-btn lobby-shop-close" type="button">SAIR</button>
             `;
             document.body.appendChild(shopModal);
+            const shopInfoTooltip = document.createElement('div');
+            shopInfoTooltip.className = 'shop-info-tooltip';
+            shopInfoTooltip.id = 'shop-info-tooltip';
+            document.body.appendChild(shopInfoTooltip);
             shopModal.addEventListener('click', (event) => {
                 if (event.target === shopModal) window.closeLobbyShop?.();
             });
@@ -2598,6 +2701,29 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             const grid = document.querySelector('#lobby-shop-modal .lobby-shop-grid');
             if (!grid) return;
             grid.innerHTML = renderShopProducts(window.currentShopCategory || 'borders');
+            const tooltip = document.getElementById('shop-info-tooltip');
+            const moveTooltip = (event) => {
+                if (!tooltip) return;
+                const gap = 18;
+                const rect = tooltip.getBoundingClientRect();
+                let left = event.clientX + gap;
+                let top = event.clientY + gap;
+                if (left + rect.width > window.innerWidth - 12) left = event.clientX - rect.width - gap;
+                if (top + rect.height > window.innerHeight - 12) top = event.clientY - rect.height - gap;
+                tooltip.style.left = `${Math.max(12, left)}px`;
+                tooltip.style.top = `${Math.max(12, top)}px`;
+            };
+            grid.querySelectorAll('[data-shop-item]').forEach((product) => {
+                product.addEventListener('mouseenter', (event) => {
+                    const item = getShopItemById(product.dataset.shopItem);
+                    if (!tooltip || !item || (window.currentShopCategory || 'borders') !== 'borders') return;
+                    tooltip.innerHTML = renderShopInfo(item);
+                    tooltip.classList.add('visible');
+                    moveTooltip(event);
+                });
+                product.addEventListener('mousemove', moveTooltip);
+                product.addEventListener('mouseleave', () => tooltip?.classList.remove('visible'));
+            });
             grid.querySelectorAll('[data-buy-item]').forEach((button) => {
                 button.addEventListener('click', () => window.confirmShopPurchase?.(button.dataset.buyItem));
             });
@@ -2632,6 +2758,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         window.closeLobbyShop = () => {
             window.playNavSound?.();
+            document.getElementById('shop-info-tooltip')?.classList.remove('visible');
             shopModal.classList.remove('visible');
         };
 

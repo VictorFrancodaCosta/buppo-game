@@ -107,7 +107,7 @@ const ASSETS_TO_LOAD = {
     ]
 };
 let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
-let player = { id:'p', name:'Voc?', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
+let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 
 window.cleanupMatchState = function() {
@@ -212,7 +212,7 @@ window.transitionToLobby = function(skipAnim = false) {
     else {
         const transScreen = document.getElementById('transition-overlay');
         const transText = transScreen.querySelector('.trans-text');
-        if(transText) transText.innerText = "RETORNANDO AO SAGU?O...";
+        if(transText) transText.innerText = "RETORNANDO AO SAGUÃO...";
         if(transScreen) transScreen.classList.add('active');
         setTimeout(() => {
             window.goToLobby(false);
@@ -246,7 +246,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         updatePlayerInventoryState([], {});
         updateLobbyProfileProgress(1, 0);
         renderLobbyIdentity(window.currentUser.displayName, gameId);
-        document.getElementById('lobby-stats').innerText = `VIT?RIAS: 0 | PONTOS: 0`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
         updateLobbyGoldWallet(0);
         window.musicEnabled = true;
         window.sfxEnabled = true;
@@ -263,7 +263,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         updatePlayerInventoryState(d.inventory || [], d.equippedItems || {});
         updateLobbyProfileProgress(d.profileLevel || 1, d.profileXp || 0);
         renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
-        document.getElementById('lobby-stats').innerText = `VIT?RIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
 
         updateLobbyGoldWallet(d.goldCoins || 0);
 
@@ -359,7 +359,7 @@ const SHOP_ITEMS = {
     },
     rogue_gold_border: {
         id: 'rogue_gold_border',
-        name: 'BORDA - M?O DOURADA',
+        name: 'BORDA - MÃO DOURADA',
         slot: 'cardBorder',
         price: 600,
         cssClass: 'rogue',
@@ -367,7 +367,7 @@ const SHOP_ITEMS = {
     },
     oracle_border: {
         id: 'oracle_border',
-        name: 'BORDA - VIS?O ASTRAL',
+        name: 'BORDA - VISÃO ASTRAL',
         slot: 'cardBorder',
         price: 600,
         cssClass: 'oracle',
@@ -403,7 +403,7 @@ window.confirmShopPurchase = function(itemId) {
         return;
     }
     const price = Math.max(0, item.price || 0);
-    window.openModal(`COMPRAR ${item.name}?`, price ? `CUSTO: ${price} OURO` : '', ['SIM', 'N?O'], (choice) => {
+    window.openModal(`COMPRAR ${item.name}?`, price ? `CUSTO: ${price} OURO` : '', ['SIM', 'NÃO'], (choice) => {
         if(choice === 'SIM') window.purchaseShopItem(itemId);
     });
 };
@@ -1106,7 +1106,7 @@ function startPvPListener() {
             if (matchData.abandonedBy && window.currentUser && matchData.abandonedBy !== window.currentUser.uid) {
                 monster.hp = 0; updateUI(); window.isProcessing = true; MusicController.stopCurrent();
                 setTimeout(() => {
-                    const title = document.getElementById('end-title'); title.innerText = "VIT?RIA"; title.className = "win-theme";
+                    const title = document.getElementById('end-title'); title.innerText = "VITÓRIA"; title.className = "win-theme";
                     showCenterText("OPONENTE DESISTIU!", "#ffd700"); playSound('sfx-win');
                     triggerEndScreenFx('win'); showEndPoints(8);
                     if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
@@ -1372,10 +1372,10 @@ function checkEndGame(){
                 const existingGold = document.getElementById('end-gold-reward');
                 if(existingGold) existingGold.remove();
                 if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); }
-                else if(isWin) { title.innerText = "VIT?RIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
+                else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
                 else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); }
                 const secondaryBtn = document.querySelector('#end-screen .secondary-btn');
-                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGU?O";
+                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUÃO";
                 if(window.currentMatchId && window.myRole === 'player1') {
                     updateDoc(doc(db, "matches", window.currentMatchId), { status: 'finished', player1Rematch: false, player2Rematch: false }).catch(() => {});
                 }
@@ -1384,9 +1384,9 @@ function checkEndGame(){
                 return;
             }
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
-            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGU?O";
+            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃO";
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
-            else if(isWin) { title.innerText = "VIT?RIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
+            else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
             else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
 
             if(isTie) { if(window.registrarEmpateOnline) window.registrarEmpateOnline(window.gameMode); }
@@ -1791,7 +1791,7 @@ window.abandonMatch = function() {
     if(document.getElementById('game-screen').classList.contains('active')) {
         stopTurnTimer();
         window.toggleConfig();
-        window.openModal("ABANDONAR?", "Sair da partida contar? como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], async (choice) => {
+        window.openModal("ABANDONAR?", "Sair da partida contará como DERROTA. Tem certeza?", ["CANCELAR", "SAIR"], async (choice) => {
                 if (choice === "SAIR") {
                     stopTurnTimer();
                     if (window.gameMode === 'pvp') await notifyAbandonment();
@@ -2009,7 +2009,7 @@ function onCardClick(index) {
     playSound('sfx-play'); clearHoverFocusState(true);
 
     if(cardKey === 'DESARMAR') {
-        window.openModal('ALVO DO DESARME', 'Qual a??o bloquear no inimigo?', ACTION_KEYS, (choice) => {
+        window.openModal('ALVO DO DESARME', 'Qual ação bloquear no inimigo?', ACTION_KEYS, (choice) => {
             if(window.gameMode === 'pvp') lockInPvPMove(index, choice); else playCardFlow(index, choice);
         });
     } else {
@@ -2020,11 +2020,11 @@ function onCardClick(index) {
 function showDisabledCardWarning(index) {
     const handContainer = document.getElementById('player-hand');
     const cardEl = handContainer && handContainer.children[index];
-    if(!cardEl) { showCenterText("N?O PODE JOGAR", "#ff7675"); return; }
+    if(!cardEl) { showCenterText("NÃO PODE JOGAR", "#ff7675"); return; }
     cardEl.querySelectorAll('.disabled-card-warning').forEach(el => el.remove());
     const warning = document.createElement('div');
     warning.className = 'disabled-card-warning';
-    warning.innerText = "N?O PODE JOGAR";
+    warning.innerText = "NÃO PODE JOGAR";
     cardEl.appendChild(warning);
     setTimeout(() => warning.remove(), 760);
 }
@@ -2357,8 +2357,8 @@ function checkLevelUp(u, doneCb) {
 
 function processMasteries(u, triggers, cb) {
     if(triggers.length === 0) { cb(); return; } let type = triggers.shift();
-    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA T?TICA", "Bloquear qual a??o?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
-    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA T?TICA", "Bloquear qual a??o?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
+    if(type === 'TREINAR' && u.id === 'p') { let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))]; if(opts.length > 0) window.openModal("MAESTRIA SUPREMA", "Copiar qual maestria?", opts, (c) => { if(c === 'DESARMAR') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (targetAction) => { monster.disabled = targetAction; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); } else { applyMastery(u,c); processMasteries(u, triggers, cb); } }); else processMasteries(u, triggers, cb); }
+    else if(type === 'DESARMAR' && u.id === 'p') { window.openModal("MAESTRIA TÁTICA", "Bloquear qual ação?", ACTION_KEYS, (c) => { monster.disabled = c; showFloatingText('m-lvl', "BLOQUEADO!", "#fab1a0"); processMasteries(u, triggers, cb); }); }
     else if(type === 'TREINAR' && u.id === 'm') {
         let opts = [...new Set(u.xp.filter(x => x !== 'TREINAR'))];
         if(opts.length > 0) {
@@ -2501,7 +2501,7 @@ function bindMasteryTooltip(el, key, value, ownerId) {
     return {
         onmouseenter: (e) => {
             let db=CARDS_DB[key]; document.getElementById('tt-title').innerHTML = key;
-            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>B?nus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
+            document.getElementById('tt-content').innerHTML = `<span class='tt-label' style='color:var(--accent-blue)'>Bônus Atual</span><span class='tt-val'>+${value}</span><span class='tt-label' style='color:var(--accent-red)'>Efeito</span><span class='tt-val'>${db.mastery}</span>`;
             const masteryLabel = key === 'ATAQUE' ? 'MAESTRIA EM ATAQUE' : 'MAESTRIA EM BLOQUEIO';
             document.getElementById('tt-title').innerHTML = `${masteryLabel} N\u00cdVEL ${value}`;
             document.getElementById('tt-content').innerHTML = '';
@@ -2538,7 +2538,7 @@ function showTT(k) {
         let content = db.customTooltip; let currentLvl = (typeof player !== 'undefined' && player.lvl) ? player.lvl : 1;
         content = content.replace('{PLAYER_LVL}', currentLvl); let bonusBlock = (typeof player !== 'undefined' && player.bonusBlock) ? player.bonusBlock : 0;
         let reflectDmg = 1 + bonusBlock; content = content.replace('{PLAYER_BLOCK_DMG}', reflectDmg); document.getElementById('tt-content').innerHTML = content;
-    } else { document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>B?nus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; }
+    } else { document.getElementById('tt-content').innerHTML = `<span class='tt-label'>Base</span><span class='tt-val'>${db.base}</span><span class='tt-label' style='color:var(--accent-orange)'>Bônus</span><span class='tt-val'>${db.bonus}</span><span class='tt-label' style='color:var(--accent-purple)'>Maestria</span><span class='tt-val'>${db.mastery}</span>`; }
     tt.style.display = 'block';
 }
 
