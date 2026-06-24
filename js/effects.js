@@ -813,7 +813,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             min-height: min(820px, 90vh) !important;
             padding: 110px 104px 90px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_loja.webp?v=2026.06.24.16') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_loja.webp?v=2026.06.24.17') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -839,7 +839,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin: 0 !important;
             width: clamp(210px, 23vw, 340px) !important;
             aspect-ratio: 1413 / 614 !important;
-            background: url('assets/img/titulo_loja.webp?v=2026.06.24.16') center / contain no-repeat !important;
+            background: url('assets/img/titulo_loja.webp?v=2026.06.24.17') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
@@ -987,26 +987,29 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .shop-product-name,
         .inventory-item-name {
-            color: #fff8c8 !important;
-            font-family: 'Russo One', sans-serif !important;
+            color: #ffffff !important;
+            font-family: 'Bangers', cursive !important;
             font-size: clamp(11px, 0.95vw, 15px) !important;
             line-height: 1.08 !important;
             text-align: center !important;
             text-transform: uppercase !important;
-            text-shadow: 2px 2px 0 #1b0a03 !important;
+            -webkit-text-stroke: 1.3px #120501 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 2px 2px 0 #120501, 0 0 8px rgba(0,0,0,0.72) !important;
         }
 
         .lobby-shop-product .shop-product-name {
             position: absolute !important;
             left: 8px !important;
             right: 8px !important;
-            top: clamp(10px, 1.1vw, 15px) !important;
+            top: clamp(-10px, -0.6vw, -6px) !important;
             z-index: 3 !important;
-            color: #ffd51d !important;
-            font-size: clamp(13px, 1.12vw, 17px) !important;
-            line-height: 1 !important;
-            letter-spacing: 2px !important;
-            text-shadow: 2px 2px 0 #2a1004, 0 0 8px rgba(255, 198, 24, 0.38) !important;
+            color: #ffffff !important;
+            font-size: clamp(18px, 1.55vw, 25px) !important;
+            line-height: 0.92 !important;
+            letter-spacing: 0 !important;
+            -webkit-text-stroke: 1.6px #120501 !important;
+            text-shadow: 3px 3px 0 #120501, 0 0 8px rgba(0,0,0,0.74) !important;
         }
 
         .metallic-border-art {
@@ -1183,7 +1186,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             min-height: min(700px, 82vh) !important;
             padding: 112px 92px 92px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_mochila.webp?v=2026.06.24.16') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_mochila.webp?v=2026.06.24.17') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -1198,7 +1201,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin: 0 !important;
             width: clamp(330px, 39vw, 570px) !important;
             aspect-ratio: 1712 / 461 !important;
-            background: url('assets/img/titulo_mochila.webp?v=2026.06.24.16') center / contain no-repeat !important;
+            background: url('assets/img/titulo_mochila.webp?v=2026.06.24.17') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
@@ -1269,13 +1272,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             position: absolute !important;
             left: 8px !important;
             right: 8px !important;
-            top: clamp(10px, 1.1vw, 15px) !important;
+            top: clamp(-10px, -0.6vw, -6px) !important;
             z-index: 3 !important;
-            color: #ffd51d !important;
-            font-size: clamp(13px, 1.12vw, 17px) !important;
-            line-height: 1 !important;
-            letter-spacing: 2px !important;
-            text-shadow: 2px 2px 0 #2a1004, 0 0 8px rgba(255, 198, 24, 0.38) !important;
+            color: #ffffff !important;
+            font-size: clamp(18px, 1.55vw, 25px) !important;
+            line-height: 0.92 !important;
+            letter-spacing: 0 !important;
+            -webkit-text-stroke: 1.6px #120501 !important;
+            text-shadow: 3px 3px 0 #120501, 0 0 8px rgba(0,0,0,0.74) !important;
         }
 
         .inventory-item.selected {
@@ -1290,6 +1294,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             top: 48% !important;
             transform: translateY(-50%) rotate(-8deg) !important;
             padding: 8px 10px !important;
+            z-index: 6 !important;
             background: rgba(255, 215, 0, 0.92) !important;
             color: #2a1004 !important;
             font-family: 'Russo One', sans-serif !important;
