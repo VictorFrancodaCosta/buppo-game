@@ -568,25 +568,47 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             top: clamp(260px, 31vh, 330px) !important;
             transform: translateX(-50%) !important;
             z-index: 12010 !important;
-            min-width: 190px !important;
-            padding: 11px 24px !important;
-            border: 3px solid #2a1004 !important;
-            border-radius: 8px !important;
-            background: linear-gradient(180deg, #f3c14b, #8f4b16) !important;
-            color: #fff8c8 !important;
-            font-family: 'Russo One', sans-serif !important;
-            font-size: 18px !important;
-            text-transform: uppercase !important;
-            text-shadow: 2px 2px 0 #1b0a03 !important;
-            box-shadow: 0 8px 0 rgba(30, 11, 3, 0.9), 0 0 16px rgba(255,215,0,0.24) !important;
+            width: clamp(126px, 10.8vw, 178px) !important;
+            aspect-ratio: 906 / 1012 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            color: transparent !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
             cursor: pointer !important;
-            transition: transform 0.15s ease, filter 0.15s ease !important;
+            appearance: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            filter: drop-shadow(6px 9px 0 rgba(26, 11, 4, 0.74))
+                    drop-shadow(0 14px 16px rgba(0, 0, 0, 0.34)) !important;
+            transform-origin: center center !important;
+            transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease !important;
+        }
+
+        #lobby-screen .lobby-inventory-button img {
+            display: block !important;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
+            pointer-events: none !important;
+            user-select: none !important;
         }
 
         #lobby-screen .lobby-inventory-button:hover,
         #lobby-screen .lobby-inventory-button:focus-visible {
-            transform: translateX(-50%) translateY(-3px) scale(1.04) !important;
-            filter: brightness(1.12) !important;
+            transform: translateX(-50%) translateY(-4px) scale(1.09) !important;
+            filter: brightness(1.12)
+                    drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
+                    drop-shadow(0 18px 21px rgba(0, 0, 0, 0.34))
+                    drop-shadow(0 0 18px rgba(255, 221, 80, 0.35)) !important;
+        }
+
+        #lobby-screen .lobby-inventory-button:active {
+            transform: translateX(-50%) translateY(7px) scale(1.06, 0.78) !important;
+            filter: brightness(1.2)
+                    drop-shadow(3px 4px 0 rgba(26, 11, 4, 0.9))
+                    drop-shadow(0 0 16px rgba(255, 221, 80, 0.52)) !important;
         }
 
         #lobby-screen .lobby-menu-button {
@@ -630,7 +652,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     drop-shadow(0 0 18px rgba(255, 221, 80, 0.55)) !important;
         }
 
-        #lobby-screen .lobby-menu-button.lobby-button-press-juice {
+        #lobby-screen .lobby-menu-button.lobby-button-press-juice,
+        #lobby-screen .lobby-inventory-button.lobby-button-press-juice {
             animation: lobbyButtonPressJuice 0.26s cubic-bezier(0.16, 1.3, 0.32, 1) both !important;
         }
 
@@ -1113,8 +1136,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 left: 50% !important;
                 top: auto !important;
                 bottom: 54px !important;
-                min-width: 160px !important;
-                font-size: 15px !important;
+                width: clamp(104px, 24vw, 138px) !important;
             }
 
             .lobby-inventory-grid {
@@ -2038,13 +2060,38 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             inventoryButton.id = 'btn-lobby-inventory';
             inventoryButton.type = 'button';
             inventoryButton.className = 'lobby-inventory-button';
-            inventoryButton.textContent = 'MOCHILA';
             lobbyScreen.appendChild(inventoryButton);
+        }
+        inventoryButton.setAttribute('aria-label', 'Mochila');
+        inventoryButton.title = 'Mochila';
+        inventoryButton.innerHTML = '<img src="assets/img/mochila.png" alt="Mochila" draggable="false">';
+        if (inventoryButton.dataset.hoverSoundBound !== '1') {
+            inventoryButton.dataset.hoverSoundBound = '1';
+            let inventoryHoverActive = false;
+            inventoryButton.addEventListener('pointerenter', () => {
+                if (inventoryHoverActive) return;
+                inventoryHoverActive = true;
+                window.playLobbyButtonHoverSound?.();
+            });
+            inventoryButton.addEventListener('pointerleave', () => {
+                inventoryHoverActive = false;
+            });
+            inventoryButton.addEventListener('focus', () => window.playLobbyButtonHoverSound?.());
+        }
+        if (inventoryButton.dataset.pressJuiceBound !== '1') {
+            inventoryButton.dataset.pressJuiceBound = '1';
+            inventoryButton.addEventListener('pointerdown', () => {
+                inventoryButton.classList.remove('lobby-button-press-juice');
+                void inventoryButton.offsetWidth;
+                inventoryButton.classList.add('lobby-button-press-juice');
+                setTimeout(() => inventoryButton.classList.remove('lobby-button-press-juice'), 360);
+            }, { capture: true });
         }
         inventoryButton.onclick = (event) => {
             event.preventDefault();
             event.stopPropagation();
-            window.playNavSound?.();
+            if (window.playLobbyButtonSelectSound) window.playLobbyButtonSelectSound();
+            else window.playNavSound?.();
             window.openInventory?.();
         };
         window.updateLobbyBottomProfileBar?.();
@@ -2193,10 +2240,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         const lobbyCardBorderItems = [
             { id: 'metallic_border', name: 'BORDA - GUARDA REAL', asset: 'assets/img/borda_metalica_card.png' },
-            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.png?v=2026.06.23.22' },
-            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.22' },
-            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.png?v=2026.06.23.22' },
-            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.png?v=2026.06.23.22' }
+            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.png?v=2026.06.23.23' },
+            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.23' },
+            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.png?v=2026.06.23.23' },
+            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.png?v=2026.06.23.23' }
         ];
         const lobbyShopItemsByCategory = {
             decks: [],
