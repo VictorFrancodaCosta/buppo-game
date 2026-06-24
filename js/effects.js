@@ -809,11 +809,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-panel {
             position: relative !important;
             z-index: 1 !important;
-            width: min(1280px, 96vw) !important;
-            min-height: min(780px, 88vh) !important;
-            padding: 104px 96px 86px !important;
+            width: min(1360px, 97vw) !important;
+            min-height: min(820px, 90vh) !important;
+            padding: 110px 104px 90px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_loja.webp?v=2026.06.24.9') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_loja.webp?v=2026.06.24.10') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -832,13 +832,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-title {
             position: absolute !important;
             left: 50% !important;
-            top: calc(50% - min(390px, 44vh) - 64px) !important;
+            top: calc(50% - min(410px, 45vh) - 64px) !important;
             transform: translateX(-50%) !important;
             z-index: 4 !important;
             margin: 0 !important;
             width: clamp(210px, 23vw, 340px) !important;
             aspect-ratio: 1413 / 614 !important;
-            background: url('assets/img/titulo_loja.webp?v=2026.06.24.9') center / contain no-repeat !important;
+            background: url('assets/img/titulo_loja.webp?v=2026.06.24.10') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
@@ -920,12 +920,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-shop-grid {
-            display: grid !important;
-            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-            gap: clamp(16px, 1.5vw, 22px) !important;
-            width: min(760px, 76%) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-wrap: wrap !important;
+            column-gap: clamp(48px, 4.6vw, 72px) !important;
+            row-gap: clamp(26px, 2.8vw, 42px) !important;
+            width: min(780px, 72%) !important;
             max-height: none !important;
-            margin: 18px auto 0 !important;
+            margin: 28px auto 0 !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             padding: 2px 10px 12px 2px !important;
@@ -950,6 +953,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-slot {
             position: relative !important;
+            flex: 0 0 clamp(165px, 13.2vw, 205px) !important;
             aspect-ratio: 1 / 1 !important;
             min-height: 0 !important;
             border: 3px solid rgba(255,215,0,0.55) !important;
@@ -1079,9 +1083,34 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             position: absolute !important;
             left: 50% !important;
             right: auto !important;
-            bottom: calc(50% - min(390px, 44vh) - 70px) !important;
+            bottom: calc(50% - min(410px, 45vh) - 70px) !important;
             transform: translateX(-50%) !important;
             z-index: 4 !important;
+            min-width: 122px !important;
+            padding: 9px 24px !important;
+            border: 3px solid #2a1004 !important;
+            border-radius: 8px !important;
+            background: linear-gradient(180deg, #8a4b20, #4b210c) !important;
+            color: var(--gold) !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: 28px !important;
+            line-height: 1 !important;
+            letter-spacing: 1px !important;
+            -webkit-text-stroke: 1.6px #160602 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 3px 3px 0 #160602, 0 0 12px rgba(255,215,0,0.34) !important;
+            box-shadow: 0 6px 0 rgba(30, 11, 3, 0.86), inset 0 2px 0 rgba(255,255,255,0.14) !important;
+            transition: transform 0.16s ease, filter 0.16s ease, box-shadow 0.16s ease !important;
+        }
+
+        .lobby-shop-close:hover {
+            transform: translateX(-50%) translateY(-3px) scale(1.04) !important;
+            filter: brightness(1.08) saturate(1.08) !important;
+        }
+
+        .lobby-shop-close:active {
+            transform: translateX(-50%) translateY(2px) scale(0.96) !important;
+            box-shadow: 0 3px 0 rgba(30, 11, 3, 0.9), inset 0 2px 0 rgba(255,255,255,0.1) !important;
         }
 
         .lobby-inventory-modal {
@@ -1254,9 +1283,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-shop-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                 width: min(560px, 88%) !important;
                 margin-top: 18px !important;
+                column-gap: 18px !important;
+                row-gap: 18px !important;
+            }
+
+            .lobby-shop-slot {
+                flex-basis: clamp(132px, 38vw, 170px) !important;
             }
 
             #lobby-screen .lobby-inventory-button {
@@ -1301,8 +1335,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-shop-close {
-                right: 22px !important;
-                bottom: 22px !important;
+                left: 50% !important;
+                right: auto !important;
+                bottom: 16px !important;
+                transform: translateX(-50%) !important;
             }
         }
 
