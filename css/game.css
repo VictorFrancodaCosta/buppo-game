@@ -94,11 +94,11 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 #m-xp { top: 25px; } #p-xp { bottom: 180px; }
 @keyframes hudFloatCentered { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-6px); } }
 .xp-mini { width: 38px; height: 53px; margin: 0 2px; position: relative; border: 1px solid #111; border-radius: 3px; box-shadow: 0 4px 8px rgba(0,0,0,0.6); cursor: default; transition: transform 0.2s; background-size: cover; background-position: center; }
-body.player-card-border-royal { --player-card-border-url: url('../assets/img/borda_metalica_card.png'); }
-body.player-card-border-elven { --player-card-border-url: url('../assets/img/borda_bosque_elfico_card.png?v=2026.06.23.23'); }
-body.player-card-border-mage { --player-card-border-url: url('../assets/img/borda_chama_arcana_card.png?v=2026.06.23.23'); }
-body.player-card-border-rogue { --player-card-border-url: url('../assets/img/borda_mao_dourada_card.png?v=2026.06.23.23'); }
-body.player-card-border-oracle { --player-card-border-url: url('../assets/img/borda_visao_astral_card.png?v=2026.06.23.23'); }
+body.player-card-border-royal { --player-card-border-url: url('../assets/img/borda_metalica_card.webp'); }
+body.player-card-border-elven { --player-card-border-url: url('../assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.1'); }
+body.player-card-border-mage { --player-card-border-url: url('../assets/img/borda_chama_arcana_card.webp?v=2026.06.24.1'); }
+body.player-card-border-rogue { --player-card-border-url: url('../assets/img/borda_mao_dourada_card.webp?v=2026.06.24.1'); }
+body.player-card-border-oracle { --player-card-border-url: url('../assets/img/borda_visao_astral_card.webp?v=2026.06.24.1'); }
 body.player-card-border-oracle { --player-card-border-inset: -7% -7% -6.7% -7%; }
 .xp-mini.card-skin-metallic-border {
     border-color: transparent !important;
@@ -110,7 +110,7 @@ body.player-card-border-oracle { --player-card-border-inset: -7% -7% -6.7% -7%; 
     z-index: 4;
     pointer-events: none;
     border-radius: 8%;
-    background: var(--player-card-border-url, url('../assets/img/borda_metalica_card.png')) center / 100% 100% no-repeat;
+    background: var(--player-card-border-url, url('../assets/img/borda_metalica_card.webp')) center / 100% 100% no-repeat;
 }
 .xp-area.levelup-xp-consuming .xp-mini { opacity: 0 !important; visibility: hidden !important; }
 #m-xp .xp-mini:hover { transform: scale(3.0) translateY(15px); z-index: 3000; } #p-xp .xp-mini:hover { transform: scale(3.0) translateY(-15px); z-index: 3000; }
@@ -146,7 +146,7 @@ body.player-card-border-oracle { --player-card-border-inset: -7% -7% -6.7% -7%; 
     z-index: 24;
     pointer-events: none;
     border-radius: 8%;
-    background: var(--player-card-border-url, url('../assets/img/borda_metalica_card.png')) center / 100% 100% no-repeat;
+    background: var(--player-card-border-url, url('../assets/img/borda_metalica_card.webp')) center / 100% 100% no-repeat;
 }
 .slot .card.card-skin-metallic-border::before {
     border-radius: 8%;

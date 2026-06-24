@@ -564,11 +564,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .lobby-inventory-button {
             position: fixed !important;
-            left: calc(50% - 50vw + var(--lobby-side-gap, 70px) + min(18vw, 260px)) !important;
-            top: clamp(260px, 31vh, 330px) !important;
+            left: calc(50% - 50vw + var(--lobby-side-gap, 70px) + clamp(76px, 6.4vw, 116px)) !important;
+            top: auto !important;
+            bottom: 48px !important;
             transform: translateX(-50%) !important;
             z-index: 12010 !important;
-            width: clamp(126px, 10.8vw, 178px) !important;
+            width: clamp(158px, 12.5vw, 220px) !important;
             aspect-ratio: 906 / 1012 !important;
             padding: 0 !important;
             border: 0 !important;
@@ -1133,10 +1134,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             #lobby-screen .lobby-inventory-button {
-                left: 50% !important;
+                left: calc(50% - 50vw + var(--lobby-side-gap, 24px) + 66px) !important;
                 top: auto !important;
-                bottom: 54px !important;
-                width: clamp(104px, 24vw, 138px) !important;
+                bottom: 42px !important;
+                width: clamp(118px, 24vw, 152px) !important;
             }
 
             .lobby-inventory-grid {
@@ -2064,7 +2065,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
         inventoryButton.setAttribute('aria-label', 'Mochila');
         inventoryButton.title = 'Mochila';
-        inventoryButton.innerHTML = '<img src="assets/img/mochila.png" alt="Mochila" draggable="false">';
+        inventoryButton.innerHTML = '<img src="assets/img/mochila.webp" alt="Mochila" draggable="false">';
         if (inventoryButton.dataset.hoverSoundBound !== '1') {
             inventoryButton.dataset.hoverSoundBound = '1';
             let inventoryHoverActive = false;
@@ -2239,11 +2240,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         const lobbyCardBorderItems = [
-            { id: 'metallic_border', name: 'BORDA - GUARDA REAL', asset: 'assets/img/borda_metalica_card.png' },
-            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.png?v=2026.06.23.23' },
-            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.23' },
-            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.png?v=2026.06.23.23' },
-            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.png?v=2026.06.23.23' }
+            { id: 'metallic_border', name: 'BORDA - GUARDA REAL', asset: 'assets/img/borda_metalica_card.webp' },
+            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.1' },
+            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.1' },
+            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.1' },
+            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.1' }
         ];
         const lobbyShopItemsByCategory = {
             decks: [],
