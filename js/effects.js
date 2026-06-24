@@ -994,8 +994,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             pointer-events: none !important;
         }
 
-        .shop-buy-btn,
-        .inventory-equip-btn {
+        .shop-buy-btn {
             min-width: 118px !important;
             padding: 10px 16px !important;
             border: 2px solid #fff4ad !important;
@@ -1007,6 +1006,62 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             text-transform: uppercase !important;
             cursor: pointer !important;
             box-shadow: 0 4px 0 rgba(42,16,4,0.8) !important;
+        }
+
+        .inventory-action-menu {
+            position: absolute !important;
+            left: 50% !important;
+            top: 52% !important;
+            z-index: 8 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 7px !important;
+            min-width: 150px !important;
+            padding: 10px !important;
+            border: 3px solid rgba(255, 215, 0, 0.82) !important;
+            border-radius: 8px !important;
+            background: rgba(18, 8, 3, 0.96) !important;
+            box-shadow: 0 8px 0 rgba(30, 11, 3, 0.82), 0 0 18px rgba(255,215,0,0.22) !important;
+            transform: translate(-50%, -50%) rotate(-1deg) !important;
+        }
+
+        .inventory-action-menu::before {
+            content: "" !important;
+            position: absolute !important;
+            left: 50% !important;
+            bottom: -10px !important;
+            width: 16px !important;
+            height: 16px !important;
+            background: rgba(18, 8, 3, 0.96) !important;
+            border-right: 3px solid rgba(255, 215, 0, 0.82) !important;
+            border-bottom: 3px solid rgba(255, 215, 0, 0.82) !important;
+            transform: translateX(-50%) rotate(45deg) !important;
+        }
+
+        .inventory-action-option {
+            position: relative !important;
+            z-index: 1 !important;
+            min-height: 36px !important;
+            padding: 7px 12px !important;
+            border: 2px solid #fff4ad !important;
+            border-radius: 999px !important;
+            background: linear-gradient(180deg, #f1c40f, #b96714) !important;
+            color: #321204 !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: 12px !important;
+            text-transform: uppercase !important;
+            cursor: pointer !important;
+            box-shadow: 0 3px 0 rgba(42,16,4,0.8) !important;
+        }
+
+        .inventory-action-option:disabled,
+        .inventory-action-option[data-disabled="true"] {
+            border-color: rgba(255,255,255,0.22) !important;
+            background: linear-gradient(180deg, #5e5440, #2d2119) !important;
+            color: rgba(255,255,255,0.34) !important;
+            cursor: default !important;
+            filter: grayscale(1) brightness(0.74) !important;
+            box-shadow: none !important;
         }
 
         .shop-buy-btn:disabled {
@@ -2261,10 +2316,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         const lobbyCardBorderItems = [
             { id: 'metallic_border', name: 'BORDA - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/borda_metalica_card.webp' },
-            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.2' },
-            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.2' },
-            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.2' },
-            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.2' }
+            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.3' },
+            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.3' },
+            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.3' },
+            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.3' }
         ];
         const lobbyShopItemsByCategory = {
             decks: [],
@@ -2407,15 +2462,25 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 const equipped = window.getShopItemState?.(item.id)?.equipped === true;
                 const selected = window.selectedInventoryItem === item.id;
                 return `
-                <button class="inventory-item ${selected ? 'selected' : ''}" type="button" data-inventory-item="${item.id}">
+                <div class="inventory-item ${selected ? 'selected' : ''}" role="button" tabindex="0" data-inventory-item="${item.id}">
                     <div class="inventory-item-name">${getItemDisplayName(item)}</div>
                     ${renderBorderPreview(item)}
-                    ${selected ? `<span class="inventory-equip-btn" data-equip-item="${item.id}">${equipped ? 'DESEQUIPAR' : 'EQUIPAR'}</span>` : '<span></span>'}
+                    ${selected ? `
+                    <span class="inventory-action-menu" role="menu" aria-label="Op\u00e7\u00f5es de ${getItemDisplayName(item)}">
+                        <span class="inventory-action-option" role="button" tabindex="0" data-inventory-action="equip" data-equip-item="${item.id}" ${equipped ? 'aria-disabled="true" data-disabled="true"' : ''}>EQUIPAR</span>
+                        <span class="inventory-action-option" role="button" tabindex="0" data-inventory-action="unequip" data-equip-item="${item.id}" ${equipped ? '' : 'aria-disabled="true" data-disabled="true"'}>DESEQUIPAR</span>
+                    </span>` : '<span></span>'}
                     ${equipped ? '<span class="inventory-equipped-ribbon">EQUIPADO</span>' : ''}
-                </button>`;
+                </div>`;
             }).join('');
             grid.querySelectorAll('[data-inventory-item]').forEach((button) => {
                 button.addEventListener('click', () => {
+                    window.selectedInventoryItem = button.dataset.inventoryItem;
+                    window.renderInventoryItems?.();
+                });
+                button.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
                     window.selectedInventoryItem = button.dataset.inventoryItem;
                     window.renderInventoryItems?.();
                 });
@@ -2424,6 +2489,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 button.addEventListener('click', (event) => {
                     event.preventDefault();
                     event.stopPropagation();
+                    if (button.dataset.disabled === 'true') return;
+                    window.toggleInventoryEquip?.(button.dataset.equipItem);
+                });
+                button.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (button.dataset.disabled === 'true') return;
                     window.toggleInventoryEquip?.(button.dataset.equipItem);
                 });
             });

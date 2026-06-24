@@ -11,7 +11,7 @@
     
     <link rel="stylesheet" href="css/style.css?v=2026.06.22.4">
     <link rel="stylesheet" href="css/lobby.css?v=2026.06.20.1">
-    <link rel="stylesheet" href="css/game.css?v=2026.06.24.2">
+    <link rel="stylesheet" href="css/game.css?v=2026.06.24.3">
     <link rel="stylesheet" href="css/effects.css?v=2026.06.22.4">
 
     <link rel="icon" type="image/webp" href="assets/img/logo_buppo.webp">
@@ -25,7 +25,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BUPPO">
     <script>
-        window.BUPPO_BUILD_VERSION = '2026.06.24.2';
+        window.BUPPO_BUILD_VERSION = '2026.06.24.3';
     </script>
     <script>
         (function () {
@@ -82,7 +82,7 @@
     
     <div id="game-container">
         <div id="top-left-controls">
-            <div class="circle-btn" onclick="window.toggleConfig()" id="btn-config-toggle" title="ConfiguraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes">
+            <div class="circle-btn" onclick="window.toggleConfig()" id="btn-config-toggle" title="Configura??es">
                 <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.49l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c-0.24,0-0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
             </div>
         </div>
@@ -127,14 +127,14 @@
                             <div class="lobby-xp-track"><span id="lobby-xp-fill"></span></div>
                         </div>
                     </div>
-                    <div class="user-welcome" id="lobby-username">OLÃƒÆ’Ã‚Â, JOGADOR</div>
-                    <div class="user-stats" id="lobby-stats">VITÃƒÆ’Ã¢â‚¬Å“RIAS: 0 | PONTOS: 0</div>
+                    <div class="user-welcome" id="lobby-username">OL?, JOGADOR</div>
+                    <div class="user-stats" id="lobby-stats">VIT?RIAS: 0 | PONTOS: 0</div>
                     <div class="gold-wallet" id="lobby-gold-wallet">
                         <img src="assets/img/moeda_ouro.png" alt="Moeda de ouro">
                         <span id="lobby-gold-count">0</span>
                     </div>
                     <div class="ranking-scroll" id="ranking-content" data-tip="Ranking dos melhores jogadores"></div>
-                    <button id="btn-history" onclick="window.openHistory()">HISTÃƒÆ’Ã¢â‚¬Å“RICO DE PARTIDAS</button>
+                    <button id="btn-history" onclick="window.openHistory()">HIST?RICO DE PARTIDAS</button>
                     <button id="btn-logout" onclick="handleLogout()">TROCAR CONTA</button>
                 </div>
             </div>
@@ -144,7 +144,7 @@
             <div class="modal-box matchmaking-box">
                 <div class="radar-spinner"></div>
                 <div class="mm-title">PROCURANDO OPONENTE...</div>
-                <div class="mm-desc">Buscando jogadores com nÃƒÆ’Ã‚Â­vel prÃƒÆ’Ã‚Â³ximo ao seu</div>
+                <div class="mm-desc">Buscando jogadores com n?vel pr?ximo ao seu</div>
                 <div class="mm-timer" id="mm-timer">00:00</div>
                 <button class="mini-btn cancel-btn" onclick="cancelPvPSearch()">CANCELAR BUSCA</button>
             </div>
@@ -152,7 +152,7 @@
 
         <div id="add-friend-screen" class="modal-overlay">
             <div class="modal-box add-friend-box">
-                <h2 class="cfg-title">ADICIONAR AMIGO</h2>
+            <h2 class="cfg-title">CONFIGURA??ES</h2>
                 <p class="add-friend-copy">Digite o ID do jogador</p>
                 <input id="friend-id-input" class="friend-id-input" maxlength="8" placeholder="#ABCD">
                 <div id="friend-add-status" class="friend-add-status"></div>
@@ -170,8 +170,8 @@
 
         <div id="friend-invite-screen" class="modal-overlay">
             <div class="modal-box add-friend-box">
-                <h2 class="cfg-title">CONVITE</h2>
-                <p id="friend-invite-text" class="add-friend-copy">Jogador estÃƒÆ’Ã‚Â¡ te convidando para uma partida.</p>
+            <h2 class="cfg-title">CONFIGURA??ES</h2>
+                <p id="friend-invite-text" class="add-friend-copy">Jogador est? te convidando para uma partida.</p>
                 <div class="modal-btns">
                     <button class="mini-btn" onclick="window.acceptFriendInvite()">ACEITAR</button>
                     <button class="mini-btn cancel-btn" onclick="window.declineFriendInvite()">RECUSAR</button>
@@ -185,15 +185,15 @@
                 <div class="deck-option" onclick="selectDeck('knight')" data-name="Forjado pela honra, guiado pela espada"><img src="assets/img/card_selecao_cavaleiro.webp" alt="Deck Cavaleiro"></div>
                 <div class="deck-option" onclick="selectDeck('mage')" data-name="Magia em estado puro"><img src="assets/img/card_selecao_mago.webp" alt="Deck Mago"></div>
             </div>
-            <button class="return-btn" onclick="playNavSound(); window.goToLobby()">VOLTAR AO SAGUÃƒÆ’Ã†â€™O</button>
+            <button class="return-btn" onclick="playNavSound(); window.goToLobby()">VOLTAR AO SAGU?O</button>
         </div>
 
         <div id="end-screen">
             <div class="end-content">
-                <h1 id="end-title" class="win-theme">VITÃƒÆ’Ã¢â‚¬Å“RIA</h1>
+                <h1 id="end-title" class="win-theme">VIT?RIA</h1>
                 <div class="end-btn-row">
                     <button class="big-btn" onclick="this.blur(); window.playNavSound(); restartMatch()">JOGAR NOVAMENTE</button>
-                    <button class="big-btn secondary-btn" onclick="this.blur(); window.playNavSound(); transitionToLobby()">SAGUÃƒÆ’Ã†â€™O</button>
+                    <button class="big-btn secondary-btn" onclick="this.blur(); window.playNavSound(); transitionToLobby()">SAGU?O</button>
                 </div>
             </div>
         </div>
@@ -212,7 +212,7 @@
             <div class="avatar-cluster" id="p-stats-cluster">
                 <div class="lvl-circle" id="p-lvl">1</div>
                 <div class="unit-info">
-                    <span class="unit-name" style="color:var(--accent-blue)">VOCÃƒÆ’Ã…Â </span>
+                    <span class="unit-name" style="color:var(--accent-blue)">VOC?</span>
                     <div class="hp-tube"><div class="hp-liquid" id="p-hp-fill" style="background: #00cec9;"></div><span class="hp-txt" id="p-hp-txt">6/6</span></div>
                     <div class="mastery-row" id="p-masteries"></div>
                 </div>
@@ -233,7 +233,7 @@
 
     <div id="config-overlay" class="modal-overlay" onclick="if(event.target === this) window.toggleConfig()">
         <div class="modal-box config-box" onclick="event.stopPropagation()">
-            <h2 class="cfg-title">CONFIGURAÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã¢â‚¬Â¢ES</h2>
+            <h2 class="cfg-title">CONFIGURA??ES</h2>
             <div class="cfg-row">
                 <span class="cfg-label">VOLUME GERAL</span>
                 <input type="range" id="vol-slider" class="cfg-slider" min="0" max="1" step="0.1" value="0.5">
@@ -242,7 +242,7 @@
                 <label class="cfg-check-container">
                     <input type="checkbox" id="check-music" checked>
                     <span class="checkmark" id="chk-music-mark"></span>
-                    MÃƒÆ’Ã…Â¡SICA
+                    M?SICA
                 </label>
                 <label class="cfg-check-container">
                     <input type="checkbox" id="check-sfx" checked>
@@ -264,7 +264,7 @@
 
     <div id="history-screen" class="screen modal-overlay" style="display: none; z-index: 85000;">
         <div class="history-panel">
-            <h2 style="color: var(--gold); text-shadow: 0 0 10px var(--gold);">DIÃƒÆ’Ã‚ÂRIO DE BATALHA</h2>
+            <h2 style="color: var(--gold); text-shadow: 0 0 10px var(--gold);">DI?RIO DE BATALHA</h2>
             <div id="history-list-container"><div class="loading-text">Carregando pergaminhos...</div></div>
             <button class="mini-btn" onclick="closeHistory()">FECHAR</button>
         </div>
@@ -273,8 +273,8 @@
     <div id="tooltip-box"><h3 id="tt-title"></h3><div id="tt-content"></div></div>
     <div id="modal-overlay" class="modal-overlay" onclick="cancelModal()"><div class="modal-box" onclick="event.stopPropagation()"><h2 id="modal-title"></h2><p id="modal-desc"></p><div class="modal-btns" id="modal-btns"></div></div></div>
 
-    <script src="js/effects.js?v=2026.06.24.2"></script> 
-    <script type="module" src="js/main.js?v=2026.06.24.2"></script>
+    <script src="js/effects.js?v=2026.06.24.3"></script> 
+    <script type="module" src="js/main.js?v=2026.06.24.3"></script>
 </body>
 </html>
 
