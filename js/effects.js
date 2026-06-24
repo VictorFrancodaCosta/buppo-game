@@ -815,6 +815,47 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             text-shadow: 4px 4px 0 #210b03, 0 0 18px rgba(255, 215, 0, 0.45) !important;
         }
 
+        .lobby-shop-title-stack {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 12px !important;
+            min-width: 0 !important;
+        }
+
+        .lobby-shop-categories {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            max-width: min(780px, 68vw) !important;
+        }
+
+        .lobby-shop-category {
+            appearance: none !important;
+            min-height: 34px !important;
+            padding: 7px 12px !important;
+            border: 2px solid rgba(255,215,0,0.58) !important;
+            border-radius: 999px !important;
+            background: rgba(0,0,0,0.36) !important;
+            color: #fff8c8 !important;
+            cursor: pointer !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: 11px !important;
+            line-height: 1 !important;
+            letter-spacing: 0 !important;
+            text-shadow: 1px 1px 0 #1b0a03 !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 10px rgba(0,0,0,0.28) !important;
+        }
+
+        .lobby-shop-category:hover,
+        .lobby-shop-category.active {
+            border-color: #fff4ad !important;
+            background: linear-gradient(180deg, #ffe48a, #d9901e) !important;
+            color: #2a1004 !important;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.38) !important;
+        }
+
         .lobby-shop-gold {
             display: inline-flex !important;
             align-items: center !important;
@@ -1047,6 +1088,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 align-items: center !important;
                 gap: 12px !important;
                 margin-bottom: 20px !important;
+            }
+
+            .lobby-shop-categories {
+                max-width: 100% !important;
+                gap: 6px !important;
+            }
+
+            .lobby-shop-category {
+                min-height: 30px !important;
+                padding: 6px 9px !important;
+                font-size: 10px !important;
             }
 
             .lobby-shop-grid {
@@ -2138,7 +2190,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         const lobbyCardBorderItems = [
             { id: 'metallic_border', name: 'BORDA - GUARDA REAL', asset: 'assets/img/borda_metalica_card.png' },
             { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.png' },
-            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.png' },
+            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.14' },
             { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.png' },
             { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.png' }
         ];
@@ -2161,7 +2213,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             shopModal.innerHTML = `
                 <div class="lobby-shop-panel" role="dialog" aria-modal="true" aria-label="Loja">
                     <div class="lobby-shop-header">
-                        <h2 class="lobby-shop-title">LOJA</h2>
+                        <div class="lobby-shop-title-stack">
+                            <h2 class="lobby-shop-title">LOJA</h2>
+                            <div class="lobby-shop-categories" aria-label="Categorias da loja">
+                                <button class="lobby-shop-category" type="button">DECKS</button>
+                                <button class="lobby-shop-category active" type="button">BORDAS</button>
+                                <button class="lobby-shop-category" type="button">CLUSTERS</button>
+                                <button class="lobby-shop-category" type="button">\u00c1REAS DE XP</button>
+                                <button class="lobby-shop-category" type="button">MASCOTES</button>
+                            </div>
+                        </div>
                         <div class="lobby-shop-gold" aria-label="Ouro disponivel">
                             <img src="assets/img/moeda_ouro.png" alt="Moeda de ouro">
                             <span id="lobby-shop-gold-count">0</span>
@@ -2178,6 +2239,12 @@ ${shopProductsHtml}${emptyShopSlotsHtml}
                 if (event.target === shopModal) window.closeLobbyShop?.();
             });
             shopModal.querySelector('.lobby-shop-close')?.addEventListener('click', () => window.closeLobbyShop?.());
+            shopModal.querySelectorAll('.lobby-shop-category').forEach((button) => {
+                button.addEventListener('click', () => {
+                    shopModal.querySelectorAll('.lobby-shop-category').forEach((category) => category.classList.remove('active'));
+                    button.classList.add('active');
+                });
+            });
             shopModal.querySelectorAll('[data-buy-item]').forEach((button) => {
                 button.addEventListener('click', () => window.confirmShopPurchase?.(button.dataset.buyItem));
             });

@@ -73,7 +73,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.png',
-        'assets/img/borda_bosque_elfico_card.png', 'assets/img/borda_chama_arcana_card.png',
+        'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.14', 'assets/img/borda_chama_arcana_card.png',
         'assets/img/borda_mao_dourada_card.png', 'assets/img/borda_visao_astral_card.png'
     ],
     audio: [
@@ -342,7 +342,7 @@ const SHOP_ITEMS = {
         name: 'BORDA - SENTINELA VERDE',
         slot: 'cardBorder',
         cssClass: 'elven',
-        asset: 'assets/img/borda_bosque_elfico_card.png'
+        asset: 'assets/img/borda_bosque_elfico_card.png?v=2026.06.23.14'
     },
     mage_fire_border: {
         id: 'mage_fire_border',
