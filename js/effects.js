@@ -813,7 +813,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             min-height: min(820px, 90vh) !important;
             padding: 110px 104px 90px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_loja.webp?v=2026.06.24.17') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_loja.webp?v=2026.06.24.18') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -839,11 +839,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin: 0 !important;
             width: clamp(210px, 23vw, 340px) !important;
             aspect-ratio: 1413 / 614 !important;
-            background: url('assets/img/titulo_loja.webp?v=2026.06.24.17') center / contain no-repeat !important;
+            background: url('assets/img/titulo_loja.webp?v=2026.06.24.18') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
-            overflow: hidden !important;
+            overflow: visible !important;
         }
 
         .lobby-shop-title-stack {
@@ -1186,7 +1186,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             min-height: min(700px, 82vh) !important;
             padding: 112px 92px 92px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_mochila.webp?v=2026.06.24.17') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_mochila.webp?v=2026.06.24.18') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -1201,7 +1201,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin: 0 !important;
             width: clamp(330px, 39vw, 570px) !important;
             aspect-ratio: 1712 / 461 !important;
-            background: url('assets/img/titulo_mochila.webp?v=2026.06.24.17') center / contain no-repeat !important;
+            background: url('assets/img/titulo_mochila.webp?v=2026.06.24.18') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
@@ -1230,11 +1230,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             column-gap: clamp(34px, 3vw, 48px) !important;
             row-gap: clamp(24px, 2.4vw, 34px) !important;
             width: min(820px, 78%) !important;
-            max-height: min(480px, 58vh) !important;
+            max-height: none !important;
             margin: 50px auto 0 !important;
-            overflow-y: auto !important;
-            overflow-x: visible !important;
-            padding: 8px 10px 12px !important;
+            overflow: visible !important;
+            padding: 18px 10px 12px !important;
         }
 
         .inventory-item {
@@ -1252,7 +1251,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 radial-gradient(circle at 50% 22%, rgba(160, 83, 18, 0.88), rgba(55, 20, 2, 0.96) 64%, rgba(0,0,0,0.98) 100%) !important;
             box-shadow: inset 0 8px 18px rgba(0,0,0,0.78), 0 8px 0 rgba(30, 11, 3, 0.62) !important;
             cursor: pointer !important;
-            overflow: hidden !important;
+            overflow: visible !important;
         }
 
         .lobby-inventory-panel .metallic-border-art {
