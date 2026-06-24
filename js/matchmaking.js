@@ -25,7 +25,7 @@ export async function initiateMatchmaking() {
 
     try {
         myQueueRef = doc(collection(db, "queue"));
-        const myData = { uid: window.currentUser.uid, name: window.currentUser.displayName, gameId: window.currentPlayerGameId || null, deck: window.currentDeck, timestamp: Date.now(), matchId: null, cancelled: false, status: 'waiting' };
+        const myData = { uid: window.currentUser.uid, name: window.currentUser.displayName, gameId: window.currentPlayerGameId || null, deck: window.currentDeck, equippedItems: { ...(window.equippedItems || {}) }, timestamp: Date.now(), matchId: null, cancelled: false, status: 'waiting' };
         await setDoc(myQueueRef, myData);
         queueListener = onSnapshot(myQueueRef, (docSnap) => {
             if (docSnap.exists()) { const data = docSnap.data(); if (data.matchId) enterMatch(data.matchId); }
@@ -57,14 +57,14 @@ async function findOpponentInQueue() {
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
             const oppRef = opponentDoc.ref;
             const p1DeckCards = generateShuffledDeck(); const p2DeckCards = generateShuffledDeck();
-            await createMatchDocument(matchId, window.currentUser.uid, opponentDoc.data().uid, window.currentUser.displayName, opponentDoc.data().name, window.currentPlayerGameId || null, opponentDoc.data().gameId || null, window.currentDeck, opponentDoc.data().deck, p1DeckCards, p2DeckCards);
+            await createMatchDocument(matchId, window.currentUser.uid, opponentDoc.data().uid, window.currentUser.displayName, opponentDoc.data().name, window.currentPlayerGameId || null, opponentDoc.data().gameId || null, window.currentDeck, opponentDoc.data().deck, { ...(window.equippedItems || {}) }, { ...(opponentDoc.data().equippedItems || {}) }, p1DeckCards, p2DeckCards);
             await updateDoc(oppRef, { matchId: matchId });
             if (myQueueRef) await updateDoc(myQueueRef, { matchId: matchId });
         }
     } catch (e) { console.error("Erro ao buscar oponente:", e); }
 }
 
-async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1GameId, p2GameId, p1DeckType, p2DeckType, p1DeckCards, p2DeckCards) {
+async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1GameId, p2GameId, p1DeckType, p2DeckType, p1EquippedItems, p2EquippedItems, p1DeckCards, p2DeckCards) {
     const matchRef = doc(db, "matches", matchId);
     const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1"; const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
     const d1Type = p1DeckType || 'knight'; const d2Type = p2DeckType || 'knight';
@@ -75,8 +75,8 @@ async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1GameId
     }
     p1Hand.sort(); p2Hand.sort();
     await setDoc(matchRef, {
-        player1: { uid: p1Id, name: cleanName1, gameId: p1GameId || null, deckType: d1Type, hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
-        player2: { uid: p2Id, name: cleanName2, gameId: p2GameId || null, deckType: d2Type, hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
+        player1: { uid: p1Id, name: cleanName1, gameId: p1GameId || null, deckType: d1Type, equippedItems: { ...(p1EquippedItems || {}) }, hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
+        player2: { uid: p2Id, name: cleanName2, gameId: p2GameId || null, deckType: d2Type, equippedItems: { ...(p2EquippedItems || {}) }, hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
         turn: 1, status: 'playing', createdAt: Date.now()
     });
 }

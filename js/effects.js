@@ -833,7 +833,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-title {
             position: absolute !important;
             left: 50% !important;
-            top: calc(50% - min(410px, 45vh) - 50px) !important;
+            top: calc(50% - min(410px, 45vh) - 34px) !important;
             transform: translateX(-50%) !important;
             z-index: 4 !important;
             margin: 0 !important;
@@ -860,7 +860,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             align-items: center !important;
             justify-content: center !important;
             flex-wrap: wrap !important;
-            gap: clamp(16px, 1.5vw, 24px) !important;
+            gap: clamp(24px, 2.4vw, 42px) !important;
             width: min(820px, 74%) !important;
             max-width: 100% !important;
             margin: 0 auto !important;
@@ -876,13 +876,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             color: rgba(255,248,200,0.84) !important;
             cursor: pointer !important;
             font-family: 'Bangers', cursive !important;
-            font-size: clamp(16px, 1.15vw, 21px) !important;
+            font-size: clamp(17px, 1.25vw, 24px) !important;
             line-height: 1 !important;
             letter-spacing: 0 !important;
             text-transform: uppercase !important;
-            -webkit-text-stroke: 1px #160602 !important;
+            -webkit-text-stroke: 1.7px #050100 !important;
             paint-order: stroke fill !important;
-            text-shadow: 2px 2px 0 #160602, 0 0 8px rgba(0,0,0,0.5) !important;
+            text-shadow: 2px 2px 0 #050100, -1px -1px 0 #050100, 0 0 9px rgba(0,0,0,0.56) !important;
             box-shadow: none !important;
             transform-origin: center !important;
             transition: transform 0.14s ease, color 0.14s ease, filter 0.14s ease, text-shadow 0.14s ease !important;
@@ -891,9 +891,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-category:hover,
         .lobby-shop-category.active {
             color: #ffd81f !important;
-            transform: scale(1.14) !important;
+            transform: scale(1.28) !important;
             filter: brightness(1.12) saturate(1.18) !important;
-            text-shadow: 2px 2px 0 #160602, 0 0 10px rgba(255,216,31,0.62), 0 0 18px rgba(255,122,24,0.36) !important;
+            text-shadow: 2px 2px 0 #050100, -1px -1px 0 #050100, 0 0 12px rgba(255,216,31,0.78), 0 0 24px rgba(255,122,24,0.46) !important;
         }
 
         .lobby-shop-gold {
@@ -987,7 +987,37 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             animation-play-state: paused !important;
             transform: translateY(-4px) scale(1.055) !important;
             z-index: 9 !important;
-            box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.1), 0 10px 0 rgba(30, 11, 3, 0.54), 0 0 22px rgba(255,215,0,0.28) !important;
+            box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.12), 0 10px 0 rgba(30, 11, 3, 0.54), 0 0 28px var(--item-glow, rgba(255,215,0,0.72)), 0 0 52px var(--item-glow-soft, rgba(255,215,0,0.32)) !important;
+        }
+
+        .lobby-shop-slot[data-shop-item="metallic_border"],
+        .inventory-item[data-inventory-item="metallic_border"] {
+            --item-glow: rgba(59, 176, 255, 0.9);
+            --item-glow-soft: rgba(59, 176, 255, 0.38);
+        }
+
+        .lobby-shop-slot[data-shop-item="mage_fire_border"],
+        .inventory-item[data-inventory-item="mage_fire_border"] {
+            --item-glow: rgba(255, 67, 54, 0.95);
+            --item-glow-soft: rgba(255, 67, 54, 0.4);
+        }
+
+        .lobby-shop-slot[data-shop-item="elven_forest_border"],
+        .inventory-item[data-inventory-item="elven_forest_border"] {
+            --item-glow: rgba(64, 224, 98, 0.92);
+            --item-glow-soft: rgba(64, 224, 98, 0.38);
+        }
+
+        .lobby-shop-slot[data-shop-item="rogue_gold_border"],
+        .inventory-item[data-inventory-item="rogue_gold_border"] {
+            --item-glow: rgba(255, 218, 37, 1);
+            --item-glow-soft: rgba(255, 218, 37, 0.42);
+        }
+
+        .lobby-shop-slot[data-shop-item="oracle_border"],
+        .inventory-item[data-inventory-item="oracle_border"] {
+            --item-glow: rgba(179, 91, 255, 0.95);
+            --item-glow-soft: rgba(179, 91, 255, 0.4);
         }
 
         .lobby-shop-product {
@@ -1060,8 +1090,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             top: 50% !important;
             transform: translate(-50%, -50%) !important;
             z-index: 4 !important;
-            width: 84% !important;
-            height: 34% !important;
+            width: 98% !important;
+            height: 44% !important;
             background: url('assets/img/comprado_title.webp') center / contain no-repeat !important;
             color: transparent !important;
             font-size: 0 !important;
@@ -1279,7 +1309,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             align-items: center !important;
             justify-content: center !important;
             flex-wrap: wrap !important;
-            gap: clamp(16px, 1.5vw, 24px) !important;
+            gap: clamp(24px, 2.4vw, 42px) !important;
             width: min(820px, 74%) !important;
             z-index: 2 !important;
         }
@@ -1353,7 +1383,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .inventory-item:focus-visible {
             transform: translateY(-4px) scale(1.055) !important;
             z-index: 8 !important;
-            box-shadow: inset 0 8px 18px rgba(0,0,0,0.78), 0 10px 0 rgba(30, 11, 3, 0.62), 0 0 22px rgba(255,215,0,0.28) !important;
+            box-shadow: inset 0 8px 18px rgba(0,0,0,0.78), 0 10px 0 rgba(30, 11, 3, 0.62), 0 0 28px var(--item-glow, rgba(255,215,0,0.72)), 0 0 52px var(--item-glow-soft, rgba(255,215,0,0.32)) !important;
         }
 
         .inventory-equipped-ribbon {
@@ -1418,19 +1448,19 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-shop-title {
-                top: 18px !important;
+                top: 28px !important;
                 width: clamp(170px, 42vw, 260px) !important;
             }
 
             .lobby-shop-categories {
                 max-width: 100% !important;
-                gap: 12px !important;
+                gap: 18px !important;
             }
 
             .lobby-shop-category {
                 min-height: auto !important;
                 padding: 0 !important;
-                font-size: 15px !important;
+                font-size: 17px !important;
             }
 
             .lobby-shop-grid {
@@ -1474,7 +1504,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             .lobby-inventory-categories {
                 top: 88px !important;
                 width: 84% !important;
-                gap: 12px !important;
+                gap: 18px !important;
             }
 
             .lobby-inventory-close {
@@ -2698,9 +2728,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                         <div class="lobby-shop-title-stack">
                             <div class="lobby-shop-categories" aria-label="Categorias da loja">
                                 <button class="lobby-shop-category" type="button" data-shop-category="decks">DECKS</button>
+                                <button class="lobby-shop-category" type="button" data-shop-category="xpAreas">\u00c1REAS DE XP</button>
                                 <button class="lobby-shop-category active" type="button" data-shop-category="borders">BORDAS</button>
                                 <button class="lobby-shop-category" type="button" data-shop-category="clusters">CLUSTERS</button>
-                                <button class="lobby-shop-category" type="button" data-shop-category="xpAreas">\u00c1REAS DE XP</button>
                                 <button class="lobby-shop-category" type="button" data-shop-category="pets">MASCOTES</button>
                             </div>
                         </div>
@@ -2785,9 +2815,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 <div class="lobby-inventory-panel" role="dialog" aria-modal="true" aria-label="Mochila">
                     <div class="lobby-inventory-categories" aria-label="Categorias da mochila">
                         <button class="lobby-shop-category" type="button" data-inventory-category="decks">DECKS</button>
+                        <button class="lobby-shop-category" type="button" data-inventory-category="xpAreas">\u00c1REAS DE XP</button>
                         <button class="lobby-shop-category active" type="button" data-inventory-category="borders">BORDAS</button>
                         <button class="lobby-shop-category" type="button" data-inventory-category="clusters">CLUSTERS</button>
-                        <button class="lobby-shop-category" type="button" data-inventory-category="xpAreas">\u00c1REAS DE XP</button>
                         <button class="lobby-shop-category" type="button" data-inventory-category="pets">MASCOTES</button>
                     </div>
                     <div class="lobby-inventory-grid" id="lobby-inventory-grid"></div>
