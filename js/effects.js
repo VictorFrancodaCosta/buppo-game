@@ -1028,12 +1028,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .inventory-action-option {
             position: relative !important;
             z-index: 1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             min-height: 20px !important;
             padding: 3px 6px !important;
             border: 0 !important;
             border-radius: 4px !important;
-            background: rgba(255, 215, 0, 0.16) !important;
-            color: #fff4ad !important;
+            background: linear-gradient(180deg, #ffe66b 0%, #f0b51a 100%) !important;
+            color: #2a1103 !important;
             font-family: 'Russo One', sans-serif !important;
             font-size: 9px !important;
             line-height: 1 !important;
@@ -1084,7 +1087,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             min-height: min(700px, 82vh) !important;
             padding: 112px 92px 92px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_mochila.webp?v=2026.06.24.5') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_mochila.webp?v=2026.06.24.6') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -1096,15 +1099,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             top: calc(50% - min(350px, 41vh) - 72px) !important;
             transform: translateX(-50%) !important;
             margin: 0 !important;
-            color: var(--gold) !important;
-            font-family: 'Bangers', cursive !important;
-            font-size: clamp(44px, 4.5vw, 66px) !important;
-            line-height: 0.9 !important;
-            text-align: center !important;
-            letter-spacing: 1px !important;
-            -webkit-text-stroke: 2px #210b03 !important;
-            paint-order: stroke fill !important;
-            text-shadow: 4px 4px 0 #210b03, 0 0 18px rgba(255, 215, 0, 0.45) !important;
+            width: clamp(270px, 32vw, 470px) !important;
+            aspect-ratio: 649 / 208 !important;
+            background: url('assets/img/titulo_mochila.webp?v=2026.06.24.6') center / contain no-repeat !important;
+            filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
+            pointer-events: none !important;
+            text-indent: -9999px !important;
+            overflow: hidden !important;
         }
 
         .lobby-inventory-categories {
@@ -1126,6 +1127,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
             gap: 26px !important;
             max-height: min(480px, 58vh) !important;
+            margin-top: 42px !important;
             overflow-y: auto !important;
             padding-right: 8px !important;
         }
@@ -2478,7 +2480,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             inventoryModal.id = 'lobby-inventory-modal';
             inventoryModal.className = 'lobby-inventory-modal';
             inventoryModal.innerHTML = `
-                <h2 class="lobby-inventory-title">MOCHILA</h2>
+                <div class="lobby-inventory-title" role="img" aria-label="MOCHILA">MOCHILA</div>
                 <div class="lobby-inventory-panel" role="dialog" aria-modal="true" aria-label="Mochila">
                     <div class="lobby-inventory-categories" aria-label="Categorias da mochila">
                         <button class="lobby-shop-category" type="button" data-inventory-category="decks">DECKS</button>
