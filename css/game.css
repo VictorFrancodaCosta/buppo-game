@@ -103,6 +103,11 @@ body.player-card-border-mage { --player-card-border-url: url('../assets/img/bord
 body.player-card-border-rogue { --player-card-border-url: url('../assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5'); }
 body.player-card-border-oracle { --player-card-border-url: url('../assets/img/borda_visao_astral_card.webp?v=2026.06.24.5'); }
 body.player-card-border-oracle { --player-card-border-inset: -7% -7% -6.7% -7%; }
+.card-border-royal { --player-card-border-url: url('../assets/img/borda_metalica_card.webp'); }
+.card-border-elven { --player-card-border-url: url('../assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5'); }
+.card-border-mage { --player-card-border-url: url('../assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5'); }
+.card-border-rogue { --player-card-border-url: url('../assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5'); }
+.card-border-oracle { --player-card-border-url: url('../assets/img/borda_visao_astral_card.webp?v=2026.06.24.5'); --player-card-border-inset: -7% -7% -6.7% -7%; }
 .xp-mini.card-skin-metallic-border,
 .xp-anim-clone.card-skin-metallic-border {
     border-color: transparent !important;

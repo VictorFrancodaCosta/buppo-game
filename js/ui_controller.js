@@ -522,8 +522,8 @@ export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isT
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
     let e = { top: 0, left: 0, width: 0, height: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
     const fly = document.createElement('div'); fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
-    window.applyCardBorderSkin?.(fly, isPlayer);
     let imgUrl = getCardArt(cardKey, isPlayer); fly.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
+    window.applyCardBorderSkin?.(fly, isPlayer);
     const isTouchLandscape = isTouchLandscapeLayout();
     const isTouchLayout = isTouchLandscape || window.matchMedia('(hover: none), (pointer: coarse)').matches;
     let startW, startH;
@@ -564,8 +564,8 @@ export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isT
 export function renderTable(key, slotId, isPlayer = false) {
     let el = document.getElementById(slotId); el.innerHTML = '';
     let card = document.createElement('div'); card.className = `card ${CARDS_DB[key].color} card-on-table`;
-    window.applyCardBorderSkin?.(card, isPlayer);
     let imgUrl = getCardArt(key, isPlayer); card.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div>`;
+    window.applyCardBorderSkin?.(card, isPlayer);
     if (isTouchLandscapeLayout()) {
         el.style.setProperty('width', '136px', 'important');
         el.style.setProperty('height', '200px', 'important');

@@ -7,7 +7,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 
 // IMPORTANDO OS NOVOS MODULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.22.4';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.24.34';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.24.35';
 import { initiateMatchmaking } from './matchmaking.js?v=2026.06.24.25';
 
 // --- VARIAVEIS GLOBAIS DE ESTADO ---
@@ -457,10 +457,9 @@ window.getEquippedCardBorderItemForSide = getCardBorderItemForSide;
 window.applyCardBorderSkin = function(cardEl, isPlayerSide = true) {
     const borderItem = getCardBorderItemForSide(isPlayerSide);
     if(!cardEl || !borderItem?.asset) return false;
+    cardEl.classList.remove('card-border-royal', 'card-border-elven', 'card-border-mage', 'card-border-rogue', 'card-border-oracle');
     cardEl.classList.add('card-skin-metallic-border');
-    cardEl.style.setProperty('--player-card-border-url', `url('${borderItem.asset}')`);
-    if(borderItem.cssClass === 'oracle') cardEl.style.setProperty('--player-card-border-inset', '-7% -7% -6.7% -7%');
-    else cardEl.style.removeProperty('--player-card-border-inset');
+    cardEl.classList.add(`card-border-${borderItem.cssClass}`);
     return true;
 };
 
@@ -2632,7 +2631,6 @@ function updateUnit(u) {
         const touchLayout = isTouchLayout();
         u.hand.forEach((k,i)=>{
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`; c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
-            window.applyCardBorderSkin?.(c, true);
             if(u.disabled===k) c.classList.add('disabled-card');
             const isLocallySelected = (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i);
             if (isLocallySelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
@@ -2640,6 +2638,7 @@ function updateUnit(u) {
             let lethalType = checkCardLethality(k, player, monster);
             let flaresHTML = ''; for(let f=1; f<=25; f++) flaresHTML += `<div class="flare-spark fs-${f}"></div>`;
             let imgUrl = getCardArt(k, true); c.innerHTML = `<div class="card-art" style="background-image: url('${imgUrl}')"></div><div class="flares-container">${flaresHTML}</div>`;
+            window.applyCardBorderSkin?.(c, true);
             c.onclick=()=>onCardClick(i);
             if(!touchLayout) {
                 bindFixedTooltip(c,k);
