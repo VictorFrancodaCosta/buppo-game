@@ -378,25 +378,25 @@ window.SHOP_ITEMS = SHOP_ITEMS;
 
 const BORDER_REWARD_RULES = {
     metallic_border: {
-        blockEffective: 2,
-        mastery: { BLOQUEIO: 1 }
+        blockEffective: 6,
+        mastery: { BLOQUEIO: 3 }
     },
     mage_fire_border: {
-        attackEffective: 1,
-        mastery: { ATAQUE: 1 }
+        attackEffective: 6,
+        mastery: { ATAQUE: 4 }
     },
     elven_forest_border: {
-        play: { DESCANSAR: 3 },
-        mastery: { DESCANSAR: 5 }
+        play: { DESCANSAR: 11 },
+        mastery: { DESCANSAR: 14 }
     },
     rogue_gold_border: {
-        play: { DESARMAR: 4 },
-        mastery: { DESARMAR: 7 }
+        play: { DESARMAR: 15 },
+        mastery: { DESARMAR: 18 }
     },
     oracle_border: {
-        play: { TREINAR: 1 },
-        levelUp: 1,
-        mastery: { TREINAR: 5 }
+        play: { TREINAR: 4 },
+        levelUp: 4,
+        mastery: { TREINAR: 18 }
     }
 };
 

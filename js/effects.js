@@ -901,27 +901,29 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 9px !important;
-            min-height: 42px !important;
-            padding: 5px 15px 5px 8px !important;
-            border: 2px solid rgba(255,215,0,0.72) !important;
-            border-radius: 999px !important;
-            background: linear-gradient(90deg, rgba(0,0,0,0.52), rgba(255,215,0,0.18), rgba(0,0,0,0.42)) !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 6px 14px rgba(0,0,0,0.36), 0 0 14px rgba(255,215,0,0.18) !important;
+            gap: 6px !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
             color: #fff8c8 !important;
             font-family: 'Russo One', sans-serif !important;
-            font-size: clamp(18px, 2vw, 26px) !important;
+            font-size: clamp(17px, 1.65vw, 24px) !important;
             line-height: 1 !important;
             white-space: nowrap !important;
             text-shadow: 2px 2px 0 #1b0a03, 0 0 10px rgba(255,215,0,0.58) !important;
             position: absolute !important;
-            right: 34px !important;
-            top: 8px !important;
+            right: 9.4% !important;
+            top: 14.8% !important;
+            transform: translate(50%, -50%) !important;
+            z-index: 3 !important;
         }
 
         .lobby-shop-gold img {
-            width: 34px !important;
-            height: 34px !important;
+            width: clamp(22px, 1.9vw, 30px) !important;
+            height: clamp(22px, 1.9vw, 30px) !important;
             object-fit: contain !important;
             filter: drop-shadow(0 2px 0 rgba(0,0,0,0.58)) drop-shadow(0 0 7px rgba(255,215,0,0.62)) !important;
         }
@@ -929,7 +931,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-grid {
             display: flex !important;
             align-items: center !important;
-            justify-content: center !important;
+            justify-content: flex-start !important;
             flex-wrap: wrap !important;
             column-gap: clamp(48px, 4.6vw, 72px) !important;
             row-gap: clamp(26px, 2.8vw, 42px) !important;
@@ -1646,15 +1648,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-shop-gold {
-                font-size: 17px !important;
-                padding-right: 12px !important;
-                right: 18px !important;
-                top: 4px !important;
+                font-size: 15px !important;
+                right: 12% !important;
+                top: 13% !important;
             }
 
             .lobby-shop-gold img {
-                width: 28px !important;
-                height: 28px !important;
+                width: 22px !important;
+                height: 22px !important;
             }
 
             .lobby-shop-close {
@@ -2766,25 +2767,25 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         const lobbyShopSlotCount = 5;
         const shopBorderInfo = {
             metallic_border: [
-                'Seus Bloqueios efetivos geram 2 {coin}.',
-                'Realizar uma <strong>Maestria em Bloqueio</strong> gera 1 {coin}.'
+                'Seus Bloqueios efetivos geram 6 {coin}.',
+                'Realizar uma <strong>Maestria em Bloqueio</strong> gera 3 {coin}.'
             ],
             mage_fire_border: [
-                'Seus Ataques efetivos geram 1 {coin}.',
-                'Realizar uma <strong>Maestria em Ataque</strong> gera 1 {coin}.'
+                'Seus Ataques efetivos geram 6 {coin}.',
+                'Realizar uma <strong>Maestria em Ataque</strong> gera 4 {coin}.'
             ],
             elven_forest_border: [
-                'Jogar Restaurar gera 3 {coin}.',
-                'Realizar uma <strong>Maestria em Restaurar</strong> gera 5 {coin}.'
+                'Jogar Restaurar gera 11 {coin}.',
+                'Realizar uma <strong>Maestria em Restaurar</strong> gera 14 {coin}.'
             ],
             rogue_gold_border: [
-                'Jogar Desarmar gera 4 {coin}.',
-                'Realizar uma <strong>Maestria em Desarmar</strong> gera 7 {coin}.'
+                'Jogar Desarmar gera 15 {coin}.',
+                'Realizar uma <strong>Maestria em Desarmar</strong> gera 18 {coin}.'
             ],
             oracle_border: [
-                'Jogar Treinar gera 1 {coin}.',
-                'Subir de nível gera 1 {coin}.',
-                'Realizar uma <strong>Maestria em Treinar</strong> gera 5 {coin}.'
+                'Jogar Treinar gera 4 {coin}.',
+                'Subir de nível gera 4 {coin}.',
+                'Realizar uma <strong>Maestria em Treinar</strong> gera 18 {coin}.'
             ]
         };
         const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';
