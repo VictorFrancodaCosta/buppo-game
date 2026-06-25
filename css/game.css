@@ -103,10 +103,12 @@ body.player-card-border-mage { --player-card-border-url: url('../assets/img/bord
 body.player-card-border-rogue { --player-card-border-url: url('../assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5'); }
 body.player-card-border-oracle { --player-card-border-url: url('../assets/img/borda_visao_astral_card.webp?v=2026.06.24.5'); }
 body.player-card-border-oracle { --player-card-border-inset: -7% -7% -6.7% -7%; }
-.xp-mini.card-skin-metallic-border {
+.xp-mini.card-skin-metallic-border,
+.xp-anim-clone.card-skin-metallic-border {
     border-color: transparent !important;
 }
-.xp-mini.card-skin-metallic-border::before {
+.xp-mini.card-skin-metallic-border::before,
+.xp-anim-clone.card-skin-metallic-border::before {
     content: "";
     position: absolute;
     inset: var(--player-card-border-inset, -7% -7% -5.8% -7%);

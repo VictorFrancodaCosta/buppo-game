@@ -7,7 +7,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 
 // IMPORTANDO OS NOVOS MODULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.22.4';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.23.1';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.24.34';
 import { initiateMatchmaking } from './matchmaking.js?v=2026.06.24.25';
 
 // --- VARIAVEIS GLOBAIS DE ESTADO ---
@@ -426,11 +426,43 @@ window.getEquippedCardBorderItem = function() {
     return SHOP_ITEMS[window.equippedItems?.cardBorder] || null;
 };
 
-function getRandomCardBorderItemId() {
-    const ids = Object.values(SHOP_ITEMS).filter(item => item.slot === 'cardBorder').map(item => item.id);
+function getRandomShopItemIdBySlot(slot) {
+    const ids = Object.values(SHOP_ITEMS).filter(item => item.slot === slot).map(item => item.id);
     if(ids.length === 0) return null;
     return ids[Math.floor(Math.random() * ids.length)];
 }
+
+function createRandomAiEquipmentForPlayerEquipment(playerEquipment = {}) {
+    const aiEquipment = {};
+    Object.entries(playerEquipment || {}).forEach(([slot, itemId]) => {
+        if(!itemId) return;
+        const randomItemId = getRandomShopItemIdBySlot(slot);
+        if(randomItemId) aiEquipment[slot] = randomItemId;
+    });
+    return aiEquipment;
+}
+
+function getCardBorderItemForUnit(u) {
+    if(!u) return null;
+    const borderId = getUnitEquippedBorderId(u);
+    return SHOP_ITEMS[borderId] || null;
+}
+
+function getCardBorderItemForSide(isPlayerSide = true) {
+    return getCardBorderItemForUnit(isPlayerSide ? player : monster);
+}
+
+window.getEquippedCardBorderItemForSide = getCardBorderItemForSide;
+
+window.applyCardBorderSkin = function(cardEl, isPlayerSide = true) {
+    const borderItem = getCardBorderItemForSide(isPlayerSide);
+    if(!cardEl || !borderItem?.asset) return false;
+    cardEl.classList.add('card-skin-metallic-border');
+    cardEl.style.setProperty('--player-card-border-url', `url('${borderItem.asset}')`);
+    if(borderItem.cssClass === 'oracle') cardEl.style.setProperty('--player-card-border-inset', '-7% -7% -6.7% -7%');
+    else cardEl.style.removeProperty('--player-card-border-inset');
+    return true;
+};
 
 window.openPurchaseConfirm = function(itemName, price, onConfirm) {
     let overlay = document.getElementById('purchase-confirm-overlay');
@@ -1142,8 +1174,7 @@ function startGameFlow() {
         player.deckType = window.currentDeck || 'knight';
         monster.deckType = 'knight';
         player.equippedItems = { ...(window.equippedItems || {}) };
-        const aiBorder = player.equippedItems.cardBorder ? getRandomCardBorderItemId() : null;
-        monster.equippedItems = aiBorder ? { cardBorder: aiBorder } : {};
+        monster.equippedItems = createRandomAiEquipmentForPlayerEquipment(player.equippedItems);
         baseDraw(monster, 6); baseDraw(player, 6);
     }
     turnCount = 1; playerHistory = [];
@@ -2324,7 +2355,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
              if (u === player && u.deck.length > 0) {
                  let card = u.deck.pop();
                  triggerDeckDrawGlow(u.id);
-                 animateFly(deckId, u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }, false, false, true);
+                 animateFly(deckId, u.id+'-xp', card, () => { u.xp.push(card); triggerXPGlow(u.id); updateUI(); }, false, false, (u.id === 'p'));
              }
         } else {
             if(u.deck.length > 0) {
@@ -2463,6 +2494,7 @@ function checkLevelUp(u, doneCb) {
         minis.forEach(realCard => {
             let rect = realCard.getBoundingClientRect(); let clone = document.createElement('div'); clone.className = 'xp-anim-clone';
             clone.style.left = rect.left + 'px'; clone.style.top = rect.top + 'px'; clone.style.width = rect.width + 'px'; clone.style.height = rect.height + 'px'; clone.style.backgroundImage = realCard.style.backgroundImage;
+            window.applyCardBorderSkin?.(clone, u.id === 'p');
             if (u.id === 'p') clone.classList.add('xp-fly-up'); else clone.classList.add('xp-fly-down'); document.body.appendChild(clone);
         });
         minis.forEach(m => m.style.opacity = '0');
@@ -2600,7 +2632,7 @@ function updateUnit(u) {
         const touchLayout = isTouchLayout();
         u.hand.forEach((k,i)=>{
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`; c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
-            if(window.getEquippedCardBorderItem?.()) c.classList.add('card-skin-metallic-border');
+            window.applyCardBorderSkin?.(c, true);
             if(u.disabled===k) c.classList.add('disabled-card');
             const isLocallySelected = (window.gameMode === 'pvp' && window.pvpSelectedCardIndex === i);
             if (isLocallySelected) { c.classList.add('card-selected'); hc.style.pointerEvents = 'none'; }
@@ -2621,7 +2653,7 @@ function updateUnit(u) {
     let xc=document.getElementById(u.id+'-xp'); xc.innerHTML='';
     u.xp.forEach(k=>{
         let d=document.createElement('div'); d.className='xp-mini'; d.dataset.cardKey = k; let imgUrl = getCardArt(k, (u === player)); d.style.backgroundImage = `url('${imgUrl}')`;
-        if(u === player && window.getEquippedCardBorderItem?.()) d.classList.add('card-skin-metallic-border');
+        window.applyCardBorderSkin?.(d, u === player);
         if(!isTouchLayout()) {
             d.onmouseenter = () => { document.body.classList.add('focus-xp'); playSound('sfx-hover'); };
             d.onmouseleave = () => { document.body.classList.remove('focus-xp'); };
