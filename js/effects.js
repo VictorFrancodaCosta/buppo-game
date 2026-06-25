@@ -915,10 +915,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             white-space: nowrap !important;
             text-shadow: 2px 2px 0 #1b0a03, 0 0 10px rgba(255,215,0,0.58) !important;
             position: absolute !important;
-            right: 9.4% !important;
-            top: 14.8% !important;
-            transform: translate(50%, -50%) !important;
-            z-index: 3 !important;
+            left: 80.3% !important;
+            top: 84.1% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 5 !important;
         }
 
         .lobby-shop-gold img {
@@ -1649,8 +1649,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
             .lobby-shop-gold {
                 font-size: 15px !important;
-                right: 12% !important;
-                top: 13% !important;
+                left: 80% !important;
+                top: 84% !important;
             }
 
             .lobby-shop-gold img {
@@ -2869,10 +2869,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                                 <button class="lobby-shop-category" type="button" data-shop-category="pets">MASCOTES</button>
                             </div>
                         </div>
-                        <div class="lobby-shop-gold" aria-label="Ouro dispon\u00edvel">
-                            <img src="assets/img/moeda_ouro.png" alt="Moeda de ouro">
-                            <span id="lobby-shop-gold-count">0</span>
-                        </div>
+                    </div>
+                    <div class="lobby-shop-gold" aria-label="Ouro dispon\u00edvel">
+                        <img src="assets/img/moeda_ouro.png" alt="Moeda de ouro">
+                        <span id="lobby-shop-gold-count">0</span>
                     </div>
                     <div class="lobby-shop-grid" aria-label="Itens da loja"></div>
                 </div>
