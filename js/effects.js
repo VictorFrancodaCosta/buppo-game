@@ -1532,10 +1532,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-panel .xp-area-product-art,
         .lobby-inventory-panel .xp-area-product-art {
-            width: 92% !important;
-            height: 78% !important;
-            bottom: 4% !important;
-            background-position: center center !important;
+            left: auto !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            transform: none !important;
+            background-position: right bottom !important;
             background-size: contain !important;
         }
 
@@ -2836,6 +2839,27 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 'Jogar Treinar gera 4 {coin}.',
                 'Subir de nível gera 4 {coin}.',
                 'Realizar uma <strong>Maestria em Treinar</strong> gera 18 {coin}.'
+            ],
+            xp_campo_honra: [
+                'Seus Bloqueios efetivos geram 4 {coin}.',
+                'Realizar uma <strong>Maestria em Bloqueio</strong> gera 2 {coin}.'
+            ],
+            xp_circulo_arcano: [
+                'Seus Ataques efetivos geram 2 {coin}.',
+                'Realizar uma <strong>Maestria em Ataque</strong> gera 2 {coin}.'
+            ],
+            xp_bosque_sentinela: [
+                'Jogar Restaurar gera 6 {coin}.',
+                'Realizar uma <strong>Maestria em Restaurar</strong> gera 7 {coin}.'
+            ],
+            xp_rota_saque: [
+                'Jogar Desarmar gera 7 {coin}.',
+                'Realizar uma <strong>Maestria em Desarmar</strong> gera 9 {coin}.'
+            ],
+            xp_altar_visao: [
+                'Jogar Treinar gera 2 {coin}.',
+                'Subir de n\u00edvel gera 2 {coin}.',
+                'Realizar uma <strong>Maestria em Treinar</strong> gera 7 {coin}.'
             ]
         };
         const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';
@@ -2950,7 +2974,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             if (!grid) return;
             document.getElementById('shop-info-tooltip')?.classList.remove('visible');
             grid.innerHTML = renderShopProducts(window.currentShopCategory || 'borders');
-            if ((window.currentShopCategory || 'borders') === 'borders') {
+            if (['borders', 'xpAreas'].includes(window.currentShopCategory || 'borders')) {
                 bindBorderInfoTooltips(grid, '[data-shop-item]', (product) => product.dataset.shopItem);
             }
             grid.querySelectorAll('[data-shop-item]').forEach((product) => {
@@ -3076,7 +3100,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     window.toggleInventoryEquip?.(button.dataset.inventoryItem);
                 });
             });
-            if ((window.currentInventoryCategory || 'borders') === 'borders') {
+            if (['borders', 'xpAreas'].includes(window.currentInventoryCategory || 'borders')) {
                 bindBorderInfoTooltips(grid, '[data-inventory-item]', (button) => button.dataset.inventoryItem);
             }
         };

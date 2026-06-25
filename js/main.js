@@ -460,6 +460,30 @@ const BORDER_REWARD_RULES = {
     }
 };
 
+const XP_AREA_REWARD_RULES = {
+    xp_campo_honra: {
+        blockEffective: 4,
+        mastery: { BLOQUEIO: 2 }
+    },
+    xp_circulo_arcano: {
+        attackEffective: 2,
+        mastery: { ATAQUE: 2 }
+    },
+    xp_bosque_sentinela: {
+        play: { DESCANSAR: 6 },
+        mastery: { DESCANSAR: 7 }
+    },
+    xp_rota_saque: {
+        play: { DESARMAR: 7 },
+        mastery: { DESARMAR: 9 }
+    },
+    xp_altar_visao: {
+        play: { TREINAR: 2 },
+        levelUp: 2,
+        mastery: { TREINAR: 7 }
+    }
+};
+
 const DECK_REWARD_RULES = {
     knight: {
         blockEffective: 2,
@@ -1635,12 +1659,17 @@ function getUnitBorderRewardRules(u) {
     return BORDER_REWARD_RULES[getUnitEquippedBorderId(u)] || null;
 }
 
+function getUnitXpAreaRewardRules(u) {
+    const xpAreaId = u?.equippedItems?.xpArea || (u === player ? window.equippedItems?.xpArea : null);
+    return XP_AREA_REWARD_RULES[xpAreaId] || null;
+}
+
 function getUnitDeckRewardRules(u) {
     return DECK_REWARD_RULES[u?.deckType || 'knight'] || null;
 }
 
 function sumRewardRules(u, getter) {
-    return [getUnitDeckRewardRules(u), getUnitBorderRewardRules(u)]
+    return [getUnitDeckRewardRules(u), getUnitBorderRewardRules(u), getUnitXpAreaRewardRules(u)]
         .reduce((total, rules) => total + Math.max(0, Number(getter(rules) || 0)), 0);
 }
 
