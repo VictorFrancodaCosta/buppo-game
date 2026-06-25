@@ -426,6 +426,12 @@ window.getEquippedCardBorderItem = function() {
     return SHOP_ITEMS[window.equippedItems?.cardBorder] || null;
 };
 
+function getRandomCardBorderItemId() {
+    const ids = Object.values(SHOP_ITEMS).filter(item => item.slot === 'cardBorder').map(item => item.id);
+    if(ids.length === 0) return null;
+    return ids[Math.floor(Math.random() * ids.length)];
+}
+
 window.openPurchaseConfirm = function(itemName, price, onConfirm) {
     let overlay = document.getElementById('purchase-confirm-overlay');
     if(!overlay) {
@@ -1136,7 +1142,8 @@ function startGameFlow() {
         player.deckType = window.currentDeck || 'knight';
         monster.deckType = 'knight';
         player.equippedItems = { ...(window.equippedItems || {}) };
-        monster.equippedItems = {};
+        const aiBorder = player.equippedItems.cardBorder ? getRandomCardBorderItemId() : null;
+        monster.equippedItems = aiBorder ? { cardBorder: aiBorder } : {};
         baseDraw(monster, 6); baseDraw(player, 6);
     }
     turnCount = 1; playerHistory = [];
@@ -1636,8 +1643,17 @@ function animateRewardCoinLabel(isPlayerReward, labels = []) {
     }).onfinish = () => labelFx.remove();
 }
 
-function animateRewardCoin(isPlayerReward, index = 0, onPop = null) {
-    const delay = index * 170;
+function getRewardCoinInterval(total = 1) {
+    if(total >= 40) return 32;
+    if(total >= 30) return 40;
+    if(total >= 20) return 55;
+    if(total >= 12) return 80;
+    if(total >= 7) return 115;
+    return 170;
+}
+
+function animateRewardCoin(isPlayerReward, index = 0, onPop = null, interval = 170) {
+    const delay = index * interval;
     setTimeout(() => {
         if(typeof onPop === 'function') onPop();
         playRewardCoinSound(0);
@@ -1682,8 +1698,9 @@ function queueRewardCoinAnimation(isPlayerReward, amount, label) {
         const startAmount = batch.length ? Math.max(0, batch[0].previousAmount || 0) : 0;
         setRewardWalletDisplay(isPlayerReward, startAmount + 1);
         animateRewardCoinLabel(isPlayerReward, labels);
+        const coinInterval = getRewardCoinInterval(total);
         for(let i = 0; i < total; i++) {
-            animateRewardCoin(isPlayerReward, i, () => setRewardWalletDisplay(isPlayerReward, startAmount + i + 1));
+            animateRewardCoin(isPlayerReward, i, () => setRewardWalletDisplay(isPlayerReward, startAmount + i + 1), coinInterval);
         }
     }, 90);
 }

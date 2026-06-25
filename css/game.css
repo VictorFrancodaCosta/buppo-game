@@ -24,7 +24,10 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 #end-screen.visible { opacity: 1; pointer-events: auto; }
 .end-content { text-align: center; transform: scale(0.8); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 #end-screen.visible .end-content { transform: scale(1); }
-#end-title { font-family: 'Russo One', sans-serif; font-size: 80px; margin-bottom: 30px; text-transform: uppercase; text-shadow: 0 5px 15px rgba(0,0,0,0.5); margin-top: 0; }
+#end-title { width: min(62vw, 620px); aspect-ratio: 4 / 1; margin: 0 auto 30px; background-position: center; background-size: contain; background-repeat: no-repeat; color: transparent; font-size: 0; line-height: 0; text-indent: -9999px; text-shadow: none; overflow: visible; }
+#end-title.win-theme { background-image: url('../assets/img/final_vitoria.webp'); }
+#end-title.tie-theme { background-image: url('../assets/img/final_empate.webp'); }
+#end-title.lose-theme { background-image: url('../assets/img/final_derrota.webp'); }
 .win-theme { color: #ffd700; text-shadow: 0 0 30px rgba(255, 215, 0, 0.6); } .lose-theme { color: #ff7675; text-shadow: 0 0 30px rgba(255, 118, 117, 0.6); } .tie-theme { color: #fff; text-shadow: 0 0 30px rgba(255, 255, 255, 0.6); }
 #end-reward-stack { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; margin: -12px 0 44px; }
 .end-reward-row { display: contents; }
@@ -469,7 +472,7 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
     }
 
     #end-title {
-        font-size: 48px;
+        width: min(82vw, 430px);
         margin-bottom: 18px;
     }
 

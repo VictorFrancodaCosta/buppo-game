@@ -1093,8 +1093,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             top: 50% !important;
             transform: translate(-50%, -50%) !important;
             z-index: 4 !important;
-            width: 116% !important;
-            height: 52% !important;
+            width: 136% !important;
+            height: 62% !important;
             background: url('assets/img/comprado_title.webp') center / contain no-repeat !important;
             color: transparent !important;
             font-size: 0 !important;
