@@ -1027,6 +1027,36 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             --item-glow-soft: rgba(179, 91, 255, 0.4);
         }
 
+        .lobby-shop-slot[data-shop-item="xp_campo_honra"],
+        .inventory-item[data-inventory-item="xp_campo_honra"] {
+            --item-glow: rgba(59, 176, 255, 0.9);
+            --item-glow-soft: rgba(59, 176, 255, 0.36);
+        }
+
+        .lobby-shop-slot[data-shop-item="xp_circulo_arcano"],
+        .inventory-item[data-inventory-item="xp_circulo_arcano"] {
+            --item-glow: rgba(255, 67, 54, 0.94);
+            --item-glow-soft: rgba(255, 67, 54, 0.38);
+        }
+
+        .lobby-shop-slot[data-shop-item="xp_bosque_sentinela"],
+        .inventory-item[data-inventory-item="xp_bosque_sentinela"] {
+            --item-glow: rgba(64, 224, 98, 0.9);
+            --item-glow-soft: rgba(64, 224, 98, 0.36);
+        }
+
+        .lobby-shop-slot[data-shop-item="xp_rota_saque"],
+        .inventory-item[data-inventory-item="xp_rota_saque"] {
+            --item-glow: rgba(255, 218, 37, 0.95);
+            --item-glow-soft: rgba(255, 218, 37, 0.38);
+        }
+
+        .lobby-shop-slot[data-shop-item="xp_altar_visao"],
+        .inventory-item[data-inventory-item="xp_altar_visao"] {
+            --item-glow: rgba(179, 91, 255, 0.94);
+            --item-glow-soft: rgba(179, 91, 255, 0.38);
+        }
+
         .lobby-shop-product {
             display: block !important;
             padding: 0 !important;
@@ -1498,6 +1528,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             aspect-ratio: auto !important;
             background-size: contain !important;
             background-position: center bottom !important;
+        }
+
+        .lobby-shop-panel .xp-area-product-art,
+        .lobby-inventory-panel .xp-area-product-art {
+            width: 92% !important;
+            height: 78% !important;
+            bottom: 4% !important;
+            background-position: center center !important;
+            background-size: contain !important;
         }
 
         .inventory-item .inventory-item-name {
@@ -2761,11 +2800,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_ladino_loja.webp?v=2026.06.24.16' },
             { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_oraculo_loja.webp?v=2026.06.24.16' }
         ];
+        const lobbyXpAreaItems = [
+            { id: 'xp_campo_honra', type: 'xpArea', name: '\u00c1REA DE XP - CAMPO DE HONRA', displayName: 'CAMPO DE HONRA', asset: 'assets/img/ui_area_xpcampodehonra.webp', shopAsset: 'assets/img/ax_cavaleiro_loja.webp' },
+            { id: 'xp_circulo_arcano', type: 'xpArea', name: '\u00c1REA DE XP - C\u00cdRCULO ARCANO', displayName: 'C\u00cdRCULO ARCANO', asset: 'assets/img/ui_area_xpcirculoarcano.webp', shopAsset: 'assets/img/ax_mago_loja.webp' },
+            { id: 'xp_bosque_sentinela', type: 'xpArea', name: '\u00c1REA DE XP - BOSQUE SENTINELA', displayName: 'BOSQUE SENTINELA', asset: 'assets/img/ui_area_xpboquesentinela.webp', shopAsset: 'assets/img/ax_arqueiro_loja.webp' },
+            { id: 'xp_rota_saque', type: 'xpArea', name: '\u00c1REA DE XP - ROTA DO SAQUE', displayName: 'ROTA DO SAQUE', asset: 'assets/img/ui_area_xprotadosaque.webp', shopAsset: 'assets/img/ax_ladino_loja.webp' },
+            { id: 'xp_altar_visao', type: 'xpArea', name: '\u00c1REA DE XP - ALTAR DA VIS\u00c3O', displayName: 'ALTAR DA VIS\u00c3O', asset: 'assets/img/ui_area_xpaltardavisao.webp', shopAsset: 'assets/img/ax_oraculo_loja.webp' }
+        ];
         const lobbyShopItemsByCategory = {
             decks: [],
             borders: lobbyCardBorderItems,
             clusters: [],
-            xpAreas: [],
+            xpAreas: lobbyXpAreaItems,
             pets: []
         };
         const lobbyShopSlotCount = 5;
@@ -2794,8 +2840,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
         const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';
 
-        const getItemDisplayName = (item) => item.displayName || item.name.replace(/^BORDA\s*-\s*/i, '');
-        const getShopItemById = (itemId) => lobbyCardBorderItems.find(item => item.id === itemId) || null;
+        const getItemDisplayName = (item) => item.displayName || item.name.replace(/^(BORDA|\u00c1REA DE XP)\s*-\s*/i, '');
+        const getShopItemById = (itemId) => [...lobbyCardBorderItems, ...lobbyXpAreaItems].find(item => item.id === itemId) || null;
         const ensureShopInfoTooltip = () => {
             let tooltip = document.getElementById('shop-info-tooltip');
             if (!tooltip) {
@@ -2838,7 +2884,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
         const renderBorderPreview = (item, location = 'inventory') => {
             const asset = location === 'shop' ? (item.shopAsset || item.asset) : item.asset;
-            return `<div class="metallic-border-art" style="background-image: url('${asset}')" aria-label="Arte de ${item.name}"></div>`;
+            const artClass = item.type === 'xpArea' || item.id.startsWith('xp_') ? 'metallic-border-art xp-area-product-art' : 'metallic-border-art';
+            return `<div class="${artClass}" style="background-image: url('${asset}')" aria-label="Arte de ${item.name}"></div>`;
         };
         const renderShopProducts = (category = 'borders') => {
             const items = lobbyShopItemsByCategory[category] || [];
@@ -3002,7 +3049,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             if (!grid) return;
             document.getElementById('shop-info-tooltip')?.classList.remove('visible');
             const owned = window.playerInventory || [];
-            const categoryItems = (window.currentInventoryCategory || 'borders') === 'borders' ? lobbyCardBorderItems : [];
+            const categoryItems = lobbyShopItemsByCategory[window.currentInventoryCategory || 'borders'] || [];
             const ownedItems = categoryItems.filter(item => owned.includes(item.id));
             if (ownedItems.length === 0) {
                 grid.innerHTML = '<div class="inventory-empty">Sua mochila est\u00e1 vazia.</div>';

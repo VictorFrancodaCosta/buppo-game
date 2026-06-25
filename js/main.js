@@ -86,6 +86,11 @@ const ASSETS_TO_LOAD = {
         'assets/img/borda_cavaleiro_loja.webp?v=2026.06.24.16', 'assets/img/borda_mago_loja.webp?v=2026.06.24.16',
         'assets/img/borda_arqueiro_loja.webp?v=2026.06.24.16', 'assets/img/borda_ladino_loja.webp?v=2026.06.24.16',
         'assets/img/borda_oraculo_loja.webp?v=2026.06.24.16',
+        'assets/img/ui_area_xpcampodehonra.webp', 'assets/img/ui_area_xpcirculoarcano.webp',
+        'assets/img/ui_area_xpboquesentinela.webp', 'assets/img/ui_area_xprotadosaque.webp',
+        'assets/img/ui_area_xpaltardavisao.webp', 'assets/img/ax_cavaleiro_loja.webp',
+        'assets/img/ax_mago_loja.webp', 'assets/img/ax_arqueiro_loja.webp',
+        'assets/img/ax_ladino_loja.webp', 'assets/img/ax_oraculo_loja.webp',
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.webp',
         'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5', 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5',
         'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5',
@@ -387,6 +392,46 @@ const SHOP_ITEMS = {
         price: 600,
         cssClass: 'oracle',
         asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5'
+    },
+    xp_campo_honra: {
+        id: 'xp_campo_honra',
+        name: 'ÁREA DE XP - CAMPO DE HONRA',
+        slot: 'xpArea',
+        price: 300,
+        asset: 'assets/img/ui_area_xpcampodehonra.webp',
+        shopAsset: 'assets/img/ax_cavaleiro_loja.webp'
+    },
+    xp_circulo_arcano: {
+        id: 'xp_circulo_arcano',
+        name: 'ÁREA DE XP - CÍRCULO ARCANO',
+        slot: 'xpArea',
+        price: 300,
+        asset: 'assets/img/ui_area_xpcirculoarcano.webp',
+        shopAsset: 'assets/img/ax_mago_loja.webp'
+    },
+    xp_bosque_sentinela: {
+        id: 'xp_bosque_sentinela',
+        name: 'ÁREA DE XP - BOSQUE SENTINELA',
+        slot: 'xpArea',
+        price: 300,
+        asset: 'assets/img/ui_area_xpboquesentinela.webp',
+        shopAsset: 'assets/img/ax_arqueiro_loja.webp'
+    },
+    xp_rota_saque: {
+        id: 'xp_rota_saque',
+        name: 'ÁREA DE XP - ROTA DO SAQUE',
+        slot: 'xpArea',
+        price: 300,
+        asset: 'assets/img/ui_area_xprotadosaque.webp',
+        shopAsset: 'assets/img/ax_ladino_loja.webp'
+    },
+    xp_altar_visao: {
+        id: 'xp_altar_visao',
+        name: 'ÁREA DE XP - ALTAR DA VISÃO',
+        slot: 'xpArea',
+        price: 300,
+        asset: 'assets/img/ui_area_xpaltardavisao.webp',
+        shopAsset: 'assets/img/ax_oraculo_loja.webp'
     }
 };
 window.SHOP_ITEMS = SHOP_ITEMS;
@@ -461,6 +506,19 @@ function getCardBorderItemForUnit(u) {
     if(!u) return null;
     const borderId = getUnitEquippedBorderId(u);
     return SHOP_ITEMS[borderId] || null;
+}
+
+function getUnitEquippedItemBySlot(u, slot) {
+    if(!u || !slot) return null;
+    const itemId = u.equippedItems?.[slot] || (u === player ? window.equippedItems?.[slot] : null);
+    return SHOP_ITEMS[itemId] || null;
+}
+
+function applyXpAreaSkinForUnit(u) {
+    const xpArea = document.getElementById(`${u.id}-xp`);
+    if(!xpArea) return;
+    const item = getUnitEquippedItemBySlot(u, 'xpArea');
+    xpArea.style.backgroundImage = item?.asset ? `url('${item.asset}')` : '';
 }
 
 function getCardBorderItemForSide(isPlayerSide = true) {
@@ -564,8 +622,9 @@ window.toggleInventoryEquip = async function(itemId) {
 };
 
 window.getShopItemState = function(itemId) {
+    const item = SHOP_ITEMS[itemId];
     const owned = window.playerInventory?.includes(itemId) === true;
-    const equipped = window.isPlayerCardSkinEquipped?.(itemId) === true;
+    const equipped = !!item?.slot && window.equippedItems?.[item.slot] === itemId;
     return { owned, equipped };
 };
 
@@ -2685,6 +2744,7 @@ function updateUI() {
 
 function updateUnit(u) {
     const cluster = document.getElementById(u.id + '-stats-cluster');
+    applyXpAreaSkinForUnit(u);
     if(cluster) {
         cluster.classList.toggle('critical-hp-pulse', u.hp === 1);
         if(u.hp > 0) {
