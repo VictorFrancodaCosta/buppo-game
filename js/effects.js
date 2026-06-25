@@ -11,6 +11,10 @@ function safeLobbyEnhancement(name, callback) {
 safeLobbyEnhancement('failsafe do carregamento', () => {
     const start = () => {
         setTimeout(() => {
+            if (!window.initialPreloadComplete) {
+                console.warn('[BUPPO] Carregamento inicial ainda em andamento; mantendo tela de loading.');
+                return;
+            }
             const loading = document.getElementById('loading-screen');
             if (!loading || loading.style.display === 'none') return;
 

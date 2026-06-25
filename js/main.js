@@ -13,6 +13,7 @@ import { initiateMatchmaking } from './matchmaking.js?v=2026.06.24.25';
 // --- VARIAVEIS GLOBAIS DE ESTADO ---
 window.currentUser = null;
 let assetsLoaded = 0;
+let preloadFinished = false;
 window.gameAssets = [];
 window.pvpUnsubscribe = null;
 window.isProcessing = false;
@@ -57,11 +58,12 @@ window.currentProfileLevel = 1;
 window.currentProfileXp = 0;
 window.currentLobbyRank = null;
 window.currentLobbyScore = 0;
+window.initialPreloadComplete = false;
 
 const ASSETS_TO_LOAD = {
     images: [
         'assets/img/logo_buppo.webp', 'assets/img/mesa_cavaleiro.webp', 'assets/img/mesa_mago.webp',
-        'assets/img/profile_asset.webp',
+        'assets/img/profile_asset.webp', 'assets/img/barra_profile.webp', 'assets/img/avatar_moldura_madeira.png',
         'assets/img/bg_saguao.webp', 'assets/img/bg_saguao_cartas_teste.png', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
         'assets/img/card_selecao_cavaleiro.webp', 'assets/img/card_selecao_mago.webp',
         'assets/img/deck_verso_cavaleiro.webp', 'assets/img/deck_verso_mago.webp',
@@ -72,12 +74,25 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_bloqueio_mago.webp', 'assets/img/carta_descansar_mago.webp',
         'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp', 'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
-        'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp',
+        'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
+        'assets/img/botao_jogar.webp', 'assets/img/botao_historico.webp', 'assets/img/botao_ranking.webp', 'assets/img/botao_loja.webp',
+        'assets/img/botao_tutorial.webp', 'assets/img/botao_sair.webp', 'assets/img/botao_pvp.webp', 'assets/img/botao_pve.webp',
+        'assets/img/btn_pvp_ranked.webp', 'assets/img/btn_pvp_ranked.webp?v=2',
+        'assets/img/btn_pve_training.webp', 'assets/img/btn_pve_training.webp?v=2',
         'assets/img/borda_cavaleiro_loja.webp', 'assets/img/borda_mago_loja.webp', 'assets/img/borda_arqueiro_loja.webp',
         'assets/img/borda_ladino_loja.webp', 'assets/img/borda_oraculo_loja.webp',
+        'assets/img/janela_loja.webp?v=2026.06.24.19', 'assets/img/titulo_loja.webp?v=2026.06.24.19',
+        'assets/img/janela_mochila.webp?v=2026.06.24.18', 'assets/img/titulo_mochila.webp?v=2026.06.24.18',
+        'assets/img/borda_cavaleiro_loja.webp?v=2026.06.24.16', 'assets/img/borda_mago_loja.webp?v=2026.06.24.16',
+        'assets/img/borda_arqueiro_loja.webp?v=2026.06.24.16', 'assets/img/borda_ladino_loja.webp?v=2026.06.24.16',
+        'assets/img/borda_oraculo_loja.webp?v=2026.06.24.16',
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.webp',
         'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5', 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5',
-        'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5'
+        'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5',
+        'assets/img/moeda_ouro.png', 'assets/img/comprado_title.webp', 'assets/img/equipado_title.webp',
+        'assets/img/final_vitoria.webp', 'assets/img/final_empate.webp', 'assets/img/final_derrota.webp',
+        'assets/img/cursor_normal.webp', 'assets/img/apple-touch-icon-180.png', 'assets/img/pwa-icon-192.png', 'assets/img/pwa-icon-512.png',
+        'assets/img/pwa-icon-maskable-192.png', 'assets/img/pwa-icon-maskable-512.png'
     ],
     audio: [
         { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true },
@@ -106,7 +121,7 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-tie', src: 'assets/audio/sfx_empate.mp3' }
     ]
 };
-let totalAssets = ASSETS_TO_LOAD.images.length + ASSETS_TO_LOAD.audio.length;
+let totalAssets = 1;
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 
@@ -1970,29 +1985,87 @@ window.abandonMatch = function() {
     }
 }
 
-function preloadGame() {
-    ASSETS_TO_LOAD.images.forEach(src => { let img = new Image(); img.src = withRuntimeVersion(src); window.gameAssets.push(img); img.onload = () => updateLoader(); img.onerror = () => updateLoader(); });
-    ASSETS_TO_LOAD.audio.forEach(a => {
-        let s = audios[a.id] || new Audio();
-        s.src = s.src || withRuntimeVersion(a.src);
-        s.preload = 'auto';
-        if(a.loop) s.loop = true;
-        if(window.__buppoAudioNodes && !window.__buppoAudioNodes.includes(s)) window.__buppoAudioNodes.push(s);
-        s.datasetKey = a.id;
-        audios[a.id] = s;
-        window.gameAssets.push(s);
-        s.onloadedmetadata = () => {
-            if(window.applyAudioSettings) window.applyAudioSettings({ persist: false });
-            updateLoader();
-        };
-        s.onerror = () => updateLoader(); setTimeout(() => { if(s.readyState === 0) updateLoader(); }, 2000);
-    });
-}
-
 function withRuntimeVersion(src) {
     const version = window.BUPPO_BUILD_VERSION || Date.now();
     if(!src || /^(https?:|data:|blob:)/i.test(src)) return src;
     return `${src}${src.includes('?') ? '&' : '?'}v=${encodeURIComponent(version)}`;
+}
+
+function preloadSourceVariants(src) {
+    if(!src || /^(data:|blob:)/i.test(src)) return [];
+    const exact = src;
+    const versioned = withRuntimeVersion(src);
+    return [...new Set([exact, versioned])];
+}
+
+function preloadImage(src, markDone) {
+    const img = new Image();
+    let done = false;
+    const finish = () => {
+        if(done) return;
+        done = true;
+        markDone();
+    };
+    img.onload = finish;
+    img.onerror = finish;
+    window.gameAssets.push(img);
+    img.src = src;
+    if(img.complete) finish();
+    setTimeout(finish, 15000);
+}
+
+function preloadAudioAsset(asset, markDone) {
+    const s = audios[asset.id] || new Audio();
+    let done = false;
+    const finish = () => {
+        if(done) return;
+        done = true;
+        if(window.applyAudioSettings) window.applyAudioSettings({ persist: false });
+        markDone();
+    };
+    s.preload = 'auto';
+    s.loop = asset.loop === true;
+    s.datasetKey = asset.id;
+    s.src = withRuntimeVersion(asset.src);
+    audios[asset.id] = s;
+    if(window.__buppoAudioNodes && !window.__buppoAudioNodes.includes(s)) window.__buppoAudioNodes.push(s);
+    window.gameAssets.push(s);
+    s.addEventListener('loadedmetadata', finish, { once: true });
+    s.addEventListener('canplaythrough', finish, { once: true });
+    s.addEventListener('error', finish, { once: true });
+    try { s.load(); } catch(e) {}
+    if(s.readyState >= 1) finish();
+    setTimeout(finish, 15000);
+}
+
+function preloadFonts(markDone) {
+    let done = false;
+    const finish = () => {
+        if(done) return;
+        done = true;
+        markDone();
+    };
+    if(document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(finish).catch(finish);
+        setTimeout(finish, 10000);
+    } else {
+        finish();
+    }
+}
+
+function preloadGame() {
+    assetsLoaded = 0;
+    preloadFinished = false;
+    window.gameAssets = [];
+    window.initialPreloadComplete = false;
+    const imageSources = [...new Set(ASSETS_TO_LOAD.images.flatMap(preloadSourceVariants))];
+    totalAssets = imageSources.length + ASSETS_TO_LOAD.audio.length + 1;
+    const fill = document.getElementById('loader-fill');
+    if(fill) fill.style.width = '0%';
+
+    imageSources.forEach(src => preloadImage(src, updateLoader));
+    ASSETS_TO_LOAD.audio.forEach(asset => preloadAudioAsset(asset, updateLoader));
+    preloadFonts(updateLoader);
 }
 
 let desktopUpdateWaiters = [];
@@ -2081,9 +2154,12 @@ async function refreshRuntimeCaches() {
 }
 
 function updateLoader() {
+    if(preloadFinished) return;
     assetsLoaded++; let pct = Math.min(100, (assetsLoaded / totalAssets) * 100);
     const fill = document.getElementById('loader-fill'); if(fill) fill.style.width = pct + '%';
     if(assetsLoaded >= totalAssets) {
+        preloadFinished = true;
+        window.initialPreloadComplete = true;
         if(window.updateVol) window.updateVol('master', window.masterVol);
         setTimeout(() => {
             const loading = document.getElementById('loading-screen');
@@ -2748,14 +2824,6 @@ window.toggleFullscreenPreference = function() {
     window.applyFullscreenPreference(chk ? chk.checked : !window.fullscreenEnabled);
     if(window.saveAudioSettings) window.saveAudioSettings();
 };
-
-setTimeout(() => {
-    if (assetsLoaded < totalAssets) {
-        updateLoader();
-        const loading = document.getElementById('loading-screen'); if(loading) loading.style.display = 'none';
-        if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
-    }
-}, 3000);
 
 setupDesktopUpdaterBridge();
 refreshRuntimeCaches().finally(() => preloadGame());
