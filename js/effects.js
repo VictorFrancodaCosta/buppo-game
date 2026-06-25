@@ -901,7 +901,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 6px !important;
+            gap: 9px !important;
             min-height: 0 !important;
             padding: 0 !important;
             border: 0 !important;
@@ -910,20 +910,20 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             box-shadow: none !important;
             color: #fff8c8 !important;
             font-family: 'Russo One', sans-serif !important;
-            font-size: clamp(17px, 1.65vw, 24px) !important;
+            font-size: clamp(24px, 2.25vw, 34px) !important;
             line-height: 1 !important;
             white-space: nowrap !important;
             text-shadow: 2px 2px 0 #1b0a03, 0 0 10px rgba(255,215,0,0.58) !important;
             position: absolute !important;
-            left: 80.3% !important;
-            top: 84.1% !important;
+            left: 77.7% !important;
+            top: 84.2% !important;
             transform: translate(-50%, -50%) !important;
             z-index: 5 !important;
         }
 
         .lobby-shop-gold img {
-            width: clamp(22px, 1.9vw, 30px) !important;
-            height: clamp(22px, 1.9vw, 30px) !important;
+            width: clamp(31px, 2.65vw, 42px) !important;
+            height: clamp(31px, 2.65vw, 42px) !important;
             object-fit: contain !important;
             filter: drop-shadow(0 2px 0 rgba(0,0,0,0.58)) drop-shadow(0 0 7px rgba(255,215,0,0.62)) !important;
         }
@@ -1648,14 +1648,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-shop-gold {
-                font-size: 15px !important;
-                left: 80% !important;
+                font-size: 20px !important;
+                left: 77.4% !important;
                 top: 84% !important;
             }
 
             .lobby-shop-gold img {
-                width: 22px !important;
-                height: 22px !important;
+                width: 30px !important;
+                height: 30px !important;
             }
 
             .lobby-shop-close {
