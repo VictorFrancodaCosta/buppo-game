@@ -1753,7 +1753,7 @@ function showEndPoints(points, goldReward = null) {
     const pointSign = points > 0 ? '+' : (points < 0 ? '-' : '');
     animateEndCounter(pointSpan, points, value => `${pointSign}${value} PTS`);
 
-    const reward = goldReward !== null ? Math.max(0, goldReward || 0) : (points >= 0 ? (window.matchRewardGold || 0) : 0);
+    const reward = goldReward !== null ? Math.max(0, goldReward || 0) : (points > 1 ? (window.matchRewardGold || 0) : 0);
     const lostGold = points < 0 ? Math.min(window.currentGoldCoins || 0, window.opponentMatchRewardGold || 0) : 0;
     let goldEl = document.getElementById('end-gold-reward');
     if(reward > 0 || lostGold > 0) {
@@ -1827,18 +1827,6 @@ async function saveMatchHistory(result, pointsChange) {
     await saveMatchHistoryDB(window.currentUser, enemyName, window.gameMode, window.currentDeck, pointsChange, result);
 }
 
-async function persistMatchRewardGoldOnly() {
-    const gold = Math.max(0, window.matchRewardGold || 0);
-    if(!window.currentUser || gold <= 0) return 0;
-    try {
-        await updateDoc(doc(db, "players", window.currentUser.uid), { goldCoins: increment(gold) });
-        updateLobbyGoldWallet((window.currentGoldCoins || 0) + gold);
-        return gold;
-    } catch(e) {
-        return 0;
-    }
-}
-
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
@@ -1870,7 +1858,6 @@ window.registrarEmpateOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
     const pts = await registrarEmpateDB(window.currentUser, modoAtual);
-    await persistMatchRewardGoldOnly();
     if(pts > 0) {
         window.currentLobbyScore = Math.max(0, (Number(window.currentLobbyScore) || 0) + pts);
         updateLobbyBottomProfileBar();
