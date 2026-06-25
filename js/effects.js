@@ -1190,32 +1190,71 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .purchase-confirm-box {
             position: relative !important;
-            width: min(780px, 88vw) !important;
+            width: min(540px, 82vw) !important;
             aspect-ratio: 1337 / 833 !important;
             background: url('assets/img/box_compra.webp') center / 100% 100% no-repeat !important;
-            filter: drop-shadow(0 18px 22px rgba(0,0,0,0.68)) !important;
+            filter: drop-shadow(0 14px 18px rgba(0,0,0,0.68)) !important;
             animation: purchaseBoxPop 0.2s cubic-bezier(0.16, 0.9, 0.28, 1.25) both !important;
         }
 
         .purchase-confirm-question {
             position: absolute !important;
-            left: 13% !important;
-            right: 13% !important;
-            top: 27% !important;
-            height: 30% !important;
+            left: 14% !important;
+            right: 14% !important;
+            top: 22% !important;
+            height: 41% !important;
             display: flex !important;
+            flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
+            gap: 5px !important;
             color: #fff7b0 !important;
-            font-family: 'Bangers', cursive !important;
-            font-size: clamp(28px, 4.1vw, 58px) !important;
-            line-height: 0.96 !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-size: clamp(14px, 2.1vw, 24px) !important;
+            font-weight: 900 !important;
+            line-height: 1.05 !important;
             text-align: center !important;
             text-transform: uppercase !important;
-            letter-spacing: 0 !important;
-            -webkit-text-stroke: 2.2px #090200 !important;
+            letter-spacing: 0.2px !important;
+            -webkit-text-stroke: 1.35px #090200 !important;
             paint-order: stroke fill !important;
-            text-shadow: 4px 4px 0 #090200, 0 0 14px rgba(255,215,0,0.28) !important;
+            text-shadow: 2px 2px 0 #090200, 0 0 10px rgba(255,215,0,0.24) !important;
+        }
+
+        .purchase-confirm-kicker {
+            display: block !important;
+            color: #ffffff !important;
+            font-size: 0.84em !important;
+        }
+
+        .purchase-confirm-item {
+            display: block !important;
+            max-width: 100% !important;
+            color: #fff2a8 !important;
+            font-size: 1.12em !important;
+            font-weight: 900 !important;
+        }
+
+        .purchase-confirm-mark {
+            display: block !important;
+            margin-top: -4px !important;
+            font-size: 0.92em !important;
+        }
+
+        .purchase-confirm-cost {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 6px !important;
+            color: #ffd81f !important;
+            font-size: 1.02em !important;
+        }
+
+        .purchase-confirm-cost img {
+            width: 1.12em !important;
+            height: 1.12em !important;
+            object-fit: contain !important;
+            filter: drop-shadow(0 2px 0 #090200) drop-shadow(0 0 6px rgba(255,216,31,0.46)) !important;
         }
 
         .purchase-confirm-actions {
@@ -1239,13 +1278,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             color: #ffd81f !important;
             cursor: pointer !important;
             font-family: 'Bangers', cursive !important;
-            font-size: clamp(27px, 3.5vw, 52px) !important;
+            font-size: clamp(22px, 3vw, 40px) !important;
             line-height: 1 !important;
             text-align: center !important;
             letter-spacing: 0 !important;
-            -webkit-text-stroke: 2px #090200 !important;
+            -webkit-text-stroke: 1.6px #090200 !important;
             paint-order: stroke fill !important;
-            text-shadow: 4px 4px 0 #090200, 0 0 12px rgba(255,216,31,0.46) !important;
+            text-shadow: 3px 3px 0 #090200, 0 0 10px rgba(255,216,31,0.46) !important;
             transition: transform 0.13s ease, filter 0.13s ease !important;
         }
 

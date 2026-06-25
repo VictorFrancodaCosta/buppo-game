@@ -402,7 +402,7 @@ const BORDER_REWARD_RULES = {
 
 const DECK_REWARD_RULES = {
     knight: {
-        play: { BLOQUEIO: 2 },
+        blockEffective: 2,
         mastery: { BLOQUEIO: 1 }
     }
 };
@@ -426,7 +426,7 @@ window.getEquippedCardBorderItem = function() {
     return SHOP_ITEMS[window.equippedItems?.cardBorder] || null;
 };
 
-window.openPurchaseConfirm = function(itemName, onConfirm) {
+window.openPurchaseConfirm = function(itemName, price, onConfirm) {
     let overlay = document.getElementById('purchase-confirm-overlay');
     if(!overlay) {
         overlay = document.createElement('div');
@@ -453,7 +453,12 @@ window.openPurchaseConfirm = function(itemName, onConfirm) {
         });
     }
     const question = overlay.querySelector('.purchase-confirm-question');
-    if(question) question.textContent = `COMPRAR ${itemName}?`;
+    if(question) {
+        question.innerHTML = `
+            <span class="purchase-confirm-kicker">Comprar</span>
+            <strong class="purchase-confirm-item">${itemName}?</strong>
+            <span class="purchase-confirm-cost">${Math.max(0, price || 0)} <img src="assets/img/moeda_ouro.png" alt="ouro"></span>`;
+    }
     overlay.confirmHandler = onConfirm;
     overlay.classList.add('visible');
 };
@@ -465,7 +470,7 @@ window.confirmShopPurchase = function(itemId) {
         window.openInventory?.();
         return;
     }
-    window.openPurchaseConfirm(item.name, () => window.purchaseShopItem(itemId));
+    window.openPurchaseConfirm(item.name, Math.max(0, item.price || 0), () => window.purchaseShopItem(itemId));
 };
 
 window.purchaseShopItem = async function(itemId) {
@@ -2335,8 +2340,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         if(mAct === 'TREINAR') triggerTrainDeckGlow(false);
         if(pBlocks) { triggerBlockShield(true); triggerBlockEffect(true); }
         else if(mBlocks) { triggerBlockShield(false); triggerBlockEffect(false); }
-        if(pAct === 'BLOQUEIO') awardBorderPlayRewardGold(player, 'BLOQUEIO');
-        if(mAct === 'BLOQUEIO') awardBorderPlayRewardGold(monster, 'BLOQUEIO');
         if(pBlocks) awardBlockRewardGold(player);
         else if(mBlocks) awardBlockRewardGold(monster);
         if(mAct === 'DESARMAR') awardBorderPlayRewardGold(monster, 'DESARMAR');
