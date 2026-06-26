@@ -2210,6 +2210,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-deck {
             position: relative !important;
+            --deck-glow: rgba(52, 152, 219, 0.7);
             width: min(17vw, 285px) !important;
             border: 0 !important;
             padding: 0 !important;
@@ -2227,6 +2228,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             transition: filter 0.2s ease, transform 0.22s cubic-bezier(0.2, 1, 0.3, 1) !important;
         }
 
+        .lobby-mode-deck[data-deck="knight"] { --deck-glow: rgba(52, 152, 219, 0.7); }
+        .lobby-mode-deck[data-deck="mage"] { --deck-glow: rgba(255, 59, 48, 0.7); }
+        .lobby-mode-deck[data-deck="archer"] { --deck-glow: rgba(54, 212, 107, 0.72); }
+        .lobby-mode-deck[data-deck="rogue"] { --deck-glow: rgba(255, 210, 46, 0.74); }
+        .lobby-mode-deck[data-deck="oracle"] { --deck-glow: rgba(168, 85, 247, 0.74); }
+
         .lobby-mode-deck:hover,
         .lobby-mode-deck:focus-visible {
             transform: translateY(-14px) scale(1.08) !important;
@@ -2234,7 +2241,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-deck:hover img,
         .lobby-mode-deck:focus-visible img {
-            filter: grayscale(0%) brightness(1.12) drop-shadow(0 0 30px rgba(255, 215, 0, 0.54)) drop-shadow(0 18px 17px rgba(0, 0, 0, 0.48)) !important;
+            filter: grayscale(0%) brightness(1.12) drop-shadow(0 0 30px var(--deck-glow)) drop-shadow(0 18px 17px rgba(0, 0, 0, 0.48)) !important;
         }
 
         .lobby-mode-deck.deck-selecting {
@@ -2244,7 +2251,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .lobby-mode-deck.deck-selecting img {
-            filter: grayscale(0%) brightness(1.32) drop-shadow(0 0 34px rgba(255, 215, 0, 0.82)) drop-shadow(0 18px 17px rgba(0, 0, 0, 0.52)) !important;
+            filter: grayscale(0%) brightness(1.32) drop-shadow(0 0 34px var(--deck-glow)) drop-shadow(0 18px 17px rgba(0, 0, 0, 0.52)) !important;
         }
 
         .lobby-mode-deck.deck-dimmed {
