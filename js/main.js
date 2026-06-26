@@ -1829,6 +1829,82 @@ function sumRewardRules(u, getter) {
         .reduce((total, rules) => total + Math.max(0, Number(getter(rules) || 0)), 0);
 }
 
+function getUnitRewardBonusSummary(u) {
+    if(!u) return [];
+    const rows = [
+        { amount: sumRewardRules(u, rules => rules?.attackEffective), text: amount => `Seus ataques efetivos geram ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.blockEffective), text: amount => `Seus bloqueios efetivos geram ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.play?.DESCANSAR), text: amount => `Jogar Restaurar gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.play?.DESARMAR), text: amount => `Jogar Desarmar gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.play?.TREINAR), text: amount => `Jogar Treinar gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.levelUp), text: amount => `Subir de nível gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.mastery?.ATAQUE), text: amount => `Realizar uma Maestria em Ataque gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.mastery?.BLOQUEIO), text: amount => `Realizar uma Maestria em Bloqueio gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.mastery?.DESCANSAR), text: amount => `Realizar uma Maestria em Restaurar gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.mastery?.DESARMAR), text: amount => `Realizar uma Maestria em Desarmar gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.mastery?.TREINAR), text: amount => `Realizar uma Maestria em Treinar gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.consecutiveAttack), text: amount => `Jogar Ataque logo após já ter jogado Ataque gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.disarmClash), text: amount => `Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera ${amount} ouro.` }
+    ];
+    return rows.filter(row => row.amount > 0).map(row => row.text(row.amount));
+}
+
+function ensureClusterRewardTooltip() {
+    let tooltip = document.getElementById('cluster-reward-tooltip');
+    if(!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'cluster-reward-tooltip';
+        tooltip.className = 'cluster-reward-tooltip';
+        document.body.appendChild(tooltip);
+    }
+    return tooltip;
+}
+
+function renderClusterRewardTooltip(u, title) {
+    const lines = getUnitRewardBonusSummary(u);
+    return `
+        <div class="cluster-reward-title">${title}</div>
+        ${lines.length
+            ? lines.map(line => `<div class="cluster-reward-line">${line}</div>`).join('')
+            : '<div class="cluster-reward-empty">Nenhum bônus de ouro ativo.</div>'}
+    `;
+}
+
+function positionClusterRewardTooltip(event) {
+    const tooltip = ensureClusterRewardTooltip();
+    const gap = 16;
+    const rect = tooltip.getBoundingClientRect();
+    let left = event.clientX + gap;
+    let top = event.clientY + gap;
+    if(left + rect.width > window.innerWidth - 12) left = event.clientX - rect.width - gap;
+    if(top + rect.height > window.innerHeight - 12) top = event.clientY - rect.height - gap;
+    tooltip.style.left = `${Math.max(12, left)}px`;
+    tooltip.style.top = `${Math.max(12, top)}px`;
+}
+
+function initClusterRewardTooltips() {
+    const bindings = [
+        { id: 'p-stats-cluster', getUnit: () => player, title: 'BÔNUS DO JOGADOR' },
+        { id: 'm-stats-cluster', getUnit: () => monster, title: 'BÔNUS DO OPONENTE' }
+    ];
+    bindings.forEach(binding => {
+        const cluster = document.getElementById(binding.id);
+        if(!cluster || cluster.dataset.rewardTooltipBound === '1') return;
+        cluster.dataset.rewardTooltipBound = '1';
+        cluster.addEventListener('mouseenter', event => {
+            const tooltip = ensureClusterRewardTooltip();
+            tooltip.innerHTML = renderClusterRewardTooltip(binding.getUnit(), binding.title);
+            tooltip.classList.add('visible');
+            positionClusterRewardTooltip(event);
+        });
+        cluster.addEventListener('mousemove', positionClusterRewardTooltip);
+        cluster.addEventListener('mouseleave', () => {
+            const tooltip = ensureClusterRewardTooltip();
+            tooltip.classList.remove('visible');
+        });
+    });
+}
+
 function awardBorderPlayRewardGold(u, cardKey) {
     const amount = sumRewardRules(u, rules => rules?.play?.[cardKey]);
     if(amount <= 0) return;
@@ -2425,6 +2501,7 @@ function updateLoader() {
 }
 
 window.onload = function() {
+    initClusterRewardTooltips();
     const deckScreen = document.getElementById('deck-selection-screen');
     if (deckScreen) {
         let backBtn = deckScreen.querySelector('.btn-back') || deckScreen.querySelector('.circle-btn') || deckScreen.querySelector('button');
