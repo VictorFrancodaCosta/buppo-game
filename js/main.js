@@ -1619,6 +1619,7 @@ function syncUnitFromServer(u, data, showPlayerDamage = false, syncXp = true) {
         u.hp = data.hp;
         if (showPlayerDamage && data.hp < oldHp) {
             showFloatingText('p-lvl', `-${oldHp - data.hp}`, "#ff7675");
+            playSound('sfx-grunt-damage');
             triggerDamageEffect(true, true);
         }
     }
@@ -1819,10 +1820,7 @@ function awardBorderPlayRewardGold(u, cardKey) {
 function awardAttackRewardGold(u, damage) {
     if(damage <= 0) return;
     const amount = sumRewardRules(u, rules => rules?.attackEffective);
-    if(amount > 0) {
-        playSound('sfx-effective-attack');
-        awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.EFFECTIVE_ATTACK);
-    }
+    if(amount > 0) awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.EFFECTIVE_ATTACK);
 }
 
 function awardConsecutiveAttackRewardGold(u, cardKey) {
@@ -2712,6 +2710,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         if(pDmg > 0) {
             const hpBefore = player.hp;
             player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675");
+            playSound('sfx-grunt-damage');
             let soundOn = !(clash && mAct === 'BLOQUEIO');
             if(mAct === 'ATAQUE') triggerAttackSlash(true);
             if (!mBlocks) { triggerDamageEffect(true, soundOn); }
@@ -2887,7 +2886,7 @@ function flushRestMasteryHeals() {
     updateUI();
 }
 
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerAttackSlash(target === player); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(u.bonusAtk >= 3) triggerCriticalDamagePop(target === player); awardMasteryRewardGold(u, 'ATAQUE'); if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; awardMasteryRewardGold(u, 'BLOQUEIO'); triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { awardMasteryRewardGold(u, 'DESCANSAR'); queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); if(target === player) playSound('sfx-grunt-damage'); triggerAttackSlash(target === player); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(u.bonusAtk >= 3) triggerCriticalDamagePop(target === player); awardMasteryRewardGold(u, 'ATAQUE'); if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; awardMasteryRewardGold(u, 'BLOQUEIO'); triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { awardMasteryRewardGold(u, 'DESCANSAR'); queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
 
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;
