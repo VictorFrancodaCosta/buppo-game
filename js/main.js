@@ -67,6 +67,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/bg_saguao.webp', 'assets/img/bg_saguao_cartas_teste.png', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
         'assets/img/card_selecao_cavaleiro.webp', 'assets/img/card_selecao_mago.webp',
         'assets/img/card_selecao_arqueiro.webp', 'assets/img/card_selecao_ladino.webp',
+        'assets/img/card_selecao_oraculo.webp',
         'assets/img/deck_verso_cavaleiro.webp', 'assets/img/deck_verso_mago.webp',
         'assets/img/card_verso_padrao.webp', 'assets/img/ui_mesa_deck.webp', 'assets/img/ui_area_xp.webp',
         'assets/img/carta_ataque_cavaleiro.webp', 'assets/img/carta_bloqueio_cavaleiro.webp',
@@ -80,6 +81,9 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_ataque_ladino.webp', 'assets/img/carta_bloqueio_ladino.webp',
         'assets/img/carta_descansar_ladino.webp', 'assets/img/carta_desarmar_ladino.webp',
         'assets/img/carta_treinar_ladino.webp',
+        'assets/img/carta_ataque_oraculo.webp', 'assets/img/carta_bloqueio_oraculo.webp',
+        'assets/img/carta_descansar_oraculo.webp', 'assets/img/carta_desarmar_oraculo.webp',
+        'assets/img/carta_treinar_oraculo.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp', 'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
         'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
         'assets/img/botao_jogar.webp', 'assets/img/botao_historico.webp', 'assets/img/botao_ranking.webp', 'assets/img/botao_loja.webp',
@@ -100,6 +104,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/ax_ladino_loja.webp', 'assets/img/ax_oraculo_loja.webp',
         'assets/img/deck_cavaleiro_loja.webp', 'assets/img/deck_mago_loja.webp',
         'assets/img/deck_arqueiro_loja.webp', 'assets/img/deck_ladino_loja.webp',
+        'assets/img/deck_oraculo_loja.webp',
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.webp',
         'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5', 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5',
         'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5',
@@ -435,6 +440,15 @@ const SHOP_ITEMS = {
         asset: 'assets/img/deck_ladino_loja.webp',
         shopAsset: 'assets/img/deck_ladino_loja.webp'
     },
+    deck_oracle: {
+        id: 'deck_oracle',
+        name: 'DECK - ORÁCULO',
+        slot: 'deck',
+        deckType: 'oracle',
+        price: 150,
+        asset: 'assets/img/deck_oraculo_loja.webp',
+        shopAsset: 'assets/img/deck_oraculo_loja.webp'
+    },
     metallic_border: {
         id: 'metallic_border',
         name: 'BORDA - GUARDA REAL',
@@ -588,6 +602,11 @@ const DECK_REWARD_RULES = {
         play: { DESARMAR: 4 },
         disarmClash: 5,
         mastery: { DESARMAR: 7 }
+    },
+    oracle: {
+        play: { TREINAR: 1 },
+        levelUp: 1,
+        mastery: { TREINAR: 5 }
     }
 };
 

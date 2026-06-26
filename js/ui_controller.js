@@ -30,10 +30,20 @@ export const ROGUE_ASSETS = {
     'DECK_SELECT': 'assets/img/card_selecao_ladino.webp'
 };
 
+export const ORACLE_ASSETS = {
+    'ATAQUE': 'assets/img/carta_ataque_oraculo.webp',
+    'BLOQUEIO': 'assets/img/carta_bloqueio_oraculo.webp',
+    'DESCANSAR': 'assets/img/carta_descansar_oraculo.webp',
+    'DESARMAR': 'assets/img/carta_desarmar_oraculo.webp',
+    'TREINAR': 'assets/img/carta_treinar_oraculo.webp',
+    'DECK_SELECT': 'assets/img/card_selecao_oraculo.webp'
+};
+
 const DECK_CARD_ASSETS = {
     mage: MAGE_ASSETS,
     archer: ARCHER_ASSETS,
-    rogue: ROGUE_ASSETS
+    rogue: ROGUE_ASSETS,
+    oracle: ORACLE_ASSETS
 };
 
 export function getCardArt(cardKey, isPlayer) {
