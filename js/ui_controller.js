@@ -157,9 +157,25 @@ function triggerScreenShakeHard() {
     setTimeout(() => document.body.classList.remove('shake-screen-hard'), 450);
 }
 
-export function triggerDamageEffect(isPlayer, playAudio = true) {
+function getDamageSfxForDeck(deckType = 'knight') {
+    if(deckType === 'mage') return 'sfx-hit-mage';
+    if(deckType === 'archer') return 'sfx-hit-archer';
+    if(deckType === 'rogue') return 'sfx-hit-rogue';
+    if(deckType === 'oracle') return 'sfx-hit-oracle';
+    return 'sfx-hit';
+}
+
+function getBlockSfxForDeck(deckType = 'knight') {
+    if(deckType === 'mage') return 'sfx-block-mage';
+    if(deckType === 'archer') return 'sfx-block-archer';
+    if(deckType === 'rogue') return 'sfx-block-rogue';
+    if(deckType === 'oracle') return 'sfx-block-oracle';
+    return 'sfx-block';
+}
+
+export function triggerDamageEffect(isPlayer, playAudio = true, attackerDeckType = null) {
     try {
-        if(playAudio) { if(!isPlayer && window.currentDeck === 'mage') playSound('sfx-hit-mage'); else playSound('sfx-hit'); }
+        if(playAudio) playSound(getDamageSfxForDeck(attackerDeckType || 'knight'));
         let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId);
         if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); }
         if (isPlayer) {
@@ -179,9 +195,9 @@ export function triggerHealEffect(isPlayer) {
     } catch(e) {}
 }
 
-export function triggerBlockEffect(isPlayer) {
+export function triggerBlockEffect(isPlayer, blockerDeckType = null) {
     try {
-        if(isPlayer && window.currentDeck === 'mage') playSound('sfx-block-mage'); else playSound('sfx-block');
+        playSound(getBlockSfxForDeck(blockerDeckType || 'knight'));
         if(window.triggerBlockEffect) window.triggerBlockEffect();
         let ov = document.getElementById('block-overlay');
         if(ov) {

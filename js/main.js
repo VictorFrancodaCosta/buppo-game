@@ -122,8 +122,14 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-play', src: 'assets/audio/sfx_jogar_carta.mp3' },
         { id: 'sfx-hit', src: 'assets/audio/sfx_dano_fisico.mp3' },
         { id: 'sfx-hit-mage', src: 'assets/audio/sfx_dano_magico.mp3' },
+        { id: 'sfx-hit-archer', src: 'assets/audio/sfx_dano_fisicoarqueiro.mp3' },
+        { id: 'sfx-hit-rogue', src: 'assets/audio/sfx_dano_fisicoladino.mp3' },
+        { id: 'sfx-hit-oracle', src: 'assets/audio/sfx_dano_magicooraculo.mp3' },
         { id: 'sfx-block', src: 'assets/audio/sfx_bloqueio.mp3' },
         { id: 'sfx-block-mage', src: 'assets/audio/sfx_bloqueio_magico.mp3' },
+        { id: 'sfx-block-archer', src: 'assets/audio/sfx_bloqueioarqueiro.mp3' },
+        { id: 'sfx-block-rogue', src: 'assets/audio/sfx_bloqueioladino.mp3' },
+        { id: 'sfx-block-oracle', src: 'assets/audio/sfx_bloqueio_magicooraculo.mp3' },
         { id: 'sfx-heal', src: 'assets/audio/sfx_cura.mp3' },
         { id: 'sfx-levelup', src: 'assets/audio/sfx_levelup.mp3' },
         { id: 'sfx-train', src: 'assets/audio/sfx_treinar.mp3' },
@@ -1625,7 +1631,7 @@ function syncUnitFromServer(u, data, showPlayerDamage = false, syncXp = true) {
             const fatalDamage = oldHp > 0 && data.hp <= 0;
             showFloatingText('p-lvl', `-${oldHp - data.hp}`, "#ff7675");
             playPlayerDamageGrunt(fatalDamage);
-            triggerDamageEffect(true, !fatalDamage);
+            triggerDamageEffect(true, !fatalDamage, monster.deckType || window.opponentDeck || 'knight');
         }
     }
     if(data.deck) u.deck = [...data.deck];
@@ -2700,8 +2706,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
     const phaseResult = () => {
         if(pAct === 'TREINAR') triggerTrainDeckGlow(true);
         if(mAct === 'TREINAR') triggerTrainDeckGlow(false);
-        if(pBlocks) { triggerBlockShield(true); triggerBlockEffect(true); }
-        else if(mBlocks) { triggerBlockShield(false); triggerBlockEffect(false); }
+        if(pBlocks) { triggerBlockShield(true); triggerBlockEffect(true, player.deckType || window.currentDeck || 'knight'); }
+        else if(mBlocks) { triggerBlockShield(false); triggerBlockEffect(false, monster.deckType || window.opponentDeck || 'knight'); }
         if(pBlocks) awardBlockRewardGold(player);
         else if(mBlocks) awardBlockRewardGold(monster);
         awardConsecutiveAttackRewardGold(player, pAct);
@@ -2730,7 +2736,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             playPlayerDamageGrunt(fatalDamage);
             let soundOn = !(clash && mAct === 'BLOQUEIO');
             if(mAct === 'ATAQUE') triggerAttackSlash(true);
-            if (!mBlocks) { triggerDamageEffect(true, !fatalDamage && soundOn); }
+            if (!mBlocks) { triggerDamageEffect(true, !fatalDamage && soundOn, monster.deckType || window.opponentDeck || 'knight'); }
             triggerHpImpact(true);
             if(pDmg >= 3) triggerCriticalDamagePop(true);
             if(mAct === 'ATAQUE' && !pBlocks) awardAttackRewardGold(monster, pDmg);
@@ -2740,7 +2746,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             const hpBefore = monster.hp;
             monster.hp -= mDmg; showFloatingText('m-lvl', `-${mDmg}`, "#ff7675");
             if(pAct === 'ATAQUE') triggerAttackSlash(false);
-            let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn);
+            let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn, player.deckType || window.currentDeck || 'knight');
             triggerHpImpact(false);
             if(mDmg >= 3) triggerCriticalDamagePop(false);
             if(pAct === 'ATAQUE' && !mBlocks) awardAttackRewardGold(player, mDmg);
@@ -2903,7 +2909,7 @@ function flushRestMasteryHeals() {
     updateUI();
 }
 
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; const fatalPlayerDamage = target === player && hpBefore > 0 && target.hp <= 0; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); if(target === player) playPlayerDamageGrunt(fatalPlayerDamage); triggerAttackSlash(target === player); triggerDamageEffect(u !== player, !fatalPlayerDamage); triggerHpImpact(target === player); if(u.bonusAtk >= 3) triggerCriticalDamagePop(target === player); awardMasteryRewardGold(u, 'ATAQUE'); if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player, !fatalPlayerDamage); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; awardMasteryRewardGold(u, 'BLOQUEIO'); triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { awardMasteryRewardGold(u, 'DESCANSAR'); queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; const fatalPlayerDamage = target === player && hpBefore > 0 && target.hp <= 0; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); if(target === player) playPlayerDamageGrunt(fatalPlayerDamage); triggerAttackSlash(target === player); triggerDamageEffect(u !== player, !fatalPlayerDamage, u.deckType || (u === player ? window.currentDeck : window.opponentDeck) || 'knight'); triggerHpImpact(target === player); if(u.bonusAtk >= 3) triggerCriticalDamagePop(target === player); awardMasteryRewardGold(u, 'ATAQUE'); if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player, !fatalPlayerDamage); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; awardMasteryRewardGold(u, 'BLOQUEIO'); triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { awardMasteryRewardGold(u, 'DESCANSAR'); queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
 
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;
