@@ -22,6 +22,7 @@ const CORE_AUDIO_ASSETS = [
     { id: 'sfx-levelup', src: 'assets/audio/sfx_levelup.mp3' },
     { id: 'sfx-train', src: 'assets/audio/sfx_treinar.mp3' },
     { id: 'sfx-disarm', src: 'assets/audio/sfx_desarmar.mp3' },
+    { id: 'sfx-effective-attack', src: 'assets/audio/sfx_ataqueefetivo.mp3' },
     { id: 'sfx-clusterbreak', src: 'assets/audio/sfx_clusterbreak.mp3' },
     { id: 'sfx-mastery', src: 'assets/audio/maestria_bonus.mp3' },
     { id: 'sfx-cine', src: 'assets/audio/ambience_cine.mp3', loop: true },

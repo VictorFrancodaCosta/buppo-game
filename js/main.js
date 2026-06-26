@@ -1819,7 +1819,10 @@ function awardBorderPlayRewardGold(u, cardKey) {
 function awardAttackRewardGold(u, damage) {
     if(damage <= 0) return;
     const amount = sumRewardRules(u, rules => rules?.attackEffective);
-    if(amount > 0) awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.EFFECTIVE_ATTACK);
+    if(amount > 0) {
+        playSound('sfx-effective-attack');
+        awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.EFFECTIVE_ATTACK);
+    }
 }
 
 function awardConsecutiveAttackRewardGold(u, cardKey) {
