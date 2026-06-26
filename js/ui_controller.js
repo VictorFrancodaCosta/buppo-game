@@ -21,9 +21,19 @@ export const ARCHER_ASSETS = {
     'DECK_SELECT': 'assets/img/card_selecao_arqueiro.webp'
 };
 
+export const ROGUE_ASSETS = {
+    'ATAQUE': 'assets/img/carta_ataque_ladino.webp',
+    'BLOQUEIO': 'assets/img/carta_bloqueio_ladino.webp',
+    'DESCANSAR': 'assets/img/carta_descansar_ladino.webp',
+    'DESARMAR': 'assets/img/carta_desarmar_ladino.webp',
+    'TREINAR': 'assets/img/carta_treinar_ladino.webp',
+    'DECK_SELECT': 'assets/img/card_selecao_ladino.webp'
+};
+
 const DECK_CARD_ASSETS = {
     mage: MAGE_ASSETS,
-    archer: ARCHER_ASSETS
+    archer: ARCHER_ASSETS,
+    rogue: ROGUE_ASSETS
 };
 
 export function getCardArt(cardKey, isPlayer) {

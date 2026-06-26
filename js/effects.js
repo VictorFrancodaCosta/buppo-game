@@ -2841,7 +2841,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         const lobbyDeckItems = [
             { id: 'deck_knight', type: 'deck', name: 'DECK - CAVALEIRO', displayName: 'CAVALEIRO', asset: 'assets/img/deck_cavaleiro_loja.webp', shopAsset: 'assets/img/deck_cavaleiro_loja.webp' },
             { id: 'deck_mage', type: 'deck', name: 'DECK - MAGO', displayName: 'MAGO', asset: 'assets/img/deck_mago_loja.webp', shopAsset: 'assets/img/deck_mago_loja.webp' },
-            { id: 'deck_archer', type: 'deck', name: 'DECK - ARQUEIRO', displayName: 'ARQUEIRO', asset: 'assets/img/deck_arqueiro_loja.webp', shopAsset: 'assets/img/deck_arqueiro_loja.webp' }
+            { id: 'deck_archer', type: 'deck', name: 'DECK - ARQUEIRO', displayName: 'ARQUEIRO', asset: 'assets/img/deck_arqueiro_loja.webp', shopAsset: 'assets/img/deck_arqueiro_loja.webp' },
+            { id: 'deck_rogue', type: 'deck', name: 'DECK - LADINO', displayName: 'LADINO', asset: 'assets/img/deck_ladino_loja.webp', shopAsset: 'assets/img/deck_ladino_loja.webp' }
         ];
         const lobbyXpAreaItems = [
             { id: 'xp_campo_honra', type: 'xpArea', name: '\u00c1REA DE XP - CAMPO DE HONRA', displayName: 'CAMPO DE HONRA', asset: 'assets/img/ui_area_xpcampodehonra.webp', shopAsset: 'assets/img/ax_cavaleiro_loja.webp' },
@@ -2874,7 +2875,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             ],
             rogue_gold_border: [
                 'Jogar Desarmar gera 15 {coin}.',
-                'Realizar uma <strong>Maestria em Desarmar</strong> gera 18 {coin}.'
+                'Realizar uma <strong>Maestria em Desarmar</strong> gera 18 {coin}.',
+                'Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera 20 {coin}.'
             ],
             oracle_border: [
                 'Jogar Treinar gera 4 {coin}.',
@@ -2896,7 +2898,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             ],
             xp_rota_saque: [
                 'Jogar Desarmar gera 7 {coin}.',
-                'Realizar uma <strong>Maestria em Desarmar</strong> gera 9 {coin}.'
+                'Realizar uma <strong>Maestria em Desarmar</strong> gera 9 {coin}.',
+                'Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera 9 {coin}.'
             ],
             xp_altar_visao: [
                 'Jogar Treinar gera 2 {coin}.',
@@ -2915,6 +2918,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             deck_archer: [
                 'Jogar Restaurar gera 3 {coin}.',
                 'Realizar uma <strong>Maestria em Restaurar</strong> gera 5 {coin}.'
+            ],
+            deck_rogue: [
+                'Jogar Desarmar gera 4 {coin}.',
+                'Realizar uma <strong>Maestria em Desarmar</strong> gera 7 {coin}.',
+                'Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera 5 {coin}.'
             ]
         };
         const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';
@@ -3214,6 +3222,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     </button>
                     <button class="lobby-mode-deck" type="button" data-deck="archer" data-name="Precis\u00e3o natural, ritmo de ca\u00e7a" aria-label="Deck Arqueiro">
                         <img src="assets/img/card_selecao_arqueiro.webp" alt="Deck Arqueiro">
+                    </button>
+                    <button class="lobby-mode-deck" type="button" data-deck="rogue" data-name="Astúcia afiada, saque preciso" aria-label="Deck Ladino">
+                        <img src="assets/img/card_selecao_ladino.webp" alt="Deck Ladino">
                     </button>
                 </div>
             </div>
