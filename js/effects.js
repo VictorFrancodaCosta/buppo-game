@@ -2880,9 +2880,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 'Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera 12 {coin}.'
             ],
             oracle_border: [
-                'Jogar Treinar gera 4 {coin}.',
-                'Subir de nível gera 4 {coin}.',
-                'Realizar uma <strong>Maestria em Treinar</strong> gera 18 {coin}.'
+                'Jogar Treinar gera 5 {coin}.',
+                'Subir de nível gera 10 {coin}.',
+                'Realizar uma <strong>Maestria em Treinar</strong> gera 10 {coin}.'
             ],
             xp_campo_honra: [
                 'Seus Bloqueios efetivos geram 4 {coin}.',
@@ -2904,8 +2904,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             ],
             xp_altar_visao: [
                 'Jogar Treinar gera 2 {coin}.',
-                'Subir de n\u00edvel gera 2 {coin}.',
-                'Realizar uma <strong>Maestria em Treinar</strong> gera 7 {coin}.'
+                'Subir de nível gera 4 {coin}.',
+                'Realizar uma <strong>Maestria em Treinar</strong> gera 8 {coin}.'
             ],
             deck_knight: [
                 'Seus Bloqueios efetivos geram 2 {coin}.',
@@ -2927,8 +2927,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             ],
             deck_oracle: [
                 'Jogar Treinar gera 1 {coin}.',
-                'Subir de nível gera 1 {coin}.',
-                'Realizar uma <strong>Maestria em Treinar</strong> gera 5 {coin}.'
+                'Subir de nível gera 2 {coin}.',
+                'Realizar uma <strong>Maestria em Treinar</strong> gera 4 {coin}.'
             ]
         };
         const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';

@@ -51,6 +51,7 @@ window.selectedFriendUid = null;
 window.pendingFriendInvite = null;
 window.friendlyRematchRound = 0;
 window.suppressFriendlyAbandon = false;
+window.suppressNextLoseSfx = false;
 window.fullscreenEnabled = false;
 window.cacheRefreshComplete = false;
 window.desktopUpdateStatus = { state: 'idle' };
@@ -127,6 +128,9 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-levelup', src: 'assets/audio/sfx_levelup.mp3' },
         { id: 'sfx-train', src: 'assets/audio/sfx_treinar.mp3' },
         { id: 'sfx-disarm', src: 'assets/audio/sfx_desarmar.mp3' },
+        { id: 'sfx-grunt-damage', src: 'assets/audio/sfx_gruntdamage.mp3' },
+        { id: 'sfx-grunt-damage-2', src: 'assets/audio/sfx_gruntdamage2.mp3' },
+        { id: 'sfx-grunt-lose', src: 'assets/audio/sfx_gruntlose.mp3' },
         { id: 'sfx-clusterbreak', src: 'assets/audio/sfx_clusterbreak.mp3' },
         { id: 'sfx-mastery', src: 'assets/audio/maestria_bonus.mp3' },
         { id: 'sfx-cine', src: 'assets/audio/ambience_cine.mp3', loop: true },
@@ -552,9 +556,9 @@ const BORDER_REWARD_RULES = {
         mastery: { DESARMAR: 12 }
     },
     oracle_border: {
-        play: { TREINAR: 4 },
-        levelUp: 4,
-        mastery: { TREINAR: 18 }
+        play: { TREINAR: 5 },
+        levelUp: 10,
+        mastery: { TREINAR: 10 }
     }
 };
 
@@ -579,8 +583,8 @@ const XP_AREA_REWARD_RULES = {
     },
     xp_altar_visao: {
         play: { TREINAR: 2 },
-        levelUp: 2,
-        mastery: { TREINAR: 7 }
+        levelUp: 4,
+        mastery: { TREINAR: 8 }
     }
 };
 
@@ -605,8 +609,8 @@ const DECK_REWARD_RULES = {
     },
     oracle: {
         play: { TREINAR: 1 },
-        levelUp: 1,
-        mastery: { TREINAR: 5 }
+        levelUp: 2,
+        mastery: { TREINAR: 4 }
     }
 };
 
@@ -1618,9 +1622,10 @@ function syncUnitFromServer(u, data, showPlayerDamage = false, syncXp = true) {
         const oldHp = u.hp;
         u.hp = data.hp;
         if (showPlayerDamage && data.hp < oldHp) {
+            const fatalDamage = oldHp > 0 && data.hp <= 0;
             showFloatingText('p-lvl', `-${oldHp - data.hp}`, "#ff7675");
-            playSound('sfx-grunt-damage');
-            triggerDamageEffect(true, true);
+            playPlayerDamageGrunt(fatalDamage);
+            triggerDamageEffect(true, !fatalDamage);
         }
     }
     if(data.deck) u.deck = [...data.deck];
@@ -1719,6 +1724,8 @@ function checkEndGame(){
         clearPvPStatus();
         setTimeout(()=>{
             let title = document.getElementById('end-title'); let isWin = player.hp > 0; let isTie = player.hp <= 0 && monster.hp <= 0;
+            const suppressLoseSfx = window.suppressNextLoseSfx;
+            window.suppressNextLoseSfx = false;
             if(isFriendlyMatch()) {
                 const existingPoints = document.getElementById('end-points');
                 if(existingPoints) existingPoints.remove();
@@ -1726,7 +1733,7 @@ function checkEndGame(){
                 if(existingGold) existingGold.remove();
                 if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); }
                 else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
-                else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); }
+                else { title.innerText = "DERROTA"; title.className = "lose-theme"; if(!suppressLoseSfx) playSound('sfx-lose'); triggerEndScreenFx('loss'); }
                 const secondaryBtn = document.querySelector('#end-screen .secondary-btn');
                 if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUÃO";
                 if(window.currentMatchId && window.myRole === 'player1') {
@@ -1740,7 +1747,7 @@ function checkEndGame(){
             if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃO";
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
             else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
-            else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
+            else { title.innerText = "DERROTA"; title.className = "lose-theme"; if(!suppressLoseSfx) playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
 
             if(isTie) { if(window.registrarEmpateOnline) window.registrarEmpateOnline(window.gameMode); }
             else if(isWin) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(window.gameMode); }
@@ -1785,6 +1792,15 @@ const MATCH_REWARD_LABELS = {
 
 function awardMatchRewardGold(amount = 1, label = MATCH_REWARD_LABELS.EFFECTIVE_ATTACK) {
     awardMatchRewardGoldFor(player, amount, label);
+}
+
+function playPlayerDamageGrunt(isFatal = false) {
+    if(isFatal) {
+        window.suppressNextLoseSfx = true;
+        playSound('sfx-grunt-lose');
+        return;
+    }
+    playSound(Math.random() < 0.5 ? 'sfx-grunt-damage' : 'sfx-grunt-damage-2');
 }
 
 function getUnitEquippedBorderId(u) {
@@ -2710,14 +2726,15 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         if(pDmg > 0) {
             const hpBefore = player.hp;
             player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675");
-            playSound('sfx-grunt-damage');
+            const fatalDamage = hpBefore > 0 && player.hp <= 0;
+            playPlayerDamageGrunt(fatalDamage);
             let soundOn = !(clash && mAct === 'BLOQUEIO');
             if(mAct === 'ATAQUE') triggerAttackSlash(true);
-            if (!mBlocks) { triggerDamageEffect(true, soundOn); }
+            if (!mBlocks) { triggerDamageEffect(true, !fatalDamage && soundOn); }
             triggerHpImpact(true);
             if(pDmg >= 3) triggerCriticalDamagePop(true);
             if(mAct === 'ATAQUE' && !pBlocks) awardAttackRewardGold(monster, pDmg);
-            if(hpBefore > 0 && player.hp <= 0) triggerClusterExplosion(true);
+            if(fatalDamage) triggerClusterExplosion(true, false);
         }
         if(mDmg > 0) {
             const hpBefore = monster.hp;
@@ -2886,7 +2903,7 @@ function flushRestMasteryHeals() {
     updateUI();
 }
 
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); if(target === player) playSound('sfx-grunt-damage'); triggerAttackSlash(target === player); triggerDamageEffect(u !== player); triggerHpImpact(target === player); if(u.bonusAtk >= 3) triggerCriticalDamagePop(target === player); awardMasteryRewardGold(u, 'ATAQUE'); if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; awardMasteryRewardGold(u, 'BLOQUEIO'); triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { awardMasteryRewardGold(u, 'DESCANSAR'); queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; const fatalPlayerDamage = target === player && hpBefore > 0 && target.hp <= 0; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); if(target === player) playPlayerDamageGrunt(fatalPlayerDamage); triggerAttackSlash(target === player); triggerDamageEffect(u !== player, !fatalPlayerDamage); triggerHpImpact(target === player); if(u.bonusAtk >= 3) triggerCriticalDamagePop(target === player); awardMasteryRewardGold(u, 'ATAQUE'); if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player, !fatalPlayerDamage); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; awardMasteryRewardGold(u, 'BLOQUEIO'); triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { awardMasteryRewardGold(u, 'DESCANSAR'); queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
 
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;
