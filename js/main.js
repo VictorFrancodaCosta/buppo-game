@@ -51,7 +51,6 @@ window.selectedFriendUid = null;
 window.pendingFriendInvite = null;
 window.friendlyRematchRound = 0;
 window.suppressFriendlyAbandon = false;
-window.suppressNextLoseSfx = false;
 window.fullscreenEnabled = false;
 window.cacheRefreshComplete = false;
 window.desktopUpdateStatus = { state: 'idle' };
@@ -1730,8 +1729,6 @@ function checkEndGame(){
         clearPvPStatus();
         setTimeout(()=>{
             let title = document.getElementById('end-title'); let isWin = player.hp > 0; let isTie = player.hp <= 0 && monster.hp <= 0;
-            const suppressLoseSfx = window.suppressNextLoseSfx;
-            window.suppressNextLoseSfx = false;
             if(isFriendlyMatch()) {
                 const existingPoints = document.getElementById('end-points');
                 if(existingPoints) existingPoints.remove();
@@ -1739,7 +1736,7 @@ function checkEndGame(){
                 if(existingGold) existingGold.remove();
                 if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); }
                 else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
-                else { title.innerText = "DERROTA"; title.className = "lose-theme"; if(!suppressLoseSfx) playSound('sfx-lose'); triggerEndScreenFx('loss'); }
+                else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); }
                 const secondaryBtn = document.querySelector('#end-screen .secondary-btn');
                 if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUÃO";
                 if(window.currentMatchId && window.myRole === 'player1') {
@@ -1753,7 +1750,7 @@ function checkEndGame(){
             if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃO";
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
             else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
-            else { title.innerText = "DERROTA"; title.className = "lose-theme"; if(!suppressLoseSfx) playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
+            else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
 
             if(isTie) { if(window.registrarEmpateOnline) window.registrarEmpateOnline(window.gameMode); }
             else if(isWin) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(window.gameMode); }
@@ -1802,7 +1799,6 @@ function awardMatchRewardGold(amount = 1, label = MATCH_REWARD_LABELS.EFFECTIVE_
 
 function playPlayerDamageGrunt(isFatal = false) {
     if(isFatal) {
-        window.suppressNextLoseSfx = true;
         playSound('sfx-grunt-lose');
         return;
     }
