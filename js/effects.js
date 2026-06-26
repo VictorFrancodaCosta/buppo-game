@@ -1542,6 +1542,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background-size: contain !important;
         }
 
+        .lobby-shop-panel .deck-product-art,
+        .lobby-inventory-panel .deck-product-art {
+            left: 50% !important;
+            right: auto !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            transform: translateX(-50%) !important;
+            background-position: center bottom !important;
+            background-size: contain !important;
+        }
+
         .inventory-item .inventory-item-name {
             position: absolute !important;
             left: 8px !important;
@@ -2241,6 +2253,29 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             pointer-events: none !important;
         }
 
+        .lobby-mode-deck.deck-locked,
+        .lobby-mode-deck:disabled {
+            opacity: 0.38 !important;
+            cursor: not-allowed !important;
+            filter: grayscale(1) brightness(0.58) !important;
+        }
+
+        .lobby-mode-deck.deck-locked::before {
+            content: "BLOQUEADO" !important;
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) rotate(-8deg) !important;
+            z-index: 5 !important;
+            color: #ffe44d !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(22px, 2.2vw, 34px) !important;
+            -webkit-text-stroke: 1.5px #120501 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 3px 3px 0 #120501 !important;
+            pointer-events: none !important;
+        }
+
         .lobby-mode-deck::after {
             content: attr(data-name);
             position: absolute !important;
@@ -2803,6 +2838,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_ladino_loja.webp?v=2026.06.24.16' },
             { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_oraculo_loja.webp?v=2026.06.24.16' }
         ];
+        const lobbyDeckItems = [
+            { id: 'deck_knight', type: 'deck', name: 'DECK - CAVALEIRO', displayName: 'CAVALEIRO', asset: 'assets/img/deck_cavaleiro_loja.webp', shopAsset: 'assets/img/deck_cavaleiro_loja.webp' },
+            { id: 'deck_mage', type: 'deck', name: 'DECK - MAGO', displayName: 'MAGO', asset: 'assets/img/deck_mago_loja.webp', shopAsset: 'assets/img/deck_mago_loja.webp' },
+            { id: 'deck_archer', type: 'deck', name: 'DECK - ARQUEIRO', displayName: 'ARQUEIRO', asset: 'assets/img/deck_arqueiro_loja.webp', shopAsset: 'assets/img/deck_arqueiro_loja.webp' }
+        ];
         const lobbyXpAreaItems = [
             { id: 'xp_campo_honra', type: 'xpArea', name: '\u00c1REA DE XP - CAMPO DE HONRA', displayName: 'CAMPO DE HONRA', asset: 'assets/img/ui_area_xpcampodehonra.webp', shopAsset: 'assets/img/ax_cavaleiro_loja.webp' },
             { id: 'xp_circulo_arcano', type: 'xpArea', name: '\u00c1REA DE XP - C\u00cdRCULO ARCANO', displayName: 'C\u00cdRCULO ARCANO', asset: 'assets/img/ui_area_xpcirculoarcano.webp', shopAsset: 'assets/img/ax_mago_loja.webp' },
@@ -2811,7 +2851,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             { id: 'xp_altar_visao', type: 'xpArea', name: '\u00c1REA DE XP - ALTAR DA VIS\u00c3O', displayName: 'ALTAR DA VIS\u00c3O', asset: 'assets/img/ui_area_xpaltardavisao.webp', shopAsset: 'assets/img/ax_oraculo_loja.webp' }
         ];
         const lobbyShopItemsByCategory = {
-            decks: [],
+            decks: lobbyDeckItems,
             borders: lobbyCardBorderItems,
             clusters: [],
             xpAreas: lobbyXpAreaItems,
@@ -2860,12 +2900,24 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 'Jogar Treinar gera 2 {coin}.',
                 'Subir de n\u00edvel gera 2 {coin}.',
                 'Realizar uma <strong>Maestria em Treinar</strong> gera 7 {coin}.'
+            ],
+            deck_knight: [
+                'Seus Bloqueios efetivos geram 2 {coin}.',
+                'Realizar uma <strong>Maestria em Bloqueio</strong> gera 1 {coin}.'
+            ],
+            deck_mage: [
+                'Seus Ataques efetivos geram 1 {coin}.',
+                'Realizar uma <strong>Maestria em Ataque</strong> gera 1 {coin}.'
+            ],
+            deck_archer: [
+                'Jogar Restaurar gera 3 {coin}.',
+                'Realizar uma <strong>Maestria em Restaurar</strong> gera 5 {coin}.'
             ]
         };
         const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';
 
-        const getItemDisplayName = (item) => item.displayName || item.name.replace(/^(BORDA|\u00c1REA DE XP)\s*-\s*/i, '');
-        const getShopItemById = (itemId) => [...lobbyCardBorderItems, ...lobbyXpAreaItems].find(item => item.id === itemId) || null;
+        const getItemDisplayName = (item) => item.displayName || item.name.replace(/^(BORDA|\u00c1REA DE XP|DECK)\s*-\s*/i, '');
+        const getShopItemById = (itemId) => [...lobbyDeckItems, ...lobbyCardBorderItems, ...lobbyXpAreaItems].find(item => item.id === itemId) || null;
         const ensureShopInfoTooltip = () => {
             let tooltip = document.getElementById('shop-info-tooltip');
             if (!tooltip) {
@@ -2908,7 +2960,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
         const renderBorderPreview = (item, location = 'inventory') => {
             const asset = location === 'shop' ? (item.shopAsset || item.asset) : item.asset;
-            const artClass = item.type === 'xpArea' || item.id.startsWith('xp_') ? 'metallic-border-art xp-area-product-art' : 'metallic-border-art';
+            const artClass = item.type === 'deck' ? 'metallic-border-art deck-product-art' : (item.type === 'xpArea' || item.id.startsWith('xp_') ? 'metallic-border-art xp-area-product-art' : 'metallic-border-art');
             return `<div class="${artClass}" style="background-image: url('${asset}')" aria-label="Arte de ${item.name}"></div>`;
         };
         const renderShopProducts = (category = 'borders') => {
@@ -2974,7 +3026,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             if (!grid) return;
             document.getElementById('shop-info-tooltip')?.classList.remove('visible');
             grid.innerHTML = renderShopProducts(window.currentShopCategory || 'borders');
-            if (['borders', 'xpAreas'].includes(window.currentShopCategory || 'borders')) {
+            if (['decks', 'borders', 'xpAreas'].includes(window.currentShopCategory || 'borders')) {
                 bindBorderInfoTooltips(grid, '[data-shop-item]', (product) => product.dataset.shopItem);
             }
             grid.querySelectorAll('[data-shop-item]').forEach((product) => {
@@ -3100,7 +3152,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     window.toggleInventoryEquip?.(button.dataset.inventoryItem);
                 });
             });
-            if (['borders', 'xpAreas'].includes(window.currentInventoryCategory || 'borders')) {
+            if (['decks', 'borders', 'xpAreas'].includes(window.currentInventoryCategory || 'borders')) {
                 bindBorderInfoTooltips(grid, '[data-inventory-item]', (button) => button.dataset.inventoryItem);
             }
         };
@@ -3151,6 +3203,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     <button class="lobby-mode-deck" type="button" data-deck="mage" data-name="Magia em estado puro" aria-label="Deck Mago">
                         <img src="assets/img/card_selecao_mago.webp" alt="Deck Mago">
                     </button>
+                    <button class="lobby-mode-deck" type="button" data-deck="archer" data-name="Precis\u00e3o natural, ritmo de ca\u00e7a" aria-label="Deck Arqueiro">
+                        <img src="assets/img/deck_arqueiro_loja.webp" alt="Deck Arqueiro">
+                    </button>
                 </div>
             </div>
         `;
@@ -3182,6 +3237,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             modeOverlay.classList.toggle('selected-pvp', mode === 'pvp');
             modeOverlay.querySelectorAll('.lobby-mode-btn').forEach(button => {
                 button.classList.toggle('selected', button.id === `btn-mode-${mode}`);
+            });
+            modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deckButton => {
+                const item = Object.values(window.SHOP_ITEMS || {}).find(shopItem => shopItem.slot === 'deck' && shopItem.deckType === deckButton.dataset.deck);
+                const owned = !item || window.playerInventory?.includes(item.id);
+                deckButton.disabled = !owned;
+                deckButton.classList.toggle('deck-locked', !owned);
             });
             const flareLayer = modeOverlay.querySelector('.lobby-mode-flares');
             if(flareLayer) {
@@ -3217,6 +3278,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 event.stopPropagation();
                 const mode = modeOverlay.dataset.selectedMode;
                 const deckType = button.dataset.deck || 'knight';
+                if(button.disabled || button.classList.contains('deck-locked')) {
+                    window.openModal?.('DECK BLOQUEADO', 'Compre este deck na loja para jogar com ele.', ['OK']);
+                    return;
+                }
                 if(!mode) return;
                 window.playBuppoSfx?.('sfx-deck-select');
                 modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deck => {

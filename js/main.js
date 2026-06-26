@@ -91,6 +91,8 @@ const ASSETS_TO_LOAD = {
         'assets/img/ui_area_xpaltardavisao.webp', 'assets/img/ax_cavaleiro_loja.webp',
         'assets/img/ax_mago_loja.webp', 'assets/img/ax_arqueiro_loja.webp',
         'assets/img/ax_ladino_loja.webp', 'assets/img/ax_oraculo_loja.webp',
+        'assets/img/deck_cavaleiro_loja.webp', 'assets/img/deck_mago_loja.webp',
+        'assets/img/deck_arqueiro_loja.webp',
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.webp',
         'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5', 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5',
         'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5',
@@ -151,7 +153,13 @@ window.applyDeckTheme = function(deckType = window.currentDeck) {
     else document.body.classList.add('theme-cavaleiro');
 }
 
-window.selectDeck = function(deckType) {
+window.selectDeck = async function(deckType) {
+    const deckItem = Object.values(SHOP_ITEMS).find(item => item.slot === 'deck' && item.deckType === deckType);
+    if(deckItem && !window.playerInventory?.includes(deckItem.id)) {
+        window.openModal?.('DECK BLOQUEADO', 'Compre este deck na loja para jogar com ele.', ['OK']);
+        return;
+    }
+    await equipOwnedDeckByType(deckType);
     if(audios['sfx-deck-select'] && window.sfxEnabled) { try { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); } catch(e){} }
     
     // Aplica a nova mesa escolhida
@@ -180,9 +188,36 @@ window.selectDeck = function(deckType) {
     }, 400);
 };
 
-window.startLobbyModeWithDeck = function(mode, deckType) {
+async function equipOwnedDeckByType(deckType) {
+    const deckItem = Object.values(SHOP_ITEMS).find(item => item.slot === 'deck' && item.deckType === deckType);
+    if(!deckItem || !window.playerInventory?.includes(deckItem.id)) return false;
+    if(window.equippedItems?.deck !== deckItem.id) {
+        const nextEquipped = { ...(window.equippedItems || {}), deck: deckItem.id };
+        if(window.currentUser) {
+            try {
+                await updateDoc(doc(db, "players", window.currentUser.uid), { equippedItems: nextEquipped });
+            } catch(e) {
+                console.warn('Nao foi possivel salvar deck equipado antes da partida:', e);
+            }
+        }
+        updatePlayerInventoryState(window.playerInventory || [], nextEquipped);
+    }
+    window.applyDeckTheme(deckType);
+    return true;
+}
+
+window.startLobbyModeWithDeck = async function(mode, deckType) {
     if(mode !== 'pvp' && mode !== 'pve') return;
     if(mode === 'pvp' && !window.currentUser) return;
+    const equippedDeck = SHOP_ITEMS[window.equippedItems?.deck];
+    const targetDeckType = deckType || equippedDeck?.deckType || window.currentDeck || 'knight';
+    const deckItem = Object.values(SHOP_ITEMS).find(item => item.slot === 'deck' && item.deckType === targetDeckType);
+    if(deckItem && !window.playerInventory?.includes(deckItem.id)) {
+        window.openModal?.('DECK BLOQUEADO', 'Compre este deck na loja para jogar com ele.', ['OK']);
+        return;
+    }
+    const equipped = await equipOwnedDeckByType(targetDeckType);
+    if(!equipped) return;
     if(audios['sfx-deck-select'] && window.sfxEnabled) {
         try {
             audios['sfx-deck-select'].currentTime = 0;
@@ -190,7 +225,6 @@ window.startLobbyModeWithDeck = function(mode, deckType) {
         } catch(e) {}
     }
     window.gameMode = mode;
-    window.applyDeckTheme(deckType);
     window.closeLobbyModeChooser?.();
     setTimeout(() => {
         if(mode === 'pvp') initiateMatchmaking();
@@ -260,10 +294,11 @@ window.goToLobby = async function(isAutoLogin = false) {
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
         const gameId = await generateUniqueGameId(window.currentUser.uid);
-        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: [], equippedItems: {}, lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
+        const defaults = normalizeInventoryDefaults([], {});
+        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: defaults.inventory, equippedItems: defaults.equippedItems, lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
         window.currentPlayerGameId = gameId;
         window.currentLobbyScore = 0;
-        updatePlayerInventoryState([], {});
+        updatePlayerInventoryState(defaults.inventory, defaults.equippedItems);
         updateLobbyProfileProgress(1, 0);
         renderLobbyIdentity(window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
@@ -278,9 +313,13 @@ window.goToLobby = async function(isAutoLogin = false) {
     } else {
         const d = userSnap.data();
         const gameId = await ensurePlayerGameId(userRef, d);
+        const normalizedInventory = normalizeInventoryDefaults(d.inventory || [], d.equippedItems || {});
+        if(JSON.stringify(normalizedInventory.inventory) !== JSON.stringify(d.inventory || []) || JSON.stringify(normalizedInventory.equippedItems) !== JSON.stringify(d.equippedItems || {})) {
+            await updateDoc(userRef, { inventory: normalizedInventory.inventory, equippedItems: normalizedInventory.equippedItems });
+        }
         window.currentPlayerGameId = gameId;
         window.currentLobbyScore = Math.max(0, Number(d.score) || 0);
-        updatePlayerInventoryState(d.inventory || [], d.equippedItems || {});
+        updatePlayerInventoryState(normalizedInventory.inventory, normalizedInventory.equippedItems);
         updateLobbyProfileProgress(d.profileLevel || 1, d.profileXp || 0);
         renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
@@ -353,6 +392,33 @@ function updateLobbyGoldWallet(amount = 0) {
 }
 
 const SHOP_ITEMS = {
+    deck_knight: {
+        id: 'deck_knight',
+        name: 'DECK - CAVALEIRO',
+        slot: 'deck',
+        deckType: 'knight',
+        price: 150,
+        asset: 'assets/img/deck_cavaleiro_loja.webp',
+        shopAsset: 'assets/img/deck_cavaleiro_loja.webp'
+    },
+    deck_mage: {
+        id: 'deck_mage',
+        name: 'DECK - MAGO',
+        slot: 'deck',
+        deckType: 'mage',
+        price: 150,
+        asset: 'assets/img/deck_mago_loja.webp',
+        shopAsset: 'assets/img/deck_mago_loja.webp'
+    },
+    deck_archer: {
+        id: 'deck_archer',
+        name: 'DECK - ARQUEIRO',
+        slot: 'deck',
+        deckType: 'archer',
+        price: 150,
+        asset: 'assets/img/deck_arqueiro_loja.webp',
+        shopAsset: 'assets/img/deck_arqueiro_loja.webp'
+    },
     metallic_border: {
         id: 'metallic_border',
         name: 'BORDA - GUARDA REAL',
@@ -488,12 +554,31 @@ const DECK_REWARD_RULES = {
     knight: {
         blockEffective: 2,
         mastery: { BLOQUEIO: 1 }
+    },
+    mage: {
+        attackEffective: 1,
+        mastery: { ATAQUE: 1 }
+    },
+    archer: {
+        play: { DESCANSAR: 3 },
+        mastery: { DESCANSAR: 5 }
     }
 };
 
+function normalizeInventoryDefaults(inventory = [], equippedItems = {}) {
+    const nextInventory = Array.isArray(inventory) ? [...new Set(inventory)] : [];
+    const nextEquipped = equippedItems && typeof equippedItems === 'object' ? { ...equippedItems } : {};
+    if(!nextInventory.includes('deck_knight')) nextInventory.push('deck_knight');
+    if(!nextEquipped.deck || !nextInventory.includes(nextEquipped.deck)) nextEquipped.deck = 'deck_knight';
+    return { inventory: nextInventory, equippedItems: nextEquipped };
+}
+
 function updatePlayerInventoryState(inventory = [], equippedItems = {}) {
-    window.playerInventory = Array.isArray(inventory) ? [...new Set(inventory)] : [];
-    window.equippedItems = equippedItems && typeof equippedItems === 'object' ? { ...equippedItems } : {};
+    const normalized = normalizeInventoryDefaults(inventory, equippedItems);
+    window.playerInventory = normalized.inventory;
+    window.equippedItems = normalized.equippedItems;
+    const equippedDeck = SHOP_ITEMS[window.equippedItems.deck];
+    if(equippedDeck?.deckType) window.currentDeck = equippedDeck.deckType;
     const equippedBorder = SHOP_ITEMS[window.equippedItems.cardBorder];
     document.body.classList.remove('player-card-border-royal', 'player-card-border-elven', 'player-card-border-mage', 'player-card-border-rogue', 'player-card-border-oracle');
     document.body.style.removeProperty('--player-card-border-url');
@@ -633,12 +718,14 @@ window.toggleInventoryEquip = async function(itemId) {
     const item = SHOP_ITEMS[itemId];
     if(!item || !window.currentUser || !window.playerInventory?.includes(itemId)) return;
     const nextEquipped = { ...(window.equippedItems || {}) };
-    if(nextEquipped[item.slot] === itemId) delete nextEquipped[item.slot];
+    if(item.slot === 'deck') nextEquipped.deck = itemId;
+    else if(nextEquipped[item.slot] === itemId) delete nextEquipped[item.slot];
     else nextEquipped[item.slot] = itemId;
     try {
         const userRef = doc(db, "players", window.currentUser.uid);
         await updateDoc(userRef, { equippedItems: nextEquipped });
         updatePlayerInventoryState(window.playerInventory || [], nextEquipped);
+        if(item.slot === 'deck' && item.deckType) window.applyDeckTheme(item.deckType);
         updateUI();
     } catch(e) {
         console.error("Erro ao equipar item:", e);
@@ -1269,9 +1356,9 @@ function startGameFlow() {
         window.applyDeckTheme(window.currentDeck);
         resetUnit(player, null, 'pve'); resetUnit(monster, null, 'pve');
         player.deckType = window.currentDeck || 'knight';
-        monster.deckType = 'knight';
         player.equippedItems = { ...(window.equippedItems || {}) };
         monster.equippedItems = createRandomAiEquipmentForPlayerEquipment(player.equippedItems);
+        monster.deckType = SHOP_ITEMS[monster.equippedItems?.deck]?.deckType || player.deckType || 'knight';
         baseDraw(monster, 6); baseDraw(player, 6);
     }
     turnCount = 1; playerHistory = [];
