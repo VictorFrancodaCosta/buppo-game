@@ -12,8 +12,24 @@ export const MAGE_ASSETS = {
     'DECK_SELECT': 'assets/img/card_selecao_mago.webp'
 };
 
+export const ARCHER_ASSETS = {
+    'ATAQUE': 'assets/img/carta_ataque_arqueiro.webp',
+    'BLOQUEIO': 'assets/img/carta_bloqueio_arqueiro.webp',
+    'DESCANSAR': 'assets/img/carta_descansar_arqueiro.webp',
+    'DESARMAR': 'assets/img/carta_desarmar_arqueiro.webp',
+    'TREINAR': 'assets/img/carta_treinar_arqueiro.webp',
+    'DECK_SELECT': 'assets/img/card_selecao_arqueiro.webp'
+};
+
+const DECK_CARD_ASSETS = {
+    mage: MAGE_ASSETS,
+    archer: ARCHER_ASSETS
+};
+
 export function getCardArt(cardKey, isPlayer) {
-    if (isPlayer && window.currentDeck === 'mage' && MAGE_ASSETS[cardKey]) return MAGE_ASSETS[cardKey];
+    const deckType = isPlayer ? window.currentDeck : (window.opponentDeck || 'knight');
+    const deckAssets = DECK_CARD_ASSETS[deckType];
+    if (deckAssets?.[cardKey]) return deckAssets[cardKey];
     return CARDS_DB[cardKey].img;
 }
 

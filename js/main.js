@@ -7,7 +7,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 
 // IMPORTANDO OS NOVOS MODULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.22.4';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.24.35';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.26.2';
 import { initiateMatchmaking } from './matchmaking.js?v=2026.06.24.25';
 
 // --- VARIAVEIS GLOBAIS DE ESTADO ---
@@ -66,6 +66,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/profile_asset.webp', 'assets/img/barra_profile.webp', 'assets/img/avatar_moldura_madeira.png',
         'assets/img/bg_saguao.webp', 'assets/img/bg_saguao_cartas_teste.png', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
         'assets/img/card_selecao_cavaleiro.webp', 'assets/img/card_selecao_mago.webp',
+        'assets/img/card_selecao_arqueiro.webp',
         'assets/img/deck_verso_cavaleiro.webp', 'assets/img/deck_verso_mago.webp',
         'assets/img/card_verso_padrao.webp', 'assets/img/ui_mesa_deck.webp', 'assets/img/ui_area_xp.webp',
         'assets/img/carta_ataque_cavaleiro.webp', 'assets/img/carta_bloqueio_cavaleiro.webp',
@@ -73,6 +74,9 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_treinar_cavaleiro.webp', 'assets/img/carta_ataque_mago.webp',
         'assets/img/carta_bloqueio_mago.webp', 'assets/img/carta_descansar_mago.webp',
         'assets/img/carta_desarmar_mago.webp', 'assets/img/carta_treinar_mago.webp',
+        'assets/img/carta_ataque_arqueiro.webp', 'assets/img/carta_bloqueio_arqueiro.webp',
+        'assets/img/carta_descansar_arqueiro.webp', 'assets/img/carta_desarmar_arqueiro.webp',
+        'assets/img/carta_treinar_arqueiro.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp', 'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
         'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
         'assets/img/botao_jogar.webp', 'assets/img/botao_historico.webp', 'assets/img/botao_ranking.webp', 'assets/img/botao_loja.webp',
@@ -1361,6 +1365,7 @@ function startGameFlow() {
         monster.deckType = SHOP_ITEMS[monster.equippedItems?.deck]?.deckType || player.deckType || 'knight';
         baseDraw(monster, 6); baseDraw(player, 6);
     }
+    window.opponentDeck = monster.deckType || 'knight';
     turnCount = 1; playerHistory = [];
     resetMatchRewardGold();
     updateUI(); dealAllInitialCards();

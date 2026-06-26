@@ -1544,14 +1544,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-shop-panel .deck-product-art,
         .lobby-inventory-panel .deck-product-art {
-            left: 50% !important;
+            left: 0 !important;
             right: auto !important;
             bottom: 0 !important;
             width: 100% !important;
             height: 100% !important;
-            transform: translateX(-50%) !important;
+            transform: none !important;
             background-position: center bottom !important;
-            background-size: contain !important;
+            background-size: 100% auto !important;
         }
 
         .inventory-item .inventory-item-name {
@@ -3063,7 +3063,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         window.openLobbyShop = () => {
             window.playNavSound?.();
-            window.currentShopCategory = window.currentShopCategory || 'borders';
+            window.currentShopCategory = 'decks';
+            shopModal.querySelectorAll('[data-shop-category]').forEach((category) => {
+                category.classList.toggle('active', category.dataset.shopCategory === 'decks');
+            });
             window.renderLobbyShopItems?.();
             window.syncLobbyShopGold?.();
             window.refreshShopInventoryState?.();
@@ -3158,7 +3161,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         window.openInventory = () => {
-            window.currentInventoryCategory = 'borders';
+            window.currentInventoryCategory = 'decks';
+            inventoryModal.querySelectorAll('[data-inventory-category]').forEach((category) => {
+                category.classList.toggle('active', category.dataset.inventoryCategory === 'decks');
+            });
             window.selectedInventoryItem = null;
             window.renderInventoryItems?.();
             inventoryModal.classList.add('visible');
@@ -3204,7 +3210,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                         <img src="assets/img/card_selecao_mago.webp" alt="Deck Mago">
                     </button>
                     <button class="lobby-mode-deck" type="button" data-deck="archer" data-name="Precis\u00e3o natural, ritmo de ca\u00e7a" aria-label="Deck Arqueiro">
-                        <img src="assets/img/deck_arqueiro_loja.webp" alt="Deck Arqueiro">
+                        <img src="assets/img/card_selecao_arqueiro.webp" alt="Deck Arqueiro">
                     </button>
                 </div>
             </div>
@@ -3214,7 +3220,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             modeOverlay.classList.remove('visible');
             modeOverlay.classList.remove('mode-selected', 'selected-pve', 'selected-pvp', 'cinematic-focus', 'cinematic-pve', 'cinematic-pvp');
             modeOverlay.querySelectorAll('.lobby-mode-btn').forEach(button => button.classList.remove('selected'));
-            modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deck => deck.classList.remove('deck-selecting', 'deck-dimmed'));
+            modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deck => {
+                deck.classList.remove('deck-selecting', 'deck-dimmed');
+                deck.hidden = false;
+                deck.disabled = false;
+            });
             const flareLayer = modeOverlay.querySelector('.lobby-mode-flares');
             if(flareLayer) flareLayer.innerHTML = '';
             document.body.classList.remove('lobby-mode-choice-open');
@@ -3241,8 +3251,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deckButton => {
                 const item = Object.values(window.SHOP_ITEMS || {}).find(shopItem => shopItem.slot === 'deck' && shopItem.deckType === deckButton.dataset.deck);
                 const owned = !item || window.playerInventory?.includes(item.id);
+                deckButton.hidden = !owned;
                 deckButton.disabled = !owned;
-                deckButton.classList.toggle('deck-locked', !owned);
+                deckButton.classList.remove('deck-locked');
             });
             const flareLayer = modeOverlay.querySelector('.lobby-mode-flares');
             if(flareLayer) {
@@ -3278,10 +3289,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 event.stopPropagation();
                 const mode = modeOverlay.dataset.selectedMode;
                 const deckType = button.dataset.deck || 'knight';
-                if(button.disabled || button.classList.contains('deck-locked')) {
-                    window.openModal?.('DECK BLOQUEADO', 'Compre este deck na loja para jogar com ele.', ['OK']);
-                    return;
-                }
+                if(button.hidden || button.disabled) return;
                 if(!mode) return;
                 window.playBuppoSfx?.('sfx-deck-select');
                 modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deck => {
