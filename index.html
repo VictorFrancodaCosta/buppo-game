@@ -192,8 +192,12 @@
             <div class="end-content">
                 <h1 id="end-title" class="win-theme">VITÓRIA</h1>
                 <div class="end-btn-row">
-                    <button class="big-btn" onclick="this.blur(); window.playNavSound(); restartMatch()">JOGAR NOVAMENTE</button>
-                    <button class="big-btn secondary-btn" onclick="this.blur(); window.playNavSound(); transitionToLobby()">SAGUÃO</button>
+                    <button class="big-btn end-image-btn end-restart-btn" type="button" aria-label="Jogar novamente" onclick="this.blur(); window.playNavSound(); restartMatch()">
+                        <img src="assets/img/botaojogarnovamente.webp" alt="Jogar novamente">
+                    </button>
+                    <button class="big-btn secondary-btn end-image-btn end-lobby-btn" type="button" aria-label="Saguão" onclick="this.blur(); window.playNavSound(); transitionToLobby()">
+                        <img src="assets/img/botaosaguao.webp" alt="Saguão">
+                    </button>
                 </div>
             </div>
         </div>

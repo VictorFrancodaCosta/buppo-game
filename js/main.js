@@ -90,6 +90,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/botao_tutorial.webp', 'assets/img/botao_sair.webp', 'assets/img/botao_pvp.webp', 'assets/img/botao_pve.webp',
         'assets/img/btn_pvp_ranked.webp', 'assets/img/btn_pvp_ranked.webp?v=2',
         'assets/img/btn_pve_training.webp', 'assets/img/btn_pve_training.webp?v=2',
+        'assets/img/botaojogarnovamente.webp', 'assets/img/botaosaguao.webp',
         'assets/img/borda_cavaleiro_loja.webp', 'assets/img/borda_mago_loja.webp', 'assets/img/borda_arqueiro_loja.webp',
         'assets/img/borda_ladino_loja.webp', 'assets/img/borda_oraculo_loja.webp',
         'assets/img/janela_loja.webp?v=2026.06.24.19', 'assets/img/titulo_loja.webp?v=2026.06.24.19',
@@ -1738,7 +1739,7 @@ function checkEndGame(){
                 else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); }
                 else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); }
                 const secondaryBtn = document.querySelector('#end-screen .secondary-btn');
-                if(secondaryBtn) secondaryBtn.innerText = "SAIR PARA O SAGUÃO";
+                if(secondaryBtn) secondaryBtn.setAttribute('aria-label', 'Sair para o saguão');
                 if(window.currentMatchId && window.myRole === 'player1') {
                     updateDoc(doc(db, "matches", window.currentMatchId), { status: 'finished', player1Rematch: false, player2Rematch: false }).catch(() => {});
                 }
@@ -1747,7 +1748,7 @@ function checkEndGame(){
                 return;
             }
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
-            if(normalSecondaryBtn) normalSecondaryBtn.innerText = "SAGUÃO";
+            if(normalSecondaryBtn) normalSecondaryBtn.setAttribute('aria-label', 'Saguão');
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
             else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
             else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }

@@ -40,11 +40,41 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 .end-points-arrow.up::before { border-bottom: 18px solid #2ecc71; transform: translateY(-2px); }
 .end-points-arrow.down::before { border-top: 18px solid #ff7675; transform: translateY(2px); }
 @keyframes endGoldRewardPop { 0% { opacity: 0; transform: translateY(14px) scale(0.72); } 62% { opacity: 1; transform: translateY(-3px) scale(1.08); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-.end-btn-row { display: flex; gap: 20px; justify-content: center; }
+.end-btn-row { display: flex; gap: 20px; justify-content: center; align-items: center; }
 .big-btn { padding: 20px 50px; font-size: 24px; font-family: 'Russo One', sans-serif; background: #ffd700; color: #000; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4); transition: transform 0.2s, box-shadow 0.2s; text-transform: uppercase; }
 .big-btn:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 15px 35px rgba(255, 215, 0, 0.6); }
 .secondary-btn { background: transparent; border: 3px solid #fff; color: #fff; box-shadow: none; }
 .secondary-btn:hover { background: rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(255,255,255,0.4); color: #fff; }
+.end-image-btn {
+    width: min(31vw, 310px);
+    aspect-ratio: 4.2 / 1;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+    filter: drop-shadow(0 8px 0 rgba(53, 22, 6, 0.62)) drop-shadow(0 13px 18px rgba(0,0,0,0.48));
+    transition: transform 0.16s cubic-bezier(0.2, 1, 0.3, 1), filter 0.16s ease;
+}
+.end-image-btn img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}
+.end-image-btn:hover,
+.end-image-btn:focus-visible {
+    transform: translateY(-4px) scale(1.055);
+    box-shadow: none;
+    filter: drop-shadow(0 10px 0 rgba(53, 22, 6, 0.62)) drop-shadow(0 17px 20px rgba(0,0,0,0.52)) drop-shadow(0 0 18px rgba(255,215,0,0.36));
+    outline: none;
+}
+.end-image-btn:active {
+    transform: translateY(5px) scale(0.965);
+    filter: drop-shadow(0 3px 0 rgba(53, 22, 6, 0.68)) drop-shadow(0 7px 10px rgba(0,0,0,0.5));
+}
 
 /* DECK AREA */
 .deck-area { position: absolute; z-index: 30; width: 120px; height: 170px; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-direction: column; font-family: 'Russo One', sans-serif; color: #fff; font-size: 10px; background-image: var(--cardback-url); background-size: cover; background-position: center; border: 3px solid var(--wood-dark); box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
@@ -508,9 +538,17 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
         flex-basis: 30px;
     }
 
-    .big-btn {
+    .end-btn-row {
+        gap: 12px;
+    }
+
+    .big-btn:not(.end-image-btn) {
         padding: 12px 26px;
         font-size: 16px;
+    }
+
+    .end-image-btn {
+        width: min(42vw, 220px);
     }
 }
 
