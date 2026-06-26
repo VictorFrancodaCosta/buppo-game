@@ -543,13 +543,13 @@ const BORDER_REWARD_RULES = {
         mastery: { ATAQUE: 4 }
     },
     elven_forest_border: {
-        play: { DESCANSAR: 11 },
+        play: { DESCANSAR: 12 },
         mastery: { DESCANSAR: 14 }
     },
     rogue_gold_border: {
-        play: { DESARMAR: 15 },
-        disarmClash: 20,
-        mastery: { DESARMAR: 18 }
+        play: { DESARMAR: 12 },
+        disarmClash: 12,
+        mastery: { DESARMAR: 12 }
     },
     oracle_border: {
         play: { TREINAR: 4 },
@@ -569,13 +569,13 @@ const XP_AREA_REWARD_RULES = {
         mastery: { ATAQUE: 2 }
     },
     xp_bosque_sentinela: {
-        play: { DESCANSAR: 6 },
-        mastery: { DESCANSAR: 7 }
+        play: { DESCANSAR: 8 },
+        mastery: { DESCANSAR: 9 }
     },
     xp_rota_saque: {
-        play: { DESARMAR: 7 },
-        disarmClash: 9,
-        mastery: { DESARMAR: 9 }
+        play: { DESARMAR: 8 },
+        disarmClash: 8,
+        mastery: { DESARMAR: 8 }
     },
     xp_altar_visao: {
         play: { TREINAR: 2 },
@@ -595,13 +595,13 @@ const DECK_REWARD_RULES = {
         mastery: { ATAQUE: 1 }
     },
     archer: {
-        play: { DESCANSAR: 3 },
-        mastery: { DESCANSAR: 5 }
+        play: { DESCANSAR: 4 },
+        mastery: { DESCANSAR: 9 }
     },
     rogue: {
         play: { DESARMAR: 4 },
-        disarmClash: 5,
-        mastery: { DESARMAR: 7 }
+        disarmClash: 4,
+        mastery: { DESARMAR: 4 }
     },
     oracle: {
         play: { TREINAR: 1 },

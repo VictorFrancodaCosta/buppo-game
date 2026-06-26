@@ -2871,13 +2871,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 'Jogar Ataque logo ap\u00f3s j\u00e1 ter jogado Ataque gera 6 {coin}.'
             ],
             elven_forest_border: [
-                'Jogar Restaurar gera 11 {coin}.',
+                'Jogar Restaurar gera 12 {coin}.',
                 'Realizar uma <strong>Maestria em Restaurar</strong> gera 14 {coin}.'
             ],
             rogue_gold_border: [
-                'Jogar Desarmar gera 15 {coin}.',
-                'Realizar uma <strong>Maestria em Desarmar</strong> gera 18 {coin}.',
-                'Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera 20 {coin}.'
+                'Jogar Desarmar gera 12 {coin}.',
+                'Realizar uma <strong>Maestria em Desarmar</strong> gera 12 {coin}.',
+                'Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera 12 {coin}.'
             ],
             oracle_border: [
                 'Jogar Treinar gera 4 {coin}.',
@@ -2894,13 +2894,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 'Jogar Ataque logo ap\u00f3s j\u00e1 ter jogado Ataque gera 2 {coin}.'
             ],
             xp_bosque_sentinela: [
-                'Jogar Restaurar gera 6 {coin}.',
-                'Realizar uma <strong>Maestria em Restaurar</strong> gera 7 {coin}.'
+                'Jogar Restaurar gera 8 {coin}.',
+                'Realizar uma <strong>Maestria em Restaurar</strong> gera 9 {coin}.'
             ],
             xp_rota_saque: [
-                'Jogar Desarmar gera 7 {coin}.',
-                'Realizar uma <strong>Maestria em Desarmar</strong> gera 9 {coin}.',
-                'Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera 9 {coin}.'
+                'Jogar Desarmar gera 8 {coin}.',
+                'Realizar uma <strong>Maestria em Desarmar</strong> gera 8 {coin}.',
+                'Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera 8 {coin}.'
             ],
             xp_altar_visao: [
                 'Jogar Treinar gera 2 {coin}.',
@@ -2917,13 +2917,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 'Jogar Ataque logo ap\u00f3s j\u00e1 ter jogado Ataque gera 1 {coin}.'
             ],
             deck_archer: [
-                'Jogar Restaurar gera 3 {coin}.',
-                'Realizar uma <strong>Maestria em Restaurar</strong> gera 5 {coin}.'
+                'Jogar Restaurar gera 4 {coin}.',
+                'Realizar uma <strong>Maestria em Restaurar</strong> gera 9 {coin}.'
             ],
             deck_rogue: [
                 'Jogar Desarmar gera 4 {coin}.',
-                'Realizar uma <strong>Maestria em Desarmar</strong> gera 7 {coin}.',
-                'Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera 5 {coin}.'
+                'Realizar uma <strong>Maestria em Desarmar</strong> gera 4 {coin}.',
+                'Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera 4 {coin}.'
             ],
             deck_oracle: [
                 'Jogar Treinar gera 1 {coin}.',
