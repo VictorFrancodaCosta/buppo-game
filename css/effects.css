@@ -123,7 +123,7 @@ body.shake-screen-hard.critical-impact-negative #game-background {
 #block-overlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     pointer-events: none; z-index: 9000;
-    background: radial-gradient(circle, transparent 40%, rgba(52, 152, 219, 0.8) 90%);
+    background: radial-gradient(circle, transparent 40%, var(--block-effect-overlay, rgba(52, 152, 219, 0.8)) 90%);
     opacity: 0;
     mix-blend-mode: screen; 
 }
@@ -137,7 +137,7 @@ body.shake-screen-hard.critical-impact-negative #game-background {
     width: 0px; height: 0px;
     border-radius: 50%; background: transparent;
     border: 30px solid rgba(255, 255, 255, 0.9); 
-    box-shadow: 0 0 30px #3498db, inset 0 0 20px #3498db;
+    box-shadow: 0 0 30px var(--block-effect-color, #3498db), inset 0 0 20px var(--block-effect-color, #3498db);
     transform: translate(-50%, -50%);
     z-index: 9001; opacity: 0; pointer-events: none;
 }
@@ -375,10 +375,10 @@ body.shake-screen-hard.critical-impact-negative #game-background {
     transform: translate(-50%, -50%) scale(0.5);
     z-index: 12400;
     pointer-events: none;
-    border: 4px solid #00cec9;
+    border: 4px solid var(--block-effect-color, #00cec9);
     border-radius: 48% 48% 52% 52% / 24% 24% 70% 70%;
-    background: radial-gradient(circle at 50% 34%, rgba(255,255,255,0.5), rgba(0,206,201,0.22) 38%, rgba(0,0,0,0) 70%);
-    box-shadow: 0 0 24px #00cec9, inset 0 0 22px rgba(0,206,201,0.65);
+    background: radial-gradient(circle at 50% 34%, rgba(255,255,255,0.5), var(--block-effect-soft, rgba(0,206,201,0.22)) 38%, rgba(0,0,0,0) 70%);
+    box-shadow: 0 0 24px var(--block-effect-color, #00cec9), inset 0 0 22px var(--block-effect-inner, rgba(0,206,201,0.65));
     animation: blockShieldRise 0.7s ease-out forwards;
 }
 .block-ripple-fx {
@@ -388,9 +388,9 @@ body.shake-screen-hard.critical-impact-negative #game-background {
     transform: translate(-50%, -50%) scale(0.4);
     z-index: 12390;
     pointer-events: none;
-    border: 4px solid rgba(0,206,201,0.85);
+    border: 4px solid var(--block-effect-ring, rgba(0,206,201,0.85));
     border-radius: 50%;
-    box-shadow: 0 0 22px #00cec9, inset 0 0 18px rgba(0,206,201,0.35);
+    box-shadow: 0 0 22px var(--block-effect-color, #00cec9), inset 0 0 18px var(--block-effect-soft, rgba(0,206,201,0.35));
     animation: blockRippleSmall 0.62s ease-out forwards;
 }
 .block-shield-fx::after {

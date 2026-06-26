@@ -173,6 +173,26 @@ function getBlockSfxForDeck(deckType = 'knight') {
     return 'sfx-block';
 }
 
+function getBlockEffectPalette(deckType = 'knight') {
+    const palettes = {
+        knight: { color: '#3498db', overlay: 'rgba(52, 152, 219, 0.82)', soft: 'rgba(52, 152, 219, 0.25)', inner: 'rgba(52, 152, 219, 0.68)', ring: 'rgba(52, 152, 219, 0.88)' },
+        mage: { color: '#ff3b30', overlay: 'rgba(255, 59, 48, 0.78)', soft: 'rgba(255, 59, 48, 0.25)', inner: 'rgba(255, 59, 48, 0.66)', ring: 'rgba(255, 59, 48, 0.86)' },
+        archer: { color: '#36d46b', overlay: 'rgba(54, 212, 107, 0.76)', soft: 'rgba(54, 212, 107, 0.24)', inner: 'rgba(54, 212, 107, 0.64)', ring: 'rgba(54, 212, 107, 0.86)' },
+        rogue: { color: '#ffd22e', overlay: 'rgba(255, 210, 46, 0.74)', soft: 'rgba(255, 210, 46, 0.25)', inner: 'rgba(255, 210, 46, 0.64)', ring: 'rgba(255, 210, 46, 0.86)' },
+        oracle: { color: '#a855f7', overlay: 'rgba(168, 85, 247, 0.78)', soft: 'rgba(168, 85, 247, 0.25)', inner: 'rgba(168, 85, 247, 0.66)', ring: 'rgba(168, 85, 247, 0.86)' }
+    };
+    return palettes[deckType] || palettes.knight;
+}
+
+function applyBlockEffectPalette(deckType = 'knight') {
+    const palette = getBlockEffectPalette(deckType);
+    document.documentElement.style.setProperty('--block-effect-color', palette.color);
+    document.documentElement.style.setProperty('--block-effect-overlay', palette.overlay);
+    document.documentElement.style.setProperty('--block-effect-soft', palette.soft);
+    document.documentElement.style.setProperty('--block-effect-inner', palette.inner);
+    document.documentElement.style.setProperty('--block-effect-ring', palette.ring);
+}
+
 export function triggerDamageEffect(isPlayer, playAudio = true, attackerDeckType = null) {
     try {
         if(playAudio) playSound(getDamageSfxForDeck(attackerDeckType || 'knight'));
@@ -197,7 +217,9 @@ export function triggerHealEffect(isPlayer) {
 
 export function triggerBlockEffect(isPlayer, blockerDeckType = null) {
     try {
-        playSound(getBlockSfxForDeck(blockerDeckType || 'knight'));
+        const deckType = blockerDeckType || 'knight';
+        applyBlockEffectPalette(deckType);
+        playSound(getBlockSfxForDeck(deckType));
         if(window.triggerBlockEffect) window.triggerBlockEffect();
         let ov = document.getElementById('block-overlay');
         if(ov) {
@@ -293,7 +315,8 @@ export function triggerAttackSlash(targetIsPlayer) {
     setTimeout(() => spark.remove(), 520);
 }
 
-export function triggerBlockShield(blockerIsPlayer, anchor = 'center') {
+export function triggerBlockShield(blockerIsPlayer, anchor = 'center', blockerDeckType = null) {
+    applyBlockEffectPalette(blockerDeckType || 'knight');
     let midX, midY;
     if(anchor === 'cluster') {
         const target = centerOfElement(blockerIsPlayer ? 'p-stats-cluster' : 'm-stats-cluster');

@@ -2703,8 +2703,16 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
     const phaseResult = () => {
         if(pAct === 'TREINAR') triggerTrainDeckGlow(true);
         if(mAct === 'TREINAR') triggerTrainDeckGlow(false);
-        if(pBlocks) { triggerBlockShield(true); triggerBlockEffect(true, player.deckType || window.currentDeck || 'knight'); }
-        else if(mBlocks) { triggerBlockShield(false); triggerBlockEffect(false, monster.deckType || window.opponentDeck || 'knight'); }
+        if(pBlocks) {
+            const blockerDeck = player.deckType || window.currentDeck || 'knight';
+            triggerBlockShield(true, 'center', blockerDeck);
+            triggerBlockEffect(true, blockerDeck);
+        }
+        else if(mBlocks) {
+            const blockerDeck = monster.deckType || window.opponentDeck || 'knight';
+            triggerBlockShield(false, 'center', blockerDeck);
+            triggerBlockEffect(false, blockerDeck);
+        }
         if(pBlocks) awardBlockRewardGold(player);
         else if(mBlocks) awardBlockRewardGold(monster);
         awardConsecutiveAttackRewardGold(player, pAct);
