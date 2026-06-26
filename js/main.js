@@ -513,6 +513,7 @@ const BORDER_REWARD_RULES = {
     },
     mage_fire_border: {
         attackEffective: 6,
+        consecutiveAttack: 6,
         mastery: { ATAQUE: 4 }
     },
     elven_forest_border: {
@@ -537,6 +538,7 @@ const XP_AREA_REWARD_RULES = {
     },
     xp_circulo_arcano: {
         attackEffective: 2,
+        consecutiveAttack: 2,
         mastery: { ATAQUE: 2 }
     },
     xp_bosque_sentinela: {
@@ -561,6 +563,7 @@ const DECK_REWARD_RULES = {
     },
     mage: {
         attackEffective: 1,
+        consecutiveAttack: 1,
         mastery: { ATAQUE: 1 }
     },
     archer: {
@@ -1590,6 +1593,7 @@ function syncUnitFromServer(u, data, showPlayerDamage = false, syncXp = true) {
     if(data.disabled !== undefined) u.disabled = data.disabled;
     if(data.equippedItems !== undefined) u.equippedItems = { ...(data.equippedItems || {}) };
     if(data.deckType !== undefined) u.deckType = data.deckType || 'knight';
+    if(data.lastAction !== undefined) u.lastAction = data.lastAction || null;
     updateUI();
     if (showPlayerDamage) checkEndGame();
 }
@@ -1605,6 +1609,7 @@ function serializeUnitState(u) {
         bonusAtk: u.bonusAtk || 0,
         bonusBlock: u.bonusBlock || 0,
         deckType: u.deckType || 'knight',
+        lastAction: u.lastAction || null,
         equippedItems: { ...(u.equippedItems || {}) }
     };
 }
@@ -1626,8 +1631,8 @@ async function resetFriendlyMatchForRematch(matchData) {
     p1Hand.sort();
     p2Hand.sort();
     await updateDoc(doc(db, "matches", window.currentMatchId), {
-        player1: { ...matchData.player1, hp: 6, maxHp: 6, lvl: 1, hand: p1Hand, deck: p1DeckCards, xp: [], disabled: null, bonusAtk: 0, bonusBlock: 0 },
-        player2: { ...matchData.player2, hp: 6, maxHp: 6, lvl: 1, hand: p2Hand, deck: p2DeckCards, xp: [], disabled: null, bonusAtk: 0, bonusBlock: 0 },
+        player1: { ...matchData.player1, hp: 6, maxHp: 6, lvl: 1, hand: p1Hand, deck: p1DeckCards, xp: [], disabled: null, bonusAtk: 0, bonusBlock: 0, lastAction: null },
+        player2: { ...matchData.player2, hp: 6, maxHp: 6, lvl: 1, hand: p2Hand, deck: p2DeckCards, xp: [], disabled: null, bonusAtk: 0, bonusBlock: 0, lastAction: null },
         p1Move: null,
         p2Move: null,
         p1Disarm: null,
@@ -1725,6 +1730,7 @@ function resetMatchRewardGold() {
 
 const MATCH_REWARD_LABELS = {
     EFFECTIVE_ATTACK: 'ATAQUE EFETIVO',
+    CONSECUTIVE_ATTACK: 'ATAQUE EM SEQUENCIA',
     LEVEL_UP: 'MAIS FORTE',
     PERFECT_DEFENSE: 'DEFESA PERFEITA',
     PLAY_BLOCK: 'BLOQUEIO',
@@ -1776,6 +1782,12 @@ function awardAttackRewardGold(u, damage) {
     if(damage <= 0) return;
     const amount = sumRewardRules(u, rules => rules?.attackEffective);
     if(amount > 0) awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.EFFECTIVE_ATTACK);
+}
+
+function awardConsecutiveAttackRewardGold(u, cardKey) {
+    if(cardKey !== 'ATAQUE' || u?.lastAction !== 'ATAQUE') return;
+    const amount = sumRewardRules(u, rules => rules?.consecutiveAttack);
+    if(amount > 0) awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.CONSECUTIVE_ATTACK);
 }
 
 function awardBlockRewardGold(u) {
@@ -2632,6 +2644,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         else if(mBlocks) { triggerBlockShield(false); triggerBlockEffect(false); }
         if(pBlocks) awardBlockRewardGold(player);
         else if(mBlocks) awardBlockRewardGold(monster);
+        awardConsecutiveAttackRewardGold(player, pAct);
+        awardConsecutiveAttackRewardGold(monster, mAct);
         if(mAct === 'DESARMAR') awardBorderPlayRewardGold(monster, 'DESARMAR');
         if(pAct === 'DESARMAR') awardBorderPlayRewardGold(player, 'DESARMAR');
         if(disarmClash) showCenterText("ANULADO", "#aaa");
@@ -2693,6 +2707,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         if(!mDead && mAct === 'TREINAR') { awardBorderPlayRewardGold(monster, 'TREINAR'); handleExtraXP(monster); }
         if(!pDead && pAct === 'ATAQUE' && mAct === 'DESCANSAR') handleExtraXP(player);
         if(!mDead && mAct === 'ATAQUE' && pAct === 'DESCANSAR') handleExtraXP(monster);
+        player.lastAction = pAct;
+        monster.lastAction = mAct;
 
         setTimeout(() => phaseXP(pDead, mDead), 520);
     };

@@ -2210,7 +2210,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .lobby-mode-deck {
             position: relative !important;
-            width: min(23vw, 375px) !important;
+            width: min(17vw, 285px) !important;
             border: 0 !important;
             padding: 0 !important;
             background: transparent !important;
@@ -2501,7 +2501,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-mode-deck {
-                width: min(40vw, 230px) !important;
+                width: min(32vw, 190px) !important;
             }
 
             .lobby-mode-history {
@@ -2865,7 +2865,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             ],
             mage_fire_border: [
                 'Seus Ataques efetivos geram 6 {coin}.',
-                'Realizar uma <strong>Maestria em Ataque</strong> gera 4 {coin}.'
+                'Realizar uma <strong>Maestria em Ataque</strong> gera 4 {coin}.',
+                'Jogar Ataque logo ap\u00f3s j\u00e1 ter jogado Ataque gera 6 {coin}.'
             ],
             elven_forest_border: [
                 'Jogar Restaurar gera 11 {coin}.',
@@ -2886,7 +2887,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             ],
             xp_circulo_arcano: [
                 'Seus Ataques efetivos geram 2 {coin}.',
-                'Realizar uma <strong>Maestria em Ataque</strong> gera 2 {coin}.'
+                'Realizar uma <strong>Maestria em Ataque</strong> gera 2 {coin}.',
+                'Jogar Ataque logo ap\u00f3s j\u00e1 ter jogado Ataque gera 2 {coin}.'
             ],
             xp_bosque_sentinela: [
                 'Jogar Restaurar gera 6 {coin}.',
@@ -2907,7 +2909,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             ],
             deck_mage: [
                 'Seus Ataques efetivos geram 1 {coin}.',
-                'Realizar uma <strong>Maestria em Ataque</strong> gera 1 {coin}.'
+                'Realizar uma <strong>Maestria em Ataque</strong> gera 1 {coin}.',
+                'Jogar Ataque logo ap\u00f3s j\u00e1 ter jogado Ataque gera 1 {coin}.'
             ],
             deck_archer: [
                 'Jogar Restaurar gera 3 {coin}.',

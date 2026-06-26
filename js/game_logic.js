@@ -49,6 +49,7 @@ export function resetUnit(u, predefinedDeck = null, role = null) {
     u.disabled = null; 
     u.bonusBlock = 0; 
     u.bonusAtk = 0; 
+    u.lastAction = null;
 }
 
 export function drawCardLogic(u, qty) {
