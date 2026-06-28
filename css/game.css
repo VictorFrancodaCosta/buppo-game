@@ -4,8 +4,14 @@
 #game-background::after { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: 0; mix-blend-mode: screen; transition: opacity 0.6s ease, background 0.6s ease; animation: tableLivingLight 5.5s ease-in-out infinite; }
 body.theme-cavaleiro #game-background::after { opacity: 0.3; background: radial-gradient(circle at 50% 49%, rgba(255, 215, 0, 0.18), transparent 28%), radial-gradient(circle at 58% 41%, rgba(255, 116, 41, 0.11), transparent 18%), linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.07) 48%, transparent 60%); }
 body.theme-mago #game-background::after { opacity: 0.34; background: radial-gradient(circle at 50% 48%, rgba(162, 155, 254, 0.22), transparent 30%), radial-gradient(circle at 58% 36%, rgba(0,206,201,0.15), transparent 22%), radial-gradient(circle at 43% 58%, rgba(85, 239, 196, 0.08), transparent 18%); }
+body.theme-arqueiro #game-background::after { opacity: 0.28; background: radial-gradient(circle at 48% 48%, rgba(118, 255, 126, 0.15), transparent 29%), radial-gradient(circle at 58% 39%, rgba(255, 210, 90, 0.1), transparent 20%), linear-gradient(115deg, transparent 36%, rgba(255,255,255,0.055) 49%, transparent 61%); }
+body.theme-ladino #game-background::after { opacity: 0.3; background: radial-gradient(circle at 50% 49%, rgba(255, 226, 92, 0.16), transparent 29%), radial-gradient(circle at 42% 58%, rgba(255, 91, 72, 0.08), transparent 18%), linear-gradient(115deg, transparent 36%, rgba(255,255,255,0.05) 49%, transparent 61%); }
+body.theme-oraculo #game-background::after { opacity: 0.34; background: radial-gradient(circle at 47% 47%, rgba(191, 91, 255, 0.22), transparent 30%), radial-gradient(circle at 58% 37%, rgba(255, 145, 255, 0.12), transparent 21%), radial-gradient(circle at 42% 57%, rgba(91, 195, 255, 0.08), transparent 18%); }
 body.theme-mago #game-background, #game-background.theme-mago { background-image: var(--table-mago) !important; }
 body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { background-image: var(--table-cavaleiro) !important; }
+body.theme-arqueiro #game-background, #game-background.theme-arqueiro { background-image: var(--table-arqueiro) !important; }
+body.theme-ladino #game-background, #game-background.theme-ladino { background-image: var(--table-ladino) !important; }
+body.theme-oraculo #game-background, #game-background.theme-oraculo { background-image: var(--table-oraculo) !important; }
 #game-background.lobby-mode { background-image: var(--lobby-bg-url) !important; filter: blur(3px); }
 
 #ambient-particles { position: fixed; inset: 0; z-index: -2; pointer-events: none; overflow: hidden; }
@@ -15,6 +21,12 @@ body.theme-cavaleiro #game-background, #game-background.theme-cavaleiro { backgr
 body.theme-cavaleiro .ember.large { background: rgba(255,116,41,0.42); box-shadow: 0 0 12px rgba(255,116,41,0.52); }
 body.theme-mago .ember { background: rgba(162,155,254,0.5); box-shadow: 0 0 12px rgba(162,155,254,0.64); }
 body.theme-mago .ember.large { background: rgba(0,206,201,0.44); box-shadow: 0 0 15px rgba(0,206,201,0.62); }
+body.theme-arqueiro .ember { background: rgba(118,255,126,0.42); box-shadow: 0 0 12px rgba(118,255,126,0.52); }
+body.theme-arqueiro .ember.large { background: rgba(255,210,90,0.38); box-shadow: 0 0 14px rgba(255,210,90,0.48); }
+body.theme-ladino .ember { background: rgba(255,226,92,0.46); box-shadow: 0 0 12px rgba(255,226,92,0.56); }
+body.theme-ladino .ember.large { background: rgba(255,91,72,0.36); box-shadow: 0 0 14px rgba(255,91,72,0.46); }
+body.theme-oraculo .ember { background: rgba(191,91,255,0.48); box-shadow: 0 0 13px rgba(191,91,255,0.62); }
+body.theme-oraculo .ember.large { background: rgba(91,195,255,0.38); box-shadow: 0 0 15px rgba(91,195,255,0.5); }
 body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-duration: 2.2s; }
 @keyframes tableLivingLight { 0%, 100% { filter: brightness(1); transform: scale(1); } 50% { filter: brightness(1.12); transform: scale(1.01); } }
 @keyframes tableDustFloat { 0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.5); } 15% { opacity: 0.55; } 80% { opacity: 0.35; } 100% { opacity: 0; transform: translate3d(var(--mx), -105vh, 0) scale(1.2); } }

@@ -60,9 +60,19 @@ window.currentLobbyRank = null;
 window.currentLobbyScore = 0;
 window.initialPreloadComplete = false;
 
+const DECK_THEME_CLASSES = ['theme-cavaleiro', 'theme-mago', 'theme-arqueiro', 'theme-ladino', 'theme-oraculo'];
+const DECK_THEME_BY_TYPE = {
+    knight: 'theme-cavaleiro',
+    mage: 'theme-mago',
+    archer: 'theme-arqueiro',
+    rogue: 'theme-ladino',
+    oracle: 'theme-oraculo'
+};
+
 const ASSETS_TO_LOAD = {
     images: [
         'assets/img/logo_buppo.webp', 'assets/img/mesa_cavaleiro.webp', 'assets/img/mesa_mago.webp',
+        'assets/img/mesa_arqueiro.webp', 'assets/img/mesa_ladino.webp', 'assets/img/mesa_oraculo.webp',
         'assets/img/profile_asset.webp', 'assets/img/barra_profile.webp', 'assets/img/avatar_moldura_madeira.png',
         'assets/img/bg_saguao.webp', 'assets/img/bg_saguao_cartas_teste.png', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
         'assets/img/card_selecao_cavaleiro.webp', 'assets/img/card_selecao_mago.webp',
@@ -166,14 +176,13 @@ window.cleanupMatchState = function() {
     updatePvPReadyIndicator(false, false);
     
     // LIMPEZA DA MESA (GARANTE QUE O TEMA DO DECK SEJA REMOVIDO)
-    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
+    document.body.classList.remove(...DECK_THEME_CLASSES);
 }
 
 window.applyDeckTheme = function(deckType = window.currentDeck) {
     window.currentDeck = deckType || 'knight';
-    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
-    if (window.currentDeck === 'mage') document.body.classList.add('theme-mago');
-    else document.body.classList.add('theme-cavaleiro');
+    document.body.classList.remove(...DECK_THEME_CLASSES);
+    document.body.classList.add(DECK_THEME_BY_TYPE[window.currentDeck] || DECK_THEME_BY_TYPE.knight);
 }
 
 window.selectDeck = async function(deckType) {
@@ -301,14 +310,14 @@ window.transitionToLobby = function(skipAnim = false) {
 window.goToLobby = async function(isAutoLogin = false) {
     if(!window.currentUser) { 
         window.showScreen('start-screen'); 
-        document.body.classList.remove('theme-cavaleiro', 'theme-mago');
+        document.body.classList.remove(...DECK_THEME_CLASSES);
         MusicController.stopCurrent();
         return; 
     }
     window.cleanupMatchState(); window.isProcessing = false;
     
     // FORCA A REMOCAO DAS MESAS DOS DECKS
-    document.body.classList.remove('theme-cavaleiro', 'theme-mago');
+    document.body.classList.remove(...DECK_THEME_CLASSES);
     
     let bg = document.getElementById('game-background'); if(bg) bg.classList.add('lobby-mode');
     createLobbyFlares();
@@ -2192,7 +2201,7 @@ onAuthStateChanged(auth, (user) => {
         const bg = document.getElementById('game-background'); if(bg) bg.classList.remove('lobby-mode');
         
         // FORCA A REMOCAO DOS TEMAS AO DESLOGAR
-        document.body.classList.remove('theme-cavaleiro', 'theme-mago');
+        document.body.classList.remove(...DECK_THEME_CLASSES);
         
         window.musicEnabled = false;
         window.sfxEnabled = false;
