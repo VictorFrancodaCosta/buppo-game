@@ -94,7 +94,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_ataque_oraculo.webp', 'assets/img/carta_bloqueio_oraculo.webp',
         'assets/img/carta_descansar_oraculo.webp', 'assets/img/carta_desarmar_oraculo.webp',
         'assets/img/carta_treinar_oraculo.webp',
-        'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp', 'assets/img/cluster_cavaleiro.webp',
+        'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp', 'assets/img/cluster_cavaleiro.webp', 'assets/img/cluster_cavaleiro_hudfit.webp',
         'assets/img/cluster_mago.webp', 'assets/img/cluster_arqueiro.webp', 'assets/img/cluster_ladino.webp',
         'assets/img/cluster_oraculo.webp', 'assets/img/cluster_cavaleiro_loja.webp', 'assets/img/cluster_mago_loja.webp',
         'assets/img/cluster_arqueiro_loja.webp', 'assets/img/cluster_ladino_loja.webp', 'assets/img/cluster_oraculo_loja.webp',
@@ -558,7 +558,7 @@ const SHOP_ITEMS = {
         name: 'CLUSTER - GUARDA REAL',
         slot: 'cluster',
         price: 1500,
-        asset: 'assets/img/cluster_cavaleiro.webp',
+        asset: 'assets/img/cluster_cavaleiro_hudfit.webp',
         shopAsset: 'assets/img/cluster_cavaleiro_loja.webp'
     },
     cluster_mage: {
