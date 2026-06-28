@@ -1610,8 +1610,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             position: absolute !important;
             left: 50% !important;
             right: auto !important;
-            bottom: calc(50% - min(350px, 41vh) - 70px) !important;
+            bottom: calc(50% - min(350px, 41vh) - 112px) !important;
             transform: translateX(-50%) !important;
+            z-index: 4 !important;
             width: clamp(150px, 13vw, 218px) !important;
             aspect-ratio: 1644 / 537 !important;
             min-width: 0 !important;
