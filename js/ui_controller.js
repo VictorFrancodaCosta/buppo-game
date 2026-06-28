@@ -499,7 +499,8 @@ export function triggerClusterExplosion(isPlayer, playAudio = true) {
     cluster.dataset.exploded = '1';
     if(playAudio) playSound('sfx-clusterbreak');
     const rect = cluster.getBoundingClientRect();
-    const source = isPlayer ? "url('assets/img/cluster_jogador.webp')" : "url('assets/img/cluster_inimigo.webp')";
+    const currentArt = getComputedStyle(cluster).getPropertyValue('--cluster-art-url').trim();
+    const source = currentArt || (isPlayer ? "url('assets/img/cluster_jogador.webp')" : "url('assets/img/cluster_inimigo.webp')");
     const cols = 4;
     const rows = 3;
 

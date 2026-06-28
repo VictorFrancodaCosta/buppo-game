@@ -1555,6 +1555,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background-size: 100% auto !important;
         }
 
+        .lobby-shop-panel .cluster-product-art,
+        .lobby-inventory-panel .cluster-product-art {
+            left: 50% !important;
+            right: auto !important;
+            bottom: 13% !important;
+            width: 112% !important;
+            height: 64% !important;
+            transform: translateX(-50%) !important;
+            background-position: center !important;
+            background-size: contain !important;
+        }
+
         .inventory-item .inventory-item-name {
             position: absolute !important;
             left: 8px !important;
@@ -2873,10 +2885,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             { id: 'xp_rota_saque', type: 'xpArea', name: '\u00c1REA DE XP - ROTA DO SAQUE', displayName: 'ROTA DO SAQUE', asset: 'assets/img/ui_area_xprotadosaque.webp', shopAsset: 'assets/img/ax_ladino_loja.webp' },
             { id: 'xp_altar_visao', type: 'xpArea', name: '\u00c1REA DE XP - ALTAR DA VIS\u00c3O', displayName: 'ALTAR DA VIS\u00c3O', asset: 'assets/img/ui_area_xpaltardavisao.webp', shopAsset: 'assets/img/ax_oraculo_loja.webp' }
         ];
+        const lobbyClusterItems = [
+            { id: 'cluster_knight', type: 'cluster', name: 'CLUSTER - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/cluster_cavaleiro.webp', shopAsset: 'assets/img/cluster_cavaleiro_loja.webp' },
+            { id: 'cluster_mage', type: 'cluster', name: 'CLUSTER - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/cluster_mago.webp', shopAsset: 'assets/img/cluster_mago_loja.webp' },
+            { id: 'cluster_archer', type: 'cluster', name: 'CLUSTER - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/cluster_arqueiro.webp', shopAsset: 'assets/img/cluster_arqueiro_loja.webp' },
+            { id: 'cluster_rogue', type: 'cluster', name: 'CLUSTER - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/cluster_ladino.webp', shopAsset: 'assets/img/cluster_ladino_loja.webp' },
+            { id: 'cluster_oracle', type: 'cluster', name: 'CLUSTER - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/cluster_oraculo.webp', shopAsset: 'assets/img/cluster_oraculo_loja.webp' }
+        ];
         const lobbyShopItemsByCategory = {
             decks: lobbyDeckItems,
             borders: lobbyCardBorderItems,
-            clusters: [],
+            clusters: lobbyClusterItems,
             xpAreas: lobbyXpAreaItems,
             pets: []
         };
@@ -2950,12 +2969,35 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 'Jogar Treinar gera 1 {coin}.',
                 'Subir de nível gera 2 {coin}.',
                 'Realizar uma <strong>Maestria em Treinar</strong> gera 4 {coin}.'
+            ],
+            cluster_knight: [
+                'Seus Bloqueios efetivos geram 8 {coin}.',
+                'Realizar uma <strong>Maestria em Bloqueio</strong> gera 8 {coin}.'
+            ],
+            cluster_mage: [
+                'Seus Ataques efetivos geram 6 {coin}.',
+                'Realizar uma <strong>Maestria em Ataque</strong> gera 4 {coin}.',
+                'Jogar Ataque logo ap\u00f3s j\u00e1 ter jogado Ataque gera 4 {coin}.'
+            ],
+            cluster_archer: [
+                'Jogar Restaurar gera 16 {coin}.',
+                'Realizar uma <strong>Maestria em Restaurar</strong> gera 18 {coin}.'
+            ],
+            cluster_rogue: [
+                'Jogar Desarmar gera 17 {coin}.',
+                'Realizar uma <strong>Maestria em Desarmar</strong> gera 20 {coin}.',
+                'Jogar Desarmar ao mesmo tempo que o oponente tamb\u00e9m jogar Desarmar gera 17 {coin}.'
+            ],
+            cluster_oracle: [
+                'Jogar Treinar gera 6 {coin}.',
+                'Subir de n\u00edvel gera 6 {coin}.',
+                'Realizar uma <strong>Maestria em Treinar</strong> gera 18 {coin}.'
             ]
         };
         const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';
 
-        const getItemDisplayName = (item) => item.displayName || item.name.replace(/^(BORDA|\u00c1REA DE XP|DECK)\s*-\s*/i, '');
-        const getShopItemById = (itemId) => [...lobbyDeckItems, ...lobbyCardBorderItems, ...lobbyXpAreaItems].find(item => item.id === itemId) || null;
+        const getItemDisplayName = (item) => item.displayName || item.name.replace(/^(BORDA|\u00c1REA DE XP|DECK|CLUSTER)\s*-\s*/i, '');
+        const getShopItemById = (itemId) => [...lobbyDeckItems, ...lobbyCardBorderItems, ...lobbyXpAreaItems, ...lobbyClusterItems].find(item => item.id === itemId) || null;
         const ensureShopInfoTooltip = () => {
             let tooltip = document.getElementById('shop-info-tooltip');
             if (!tooltip) {
@@ -2998,7 +3040,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
         const renderBorderPreview = (item, location = 'inventory') => {
             const asset = location === 'shop' ? (item.shopAsset || item.asset) : item.asset;
-            const artClass = item.type === 'deck' ? 'metallic-border-art deck-product-art' : (item.type === 'xpArea' || item.id.startsWith('xp_') ? 'metallic-border-art xp-area-product-art' : 'metallic-border-art');
+            const artClass = item.type === 'deck' ? 'metallic-border-art deck-product-art' : (item.type === 'cluster' ? 'metallic-border-art cluster-product-art' : (item.type === 'xpArea' || item.id.startsWith('xp_') ? 'metallic-border-art xp-area-product-art' : 'metallic-border-art'));
             return `<div class="${artClass}" style="background-image: url('${asset}')" aria-label="Arte de ${item.name}"></div>`;
         };
         const renderShopProducts = (category = 'borders') => {
@@ -3064,7 +3106,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             if (!grid) return;
             document.getElementById('shop-info-tooltip')?.classList.remove('visible');
             grid.innerHTML = renderShopProducts(window.currentShopCategory || 'borders');
-            if (['decks', 'borders', 'xpAreas'].includes(window.currentShopCategory || 'borders')) {
+            if (['decks', 'borders', 'xpAreas', 'clusters'].includes(window.currentShopCategory || 'borders')) {
                 bindBorderInfoTooltips(grid, '[data-shop-item]', (product) => product.dataset.shopItem);
             }
             grid.querySelectorAll('[data-shop-item]').forEach((product) => {
@@ -3193,7 +3235,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     window.toggleInventoryEquip?.(button.dataset.inventoryItem);
                 });
             });
-            if (['decks', 'borders', 'xpAreas'].includes(window.currentInventoryCategory || 'borders')) {
+            if (['decks', 'borders', 'xpAreas', 'clusters'].includes(window.currentInventoryCategory || 'borders')) {
                 bindBorderInfoTooltips(grid, '[data-inventory-item]', (button) => button.dataset.inventoryItem);
             }
         };
