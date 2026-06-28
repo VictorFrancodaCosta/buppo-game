@@ -86,6 +86,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_treinar_oraculo.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp', 'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
         'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
+        'assets/img/botao_sair_loja_ui.png', 'assets/img/botao_sair_mochila_ui.png',
         'assets/img/botao_jogar.webp', 'assets/img/botao_historico.webp', 'assets/img/botao_ranking.webp', 'assets/img/botao_loja.webp',
         'assets/img/botao_tutorial.webp', 'assets/img/botao_sair.webp', 'assets/img/botao_pvp.webp', 'assets/img/botao_pve.webp',
         'assets/img/btn_pvp_ranked.webp', 'assets/img/btn_pvp_ranked.webp?v=2',

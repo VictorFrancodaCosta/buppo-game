@@ -1399,31 +1399,32 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             bottom: calc(50% - min(410px, 45vh) - 70px) !important;
             transform: translateX(-50%) !important;
             z-index: 4 !important;
-            min-width: 122px !important;
-            padding: 9px 24px !important;
-            border: 3px solid #2a1004 !important;
-            border-radius: 8px !important;
-            background: linear-gradient(180deg, #8a4b20, #4b210c) !important;
-            color: var(--gold) !important;
-            font-family: 'Bangers', cursive !important;
-            font-size: 28px !important;
-            line-height: 1 !important;
-            letter-spacing: 1px !important;
-            -webkit-text-stroke: 1.6px #160602 !important;
-            paint-order: stroke fill !important;
-            text-shadow: 3px 3px 0 #160602, 0 0 12px rgba(255,215,0,0.34) !important;
-            box-shadow: 0 6px 0 rgba(30, 11, 3, 0.86), inset 0 2px 0 rgba(255,255,255,0.14) !important;
-            transition: transform 0.16s ease, filter 0.16s ease, box-shadow 0.16s ease !important;
+            width: clamp(150px, 13vw, 218px) !important;
+            aspect-ratio: 1724 / 561 !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: url('assets/img/botao_sair_loja_ui.png?v=2026.06.28.1') center / contain no-repeat !important;
+            color: transparent !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+            overflow: visible !important;
+            filter: drop-shadow(0 7px 0 rgba(30, 11, 3, 0.72)) drop-shadow(0 0 12px rgba(255,215,0,0.22)) !important;
+            box-shadow: none !important;
+            transition: transform 0.16s ease, filter 0.16s ease !important;
         }
 
-        .lobby-shop-close:hover {
+        .lobby-shop-close:hover,
+        .lobby-shop-close:focus-visible {
             transform: translateX(-50%) translateY(-3px) scale(1.04) !important;
-            filter: brightness(1.08) saturate(1.08) !important;
+            filter: brightness(1.08) saturate(1.08) drop-shadow(0 9px 0 rgba(30, 11, 3, 0.72)) drop-shadow(0 0 18px rgba(255,215,0,0.34)) !important;
+            outline: none !important;
         }
 
         .lobby-shop-close:active {
             transform: translateX(-50%) translateY(2px) scale(0.96) !important;
-            box-shadow: 0 3px 0 rgba(30, 11, 3, 0.9), inset 0 2px 0 rgba(255,255,255,0.1) !important;
+            filter: brightness(0.95) saturate(0.95) drop-shadow(0 3px 0 rgba(30, 11, 3, 0.82)) !important;
         }
 
         .lobby-inventory-modal {
@@ -1611,20 +1612,32 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             right: auto !important;
             bottom: calc(50% - min(350px, 41vh) - 70px) !important;
             transform: translateX(-50%) !important;
-            min-width: 122px !important;
-            padding: 9px 24px !important;
-            border: 3px solid #2a1004 !important;
-            border-radius: 8px !important;
-            background: linear-gradient(180deg, #8a4b20, #4b210c) !important;
-            color: var(--gold) !important;
-            font-family: 'Bangers', cursive !important;
-            font-size: 28px !important;
-            line-height: 1 !important;
-            letter-spacing: 1px !important;
-            -webkit-text-stroke: 1.6px #160602 !important;
-            paint-order: stroke fill !important;
-            text-shadow: 3px 3px 0 #160602, 0 0 12px rgba(255,215,0,0.34) !important;
-            box-shadow: 0 6px 0 rgba(30, 11, 3, 0.86), inset 0 2px 0 rgba(255,255,255,0.14) !important;
+            width: clamp(150px, 13vw, 218px) !important;
+            aspect-ratio: 1644 / 537 !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: url('assets/img/botao_sair_mochila_ui.png?v=2026.06.28.1') center / contain no-repeat !important;
+            color: transparent !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+            overflow: visible !important;
+            filter: drop-shadow(0 7px 0 rgba(30, 11, 3, 0.72)) drop-shadow(0 0 12px rgba(255,215,0,0.22)) !important;
+            box-shadow: none !important;
+            transition: transform 0.16s ease, filter 0.16s ease !important;
+        }
+
+        .lobby-inventory-close:hover,
+        .lobby-inventory-close:focus-visible {
+            transform: translateX(-50%) translateY(-3px) scale(1.04) !important;
+            filter: brightness(1.08) saturate(1.08) drop-shadow(0 9px 0 rgba(30, 11, 3, 0.72)) drop-shadow(0 0 18px rgba(255,215,0,0.34)) !important;
+            outline: none !important;
+        }
+
+        .lobby-inventory-close:active {
+            transform: translateX(-50%) translateY(2px) scale(0.96) !important;
+            filter: brightness(0.95) saturate(0.95) drop-shadow(0 3px 0 rgba(30, 11, 3, 0.82)) !important;
         }
 
         @media (max-width: 680px) {
@@ -3027,7 +3040,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     </div>
                     <div class="lobby-shop-grid" aria-label="Itens da loja"></div>
                 </div>
-                <button class="mini-btn lobby-shop-close" type="button">SAIR</button>
+                <button class="mini-btn lobby-shop-close" type="button" aria-label="Sair da loja">SAIR</button>
             `;
             document.body.appendChild(shopModal);
             ensureShopInfoTooltip();
@@ -3120,7 +3133,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     </div>
                     <div class="lobby-inventory-grid" id="lobby-inventory-grid"></div>
                 </div>
-                <button class="mini-btn lobby-inventory-close" type="button">SAIR</button>
+                <button class="mini-btn lobby-inventory-close" type="button" aria-label="Sair da mochila">SAIR</button>
             `;
             document.body.appendChild(inventoryModal);
             inventoryModal.addEventListener('click', (event) => {
