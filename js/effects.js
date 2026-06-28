@@ -1555,18 +1555,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background-size: 100% auto !important;
         }
 
-        .lobby-shop-panel .cluster-product-art,
-        .lobby-inventory-panel .cluster-product-art {
-            left: 50% !important;
-            right: auto !important;
-            bottom: 13% !important;
-            width: 112% !important;
-            height: 64% !important;
-            transform: translateX(-50%) !important;
-            background-position: center !important;
-            background-size: contain !important;
-        }
-
         .inventory-item .inventory-item-name {
             position: absolute !important;
             left: 8px !important;
@@ -3040,7 +3028,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
         const renderBorderPreview = (item, location = 'inventory') => {
             const asset = location === 'shop' ? (item.shopAsset || item.asset) : item.asset;
-            const artClass = item.type === 'deck' ? 'metallic-border-art deck-product-art' : (item.type === 'cluster' ? 'metallic-border-art cluster-product-art' : (item.type === 'xpArea' || item.id.startsWith('xp_') ? 'metallic-border-art xp-area-product-art' : 'metallic-border-art'));
+            const artClass = (item.type === 'deck' || item.type === 'cluster') ? 'metallic-border-art deck-product-art' : (item.type === 'xpArea' || item.id.startsWith('xp_') ? 'metallic-border-art xp-area-product-art' : 'metallic-border-art');
             return `<div class="${artClass}" style="background-image: url('${asset}')" aria-label="Arte de ${item.name}"></div>`;
         };
         const renderShopProducts = (category = 'borders') => {

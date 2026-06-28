@@ -770,7 +770,9 @@ function applyClusterSkinForUnit(u) {
     if(!cluster) return;
     const item = getUnitEquippedItemBySlot(u, 'cluster');
     const fallback = u === player ? 'assets/img/cluster_jogador.webp' : 'assets/img/cluster_inimigo.webp';
-    cluster.style.setProperty('--cluster-art-url', `url('${item?.asset || fallback}')`);
+    const assetPath = item?.asset || fallback;
+    const assetUrl = new URL(assetPath, window.location.href).href;
+    cluster.style.setProperty('--cluster-art-url', `url("${assetUrl}")`);
     cluster.classList.toggle('cluster-skin-equipped', !!item?.asset);
 }
 
