@@ -2875,10 +2875,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         ];
         const lobbyClusterItems = [
             { id: 'cluster_knight', type: 'cluster', name: 'CLUSTER - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/cluster_cavaleiro_hudfit.webp', shopAsset: 'assets/img/cluster_cavaleiro_loja.webp' },
-            { id: 'cluster_mage', type: 'cluster', name: 'CLUSTER - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/cluster_mago.webp', shopAsset: 'assets/img/cluster_mago_loja.webp' },
-            { id: 'cluster_archer', type: 'cluster', name: 'CLUSTER - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/cluster_arqueiro.webp', shopAsset: 'assets/img/cluster_arqueiro_loja.webp' },
-            { id: 'cluster_rogue', type: 'cluster', name: 'CLUSTER - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/cluster_ladino.webp', shopAsset: 'assets/img/cluster_ladino_loja.webp' },
-            { id: 'cluster_oracle', type: 'cluster', name: 'CLUSTER - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/cluster_oraculo.webp', shopAsset: 'assets/img/cluster_oraculo_loja.webp' }
+            { id: 'cluster_mage', type: 'cluster', name: 'CLUSTER - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/cluster_mago_hudfit.webp', shopAsset: 'assets/img/cluster_mago_loja.webp' },
+            { id: 'cluster_archer', type: 'cluster', name: 'CLUSTER - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/cluster_arqueiro_hudfit.webp', shopAsset: 'assets/img/cluster_arqueiro_loja.webp' },
+            { id: 'cluster_rogue', type: 'cluster', name: 'CLUSTER - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/cluster_ladino_hudfit.webp', shopAsset: 'assets/img/cluster_ladino_loja.webp' },
+            { id: 'cluster_oracle', type: 'cluster', name: 'CLUSTER - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/cluster_oraculo_hudfit.webp', shopAsset: 'assets/img/cluster_oraculo_loja.webp' }
         ];
         const lobbyShopItemsByCategory = {
             decks: lobbyDeckItems,

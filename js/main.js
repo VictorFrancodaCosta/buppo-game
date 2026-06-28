@@ -94,9 +94,10 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_ataque_oraculo.webp', 'assets/img/carta_bloqueio_oraculo.webp',
         'assets/img/carta_descansar_oraculo.webp', 'assets/img/carta_desarmar_oraculo.webp',
         'assets/img/carta_treinar_oraculo.webp',
-        'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp', 'assets/img/cluster_cavaleiro.webp', 'assets/img/cluster_cavaleiro_hudfit.webp',
-        'assets/img/cluster_mago.webp', 'assets/img/cluster_arqueiro.webp', 'assets/img/cluster_ladino.webp',
-        'assets/img/cluster_oraculo.webp', 'assets/img/cluster_cavaleiro_loja.webp', 'assets/img/cluster_mago_loja.webp',
+        'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
+        'assets/img/cluster_cavaleiro_hudfit.webp', 'assets/img/cluster_mago_hudfit.webp', 'assets/img/cluster_arqueiro_hudfit.webp',
+        'assets/img/cluster_ladino_hudfit.webp', 'assets/img/cluster_oraculo_hudfit.webp',
+        'assets/img/cluster_cavaleiro_loja.webp', 'assets/img/cluster_mago_loja.webp',
         'assets/img/cluster_arqueiro_loja.webp', 'assets/img/cluster_ladino_loja.webp', 'assets/img/cluster_oraculo_loja.webp',
         'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
         'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
@@ -559,6 +560,7 @@ const SHOP_ITEMS = {
         slot: 'cluster',
         price: 1500,
         asset: 'assets/img/cluster_cavaleiro_hudfit.webp',
+        clusterArtHeight: 1592,
         shopAsset: 'assets/img/cluster_cavaleiro_loja.webp'
     },
     cluster_mage: {
@@ -566,7 +568,8 @@ const SHOP_ITEMS = {
         name: 'CLUSTER - CHAMA ARCANA',
         slot: 'cluster',
         price: 1500,
-        asset: 'assets/img/cluster_mago.webp',
+        asset: 'assets/img/cluster_mago_hudfit.webp',
+        clusterArtHeight: 1434,
         shopAsset: 'assets/img/cluster_mago_loja.webp'
     },
     cluster_archer: {
@@ -574,7 +577,8 @@ const SHOP_ITEMS = {
         name: 'CLUSTER - SENTINELA VERDE',
         slot: 'cluster',
         price: 1500,
-        asset: 'assets/img/cluster_arqueiro.webp',
+        asset: 'assets/img/cluster_arqueiro_hudfit.webp',
+        clusterArtHeight: 1246,
         shopAsset: 'assets/img/cluster_arqueiro_loja.webp'
     },
     cluster_rogue: {
@@ -582,7 +586,8 @@ const SHOP_ITEMS = {
         name: 'CLUSTER - MAO DOURADA',
         slot: 'cluster',
         price: 1500,
-        asset: 'assets/img/cluster_ladino.webp',
+        asset: 'assets/img/cluster_ladino_hudfit.webp',
+        clusterArtHeight: 1411,
         shopAsset: 'assets/img/cluster_ladino_loja.webp'
     },
     cluster_oracle: {
@@ -590,7 +595,8 @@ const SHOP_ITEMS = {
         name: 'CLUSTER - VISAO ASTRAL',
         slot: 'cluster',
         price: 1500,
-        asset: 'assets/img/cluster_oraculo.webp',
+        asset: 'assets/img/cluster_oraculo_hudfit.webp',
+        clusterArtHeight: 1464,
         shopAsset: 'assets/img/cluster_oraculo_loja.webp'
     }
 };
@@ -772,7 +778,11 @@ function applyClusterSkinForUnit(u) {
     const fallback = u === player ? 'assets/img/cluster_jogador.webp' : 'assets/img/cluster_inimigo.webp';
     const assetPath = item?.asset || fallback;
     const assetUrl = new URL(assetPath, window.location.href).href;
+    const artHeight = Number(item?.clusterArtHeight) || 1248;
+    const artHeightPct = (artHeight / 1248) * 100;
     cluster.style.setProperty('--cluster-art-url', `url("${assetUrl}")`);
+    cluster.style.setProperty('--cluster-art-height', `${artHeightPct}%`);
+    cluster.style.setProperty('--cluster-art-top', `${(100 - artHeightPct) / 2}%`);
     cluster.classList.toggle('cluster-skin-equipped', !!item?.asset);
 }
 
