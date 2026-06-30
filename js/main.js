@@ -3222,7 +3222,8 @@ function bindMasteryTooltip(el, key, value, ownerId) {
 }
 
 function addMI(parent, key, value, col, ownerId){
-    let d = document.createElement('div'); d.className = 'mastery-icon'; d.innerHTML = `<span class="mastery-symbol">${CARDS_DB[key].icon}</span><span class="mastery-lvl">${value}</span>`; d.style.borderColor = col;
+    const symbol = key === 'ATAQUE' ? '&#9876;&#65038;' : (key === 'BLOQUEIO' ? '&#128737;&#65038;' : CARDS_DB[key].icon);
+    let d = document.createElement('div'); d.className = `mastery-icon mastery-${key.toLowerCase()}`; d.innerHTML = `<span class="mastery-symbol">${symbol}</span><span class="mastery-lvl">${value}</span>`; d.style.borderColor = col;
     let handlers = bindMasteryTooltip(d, key, value, ownerId); d.onmouseenter = handlers.onmouseenter; d.onmouseleave = () => { tt.style.display = 'none'; tt.classList.remove('mastery-tooltip'); }; parent.appendChild(d);
 }
 
