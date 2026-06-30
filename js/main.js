@@ -560,7 +560,7 @@ const SHOP_ITEMS = {
         slot: 'cluster',
         price: 1500,
         asset: 'assets/img/cluster_cavaleiro_hudfit.webp',
-        clusterArtHeight: 1592,
+        clusterArtHeight: 1248,
         shopAsset: 'assets/img/cluster_cavaleiro_loja.webp'
     },
     cluster_mage: {
@@ -569,7 +569,7 @@ const SHOP_ITEMS = {
         slot: 'cluster',
         price: 1500,
         asset: 'assets/img/cluster_mago_hudfit.webp',
-        clusterArtHeight: 1434,
+        clusterArtHeight: 1248,
         shopAsset: 'assets/img/cluster_mago_loja.webp'
     },
     cluster_archer: {
@@ -578,7 +578,7 @@ const SHOP_ITEMS = {
         slot: 'cluster',
         price: 1500,
         asset: 'assets/img/cluster_arqueiro_hudfit.webp',
-        clusterArtHeight: 1246,
+        clusterArtHeight: 1248,
         shopAsset: 'assets/img/cluster_arqueiro_loja.webp'
     },
     cluster_rogue: {
@@ -587,7 +587,7 @@ const SHOP_ITEMS = {
         slot: 'cluster',
         price: 1500,
         asset: 'assets/img/cluster_ladino_hudfit.webp',
-        clusterArtHeight: 1411,
+        clusterArtHeight: 1248,
         shopAsset: 'assets/img/cluster_ladino_loja.webp'
     },
     cluster_oracle: {
@@ -596,7 +596,7 @@ const SHOP_ITEMS = {
         slot: 'cluster',
         price: 1500,
         asset: 'assets/img/cluster_oraculo_hudfit.webp',
-        clusterArtHeight: 1464,
+        clusterArtHeight: 1248,
         shopAsset: 'assets/img/cluster_oraculo_loja.webp'
     }
 };
