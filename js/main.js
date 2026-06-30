@@ -95,10 +95,10 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_descansar_oraculo.webp', 'assets/img/carta_desarmar_oraculo.webp',
         'assets/img/carta_treinar_oraculo.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
-        'assets/img/cluster_cavaleiro_guardareal.webp', 'assets/img/cluster_mago_hudfit.webp', 'assets/img/cluster_arqueiro_hudfit.webp',
-        'assets/img/cluster_ladino_hudfit.webp', 'assets/img/cluster_oraculo_hudfit.webp',
-        'assets/img/cluster_cavaleiro_guardareal.webp', 'assets/img/cluster_mago_loja.webp',
-        'assets/img/cluster_arqueiro_loja.webp', 'assets/img/cluster_ladino_loja.webp', 'assets/img/cluster_oraculo_loja.webp',
+        'assets/img/cluster_cavaleiro_guardareal.webp', 'assets/img/cluster_mago_chamaarcana.webp', 'assets/img/cluster_arqueiro_sentinelaverde.webp',
+        'assets/img/cluster_ladino_maodourada.webp', 'assets/img/cluster_oraculo_visaoastral.webp',
+        'assets/img/cluster_cavaleiro_guardareal.webp', 'assets/img/cluster_mago_chamaarcana.webp',
+        'assets/img/cluster_arqueiro_sentinelaverde.webp', 'assets/img/cluster_ladino_maodourada.webp', 'assets/img/cluster_oraculo_visaoastral.webp',
         'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
         'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
         'assets/img/botao_sair_loja_ui.png', 'assets/img/botao_sair_mochila_ui.png',
@@ -568,36 +568,36 @@ const SHOP_ITEMS = {
         name: 'CLUSTER - CHAMA ARCANA',
         slot: 'cluster',
         price: 1500,
-        asset: 'assets/img/cluster_mago_hudfit.webp',
+        asset: 'assets/img/cluster_mago_chamaarcana.webp',
         clusterArtHeight: 1248,
-        shopAsset: 'assets/img/cluster_mago_loja.webp'
+        shopAsset: 'assets/img/cluster_mago_chamaarcana.webp'
     },
     cluster_archer: {
         id: 'cluster_archer',
         name: 'CLUSTER - SENTINELA VERDE',
         slot: 'cluster',
         price: 1500,
-        asset: 'assets/img/cluster_arqueiro_hudfit.webp',
+        asset: 'assets/img/cluster_arqueiro_sentinelaverde.webp',
         clusterArtHeight: 1248,
-        shopAsset: 'assets/img/cluster_arqueiro_loja.webp'
+        shopAsset: 'assets/img/cluster_arqueiro_sentinelaverde.webp'
     },
     cluster_rogue: {
         id: 'cluster_rogue',
         name: 'CLUSTER - MAO DOURADA',
         slot: 'cluster',
         price: 1500,
-        asset: 'assets/img/cluster_ladino_hudfit.webp',
+        asset: 'assets/img/cluster_ladino_maodourada.webp',
         clusterArtHeight: 1248,
-        shopAsset: 'assets/img/cluster_ladino_loja.webp'
+        shopAsset: 'assets/img/cluster_ladino_maodourada.webp'
     },
     cluster_oracle: {
         id: 'cluster_oracle',
         name: 'CLUSTER - VISAO ASTRAL',
         slot: 'cluster',
         price: 1500,
-        asset: 'assets/img/cluster_oraculo_hudfit.webp',
+        asset: 'assets/img/cluster_oraculo_visaoastral.webp',
         clusterArtHeight: 1248,
-        shopAsset: 'assets/img/cluster_oraculo_loja.webp'
+        shopAsset: 'assets/img/cluster_oraculo_visaoastral.webp'
     }
 };
 window.SHOP_ITEMS = SHOP_ITEMS;
@@ -3222,7 +3222,7 @@ function bindMasteryTooltip(el, key, value, ownerId) {
 }
 
 function addMI(parent, key, value, col, ownerId){
-    let d = document.createElement('div'); d.className = 'mastery-icon'; d.innerHTML = `${CARDS_DB[key].icon}<span class="mastery-lvl">${value}</span>`; d.style.borderColor = col;
+    let d = document.createElement('div'); d.className = 'mastery-icon'; d.innerHTML = `<span class="mastery-symbol">${CARDS_DB[key].icon}</span><span class="mastery-lvl">${value}</span>`; d.style.borderColor = col;
     let handlers = bindMasteryTooltip(d, key, value, ownerId); d.onmouseenter = handlers.onmouseenter; d.onmouseleave = () => { tt.style.display = 'none'; tt.classList.remove('mastery-tooltip'); }; parent.appendChild(d);
 }
 
