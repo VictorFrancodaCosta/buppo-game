@@ -30,11 +30,19 @@
     <script>
         (function () {
             try {
+                var params = new URLSearchParams(window.location.search || '');
+                var simpleMobile = params.has('mobile') || (
+                    window.matchMedia &&
+                    window.matchMedia('(hover: none)').matches &&
+                    window.matchMedia('(orientation: portrait)').matches
+                );
+                window.BUPPO_MOBILE_SIMPLE = simpleMobile;
+                if (simpleMobile) document.documentElement.classList.add('mobile-simple');
                 const isTouchDevice = window.matchMedia && (
                     window.matchMedia('(hover: none)').matches ||
                     window.matchMedia('(pointer: coarse)').matches
                 );
-                if (isTouchDevice) document.documentElement.classList.add('force-landscape');
+                if (isTouchDevice && !simpleMobile) document.documentElement.classList.add('force-landscape');
             } catch (e) {}
         })();
     </script>
@@ -92,6 +100,7 @@
         <div id="start-screen" class="screen active">
             <div class="start-bg-layer"></div>
             <img src="assets/img/logo_buppo.webp" alt="BUPPO LOGO" class="game-logo">
+            <button id="btn-mobile-play" type="button" onclick="window.startMobileSimpleMatch()">JOGAR</button>
             <button id="btn-login" onclick="googleLogin()"><span id="btn-text">LOGIN COM GOOGLE</span></button>
             <p id="login-status" style="color: #888; font-family: 'Montserrat'; font-size: 12px; margin-top:-20px;"></p>
         </div>
@@ -278,6 +287,7 @@
     <div id="modal-overlay" class="modal-overlay" onclick="cancelModal()"><div class="modal-box" onclick="event.stopPropagation()"><h2 id="modal-title"></h2><p id="modal-desc"></p><div class="modal-btns" id="modal-btns"></div></div></div>
 
     <script src="js/effects.js?v=2026.06.26.4"></script> 
+    <script type="module" src="js/mobile_simple.js?v=2026.06.30.1"></script>
     <script type="module" src="js/main.js?v=2026.06.26.4"></script>
 </body>
 </html>

@@ -59,6 +59,11 @@ window.currentProfileXp = 0;
 window.currentLobbyRank = null;
 window.currentLobbyScore = 0;
 window.initialPreloadComplete = false;
+window.isMobileSimpleMode = window.BUPPO_MOBILE_SIMPLE === true;
+if (window.isMobileSimpleMode) {
+    document.documentElement.classList.add('mobile-simple');
+    document.body?.classList.add('mobile-simple');
+}
 
 const DECK_THEME_CLASSES = ['theme-cavaleiro', 'theme-mago', 'theme-arqueiro', 'theme-ladino', 'theme-oraculo'];
 const DECK_THEME_BY_TYPE = {
@@ -95,9 +100,9 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_descansar_oraculo.webp', 'assets/img/carta_desarmar_oraculo.webp',
         'assets/img/carta_treinar_oraculo.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
-        'assets/img/cluster_cavaleiro_novo_guardiao.webp', 'assets/img/cluster_mago_chamaarcana.webp', 'assets/img/cluster_arqueiro_sentinelaverde.webp',
+        'assets/img/cluster_cavaleiro_guardareal.webp', 'assets/img/cluster_mago_chamaarcana.webp', 'assets/img/cluster_arqueiro_sentinelaverde.webp',
         'assets/img/cluster_ladino_maodourada.webp', 'assets/img/cluster_oraculo_visaoastral.webp',
-        'assets/img/cluster_cavaleiro_novo_guardiao.webp', 'assets/img/cluster_mago_chamaarcana.webp',
+        'assets/img/cluster_cavaleiro_guardareal.webp', 'assets/img/cluster_mago_chamaarcana.webp',
         'assets/img/cluster_arqueiro_sentinelaverde.webp', 'assets/img/cluster_ladino_maodourada.webp', 'assets/img/cluster_oraculo_visaoastral.webp',
         'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
         'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
@@ -270,7 +275,7 @@ window.startLobbyModeWithDeck = async function(mode, deckType) {
 };
 
 window.transitionToGame = function() {
-    if (window.gameMode === 'pvp' || window.gameMode === 'pve') document.body.classList.add('force-landscape');
+    if ((window.gameMode === 'pvp' || window.gameMode === 'pve') && !window.isMobileSimpleMode) document.body.classList.add('force-landscape');
     updatePresence();
     const transScreen = document.getElementById('transition-overlay');
     const transText = transScreen.querySelector('.trans-text');
@@ -290,6 +295,20 @@ window.transitionToGame = function() {
 }
 
 window.transitionToLobby = function(skipAnim = false) {
+    if (window.isMobileSimpleMode) {
+        window.cleanupMatchState();
+        document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active', 'force-landscape');
+        document.body.classList.add('mobile-simple');
+        document.documentElement.classList.add('mobile-simple');
+        const endScreen = document.getElementById('end-screen');
+        if(endScreen) endScreen.classList.remove('visible');
+        window.gameMode = 'pve';
+        window.showScreen('start-screen');
+        let bg = document.getElementById('game-background');
+        if(bg) bg.classList.add('lobby-mode');
+        MusicController.transitionTo?.('bgm-menu', { fadeOutMs: 300, fadeInMs: 500, restart: true });
+        return;
+    }
     if (isFriendlyMatch() && window.currentMatchId && window.currentUser && !window.suppressFriendlyAbandon) {
         updateDoc(doc(db, "matches", window.currentMatchId), { status: 'abandoned', abandonedBy: window.currentUser.uid }).catch(() => {});
     }
@@ -313,6 +332,17 @@ window.transitionToLobby = function(skipAnim = false) {
 }
 
 window.goToLobby = async function(isAutoLogin = false) {
+    if(window.isMobileSimpleMode) {
+        window.cleanupMatchState();
+        document.body.classList.remove(...DECK_THEME_CLASSES, 'force-landscape');
+        document.body.classList.add('mobile-simple');
+        document.documentElement.classList.add('mobile-simple');
+        let bg = document.getElementById('game-background');
+        if(bg) bg.classList.add('lobby-mode');
+        window.showScreen('start-screen');
+        MusicController.transitionTo?.('bgm-menu', { fadeOutMs: 300, fadeInMs: 500, restart: true });
+        return;
+    }
     if(!window.currentUser) { 
         window.showScreen('start-screen'); 
         document.body.classList.remove(...DECK_THEME_CLASSES);
@@ -418,6 +448,22 @@ window.goToLobby = async function(isAutoLogin = false) {
     if(document.activeElement && document.activeElement.closest && document.activeElement.closest('#end-screen')) document.activeElement.blur();
     window.showScreen('lobby-screen'); document.getElementById('end-screen').classList.remove('visible');
     document.getElementById('btn-config-toggle').style.display = 'flex';
+};
+
+window.startMobileSimpleMatch = function() {
+    window.isMobileSimpleMode = true;
+    window.BUPPO_MOBILE_SIMPLE = true;
+    document.documentElement.classList.add('mobile-simple');
+    document.documentElement.classList.remove('force-landscape');
+    document.body.classList.add('mobile-simple');
+    document.body.classList.remove('force-landscape');
+    window.gameMode = 'pve';
+    window.currentDeck = 'knight';
+    window.playerInventory = [];
+    window.equippedItems = {};
+    window.currentUser = null;
+    window.applyDeckTheme('knight');
+    window.transitionToGame();
 };
 
 function updateLobbyGoldWallet(amount = 0) {
@@ -559,9 +605,9 @@ const SHOP_ITEMS = {
         name: 'CLUSTER - GUARDA REAL',
         slot: 'cluster',
         price: 1500,
-        asset: 'assets/img/cluster_cavaleiro_novo_guardiao.webp',
+        asset: 'assets/img/cluster_cavaleiro_guardareal.webp',
         clusterArtHeight: 1248,
-        shopAsset: 'assets/img/cluster_cavaleiro_novo_guardiao.webp'
+        shopAsset: 'assets/img/cluster_cavaleiro_guardareal.webp'
     },
     cluster_mage: {
         id: 'cluster_mage',
@@ -1513,9 +1559,9 @@ function startGameFlow() {
         window.applyDeckTheme(window.currentDeck);
         resetUnit(player, null, 'pve'); resetUnit(monster, null, 'pve');
         player.deckType = window.currentDeck || 'knight';
-        player.equippedItems = { ...(window.equippedItems || {}) };
-        monster.equippedItems = createRandomAiEquipmentForPlayerEquipment(player.equippedItems);
-        monster.deckType = SHOP_ITEMS[monster.equippedItems?.deck]?.deckType || player.deckType || 'knight';
+        player.equippedItems = window.isMobileSimpleMode ? {} : { ...(window.equippedItems || {}) };
+        monster.equippedItems = window.isMobileSimpleMode ? {} : createRandomAiEquipmentForPlayerEquipment(player.equippedItems);
+        monster.deckType = window.isMobileSimpleMode ? 'knight' : (SHOP_ITEMS[monster.equippedItems?.deck]?.deckType || player.deckType || 'knight');
         baseDraw(monster, 6); baseDraw(player, 6);
     }
     window.opponentDeck = monster.deckType || 'knight';
@@ -1851,9 +1897,9 @@ function checkEndGame(){
             }
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
             if(normalSecondaryBtn) normalSecondaryBtn.setAttribute('aria-label', 'Saguão');
-            if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); showEndPoints(1); }
-            else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
-            else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); showEndPoints(-3); }
+            if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); if(!window.isMobileSimpleMode) showEndPoints(1); }
+            else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); if(!window.isMobileSimpleMode) showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
+            else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); if(!window.isMobileSimpleMode) showEndPoints(-3); }
 
             if(isTie) { if(window.registrarEmpateOnline) window.registrarEmpateOnline(window.gameMode); }
             else if(isWin) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(window.gameMode); }
@@ -2189,6 +2235,7 @@ function queueRewardCoinAnimation(isPlayerReward, amount, label) {
 }
 
 function awardMatchRewardGoldFor(u, amount = 1, label = MATCH_REWARD_LABELS.EFFECTIVE_ATTACK) {
+    if(window.isMobileSimpleMode) return;
     if(isFriendlyMatch()) return;
     if(!window.currentUser || amount <= 0) return;
     const isPlayerReward = u === player;
@@ -2292,6 +2339,13 @@ function triggerEndScreenFx(result) {
 }
 
 onAuthStateChanged(auth, (user) => {
+    if (window.isMobileSimpleMode) {
+        window.currentUser = null;
+        const gameActive = document.getElementById('game-screen')?.classList.contains('active');
+        const transitionActive = document.getElementById('transition-overlay')?.classList.contains('active');
+        if(!gameActive && !transitionActive) window.showScreen('start-screen');
+        return;
+    }
     if (user) { window.currentUser = user; window.goToLobby(true); }
     else {
         window.currentUser = null; window.showScreen('start-screen');

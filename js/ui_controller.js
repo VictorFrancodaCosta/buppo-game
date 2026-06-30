@@ -46,7 +46,16 @@ const DECK_CARD_ASSETS = {
     oracle: ORACLE_ASSETS
 };
 
+const MOBILE_SIMPLE_ASSETS = {
+    'ATAQUE': 'assets/img/mobile/card_attack.png',
+    'BLOQUEIO': 'assets/img/mobile/card_block.png',
+    'DESCANSAR': 'assets/img/mobile/card_rest.png',
+    'DESARMAR': 'assets/img/mobile/card_disarm.png',
+    'TREINAR': 'assets/img/mobile/card_train.png'
+};
+
 export function getCardArt(cardKey, isPlayer) {
+    if (window.isMobileSimpleMode && MOBILE_SIMPLE_ASSETS[cardKey]) return MOBILE_SIMPLE_ASSETS[cardKey];
     const deckType = isPlayer ? window.currentDeck : (window.opponentDeck || 'knight');
     const deckAssets = DECK_CARD_ASSETS[deckType];
     if (deckAssets?.[cardKey]) return deckAssets[cardKey];
@@ -59,8 +68,11 @@ function isTouchLandscapeLayout() {
 
 function syncOrientationRequirement() {
     const isTouchDevice = window.matchMedia('(hover: none), (pointer: coarse)').matches;
-    document.documentElement.classList.toggle('force-landscape', isTouchDevice);
-    document.body.classList.toggle('force-landscape', isTouchDevice);
+    const forceLandscape = isTouchDevice && !window.isMobileSimpleMode && !window.BUPPO_MOBILE_SIMPLE;
+    document.documentElement.classList.toggle('force-landscape', forceLandscape);
+    document.body.classList.toggle('force-landscape', forceLandscape);
+    document.documentElement.classList.toggle('mobile-simple', !!(window.isMobileSimpleMode || window.BUPPO_MOBILE_SIMPLE));
+    document.body.classList.toggle('mobile-simple', !!(window.isMobileSimpleMode || window.BUPPO_MOBILE_SIMPLE));
 }
 
 syncOrientationRequirement();
@@ -93,6 +105,10 @@ window.showScreen = function(screenId) {
 }
 
 window.openDeckSelector = function() {
+    if (window.isMobileSimpleMode) {
+        window.startMobileSimpleMatch?.();
+        return;
+    }
     document.body.classList.add('force-landscape');
     const ds = document.getElementById('deck-selection-screen');
     if(ds) {
