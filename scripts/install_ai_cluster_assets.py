@@ -7,15 +7,14 @@ OUT = ROOT / "assets" / "img"
 GEN = Path(r"C:\Users\Victor Franco\.codex\generated_images\019f10b1-7919-77a2-8061-f27fec20be13")
 
 ASSETS = [
-    ("cluster_cavaleiro_guardareal.webp", "ig_0c8094ed476e3fd4016a436e9af34c8191b86e730035fdaefa.png"),
-    ("cluster_mago_chamaarcana.webp", "ig_0c8094ed476e3fd4016a436ef7cce08191ad82a0df77fe5ef7.png"),
-    ("cluster_arqueiro_sentinelaverde.webp", "ig_0c8094ed476e3fd4016a436f54ff488191992b20f75530e479.png"),
-    ("cluster_ladino_maodourada.webp", "ig_0c8094ed476e3fd4016a436fa1aa648191a7bbd15a607a81be.png"),
-    ("cluster_oraculo_visaoastral.webp", "ig_0c8094ed476e3fd4016a437006040881919daf50a5c14a910a.png"),
+    ("cluster_cavaleiro_guardareal.webp", "ig_06b0d5b496bc2f85016a43728540c08191892046e8b183e5ce.png", (24, 89, 190)),
+    ("cluster_mago_chamaarcana.webp", "ig_06b0d5b496bc2f85016a4372d2a0cc81919dde653b87cff7a2.png", (184, 35, 30)),
+    ("cluster_arqueiro_sentinelaverde.webp", "ig_06b0d5b496bc2f85016a4373141ca081919793b6028c5b254d.png", (40, 142, 55)),
+    ("cluster_ladino_maodourada.webp", "ig_06b0d5b496bc2f85016a43735b70bc81919908427aba2fd92f.png", (54, 48, 43)),
+    ("cluster_oraculo_visaoastral.webp", "ig_06b0d5b496bc2f85016a4373b37a2481918fde7aedb29abee2.png", (92, 35, 160)),
 ]
 
 W, H = 2048, 739
-CROP_TOP = 142
 HUD = {
     "level": (354, 386, 136),
     "name": (554, 65, 1716, 165),
@@ -56,10 +55,27 @@ def remove_key(img):
 
 def prepare(src):
     img = Image.open(src).convert("RGBA")
-    if img.size != (2048, 1024):
-        img = img.resize((2048, 1024), Image.Resampling.LANCZOS)
-    cropped = img.crop((0, CROP_TOP, W, CROP_TOP + H))
-    return remove_key(cropped)
+    if img.size != (W, H):
+        img = img.resize((W, H), Image.Resampling.LANCZOS)
+    return remove_key(img)
+
+
+def draw_fixed_hp_socket(img, accent):
+    x1, y1, x2, y2 = HUD["hp"]
+    d = ImageDraw.Draw(img, "RGBA")
+    gold = (228, 178, 56, 255)
+    dark = (13, 22, 25, 242)
+    shadow = (0, 0, 0, 165)
+    x1 += 12
+    y1 += 12
+    x2 -= 12
+    y2 -= 12
+    radius = 38
+    d.rounded_rectangle((x1 + 10, y1 + 12, x2 + 10, y2 + 12), radius=radius, fill=shadow)
+    d.rounded_rectangle((x1, y1, x2, y2), radius=radius, fill=dark, outline=(20, 12, 8, 255), width=15)
+    d.rounded_rectangle((x1 + 7, y1 + 7, x2 - 7, y2 - 7), radius=radius - 8, outline=gold, width=9)
+    d.rounded_rectangle((x1 + 20, y1 + 20, x2 - 20, y2 - 20), radius=radius - 20, outline=(*accent, 235), width=5)
+    return img
 
 
 def make_audit(images):
@@ -86,8 +102,9 @@ def make_audit(images):
 
 def main():
     processed = []
-    for out_name, src_name in ASSETS:
+    for out_name, src_name, accent in ASSETS:
         img = prepare(GEN / src_name)
+        img = draw_fixed_hp_socket(img, accent)
         img.save(OUT / out_name, "WEBP", lossless=True, quality=100, method=6)
         processed.append((out_name, img))
     make_audit(processed).save(OUT / "cluster_alignment_audit.png")
