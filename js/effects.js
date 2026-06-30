@@ -2874,7 +2874,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             { id: 'xp_altar_visao', type: 'xpArea', name: '\u00c1REA DE XP - ALTAR DA VIS\u00c3O', displayName: 'ALTAR DA VIS\u00c3O', asset: 'assets/img/ui_area_xpaltardavisao.webp', shopAsset: 'assets/img/ax_oraculo_loja.webp' }
         ];
         const lobbyClusterItems = [
-            { id: 'cluster_knight', type: 'cluster', name: 'CLUSTER - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/cluster_cavaleiro_guardareal.webp', shopAsset: 'assets/img/cluster_cavaleiro_guardareal.webp' },
+            { id: 'cluster_knight', type: 'cluster', name: 'CLUSTER - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/cluster_cavaleiro_novo_guardiao.webp', shopAsset: 'assets/img/cluster_cavaleiro_novo_guardiao.webp' },
             { id: 'cluster_mage', type: 'cluster', name: 'CLUSTER - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/cluster_mago_chamaarcana.webp', shopAsset: 'assets/img/cluster_mago_chamaarcana.webp' },
             { id: 'cluster_archer', type: 'cluster', name: 'CLUSTER - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/cluster_arqueiro_sentinelaverde.webp', shopAsset: 'assets/img/cluster_arqueiro_sentinelaverde.webp' },
             { id: 'cluster_rogue', type: 'cluster', name: 'CLUSTER - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/cluster_ladino_maodourada.webp', shopAsset: 'assets/img/cluster_ladino_maodourada.webp' },

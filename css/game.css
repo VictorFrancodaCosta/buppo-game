@@ -156,6 +156,8 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
 #m-stats-cluster.cluster-skin-equipped .hp-tube { top: 48px; height: 27px; }
 #p-stats-cluster.cluster-skin-equipped .mastery-row { left: 149px; top: 92px; gap: 18px; }
 #m-stats-cluster.cluster-skin-equipped .mastery-row { right: 149px; top: 92px; gap: 18px; }
+#p-stats-cluster[data-cluster-skin="cluster_knight"] .mastery-row { left: 149px; top: 91px; gap: 41px; }
+#m-stats-cluster[data-cluster-skin="cluster_knight"] .mastery-row { right: 149px; top: 91px; gap: 41px; }
 #m-stats-cluster .unit-info { display: contents; }
 #m-stats-cluster .lvl-circle { position: absolute; right: 30px; top: 38px; width: 68px; height: 68px; background: transparent; border: none; box-shadow: none; color: #fbc531; font-family: 'Russo One', sans-serif; font-size: 50px; text-shadow: 2px 2px 0 #3c220f, -1px -1px 0 #602d0c, 1px -1px 0 #602d0c, -1px 1px 0 #602d0c, 1px 1px 0 #602d0c; display: flex; justify-content: center; align-items: center; margin: 0; }
 #m-stats-cluster .unit-name { position: absolute; right: 100px; top: 17px; width: 210px; font-family: 'MedievalSharp', cursive; font-size: 18px; color: #3e2723 !important; font-weight: 900; text-align: center; text-transform: uppercase; text-shadow: none; margin: 0; }
