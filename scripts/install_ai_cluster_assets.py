@@ -1,26 +1,49 @@
 from pathlib import Path
 from PIL import Image, ImageDraw
+import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "assets" / "img"
 GEN = Path(r"C:\Users\Victor Franco\.codex\generated_images\019f10b1-7919-77a2-8061-f27fec20be13")
 
+W, H = 2048, 739
+DOM_W, DOM_H = 370, 138
+
 ASSETS = [
-    ("cluster_cavaleiro_guardareal.webp", "ig_06b0d5b496bc2f85016a43728540c08191892046e8b183e5ce.png", (24, 89, 190)),
-    ("cluster_mago_chamaarcana.webp", "ig_06b0d5b496bc2f85016a4372d2a0cc81919dde653b87cff7a2.png", (184, 35, 30)),
-    ("cluster_arqueiro_sentinelaverde.webp", "ig_06b0d5b496bc2f85016a4373141ca081919793b6028c5b254d.png", (40, 142, 55)),
-    ("cluster_ladino_maodourada.webp", "ig_06b0d5b496bc2f85016a43735b70bc81919908427aba2fd92f.png", (54, 48, 43)),
-    ("cluster_oraculo_visaoastral.webp", "ig_06b0d5b496bc2f85016a4373b37a2481918fde7aedb29abee2.png", (92, 35, 160)),
+    ("cluster_cavaleiro_guardareal.webp", "ig_07c1f2575ebdbe42016a438320092c8191b7f07f6f819fc802.png"),
+    ("cluster_mago_chamaarcana.webp", "ig_07c1f2575ebdbe42016a43837cde488191a7e75cc9aa2c05e1.png"),
+    ("cluster_arqueiro_sentinelaverde.webp", "ig_07c1f2575ebdbe42016a4383cf5d008191a2dd2db66d39ac3c.png"),
+    ("cluster_ladino_maodourada.webp", "ig_07c1f2575ebdbe42016a43842472548191988d0e3305902cd6.png"),
+    ("cluster_oraculo_visaoastral.webp", "ig_07c1f2575ebdbe42016a4384737308819184164f90caf2f45e.png"),
 ]
 
-W, H = 2048, 739
-HUD = {
-    "level": (354, 386, 136),
-    "name": (554, 65, 1716, 165),
-    "hp": (775, 257, 1661, 402),
-    "masteries": ((913, 578, 86), (1190, 578, 86)),
+HUD_DOM = {
+    "level_center": (64, 72),
+    "level_radius": 34,
+    "name_box": (100, 17, 310, 39),
+    "hp_box": (140, 48, 300, 75),
+    "mastery_centers": ((165, 108), (215, 108)),
+    "mastery_radius": 16,
 }
+
+
+def sx(x):
+    return x * W / DOM_W
+
+
+def sy(y):
+    return y * H / DOM_H
+
+
+def box_dom(box):
+    x1, y1, x2, y2 = box
+    return (sx(x1), sy(y1), sx(x2), sy(y2))
+
+
+def point_dom(point):
+    x, y = point
+    return (sx(x), sy(y))
 
 
 def key_color_for(img):
@@ -34,81 +57,74 @@ def key_color_for(img):
 
 
 def remove_key(img):
-    rgba = img.convert("RGBA")
-    key = key_color_for(rgba)
-    pixels = rgba.load()
-    for y in range(rgba.height):
-        for x in range(rgba.width):
-            r, g, b, a = pixels[x, y]
-            dist = ((r - key[0]) ** 2 + (g - key[1]) ** 2 + (b - key[2]) ** 2) ** 0.5
-            if dist < 34:
-                pixels[x, y] = (r, g, b, 0)
-            elif dist < 118:
-                alpha = int(255 * (dist - 34) / 84)
-                # Despill toward neutral dark to avoid green/magenta fringes.
-                nr = int((r + min(r, 40)) / 2) if key[0] > 200 else r
-                ng = int((g + min(g, 40)) / 2) if key[1] > 200 else g
-                nb = int((b + min(b, 40)) / 2) if key[2] > 200 else b
-                pixels[x, y] = (nr, ng, nb, min(a, alpha))
-    return rgba
+    img = img.convert("RGBA")
+    key = key_color_for(img)
+    arr = np.array(img).astype(np.float32)
+    rgb = arr[:, :, :3]
+    alpha = arr[:, :, 3]
+    key_arr = np.array(key, dtype=np.float32)
+    dist = np.sqrt(np.sum((rgb - key_arr) ** 2, axis=2))
+    alpha = np.where(dist < 38, 0, alpha)
+    soft = (dist >= 38) & (dist < 120)
+    alpha = np.where(soft, alpha * ((dist - 38) / 82), alpha)
+    r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
+    if key[1] > 180:
+        chroma = (g > 120) & (g > r * 1.22) & (g > b * 1.22)
+        alpha = np.where(chroma, 0, alpha)
+    if key[0] > 180 and key[2] > 180:
+        chroma = (r > 120) & (b > 120) & (r > g * 1.22) & (b > g * 1.22)
+        alpha = np.where(chroma, 0, alpha)
+    arr[:, :, 3] = np.clip(alpha, 0, 255)
+    return Image.fromarray(arr.astype(np.uint8), "RGBA")
 
 
-def prepare(src):
-    img = Image.open(src).convert("RGBA")
-    if img.size != (W, H):
-        img = img.resize((W, H), Image.Resampling.LANCZOS)
-    return remove_key(img)
+def normalize_to_canvas(src):
+    img = remove_key(Image.open(src))
+    bbox = img.getbbox()
+    if not bbox:
+        raise ValueError(f"Empty generated art: {src}")
+    cropped = img.crop(bbox)
+    # Fit the AI-painted cluster itself to the exact game asset canvas.
+    fitted = cropped.resize((W, H), Image.Resampling.LANCZOS)
+    return fitted
 
 
-def draw_fixed_hp_socket(img, accent):
-    x1, y1, x2, y2 = HUD["hp"]
+def draw_audit_marks(img):
     d = ImageDraw.Draw(img, "RGBA")
-    gold = (228, 178, 56, 255)
-    dark = (13, 22, 25, 242)
-    shadow = (0, 0, 0, 165)
-    x1 += 12
-    y1 += 12
-    x2 -= 12
-    y2 -= 12
-    radius = 38
-    d.rounded_rectangle((x1 + 10, y1 + 12, x2 + 10, y2 + 12), radius=radius, fill=shadow)
-    d.rounded_rectangle((x1, y1, x2, y2), radius=radius, fill=dark, outline=(20, 12, 8, 255), width=15)
-    d.rounded_rectangle((x1 + 7, y1 + 7, x2 - 7, y2 - 7), radius=radius - 8, outline=gold, width=9)
-    d.rounded_rectangle((x1 + 20, y1 + 20, x2 - 20, y2 - 20), radius=radius - 20, outline=(*accent, 235), width=5)
-    return img
+    lx, ly = point_dom(HUD_DOM["level_center"])
+    lr = sx(HUD_DOM["level_radius"])
+    d.ellipse((lx - lr, ly - lr, lx + lr, ly + lr), outline=(255, 230, 0, 255), width=7)
+    d.rectangle(box_dom(HUD_DOM["name_box"]), outline=(0, 255, 255, 255), width=7)
+    d.rectangle(box_dom(HUD_DOM["hp_box"]), outline=(0, 255, 0, 255), width=7)
+    mr = sx(HUD_DOM["mastery_radius"])
+    for center in HUD_DOM["mastery_centers"]:
+        cx, cy = point_dom(center)
+        d.ellipse((cx - mr, cy - mr, cx + mr, cy + mr), outline=(255, 0, 255, 255), width=7)
+        d.line((cx - sx(5), cy, cx + sx(5), cy), fill=(255, 255, 255, 255), width=5)
+        d.line((cx, cy - sy(5), cx, cy + sy(5)), fill=(255, 255, 255, 255), width=5)
 
 
-def make_audit(images):
+def make_audit(processed):
     rows = []
-    for name, img in images:
+    for _, img in processed:
         bg = Image.new("RGBA", (W, H), (28, 28, 28, 255))
         bg.alpha_composite(img)
-        d = ImageDraw.Draw(bg)
-        x, y, r = HUD["level"]
-        d.ellipse((x - r, y - r, x + r, y + r), outline=(255, 230, 0, 255), width=7)
-        d.rectangle(HUD["name"], outline=(0, 255, 255, 255), width=7)
-        d.rectangle(HUD["hp"], outline=(0, 255, 0, 255), width=7)
-        for x, y, r in HUD["masteries"]:
-            d.ellipse((x - r, y - r, x + r, y + r), outline=(255, 0, 255, 255), width=7)
-            d.line((x - 26, y, x + 26, y), fill=(255, 255, 255, 255), width=5)
-            d.line((x, y - 26, x, y + 26), fill=(255, 255, 255, 255), width=5)
+        draw_audit_marks(bg)
         rows.append(bg.resize((740, 267), Image.Resampling.LANCZOS))
-
     audit = Image.new("RGBA", (740, 267 * len(rows)), (18, 18, 18, 255))
     for i, row in enumerate(rows):
-        audit.alpha_composite(row, (0, 267 * i))
+        audit.alpha_composite(row, (0, i * 267))
     return audit
 
 
 def main():
     processed = []
-    for out_name, src_name, accent in ASSETS:
-        img = prepare(GEN / src_name)
-        img = draw_fixed_hp_socket(img, accent)
+    for out_name, src_name in ASSETS:
+        img = normalize_to_canvas(GEN / src_name)
         img.save(OUT / out_name, "WEBP", lossless=True, quality=100, method=6)
         processed.append((out_name, img))
     make_audit(processed).save(OUT / "cluster_alignment_audit.png")
-    print("Installed", len(processed), "AI cluster assets")
+    print("Installed", len(processed), "AI-painted cluster assets")
 
 
 if __name__ == "__main__":

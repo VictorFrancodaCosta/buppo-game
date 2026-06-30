@@ -823,7 +823,9 @@ function applyClusterSkinForUnit(u) {
     const item = getUnitEquippedItemBySlot(u, 'cluster');
     const fallback = u === player ? 'assets/img/cluster_jogador.webp' : 'assets/img/cluster_inimigo.webp';
     const assetPath = item?.asset || fallback;
-    const assetUrl = new URL(assetPath, window.location.href).href;
+    const assetUrlObj = new URL(assetPath, window.location.href);
+    if(item?.asset) assetUrlObj.searchParams.set('v', '20260630-ai-painted');
+    const assetUrl = assetUrlObj.href;
     const artHeight = Number(item?.clusterArtHeight) || 1248;
     const artHeightPct = (artHeight / 1248) * 100;
     cluster.style.setProperty('--cluster-art-url', `url("${assetUrl}")`);
