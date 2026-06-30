@@ -783,6 +783,7 @@ function applyClusterSkinForUnit(u) {
     cluster.style.setProperty('--cluster-art-url', `url("${assetUrl}")`);
     cluster.style.setProperty('--cluster-art-height', `${artHeightPct}%`);
     cluster.style.setProperty('--cluster-art-top', `${(100 - artHeightPct) / 2}%`);
+    cluster.dataset.clusterSkin = item?.id || '';
     cluster.classList.toggle('cluster-skin-equipped', !!item?.asset);
 }
 
