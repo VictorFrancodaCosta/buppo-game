@@ -199,6 +199,47 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
     flex-direction: column;
     gap: 46px;
 }
+/* Cluster Mago: arte e HUD reposicionados para o layout arcano. */
+#p-stats-cluster[data-cluster-skin="cluster_mage"] {
+    width: 500px;
+    height: 242px;
+    bottom: 24px;
+    left: calc(50% - 50vw + 22px);
+}
+#p-stats-cluster[data-cluster-skin="cluster_mage"] .lvl-circle {
+    left: 56px;
+    top: 94px;
+    width: 74px;
+    height: 74px;
+}
+#p-stats-cluster[data-cluster-skin="cluster_mage"] .unit-name {
+    left: 184px;
+    top: 49px;
+    width: 222px;
+    font-size: 13px;
+    line-height: 18px;
+    color: #ffe8a4 !important;
+    text-shadow: 1px 1px 0 #3d0f05, -1px -1px 0 #3d0f05, 1px -1px 0 #3d0f05, -1px 1px 0 #3d0f05;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#p-stats-cluster[data-cluster-skin="cluster_mage"] .hp-tube {
+    left: 186px;
+    top: 127px;
+    width: 205px;
+    height: 34px;
+    border-radius: 8px;
+}
+#p-stats-cluster[data-cluster-skin="cluster_mage"] .hp-liquid {
+    border-radius: 6px;
+}
+#p-stats-cluster[data-cluster-skin="cluster_mage"] .mastery-row {
+    left: 417px;
+    top: 76px;
+    flex-direction: column;
+    gap: 48px;
+}
 .cluster-reward-tooltip {
     position: fixed;
     z-index: 95000;
