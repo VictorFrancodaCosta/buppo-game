@@ -1,130 +1,178 @@
 from pathlib import Path
-from PIL import Image, ImageDraw
+
 import numpy as np
+from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "assets" / "img"
-GEN = Path(r"C:\Users\Victor Franco\.codex\generated_images\019f10b1-7919-77a2-8061-f27fec20be13")
+IMG_DIR = ROOT / "assets" / "img"
+GEN_DIR = Path(r"C:\Users\Victor Franco\.codex\generated_images\019f10b1-7919-77a2-8061-f27fec20be13")
 
-W, H = 2048, 739
-DOM_W, DOM_H = 370, 138
+TEMPLATE_PATH = IMG_DIR / "cluster_jogador.webp"
+OUTPUT_PATH = IMG_DIR / "cluster_cavaleiro_guardareal.webp"
+PREVIEW_PATH = IMG_DIR / "cluster_cavaleiro_guardareal_preview.png"
 
-ASSETS = [
-    ("cluster_cavaleiro_guardareal.webp", "ig_07c1f2575ebdbe42016a438320092c8191b7f07f6f819fc802.png"),
-    ("cluster_mago_chamaarcana.webp", "ig_07c1f2575ebdbe42016a43837cde488191a7e75cc9aa2c05e1.png"),
-    ("cluster_arqueiro_sentinelaverde.webp", "ig_07c1f2575ebdbe42016a4383cf5d008191a2dd2db66d39ac3c.png"),
-    ("cluster_ladino_maodourada.webp", "ig_07c1f2575ebdbe42016a43842472548191988d0e3305902cd6.png"),
-    ("cluster_oraculo_visaoastral.webp", "ig_07c1f2575ebdbe42016a4384737308819184164f90caf2f45e.png"),
-]
-
-HUD_DOM = {
-    "level_center": (64, 72),
-    "level_radius": 34,
-    "name_box": (100, 17, 310, 39),
-    "hp_box": (140, 48, 300, 75),
-    "mastery_centers": ((165, 108), (215, 108)),
-    "mastery_radius": 16,
-}
+AI_KNIGHT_SOURCE = GEN_DIR / "ig_07c1f2575ebdbe42016a438320092c8191b7f07f6f819fc802.png"
 
 
-def sx(x):
-    return x * W / DOM_W
+def rgba(path):
+    return Image.open(path).convert("RGBA")
 
 
-def sy(y):
-    return y * H / DOM_H
+def alpha_mask(img):
+    return img.getchannel("A")
 
 
-def box_dom(box):
-    x1, y1, x2, y2 = box
-    return (sx(x1), sy(y1), sx(x2), sy(y2))
+def classify_template(template):
+    arr = np.array(template.convert("RGBA")).astype(np.int16)
+    r, g, b, a = [arr[:, :, i] for i in range(4)]
+    maxc = np.maximum.reduce([r, g, b])
+    minc = np.minimum.reduce([r, g, b])
+    sat = maxc - minc
+    visible = a > 24
+
+    parchment = visible & (r > 150) & (g > 95) & (b > 60) & (r > g) & (g > b)
+    metal = visible & (sat < 42) & (r > 70) & (g > 70) & (b > 65)
+    gold = visible & (r > 145) & (g > 85) & (b < 95) & (sat > 48)
+    wood = visible & ~(parchment | metal | gold)
+
+    def mask(cond, blur=0.25):
+        m = Image.fromarray(np.where(cond, a, 0).clip(0, 255).astype(np.uint8), "L")
+        return m.filter(ImageFilter.GaussianBlur(blur))
+
+    return {
+        "visible": Image.fromarray(np.where(visible, a, 0).clip(0, 255).astype(np.uint8), "L"),
+        "wood": mask(wood, 0.35),
+        "parchment": mask(parchment, 0.2),
+        "metal": mask(metal, 0.35),
+        "gold": mask(gold, 0.2),
+    }
 
 
-def point_dom(point):
-    x, y = point
-    return (sx(x), sy(y))
-
-
-def key_color_for(img):
-    corners = [
-        img.getpixel((0, 0))[:3],
-        img.getpixel((img.width - 1, 0))[:3],
-        img.getpixel((0, img.height - 1))[:3],
-        img.getpixel((img.width - 1, img.height - 1))[:3],
-    ]
-    return max(set(corners), key=corners.count)
-
-
-def remove_key(img):
-    img = img.convert("RGBA")
-    key = key_color_for(img)
+def clean_ai_texture(template_size):
+    img = rgba(AI_KNIGHT_SOURCE)
+    key = np.array(img.getpixel((0, 0))[:3], dtype=np.float32)
     arr = np.array(img).astype(np.float32)
     rgb = arr[:, :, :3]
+    dist = np.sqrt(np.sum((rgb - key) ** 2, axis=2))
     alpha = arr[:, :, 3]
-    key_arr = np.array(key, dtype=np.float32)
-    dist = np.sqrt(np.sum((rgb - key_arr) ** 2, axis=2))
-    alpha = np.where(dist < 38, 0, alpha)
-    soft = (dist >= 38) & (dist < 120)
-    alpha = np.where(soft, alpha * ((dist - 38) / 82), alpha)
-    r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
-    if key[1] > 180:
-        chroma = (g > 120) & (g > r * 1.22) & (g > b * 1.22)
-        alpha = np.where(chroma, 0, alpha)
-    if key[0] > 180 and key[2] > 180:
-        chroma = (r > 120) & (b > 120) & (r > g * 1.22) & (b > g * 1.22)
-        alpha = np.where(chroma, 0, alpha)
+    alpha = np.where(dist < 44, 0, alpha)
+    alpha = np.where((dist >= 44) & (dist < 130), alpha * ((dist - 44) / 86), alpha)
     arr[:, :, 3] = np.clip(alpha, 0, 255)
-    return Image.fromarray(arr.astype(np.uint8), "RGBA")
-
-
-def normalize_to_canvas(src):
-    img = remove_key(Image.open(src))
+    img = Image.fromarray(arr.astype(np.uint8), "RGBA")
     bbox = img.getbbox()
-    if not bbox:
-        raise ValueError(f"Empty generated art: {src}")
-    cropped = img.crop(bbox)
-    # Fit the AI-painted cluster itself to the exact game asset canvas.
-    fitted = cropped.resize((W, H), Image.Resampling.LANCZOS)
-    return fitted
+    if bbox:
+        img = img.crop(bbox)
+    img = img.resize(template_size, Image.Resampling.LANCZOS)
+    return ImageEnhance.Contrast(img.filter(ImageFilter.SMOOTH_MORE)).enhance(1.08)
 
 
-def draw_audit_marks(img):
+def color_layer(template, mask, color, opacity=1.0):
+    gray = ImageEnhance.Contrast(template.convert("L")).enhance(1.16)
+    arr = np.array(gray).astype(np.float32) / 255.0
+    shade = 0.54 + arr * 0.68
+    rgb = np.zeros((template.height, template.width, 4), dtype=np.uint8)
+    for i, c in enumerate(color):
+        rgb[:, :, i] = np.clip(c * shade, 0, 255)
+    rgb[:, :, 3] = np.array(mask.point(lambda p: int(p * opacity)), dtype=np.uint8)
+    return Image.fromarray(rgb, "RGBA")
+
+
+def alpha_composite_masked(base, layer, mask, opacity=255):
+    layer = layer.copy()
+    layer.putalpha(ImageChops.multiply(mask, Image.new("L", base.size, opacity)))
+    base.alpha_composite(layer)
+
+
+def add_knight_details(img, masks):
     d = ImageDraw.Draw(img, "RGBA")
-    lx, ly = point_dom(HUD_DOM["level_center"])
-    lr = sx(HUD_DOM["level_radius"])
-    d.ellipse((lx - lr, ly - lr, lx + lr, ly + lr), outline=(255, 230, 0, 255), width=7)
-    d.rectangle(box_dom(HUD_DOM["name_box"]), outline=(0, 255, 255, 255), width=7)
-    d.rectangle(box_dom(HUD_DOM["hp_box"]), outline=(0, 255, 0, 255), width=7)
-    mr = sx(HUD_DOM["mastery_radius"])
-    for center in HUD_DOM["mastery_centers"]:
-        cx, cy = point_dom(center)
-        d.ellipse((cx - mr, cy - mr, cx + mr, cy + mr), outline=(255, 0, 255, 255), width=7)
-        d.line((cx - sx(5), cy, cx + sx(5), cy), fill=(255, 255, 255, 255), width=5)
-        d.line((cx, cy - sy(5), cx, cy + sy(5)), fill=(255, 255, 255, 255), width=5)
+    w, h = img.size
+    sx = w / 370
+    sy = h / 138
+
+    def p(x, y):
+        return (x * sx, y * sy)
+
+    blue = (28, 94, 210, 230)
+    gold = (234, 178, 46, 235)
+    ink = (32, 18, 10, 230)
+    steel = (210, 220, 219, 215)
+
+    # Blue enamel accents on existing metal zones; all are outside text/HUD centers.
+    for cx, cy, r in ((64, 72, 49), (158, 111, 17), (210, 111, 17)):
+        x, y = p(cx, cy)
+        d.ellipse((x - r * sx, y - r * sy, x + r * sx, y + r * sy), outline=blue, width=max(4, int(2.2 * sx)))
+        d.arc((x - (r - 4) * sx, y - (r - 4) * sy, x + (r - 4) * sx, y + (r - 4) * sy), 205, 322, fill=(255, 255, 255, 70), width=max(2, int(0.75 * sx)))
+
+    # A knight shield/fleur-de-lis ornament on the original right ornament area.
+    shield = [p(338, 45), p(361, 54), p(357, 93), p(340, 110), p(323, 93), p(319, 54)]
+    d.polygon(shield, fill=(24, 83, 186, 215), outline=ink)
+    inner = [p(340, 53), p(353, 59), p(350, 88), p(340, 99), p(330, 88), p(327, 59)]
+    d.polygon(inner, outline=gold, fill=(18, 70, 165, 210))
+    x, y = p(340, 75)
+    d.polygon([(x, y - 19 * sy), (x + 8 * sx, y + 6 * sy), (x, y + 20 * sy), (x - 8 * sx, y + 6 * sy)], fill=gold, outline=ink)
+    d.ellipse((x - 18 * sx, y - 2 * sy, x - 1 * sx, y + 17 * sy), outline=gold, width=max(3, int(1.7 * sx)))
+    d.ellipse((x + 1 * sx, y - 2 * sy, x + 18 * sx, y + 17 * sy), outline=gold, width=max(3, int(1.7 * sx)))
+
+    # Small steel scratches and rivet highlights, clipped to original visible silhouette.
+    for x1, y1, x2, y2 in ((112, 57, 145, 54), (184, 64, 228, 62), (258, 86, 304, 83), (315, 103, 333, 101)):
+        d.line((*p(x1, y1), *p(x2, y2)), fill=steel, width=max(1, int(0.55 * sx)))
+
+    img.putalpha(masks["visible"])
 
 
-def make_audit(processed):
-    rows = []
-    for _, img in processed:
-        bg = Image.new("RGBA", (W, H), (28, 28, 28, 255))
-        bg.alpha_composite(img)
-        draw_audit_marks(bg)
-        rows.append(bg.resize((740, 267), Image.Resampling.LANCZOS))
-    audit = Image.new("RGBA", (740, 267 * len(rows)), (18, 18, 18, 255))
-    for i, row in enumerate(rows):
-        audit.alpha_composite(row, (0, i * 267))
-    return audit
+def build_knight_cluster():
+    template = rgba(TEMPLATE_PATH)
+    masks = classify_template(template)
+    out = Image.new("RGBA", template.size, (0, 0, 0, 0))
+
+    # AI art contributes painterly texture only, clipped to the original cluster silhouette.
+    texture = clean_ai_texture(template.size).convert("RGBA")
+    texture_gray = ImageEnhance.Contrast(texture.convert("L")).enhance(1.15)
+    texture_color = Image.merge(
+        "RGBA",
+        (
+            texture_gray.point(lambda p: int(32 + p * 0.22)),
+            texture_gray.point(lambda p: int(82 + p * 0.26)),
+            texture_gray.point(lambda p: int(160 + p * 0.34)),
+            ImageChops.multiply(alpha_mask(texture), masks["visible"]).point(lambda p: int(p * 0.18)),
+        ),
+    )
+    out.alpha_composite(texture_color)
+
+    alpha_composite_masked(out, color_layer(template, masks["wood"], (42, 101, 190), 0.94), masks["wood"])
+    alpha_composite_masked(out, color_layer(template, masks["metal"], (178, 187, 184), 0.9), masks["metal"])
+    alpha_composite_masked(out, color_layer(template, masks["gold"], (232, 174, 42), 0.88), masks["gold"])
+    alpha_composite_masked(out, color_layer(template, masks["parchment"], (236, 193, 126), 0.58), masks["parchment"])
+
+    # Preserve original cartoon ink/wood grain, which preserves visual alignment.
+    linework = ImageEnhance.Contrast(template).enhance(1.18)
+    linework.putalpha(masks["visible"].point(lambda p: int(p * 0.5)))
+    out.alpha_composite(linework)
+
+    add_knight_details(out, masks)
+    out.putalpha(masks["visible"])
+    return out
+
+
+def make_preview(cluster):
+    preview = cluster.resize((370, 138), Image.Resampling.LANCZOS)
+    d = ImageDraw.Draw(preview, "RGBA")
+    # Reference boxes from the current CSS, not new positions.
+    d.rectangle((30, 38, 98, 106), outline=(255, 230, 0, 230), width=2)
+    d.rectangle((100, 17, 310, 39), outline=(0, 255, 255, 230), width=2)
+    d.rectangle((140, 45, 300, 78), outline=(0, 255, 0, 230), width=2)
+    d.ellipse((142, 95, 174, 127), outline=(255, 0, 255, 230), width=2)
+    d.ellipse((194, 95, 226, 127), outline=(255, 0, 255, 230), width=2)
+    preview.save(PREVIEW_PATH)
 
 
 def main():
-    processed = []
-    for out_name, src_name in ASSETS:
-        img = normalize_to_canvas(GEN / src_name)
-        img.save(OUT / out_name, "WEBP", lossless=True, quality=100, method=6)
-        processed.append((out_name, img))
-    make_audit(processed).save(OUT / "cluster_alignment_audit.png")
-    print("Installed", len(processed), "AI-painted cluster assets")
+    cluster = build_knight_cluster()
+    cluster.save(OUTPUT_PATH, "WEBP", lossless=True, quality=100, method=6)
+    make_preview(cluster)
+    print(f"saved {OUTPUT_PATH}")
+    print(f"saved {PREVIEW_PATH}")
 
 
 if __name__ == "__main__":

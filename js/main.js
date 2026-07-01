@@ -824,7 +824,7 @@ function applyClusterSkinForUnit(u) {
     const fallback = u === player ? 'assets/img/cluster_jogador.webp' : 'assets/img/cluster_inimigo.webp';
     const assetPath = item?.asset || fallback;
     const assetUrlObj = new URL(assetPath, window.location.href);
-    if(item?.asset) assetUrlObj.searchParams.set('v', '20260630-ai-painted');
+    if(item?.asset) assetUrlObj.searchParams.set('v', '20260701-knight-template-locked');
     const assetUrl = assetUrlObj.href;
     const artHeight = Number(item?.clusterArtHeight) || 1248;
     const artHeightPct = (artHeight / 1248) * 100;
