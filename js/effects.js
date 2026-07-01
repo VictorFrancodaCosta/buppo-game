@@ -2873,13 +2873,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             { id: 'xp_rota_saque', type: 'xpArea', name: '\u00c1REA DE XP - ROTA DO SAQUE', displayName: 'ROTA DO SAQUE', asset: 'assets/img/ui_area_xprotadosaque.webp', shopAsset: 'assets/img/ax_ladino_loja.webp' },
             { id: 'xp_altar_visao', type: 'xpArea', name: '\u00c1REA DE XP - ALTAR DA VIS\u00c3O', displayName: 'ALTAR DA VIS\u00c3O', asset: 'assets/img/ui_area_xpaltardavisao.webp', shopAsset: 'assets/img/ax_oraculo_loja.webp' }
         ];
-        const lobbyClusterItems = [
-            { id: 'cluster_knight', type: 'cluster', name: 'CLUSTER - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/cluster_testeclusternovo_cavaleiro_v2.webp', shopAsset: 'assets/img/cluster_testeclusternovo_cavaleiro_v2.webp' },
-            { id: 'cluster_mage', type: 'cluster', name: 'CLUSTER - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/cluster_testeclusternovo_mago_v1.webp', shopAsset: 'assets/img/cluster_testeclusternovo_mago_v1.webp' },
-            { id: 'cluster_archer', type: 'cluster', name: 'CLUSTER - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/cluster_arqueiro_sentinelaverde.webp', shopAsset: 'assets/img/cluster_arqueiro_sentinelaverde.webp' },
-            { id: 'cluster_rogue', type: 'cluster', name: 'CLUSTER - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/cluster_ladino_maodourada.webp', shopAsset: 'assets/img/cluster_ladino_maodourada.webp' },
-            { id: 'cluster_oracle', type: 'cluster', name: 'CLUSTER - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/cluster_oraculo_visaoastral.webp', shopAsset: 'assets/img/cluster_oraculo_visaoastral.webp' }
-        ];
+        const lobbyClusterItems = [];
         const lobbyShopItemsByCategory = {
             decks: lobbyDeckItems,
             borders: lobbyCardBorderItems,
@@ -2957,29 +2951,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 'Jogar Treinar gera 1 {coin}.',
                 'Subir de nível gera 2 {coin}.',
                 'Realizar uma <strong>Maestria em Treinar</strong> gera 4 {coin}.'
-            ],
-            cluster_knight: [
-                'Seus Bloqueios efetivos geram 8 {coin}.',
-                'Realizar uma <strong>Maestria em Bloqueio</strong> gera 8 {coin}.'
-            ],
-            cluster_mage: [
-                'Seus Ataques efetivos geram 6 {coin}.',
-                'Realizar uma <strong>Maestria em Ataque</strong> gera 4 {coin}.',
-                'Jogar Ataque logo ap\u00f3s j\u00e1 ter jogado Ataque gera 4 {coin}.'
-            ],
-            cluster_archer: [
-                'Jogar Restaurar gera 16 {coin}.',
-                'Realizar uma <strong>Maestria em Restaurar</strong> gera 18 {coin}.'
-            ],
-            cluster_rogue: [
-                'Jogar Desarmar gera 17 {coin}.',
-                'Realizar uma <strong>Maestria em Desarmar</strong> gera 20 {coin}.',
-                'Jogar Desarmar ao mesmo tempo que o oponente tamb\u00e9m jogar Desarmar gera 17 {coin}.'
-            ],
-            cluster_oracle: [
-                'Jogar Treinar gera 6 {coin}.',
-                'Subir de n\u00edvel gera 6 {coin}.',
-                'Realizar uma <strong>Maestria em Treinar</strong> gera 18 {coin}.'
             ]
         };
         const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';

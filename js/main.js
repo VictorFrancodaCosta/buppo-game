@@ -100,10 +100,6 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_descansar_oraculo.webp', 'assets/img/carta_desarmar_oraculo.webp',
         'assets/img/carta_treinar_oraculo.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
-        'assets/img/cluster_testeclusternovo_cavaleiro_v2.webp', 'assets/img/cluster_testeclusternovo_mago_v1.webp', 'assets/img/cluster_arqueiro_sentinelaverde.webp',
-        'assets/img/cluster_ladino_maodourada.webp', 'assets/img/cluster_oraculo_visaoastral.webp',
-        'assets/img/cluster_testeclusternovo_cavaleiro_v2.webp', 'assets/img/cluster_testeclusternovo_mago_v1.webp',
-        'assets/img/cluster_arqueiro_sentinelaverde.webp', 'assets/img/cluster_ladino_maodourada.webp', 'assets/img/cluster_oraculo_visaoastral.webp',
         'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
         'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
         'assets/img/botao_sair_loja_ui.png', 'assets/img/botao_sair_mochila_ui.png',
@@ -599,51 +595,6 @@ const SHOP_ITEMS = {
         price: 300,
         asset: 'assets/img/ui_area_xpaltardavisao.webp',
         shopAsset: 'assets/img/ax_oraculo_loja.webp'
-    },
-    cluster_knight: {
-        id: 'cluster_knight',
-        name: 'CLUSTER - GUARDA REAL',
-        slot: 'cluster',
-        price: 1500,
-        asset: 'assets/img/cluster_testeclusternovo_cavaleiro_v2.webp',
-        clusterArtHeight: 870,
-        shopAsset: 'assets/img/cluster_testeclusternovo_cavaleiro_v2.webp'
-    },
-    cluster_mage: {
-        id: 'cluster_mage',
-        name: 'CLUSTER - CHAMA ARCANA',
-        slot: 'cluster',
-        price: 1500,
-        asset: 'assets/img/cluster_testeclusternovo_mago_v1.webp',
-        clusterArtHeight: 815,
-        shopAsset: 'assets/img/cluster_testeclusternovo_mago_v1.webp'
-    },
-    cluster_archer: {
-        id: 'cluster_archer',
-        name: 'CLUSTER - SENTINELA VERDE',
-        slot: 'cluster',
-        price: 1500,
-        asset: 'assets/img/cluster_arqueiro_sentinelaverde.webp',
-        clusterArtHeight: 1248,
-        shopAsset: 'assets/img/cluster_arqueiro_sentinelaverde.webp'
-    },
-    cluster_rogue: {
-        id: 'cluster_rogue',
-        name: 'CLUSTER - MAO DOURADA',
-        slot: 'cluster',
-        price: 1500,
-        asset: 'assets/img/cluster_ladino_maodourada.webp',
-        clusterArtHeight: 1248,
-        shopAsset: 'assets/img/cluster_ladino_maodourada.webp'
-    },
-    cluster_oracle: {
-        id: 'cluster_oracle',
-        name: 'CLUSTER - VISAO ASTRAL',
-        slot: 'cluster',
-        price: 1500,
-        asset: 'assets/img/cluster_oraculo_visaoastral.webp',
-        clusterArtHeight: 1248,
-        shopAsset: 'assets/img/cluster_oraculo_visaoastral.webp'
     }
 };
 window.SHOP_ITEMS = SHOP_ITEMS;
@@ -700,31 +651,7 @@ const XP_AREA_REWARD_RULES = {
     }
 };
 
-const CLUSTER_REWARD_RULES = {
-    cluster_knight: {
-        blockEffective: 8,
-        mastery: { BLOQUEIO: 8 }
-    },
-    cluster_mage: {
-        attackEffective: 6,
-        consecutiveAttack: 4,
-        mastery: { ATAQUE: 4 }
-    },
-    cluster_archer: {
-        play: { DESCANSAR: 16 },
-        mastery: { DESCANSAR: 18 }
-    },
-    cluster_rogue: {
-        play: { DESARMAR: 17 },
-        disarmClash: 17,
-        mastery: { DESARMAR: 20 }
-    },
-    cluster_oracle: {
-        play: { TREINAR: 6 },
-        levelUp: 6,
-        mastery: { TREINAR: 18 }
-    }
-};
+const CLUSTER_REWARD_RULES = {};
 
 const DECK_REWARD_RULES = {
     knight: {
@@ -820,19 +747,14 @@ function applyXpAreaSkinForUnit(u) {
 function applyClusterSkinForUnit(u) {
     const cluster = document.getElementById(`${u.id}-stats-cluster`);
     if(!cluster) return;
-    const item = getUnitEquippedItemBySlot(u, 'cluster');
     const fallback = u === player ? 'assets/img/cluster_jogador.webp' : 'assets/img/cluster_inimigo.webp';
-    const assetPath = item?.asset || fallback;
-    const assetUrlObj = new URL(assetPath, window.location.href);
-    if(item?.asset) assetUrlObj.searchParams.set('v', '20260701-testeclusternovo-mago-v1');
+    const assetUrlObj = new URL(fallback, window.location.href);
     const assetUrl = assetUrlObj.href;
-    const artHeight = Number(item?.clusterArtHeight) || 1248;
-    const artHeightPct = (artHeight / 1248) * 100;
     cluster.style.setProperty('--cluster-art-url', `url("${assetUrl}")`);
-    cluster.style.setProperty('--cluster-art-height', `${artHeightPct}%`);
-    cluster.style.setProperty('--cluster-art-top', `${(100 - artHeightPct) / 2}%`);
-    cluster.dataset.clusterSkin = item?.id || '';
-    cluster.classList.toggle('cluster-skin-equipped', !!item?.asset);
+    cluster.style.setProperty('--cluster-art-height', '100%');
+    cluster.style.setProperty('--cluster-art-top', '0%');
+    cluster.dataset.clusterSkin = '';
+    cluster.classList.remove('cluster-skin-equipped');
 }
 
 function getCardBorderItemForSide(isPlayerSide = true) {
