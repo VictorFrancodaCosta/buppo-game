@@ -100,9 +100,9 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_descansar_oraculo.webp', 'assets/img/carta_desarmar_oraculo.webp',
         'assets/img/carta_treinar_oraculo.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
-        'assets/img/cluster_cavaleiro_guardareal.webp', 'assets/img/cluster_mago_chamaarcana.webp', 'assets/img/cluster_arqueiro_sentinelaverde.webp',
+        'assets/img/cluster_testeclusternovo_cavaleiro.webp', 'assets/img/cluster_mago_chamaarcana.webp', 'assets/img/cluster_arqueiro_sentinelaverde.webp',
         'assets/img/cluster_ladino_maodourada.webp', 'assets/img/cluster_oraculo_visaoastral.webp',
-        'assets/img/cluster_cavaleiro_guardareal.webp', 'assets/img/cluster_mago_chamaarcana.webp',
+        'assets/img/cluster_testeclusternovo_cavaleiro.webp', 'assets/img/cluster_mago_chamaarcana.webp',
         'assets/img/cluster_arqueiro_sentinelaverde.webp', 'assets/img/cluster_ladino_maodourada.webp', 'assets/img/cluster_oraculo_visaoastral.webp',
         'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
         'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
@@ -605,9 +605,9 @@ const SHOP_ITEMS = {
         name: 'CLUSTER - GUARDA REAL',
         slot: 'cluster',
         price: 1500,
-        asset: 'assets/img/cluster_cavaleiro_guardareal.webp',
+        asset: 'assets/img/cluster_testeclusternovo_cavaleiro.webp',
         clusterArtHeight: 1248,
-        shopAsset: 'assets/img/cluster_cavaleiro_guardareal.webp'
+        shopAsset: 'assets/img/cluster_testeclusternovo_cavaleiro.webp'
     },
     cluster_mage: {
         id: 'cluster_mage',
@@ -824,7 +824,7 @@ function applyClusterSkinForUnit(u) {
     const fallback = u === player ? 'assets/img/cluster_jogador.webp' : 'assets/img/cluster_inimigo.webp';
     const assetPath = item?.asset || fallback;
     const assetUrlObj = new URL(assetPath, window.location.href);
-    if(item?.asset) assetUrlObj.searchParams.set('v', '20260701-knight-ai-visible');
+    if(item?.asset) assetUrlObj.searchParams.set('v', '20260701-testeclusternovo');
     const assetUrl = assetUrlObj.href;
     const artHeight = Number(item?.clusterArtHeight) || 1248;
     const artHeightPct = (artHeight / 1248) * 100;
