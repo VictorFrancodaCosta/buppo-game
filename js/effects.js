@@ -566,56 +566,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             text-shadow: 2px 2px 0 #190700, -1px -1px 0 #190700, 1px -1px 0 #190700, -1px 1px 0 #190700, 0 0 9px rgba(255,214,46,0.4) !important;
         }
 
-        #lobby-screen .lobby-inventory-button {
-            position: fixed !important;
-            left: calc(50% - 50vw + var(--lobby-side-gap, 70px) + clamp(76px, 6.4vw, 116px)) !important;
-            top: auto !important;
-            bottom: 78px !important;
-            transform: translateX(-50%) !important;
-            z-index: 12010 !important;
-            width: clamp(158px, 12.5vw, 220px) !important;
-            aspect-ratio: 906 / 1012 !important;
-            padding: 0 !important;
-            border: 0 !important;
-            border-radius: 0 !important;
-            background: transparent !important;
-            color: transparent !important;
-            font-size: 0 !important;
-            line-height: 0 !important;
-            cursor: pointer !important;
-            appearance: none !important;
-            -webkit-tap-highlight-color: transparent !important;
-            filter: drop-shadow(6px 9px 0 rgba(26, 11, 4, 0.74))
-                    drop-shadow(0 14px 16px rgba(0, 0, 0, 0.34)) !important;
-            transform-origin: center center !important;
-            transition: transform 0.15s cubic-bezier(0.2, 1, 0.3, 1), filter 0.15s ease !important;
-        }
-
-        #lobby-screen .lobby-inventory-button img {
-            display: block !important;
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: contain !important;
-            pointer-events: none !important;
-            user-select: none !important;
-        }
-
-        #lobby-screen .lobby-inventory-button:hover,
-        #lobby-screen .lobby-inventory-button:focus-visible {
-            transform: translateX(-50%) translateY(-4px) scale(1.09) !important;
-            filter: brightness(1.12)
-                    drop-shadow(8px 12px 0 rgba(26, 11, 4, 0.82))
-                    drop-shadow(0 18px 21px rgba(0, 0, 0, 0.34))
-                    drop-shadow(0 0 18px rgba(255, 221, 80, 0.35)) !important;
-        }
-
-        #lobby-screen .lobby-inventory-button:active {
-            transform: translateX(-50%) translateY(7px) scale(1.06, 0.78) !important;
-            filter: brightness(1.2)
-                    drop-shadow(3px 4px 0 rgba(26, 11, 4, 0.9))
-                    drop-shadow(0 0 16px rgba(255, 221, 80, 0.52)) !important;
-        }
-
         #lobby-screen .lobby-menu-button {
             border: 0 !important;
             padding: 0 !important;
@@ -657,8 +607,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     drop-shadow(0 0 18px rgba(255, 221, 80, 0.55)) !important;
         }
 
-        #lobby-screen .lobby-menu-button.lobby-button-press-juice,
-        #lobby-screen .lobby-inventory-button.lobby-button-press-juice {
+        #lobby-screen .lobby-menu-button.lobby-button-press-juice {
             animation: lobbyButtonPressJuice 0.26s cubic-bezier(0.16, 1.3, 0.32, 1) both !important;
         }
 
@@ -741,7 +690,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background-image: url('assets/img/botao_historico.webp') !important;
         }
         #lobby-screen .lobby-main-ranking { background-image: url('assets/img/botao_ranking.webp') !important; }
-        #lobby-screen .lobby-main-shop { background-image: url('assets/img/botao_loja.webp') !important; }
+        #lobby-screen .lobby-main-shop { background-image: url('assets/img/botao_arsenal.webp') !important; }
         #lobby-screen .lobby-main-tutorial { background-image: url('assets/img/botao_tutorial.webp') !important; }
         #lobby-screen .lobby-main-exit { background-image: url('assets/img/botao_sair.webp') !important; }
 
@@ -843,7 +792,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             margin: 0 !important;
             width: clamp(210px, 23vw, 340px) !important;
             aspect-ratio: 1413 / 614 !important;
-            background: url('assets/img/titulo_loja.webp?v=2026.06.24.19') center / contain no-repeat !important;
+            background: url('assets/img/titulo_arsenal.webp') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
@@ -997,62 +946,52 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             box-shadow: inset 0 8px 18px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.12), 0 10px 0 rgba(30, 11, 3, 0.54), 0 0 28px var(--item-glow, rgba(255,215,0,0.72)), 0 0 52px var(--item-glow-soft, rgba(255,215,0,0.32)) !important;
         }
 
-        .lobby-shop-slot[data-shop-item="metallic_border"],
-        .inventory-item[data-inventory-item="metallic_border"] {
+        .lobby-shop-slot[data-shop-item="metallic_border"] {
             --item-glow: rgba(59, 176, 255, 0.9);
             --item-glow-soft: rgba(59, 176, 255, 0.38);
         }
 
-        .lobby-shop-slot[data-shop-item="mage_fire_border"],
-        .inventory-item[data-inventory-item="mage_fire_border"] {
+        .lobby-shop-slot[data-shop-item="mage_fire_border"] {
             --item-glow: rgba(255, 67, 54, 0.95);
             --item-glow-soft: rgba(255, 67, 54, 0.4);
         }
 
-        .lobby-shop-slot[data-shop-item="elven_forest_border"],
-        .inventory-item[data-inventory-item="elven_forest_border"] {
+        .lobby-shop-slot[data-shop-item="elven_forest_border"] {
             --item-glow: rgba(64, 224, 98, 0.92);
             --item-glow-soft: rgba(64, 224, 98, 0.38);
         }
 
-        .lobby-shop-slot[data-shop-item="rogue_gold_border"],
-        .inventory-item[data-inventory-item="rogue_gold_border"] {
+        .lobby-shop-slot[data-shop-item="rogue_gold_border"] {
             --item-glow: rgba(255, 218, 37, 1);
             --item-glow-soft: rgba(255, 218, 37, 0.42);
         }
 
-        .lobby-shop-slot[data-shop-item="oracle_border"],
-        .inventory-item[data-inventory-item="oracle_border"] {
+        .lobby-shop-slot[data-shop-item="oracle_border"] {
             --item-glow: rgba(179, 91, 255, 0.95);
             --item-glow-soft: rgba(179, 91, 255, 0.4);
         }
 
-        .lobby-shop-slot[data-shop-item="xp_campo_honra"],
-        .inventory-item[data-inventory-item="xp_campo_honra"] {
+        .lobby-shop-slot[data-shop-item="xp_campo_honra"] {
             --item-glow: rgba(59, 176, 255, 0.9);
             --item-glow-soft: rgba(59, 176, 255, 0.36);
         }
 
-        .lobby-shop-slot[data-shop-item="xp_circulo_arcano"],
-        .inventory-item[data-inventory-item="xp_circulo_arcano"] {
+        .lobby-shop-slot[data-shop-item="xp_circulo_arcano"] {
             --item-glow: rgba(255, 67, 54, 0.94);
             --item-glow-soft: rgba(255, 67, 54, 0.38);
         }
 
-        .lobby-shop-slot[data-shop-item="xp_bosque_sentinela"],
-        .inventory-item[data-inventory-item="xp_bosque_sentinela"] {
+        .lobby-shop-slot[data-shop-item="xp_bosque_sentinela"] {
             --item-glow: rgba(64, 224, 98, 0.9);
             --item-glow-soft: rgba(64, 224, 98, 0.36);
         }
 
-        .lobby-shop-slot[data-shop-item="xp_rota_saque"],
-        .inventory-item[data-inventory-item="xp_rota_saque"] {
+        .lobby-shop-slot[data-shop-item="xp_rota_saque"] {
             --item-glow: rgba(255, 218, 37, 0.95);
             --item-glow-soft: rgba(255, 218, 37, 0.38);
         }
 
-        .lobby-shop-slot[data-shop-item="xp_altar_visao"],
-        .inventory-item[data-inventory-item="xp_altar_visao"] {
+        .lobby-shop-slot[data-shop-item="xp_altar_visao"] {
             --item-glow: rgba(179, 91, 255, 0.94);
             --item-glow-soft: rgba(179, 91, 255, 0.38);
         }
@@ -1066,8 +1005,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 radial-gradient(circle at 50% 22%, rgba(160, 83, 18, 0.96), rgba(98, 43, 5, 0.98) 56%, rgba(61, 25, 2, 0.99) 100%) !important;
         }
 
-        .shop-product-name,
-        .inventory-item-name {
+        .shop-product-name {
             color: #ffffff !important;
             font-family: 'Bangers', cursive !important;
             font-size: clamp(11px, 0.95vw, 15px) !important;
@@ -1427,112 +1365,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             filter: brightness(0.95) saturate(0.95) drop-shadow(0 3px 0 rgba(30, 11, 3, 0.82)) !important;
         }
 
-        .lobby-inventory-modal {
-            position: fixed !important;
-            inset: 0 !important;
-            z-index: 87500 !important;
-            display: none !important;
-            align-items: center !important;
-            justify-content: center !important;
-            background: rgba(8, 3, 1, 0.64) !important;
-            backdrop-filter: blur(8px) saturate(0.82) !important;
-        }
-
-        .lobby-inventory-modal.visible {
-            display: flex !important;
-        }
-
-        .lobby-inventory-panel {
-            position: relative !important;
-            z-index: 1 !important;
-            width: min(1180px, 96vw) !important;
-            min-height: min(700px, 82vh) !important;
-            padding: 112px 92px 92px !important;
-            box-sizing: border-box !important;
-            background: url('assets/img/janela_mochila.webp?v=2026.06.24.18') center / 100% 100% no-repeat !important;
-            border: 0 !important;
-            border-radius: 8px !important;
-            box-shadow: none !important;
-        }
-
-        .lobby-inventory-title {
-            position: absolute !important;
-            left: 50% !important;
-            top: calc(50% - min(350px, 41vh) - 72px) !important;
-            transform: translateX(-50%) !important;
-            z-index: 4 !important;
-            margin: 0 !important;
-            width: clamp(330px, 39vw, 570px) !important;
-            aspect-ratio: 1712 / 461 !important;
-            background: url('assets/img/titulo_mochila.webp?v=2026.06.24.18') center / contain no-repeat !important;
-            filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
-            pointer-events: none !important;
-            text-indent: -9999px !important;
-            overflow: hidden !important;
-        }
-
-        .lobby-inventory-categories {
-            position: absolute !important;
-            left: 50% !important;
-            top: 108px !important;
-            transform: translateX(-50%) !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            flex-wrap: wrap !important;
-            gap: clamp(34px, 3.4vw, 62px) !important;
-            width: min(820px, 74%) !important;
-            z-index: 2 !important;
-        }
-
-        .lobby-inventory-grid {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            flex-wrap: wrap !important;
-            column-gap: clamp(34px, 3vw, 48px) !important;
-            row-gap: clamp(24px, 2.4vw, 34px) !important;
-            width: min(820px, 78%) !important;
-            max-height: none !important;
-            margin: 50px auto 0 !important;
-            overflow: visible !important;
-            padding: 18px 10px 12px !important;
-        }
-
-        .inventory-item {
-            position: relative !important;
-            flex: 0 0 clamp(165px, 13.2vw, 205px) !important;
-            aspect-ratio: 1 / 1 !important;
-            min-height: 0 !important;
-            display: block !important;
-            align-items: center !important;
-            justify-items: center !important;
-            padding: 0 !important;
-            border: 3px solid rgba(255,215,0,0.55) !important;
-            border-radius: 8px !important;
-            background:
-                radial-gradient(circle at 50% 22%, rgba(160, 83, 18, 0.88), rgba(55, 20, 2, 0.96) 64%, rgba(0,0,0,0.98) 100%) !important;
-            box-shadow: inset 0 8px 18px rgba(0,0,0,0.78), 0 8px 0 rgba(30, 11, 3, 0.62) !important;
-            cursor: pointer !important;
-            overflow: visible !important;
-            transition: transform 0.16s ease, filter 0.16s ease, box-shadow 0.16s ease !important;
-        }
-
-        .lobby-inventory-panel .metallic-border-art {
-            position: absolute !important;
-            left: 50% !important;
-            bottom: 0 !important;
-            z-index: 1 !important;
-            width: 82% !important;
-            height: 82% !important;
-            transform: translateX(-50%) !important;
-            aspect-ratio: auto !important;
-            background-size: contain !important;
-            background-position: center bottom !important;
-        }
-
-        .lobby-shop-panel .xp-area-product-art,
-        .lobby-inventory-panel .xp-area-product-art {
+        .lobby-shop-panel .xp-area-product-art {
             left: auto !important;
             right: 0 !important;
             bottom: 0 !important;
@@ -1543,8 +1376,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background-size: contain !important;
         }
 
-        .lobby-shop-panel .deck-product-art,
-        .lobby-inventory-panel .deck-product-art {
+        .lobby-shop-panel .deck-product-art {
             left: 0 !important;
             right: auto !important;
             bottom: 0 !important;
@@ -1553,92 +1385,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             transform: none !important;
             background-position: center bottom !important;
             background-size: 100% auto !important;
-        }
-
-        .inventory-item .inventory-item-name {
-            position: absolute !important;
-            left: 8px !important;
-            right: 8px !important;
-            top: clamp(-10px, -0.6vw, -6px) !important;
-            z-index: 3 !important;
-            color: #ffffff !important;
-            font-size: clamp(18px, 1.55vw, 25px) !important;
-            line-height: 0.92 !important;
-            letter-spacing: 0 !important;
-            -webkit-text-stroke: 1.6px #120501 !important;
-            text-shadow: 3px 3px 0 #120501, 0 0 8px rgba(0,0,0,0.74) !important;
-        }
-
-        .inventory-item.selected {
-            border-color: rgba(255,245,180,0.95) !important;
-            box-shadow: inset 0 8px 18px rgba(0,0,0,0.78), 0 8px 0 rgba(30, 11, 3, 0.62), 0 0 24px rgba(255,215,0,0.38) !important;
-        }
-
-        .inventory-item:hover,
-        .inventory-item:focus-visible {
-            transform: translateY(-4px) scale(1.055) !important;
-            z-index: 8 !important;
-            box-shadow: inset 0 8px 18px rgba(0,0,0,0.78), 0 10px 0 rgba(30, 11, 3, 0.62), 0 0 28px var(--item-glow, rgba(255,215,0,0.72)), 0 0 52px var(--item-glow-soft, rgba(255,215,0,0.32)) !important;
-        }
-
-        .inventory-equipped-ribbon {
-            position: absolute !important;
-            left: 50% !important;
-            right: auto !important;
-            top: 48% !important;
-            transform: translate(-50%, -50%) !important;
-            z-index: 6 !important;
-            width: 84% !important;
-            height: 34% !important;
-            background: url('assets/img/equipado_title.webp') center / contain no-repeat !important;
-            color: transparent !important;
-            font-size: 0 !important;
-            line-height: 0 !important;
-            filter: drop-shadow(0 4px 0 rgba(0,0,0,0.62)) drop-shadow(0 0 8px rgba(255,215,0,0.26)) !important;
-            pointer-events: none !important;
-        }
-
-        .inventory-empty {
-            grid-column: 1 / -1 !important;
-            color: rgba(255,255,255,0.72) !important;
-            font-family: 'Russo One', sans-serif !important;
-            text-align: center !important;
-            padding: 70px 10px !important;
-        }
-
-        .lobby-inventory-close {
-            position: absolute !important;
-            left: 50% !important;
-            right: auto !important;
-            bottom: calc(50% - min(350px, 41vh) - 112px) !important;
-            transform: translateX(-50%) !important;
-            z-index: 4 !important;
-            width: clamp(150px, 13vw, 218px) !important;
-            aspect-ratio: 1644 / 537 !important;
-            min-width: 0 !important;
-            padding: 0 !important;
-            border: 0 !important;
-            border-radius: 0 !important;
-            background: url('assets/img/botao_sair_mochila_ui.png?v=2026.06.28.1') center / contain no-repeat !important;
-            color: transparent !important;
-            font-size: 0 !important;
-            line-height: 0 !important;
-            overflow: visible !important;
-            filter: drop-shadow(0 7px 0 rgba(30, 11, 3, 0.72)) drop-shadow(0 0 12px rgba(255,215,0,0.22)) !important;
-            box-shadow: none !important;
-            transition: transform 0.16s ease, filter 0.16s ease !important;
-        }
-
-        .lobby-inventory-close:hover,
-        .lobby-inventory-close:focus-visible {
-            transform: translateX(-50%) translateY(-3px) scale(1.04) !important;
-            filter: brightness(1.08) saturate(1.08) drop-shadow(0 9px 0 rgba(30, 11, 3, 0.72)) drop-shadow(0 0 18px rgba(255,215,0,0.34)) !important;
-            outline: none !important;
-        }
-
-        .lobby-inventory-close:active {
-            transform: translateX(-50%) translateY(2px) scale(0.96) !important;
-            filter: brightness(0.95) saturate(0.95) drop-shadow(0 3px 0 rgba(30, 11, 3, 0.82)) !important;
         }
 
         @media (max-width: 680px) {
@@ -1680,43 +1426,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
             .lobby-shop-slot {
                 flex-basis: clamp(132px, 38vw, 170px) !important;
-            }
-
-            #lobby-screen .lobby-inventory-button {
-                left: calc(50% - 50vw + var(--lobby-side-gap, 24px) + 66px) !important;
-                top: auto !important;
-                bottom: 66px !important;
-                width: clamp(118px, 24vw, 152px) !important;
-            }
-
-            .lobby-inventory-grid {
-                width: min(560px, 88%) !important;
-                column-gap: 18px !important;
-                row-gap: 18px !important;
-            }
-
-            .inventory-item {
-                flex-basis: clamp(132px, 38vw, 170px) !important;
-            }
-
-            .lobby-inventory-title {
-                top: 18px !important;
-            }
-
-            .lobby-inventory-panel {
-                width: 96vw !important;
-                min-height: 74vh !important;
-                padding: 92px 30px 76px !important;
-            }
-
-            .lobby-inventory-categories {
-                top: 88px !important;
-                width: 84% !important;
-                gap: 24px !important;
-            }
-
-            .lobby-inventory-close {
-                bottom: 16px !important;
             }
 
             .lobby-shop-gold {
@@ -2668,46 +2377,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             `;
             lobbyScreen.appendChild(profileAsset);
         }
-        let inventoryButton = document.getElementById('btn-lobby-inventory');
-        if (!inventoryButton) {
-            inventoryButton = document.createElement('button');
-            inventoryButton.id = 'btn-lobby-inventory';
-            inventoryButton.type = 'button';
-            inventoryButton.className = 'lobby-inventory-button';
-            lobbyScreen.appendChild(inventoryButton);
-        }
-        inventoryButton.setAttribute('aria-label', 'Mochila');
-        inventoryButton.title = 'Mochila';
-        inventoryButton.innerHTML = '<img src="assets/img/mochila.webp" alt="Mochila" draggable="false">';
-        if (inventoryButton.dataset.hoverSoundBound !== '1') {
-            inventoryButton.dataset.hoverSoundBound = '1';
-            let inventoryHoverActive = false;
-            inventoryButton.addEventListener('pointerenter', () => {
-                if (inventoryHoverActive) return;
-                inventoryHoverActive = true;
-                window.playLobbyButtonHoverSound?.();
-            });
-            inventoryButton.addEventListener('pointerleave', () => {
-                inventoryHoverActive = false;
-            });
-            inventoryButton.addEventListener('focus', () => window.playLobbyButtonHoverSound?.());
-        }
-        if (inventoryButton.dataset.pressJuiceBound !== '1') {
-            inventoryButton.dataset.pressJuiceBound = '1';
-            inventoryButton.addEventListener('pointerdown', () => {
-                inventoryButton.classList.remove('lobby-button-press-juice');
-                void inventoryButton.offsetWidth;
-                inventoryButton.classList.add('lobby-button-press-juice');
-                setTimeout(() => inventoryButton.classList.remove('lobby-button-press-juice'), 360);
-            }, { capture: true });
-        }
-        inventoryButton.onclick = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            if (window.playLobbyButtonSelectSound) window.playLobbyButtonSelectSound();
-            else window.playNavSound?.();
-            window.openInventory?.();
-        };
         window.updateLobbyBottomProfileBar?.();
 
         let playCenter = document.querySelector('.lobby-play-center');
@@ -2796,7 +2465,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         ensureLobbyMenuButton('btn-lobby-main-history', 'lobby-main-history', 'Hist\u00f3rico de partidas', () => window.openHistory?.());
         ensureLobbyMenuButton('btn-lobby-main-ranking', 'lobby-main-ranking', 'Ranking', () => window.openLobbyRanking?.());
-        ensureLobbyMenuButton('btn-lobby-main-shop', 'lobby-main-shop', 'Loja', () => window.openLobbyShop?.());
+        ensureLobbyMenuButton('btn-lobby-main-shop', 'lobby-main-shop', 'Arsenal', () => window.openLobbyShop?.());
         ensureLobbyMenuButton('btn-lobby-main-tutorial', 'lobby-main-tutorial', 'Tutorial', () => {});
         ensureLobbyMenuButton('btn-lobby-main-exit', 'lobby-main-exit', 'Sair', () => {
             if (window.buppoDesktop?.quit) {
@@ -2881,11 +2550,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             { id: 'cluster_oracle', type: 'cluster', name: 'CLUSTER - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/cluster_oraculo_visaoastral.webp', shopAsset: 'assets/img/cluster_oraculo_visaoastral_shop.webp' }
         ];
         const lobbyShopItemsByCategory = {
-            decks: lobbyDeckItems,
-            borders: lobbyCardBorderItems,
-            clusters: lobbyClusterItems,
-            xpAreas: lobbyXpAreaItems,
-            pets: []
+            decks: lobbyDeckItems
         };
         const lobbyShopSlotCount = 5;
         const shopBorderInfo = {
@@ -3031,8 +2696,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             const artClass = (item.type === 'deck' || item.type === 'cluster') ? 'metallic-border-art deck-product-art' : (item.type === 'xpArea' || item.id.startsWith('xp_') ? 'metallic-border-art xp-area-product-art' : 'metallic-border-art');
             return `<div class="${artClass}" style="background-image: url('${asset}')" aria-label="Arte de ${item.name}"></div>`;
         };
-        const renderShopProducts = (category = 'borders') => {
-            const items = lobbyShopItemsByCategory[category] || [];
+        const renderShopProducts = () => {
+            const items = lobbyShopItemsByCategory.decks || [];
             const productsHtml = items.slice(0, lobbyShopSlotCount).map(item => `
                         <div class="lobby-shop-slot lobby-shop-product" role="button" tabindex="0" data-shop-item="${item.id}">
                             <div class="shop-product-name">${getItemDisplayName(item)}</div>
@@ -3052,26 +2717,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             shopModal.id = 'lobby-shop-modal';
             shopModal.className = 'lobby-shop-modal';
             shopModal.innerHTML = `
-                <div class="lobby-shop-title" role="img" aria-label="LOJA">LOJA</div>
-                <div class="lobby-shop-panel" role="dialog" aria-modal="true" aria-label="Loja">
-                    <div class="lobby-shop-header">
-                        <div class="lobby-shop-title-stack">
-                            <div class="lobby-shop-categories" aria-label="Categorias da loja">
-                                <button class="lobby-shop-category" type="button" data-shop-category="decks">DECKS</button>
-                                <button class="lobby-shop-category" type="button" data-shop-category="xpAreas">\u00c1REAS DE XP</button>
-                                <button class="lobby-shop-category active" type="button" data-shop-category="borders">BORDAS</button>
-                                <button class="lobby-shop-category" type="button" data-shop-category="clusters">CLUSTERS</button>
-                                <button class="lobby-shop-category" type="button" data-shop-category="pets">MASCOTES</button>
-                            </div>
-                        </div>
-                    </div>
+                <div class="lobby-shop-title" role="img" aria-label="ARSENAL">ARSENAL</div>
+                <div class="lobby-shop-panel" role="dialog" aria-modal="true" aria-label="Arsenal">
                     <div class="lobby-shop-gold" aria-label="Ouro dispon\u00edvel">
                         <img src="assets/img/moeda_ouro.png" alt="Moeda de ouro">
                         <span id="lobby-shop-gold-count">0</span>
                     </div>
-                    <div class="lobby-shop-grid" aria-label="Itens da loja"></div>
+                    <div class="lobby-shop-grid" aria-label="Decks do arsenal"></div>
                 </div>
-                <button class="mini-btn lobby-shop-close" type="button" aria-label="Sair da loja">SAIR</button>
+                <button class="mini-btn lobby-shop-close" type="button" aria-label="Sair do arsenal">SAIR</button>
             `;
             document.body.appendChild(shopModal);
             ensureShopInfoTooltip();
@@ -3079,24 +2733,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 if (event.target === shopModal) window.closeLobbyShop?.();
             });
             shopModal.querySelector('.lobby-shop-close')?.addEventListener('click', () => window.closeLobbyShop?.());
-            shopModal.querySelectorAll('.lobby-shop-category').forEach((button) => {
-                button.addEventListener('click', () => {
-                    shopModal.querySelectorAll('.lobby-shop-category').forEach((category) => category.classList.remove('active'));
-                    button.classList.add('active');
-                    window.currentShopCategory = button.dataset.shopCategory || 'borders';
-                    window.renderLobbyShopItems?.();
-                });
-            });
         }
 
         window.renderLobbyShopItems = () => {
             const grid = document.querySelector('#lobby-shop-modal .lobby-shop-grid');
             if (!grid) return;
             document.getElementById('shop-info-tooltip')?.classList.remove('visible');
-            grid.innerHTML = renderShopProducts(window.currentShopCategory || 'borders');
-            if (['decks', 'borders', 'xpAreas', 'clusters'].includes(window.currentShopCategory || 'borders')) {
-                bindBorderInfoTooltips(grid, '[data-shop-item]', (product) => product.dataset.shopItem);
-            }
+            grid.innerHTML = renderShopProducts();
+            bindBorderInfoTooltips(grid, '[data-shop-item]', (product) => product.dataset.shopItem);
             grid.querySelectorAll('[data-shop-item]').forEach((product) => {
                 product.addEventListener('click', () => {
                     const state = window.getShopItemState?.(product.dataset.shopItem) || { owned: false };
@@ -3132,9 +2776,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         window.openLobbyShop = () => {
             window.playNavSound?.();
             window.currentShopCategory = 'decks';
-            shopModal.querySelectorAll('[data-shop-category]').forEach((category) => {
-                category.classList.toggle('active', category.dataset.shopCategory === 'decks');
-            });
             window.renderLobbyShopItems?.();
             window.syncLobbyShopGold?.();
             window.refreshShopInventoryState?.();
@@ -3145,104 +2786,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             window.playNavSound?.();
             document.getElementById('shop-info-tooltip')?.classList.remove('visible');
             shopModal.classList.remove('visible');
-        };
-
-        let inventoryModal = document.getElementById('lobby-inventory-modal');
-        if (!inventoryModal) {
-            inventoryModal = document.createElement('div');
-            inventoryModal.id = 'lobby-inventory-modal';
-            inventoryModal.className = 'lobby-inventory-modal';
-            inventoryModal.innerHTML = `
-                <div class="lobby-inventory-title" role="img" aria-label="MOCHILA">MOCHILA</div>
-                <div class="lobby-inventory-panel" role="dialog" aria-modal="true" aria-label="Mochila">
-                    <div class="lobby-inventory-categories" aria-label="Categorias da mochila">
-                        <button class="lobby-shop-category" type="button" data-inventory-category="decks">DECKS</button>
-                        <button class="lobby-shop-category" type="button" data-inventory-category="xpAreas">\u00c1REAS DE XP</button>
-                        <button class="lobby-shop-category active" type="button" data-inventory-category="borders">BORDAS</button>
-                        <button class="lobby-shop-category" type="button" data-inventory-category="clusters">CLUSTERS</button>
-                        <button class="lobby-shop-category" type="button" data-inventory-category="pets">MASCOTES</button>
-                    </div>
-                    <div class="lobby-inventory-grid" id="lobby-inventory-grid"></div>
-                </div>
-                <button class="mini-btn lobby-inventory-close" type="button" aria-label="Sair da mochila">SAIR</button>
-            `;
-            document.body.appendChild(inventoryModal);
-            inventoryModal.addEventListener('click', (event) => {
-                if (event.target === inventoryModal) {
-                    window.closeInventory?.();
-                    return;
-                }
-                if (!event.target.closest?.('[data-inventory-item], .inventory-action-menu')) {
-                    window.selectedInventoryItem = null;
-                    window.renderInventoryItems?.();
-                }
-            });
-            inventoryModal.querySelector('.lobby-inventory-close')?.addEventListener('click', () => window.closeInventory?.());
-            inventoryModal.querySelectorAll('[data-inventory-category]').forEach((button) => {
-                button.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    inventoryModal.querySelectorAll('[data-inventory-category]').forEach((category) => category.classList.remove('active'));
-                    button.classList.add('active');
-                    window.currentInventoryCategory = button.dataset.inventoryCategory || 'borders';
-                    window.selectedInventoryItem = null;
-                    window.renderInventoryItems?.();
-                });
-            });
-        }
-
-        window.renderInventoryItems = () => {
-            const grid = document.getElementById('lobby-inventory-grid');
-            if (!grid) return;
-            document.getElementById('shop-info-tooltip')?.classList.remove('visible');
-            const owned = window.playerInventory || [];
-            const categoryItems = lobbyShopItemsByCategory[window.currentInventoryCategory || 'borders'] || [];
-            const ownedItems = categoryItems.filter(item => owned.includes(item.id));
-            if (ownedItems.length === 0) {
-                grid.innerHTML = '<div class="inventory-empty">Sua mochila est\u00e1 vazia.</div>';
-                return;
-            }
-            grid.innerHTML = ownedItems.map(item => {
-                const equipped = window.getShopItemState?.(item.id)?.equipped === true;
-                return `
-                <div class="inventory-item" role="button" tabindex="0" data-inventory-item="${item.id}">
-                    <div class="inventory-item-name">${getItemDisplayName(item)}</div>
-                    ${renderBorderPreview(item, 'shop')}
-                    ${equipped ? '<span class="inventory-equipped-ribbon">EQUIPADO</span>' : ''}
-                </div>`;
-            }).join('');
-            grid.querySelectorAll('[data-inventory-item]').forEach((button) => {
-                button.addEventListener('click', () => {
-                    window.selectedInventoryItem = null;
-                    window.toggleInventoryEquip?.(button.dataset.inventoryItem);
-                });
-                button.addEventListener('keydown', (event) => {
-                    if (event.key !== 'Enter' && event.key !== ' ') return;
-                    event.preventDefault();
-                    window.selectedInventoryItem = null;
-                    window.toggleInventoryEquip?.(button.dataset.inventoryItem);
-                });
-            });
-            if (['decks', 'borders', 'xpAreas', 'clusters'].includes(window.currentInventoryCategory || 'borders')) {
-                bindBorderInfoTooltips(grid, '[data-inventory-item]', (button) => button.dataset.inventoryItem);
-            }
-        };
-
-        window.openInventory = () => {
-            window.currentInventoryCategory = 'decks';
-            inventoryModal.querySelectorAll('[data-inventory-category]').forEach((category) => {
-                category.classList.toggle('active', category.dataset.inventoryCategory === 'decks');
-            });
-            window.selectedInventoryItem = null;
-            window.renderInventoryItems?.();
-            inventoryModal.classList.add('visible');
-        };
-
-        window.closeInventory = () => {
-            window.playNavSound?.();
-            window.selectedInventoryItem = null;
-            document.getElementById('shop-info-tooltip')?.classList.remove('visible');
-            inventoryModal.classList.remove('visible');
         };
 
         if (historyButton) {

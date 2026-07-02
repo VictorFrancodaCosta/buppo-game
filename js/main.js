@@ -105,18 +105,16 @@ const ASSETS_TO_LOAD = {
         'assets/img/cluster_arqueiro_sentinelaverde.webp', 'assets/img/cluster_arqueiro_sentinelaverde_shop.webp',
         'assets/img/cluster_ladino_maodourada.webp', 'assets/img/cluster_ladino_maodourada_shop.webp',
         'assets/img/cluster_oraculo_visaoastral.webp', 'assets/img/cluster_oraculo_visaoastral_shop.webp',
-        'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
-        'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
-        'assets/img/botao_sair_loja_ui.png', 'assets/img/botao_sair_mochila_ui.png',
-        'assets/img/botao_jogar.webp', 'assets/img/botao_historico.webp', 'assets/img/botao_ranking.webp', 'assets/img/botao_loja.webp',
+        'assets/img/janela_loja.webp', 'assets/img/titulo_arsenal.webp', 'assets/img/box_compra.webp',
+        'assets/img/botao_sair_loja_ui.png',
+        'assets/img/botao_jogar.webp', 'assets/img/botao_historico.webp', 'assets/img/botao_ranking.webp', 'assets/img/botao_arsenal.webp',
         'assets/img/botao_tutorial.webp', 'assets/img/botao_sair.webp', 'assets/img/botao_pvp.webp', 'assets/img/botao_pve.webp',
         'assets/img/btn_pvp_ranked.webp', 'assets/img/btn_pvp_ranked.webp?v=2',
         'assets/img/btn_pve_training.webp', 'assets/img/btn_pve_training.webp?v=2',
         'assets/img/botaojogarnovamente.webp', 'assets/img/botaosaguao.webp',
         'assets/img/borda_cavaleiro_loja.webp', 'assets/img/borda_mago_loja.webp', 'assets/img/borda_arqueiro_loja.webp',
         'assets/img/borda_ladino_loja.webp', 'assets/img/borda_oraculo_loja.webp',
-        'assets/img/janela_loja.webp?v=2026.06.24.19', 'assets/img/titulo_loja.webp?v=2026.06.24.19',
-        'assets/img/janela_mochila.webp?v=2026.06.24.18', 'assets/img/titulo_mochila.webp?v=2026.06.24.18',
+        'assets/img/janela_loja.webp?v=2026.06.24.19', 'assets/img/titulo_arsenal.webp',
         'assets/img/borda_cavaleiro_loja.webp?v=2026.06.24.16', 'assets/img/borda_mago_loja.webp?v=2026.06.24.16',
         'assets/img/borda_arqueiro_loja.webp?v=2026.06.24.16', 'assets/img/borda_ladino_loja.webp?v=2026.06.24.16',
         'assets/img/borda_oraculo_loja.webp?v=2026.06.24.16',
@@ -199,7 +197,7 @@ window.applyDeckTheme = function(deckType = window.currentDeck) {
 window.selectDeck = async function(deckType) {
     const deckItem = Object.values(SHOP_ITEMS).find(item => item.slot === 'deck' && item.deckType === deckType);
     if(deckItem && !window.playerInventory?.includes(deckItem.id)) {
-        window.openModal?.('DECK BLOQUEADO', 'Compre este deck na loja para jogar com ele.', ['OK']);
+        window.openModal?.('DECK BLOQUEADO', 'Compre este deck no arsenal para jogar com ele.', ['OK']);
         return;
     }
     await equipOwnedDeckByType(deckType);
@@ -256,7 +254,7 @@ window.startLobbyModeWithDeck = async function(mode, deckType) {
     const targetDeckType = deckType || equippedDeck?.deckType || window.currentDeck || 'knight';
     const deckItem = Object.values(SHOP_ITEMS).find(item => item.slot === 'deck' && item.deckType === targetDeckType);
     if(deckItem && !window.playerInventory?.includes(deckItem.id)) {
-        window.openModal?.('DECK BLOQUEADO', 'Compre este deck na loja para jogar com ele.', ['OK']);
+        window.openModal?.('DECK BLOQUEADO', 'Compre este deck no arsenal para jogar com ele.', ['OK']);
         return;
     }
     const equipped = await equipOwnedDeckByType(targetDeckType);
@@ -922,7 +920,7 @@ window.confirmShopPurchase = function(itemId) {
     const item = SHOP_ITEMS[itemId];
     if(!item) return;
     if(window.playerInventory?.includes(itemId)) {
-        window.openInventory?.();
+        window.openModal?.('JÁ COMPRADO', 'Este deck já está no seu arsenal.', ['OK']);
         return;
     }
     window.openPurchaseConfirm(item.name, Math.max(0, item.price || 0), () => window.purchaseShopItem(itemId));
