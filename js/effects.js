@@ -773,16 +773,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             color: #fff !important;
         }
 
-        .lobby-shop-header {
-            display: flex !important;
-            align-items: flex-start !important;
-            justify-content: space-between !important;
-            gap: 20px !important;
-            margin-top: 40px !important;
-            margin-bottom: 12px !important;
-            position: relative !important;
-        }
-
         .lobby-shop-title {
             position: absolute !important;
             left: 50% !important;
@@ -790,64 +780,13 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             transform: translateX(-50%) !important;
             z-index: 4 !important;
             margin: 0 !important;
-            width: clamp(210px, 23vw, 340px) !important;
+            width: clamp(330px, 37vw, 590px) !important;
             aspect-ratio: 1413 / 614 !important;
             background: url('assets/img/titulo_arsenal.webp') center / contain no-repeat !important;
             filter: drop-shadow(0 7px 0 rgba(31, 10, 2, 0.75)) drop-shadow(0 0 16px rgba(255, 213, 58, 0.28)) !important;
             pointer-events: none !important;
             text-indent: -9999px !important;
             overflow: visible !important;
-        }
-
-        .lobby-shop-title-stack {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            gap: 12px !important;
-            width: 100% !important;
-            min-width: 0 !important;
-        }
-
-        .lobby-shop-categories {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            flex-wrap: wrap !important;
-            gap: clamp(34px, 3.4vw, 62px) !important;
-            width: min(820px, 74%) !important;
-            max-width: 100% !important;
-            margin: 0 auto !important;
-        }
-
-        .lobby-shop-category {
-            appearance: none !important;
-            min-height: auto !important;
-            padding: 0 !important;
-            border: 0 !important;
-            border-radius: 0 !important;
-            background: transparent !important;
-            color: rgba(255,248,200,0.84) !important;
-            cursor: pointer !important;
-            font-family: 'Montserrat', sans-serif !important;
-            font-size: clamp(12px, 0.92vw, 16px) !important;
-            font-weight: 900 !important;
-            line-height: 1 !important;
-            letter-spacing: 0.8px !important;
-            text-transform: uppercase !important;
-            -webkit-text-stroke: 1.25px #050100 !important;
-            paint-order: stroke fill !important;
-            text-shadow: 2px 2px 0 #050100, -1px -1px 0 #050100, 0 0 9px rgba(0,0,0,0.56) !important;
-            box-shadow: none !important;
-            transform-origin: center !important;
-            transition: transform 0.14s ease, color 0.14s ease, filter 0.14s ease, text-shadow 0.14s ease !important;
-        }
-
-        .lobby-shop-category:hover,
-        .lobby-shop-category.active {
-            color: #ffd81f !important;
-            transform: scale(1.28) !important;
-            filter: brightness(1.12) saturate(1.18) !important;
-            text-shadow: 2px 2px 0 #050100, -1px -1px 0 #050100, 0 0 12px rgba(255,216,31,0.78), 0 0 24px rgba(255,122,24,0.46) !important;
         }
 
         .lobby-shop-gold {
@@ -1394,27 +1333,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 padding: 88px 28px 82px !important;
             }
 
-            .lobby-shop-header {
-                align-items: center !important;
-                gap: 12px !important;
-                margin-top: 26px !important;
-                margin-bottom: 20px !important;
-            }
-
             .lobby-shop-title {
                 top: 42px !important;
-                width: clamp(170px, 42vw, 260px) !important;
-            }
-
-            .lobby-shop-categories {
-                max-width: 100% !important;
-                gap: 24px !important;
-            }
-
-            .lobby-shop-category {
-                min-height: auto !important;
-                padding: 0 !important;
-                font-size: 13px !important;
+                width: clamp(260px, 66vw, 400px) !important;
             }
 
             .lobby-shop-grid {

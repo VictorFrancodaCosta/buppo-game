@@ -129,7 +129,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.webp',
         'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5', 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5',
         'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5',
-        'assets/img/moeda_ouro.png', 'assets/img/comprado_title.webp', 'assets/img/equipado_title.webp',
+        'assets/img/moeda_ouro.png', 'assets/img/comprado_title.webp',
         'assets/img/final_vitoria.webp', 'assets/img/final_empate.webp', 'assets/img/final_derrota.webp',
         'assets/img/cursor_normal.webp', 'assets/img/apple-touch-icon-180.png', 'assets/img/pwa-icon-192.png', 'assets/img/pwa-icon-512.png',
         'assets/img/pwa-icon-maskable-192.png', 'assets/img/pwa-icon-maskable-512.png'
@@ -200,7 +200,7 @@ window.selectDeck = async function(deckType) {
         window.openModal?.('DECK BLOQUEADO', 'Compre este deck no arsenal para jogar com ele.', ['OK']);
         return;
     }
-    await equipOwnedDeckByType(deckType);
+    selectOwnedDeckForMatch(deckType);
     if(audios['sfx-deck-select'] && window.sfxEnabled) { try { audios['sfx-deck-select'].currentTime = 0; audios['sfx-deck-select'].play().catch(()=>{}); } catch(e){} }
     
     // Aplica a nova mesa escolhida
@@ -229,20 +229,10 @@ window.selectDeck = async function(deckType) {
     }, 400);
 };
 
-async function equipOwnedDeckByType(deckType) {
+function selectOwnedDeckForMatch(deckType) {
     const deckItem = Object.values(SHOP_ITEMS).find(item => item.slot === 'deck' && item.deckType === deckType);
     if(!deckItem || !window.playerInventory?.includes(deckItem.id)) return false;
-    if(window.equippedItems?.deck !== deckItem.id) {
-        const nextEquipped = { ...(window.equippedItems || {}), deck: deckItem.id };
-        if(window.currentUser) {
-            try {
-                await updateDoc(doc(db, "players", window.currentUser.uid), { equippedItems: nextEquipped });
-            } catch(e) {
-                console.warn('Nao foi possivel salvar deck equipado antes da partida:', e);
-            }
-        }
-        updatePlayerInventoryState(window.playerInventory || [], nextEquipped);
-    }
+    window.equippedItems = getClassEquipmentByDeckType(deckType);
     window.applyDeckTheme(deckType);
     return true;
 }
@@ -250,15 +240,13 @@ async function equipOwnedDeckByType(deckType) {
 window.startLobbyModeWithDeck = async function(mode, deckType) {
     if(mode !== 'pvp' && mode !== 'pve') return;
     if(mode === 'pvp' && !window.currentUser) return;
-    const equippedDeck = SHOP_ITEMS[window.equippedItems?.deck];
-    const targetDeckType = deckType || equippedDeck?.deckType || window.currentDeck || 'knight';
+    const targetDeckType = deckType || window.currentDeck || 'knight';
     const deckItem = Object.values(SHOP_ITEMS).find(item => item.slot === 'deck' && item.deckType === targetDeckType);
     if(deckItem && !window.playerInventory?.includes(deckItem.id)) {
         window.openModal?.('DECK BLOQUEADO', 'Compre este deck no arsenal para jogar com ele.', ['OK']);
         return;
     }
-    const equipped = await equipOwnedDeckByType(targetDeckType);
-    if(!equipped) return;
+    if(!selectOwnedDeckForMatch(targetDeckType)) return;
     if(audios['sfx-deck-select'] && window.sfxEnabled) {
         try {
             audios['sfx-deck-select'].currentTime = 0;
@@ -672,6 +660,45 @@ const SHOP_ITEMS = {
 };
 window.SHOP_ITEMS = SHOP_ITEMS;
 
+const CLASS_EQUIPMENT_BY_DECK = {
+    knight: {
+        deck: 'deck_knight',
+        cardBorder: 'metallic_border',
+        xpArea: 'xp_campo_honra',
+        cluster: 'cluster_knight'
+    },
+    mage: {
+        deck: 'deck_mage',
+        cardBorder: 'mage_fire_border',
+        xpArea: 'xp_circulo_arcano',
+        cluster: 'cluster_mage'
+    },
+    archer: {
+        deck: 'deck_archer',
+        cardBorder: 'elven_forest_border',
+        xpArea: 'xp_bosque_sentinela',
+        cluster: 'cluster_archer'
+    },
+    rogue: {
+        deck: 'deck_rogue',
+        cardBorder: 'rogue_gold_border',
+        xpArea: 'xp_rota_saque',
+        cluster: 'cluster_rogue'
+    },
+    oracle: {
+        deck: 'deck_oracle',
+        cardBorder: 'oracle_border',
+        xpArea: 'xp_altar_visao',
+        cluster: 'cluster_oracle'
+    }
+};
+
+function getClassEquipmentByDeckType(deckType = 'knight') {
+    return { ...(CLASS_EQUIPMENT_BY_DECK[deckType] || CLASS_EQUIPMENT_BY_DECK.knight) };
+}
+
+window.getClassEquipmentByDeckType = getClassEquipmentByDeckType;
+
 const BORDER_REWARD_RULES = {
     metallic_border: {
         blockEffective: 6,
@@ -787,40 +814,23 @@ function normalizeInventoryDefaults(inventory = [], equippedItems = {}) {
 function updatePlayerInventoryState(inventory = [], equippedItems = {}) {
     const normalized = normalizeInventoryDefaults(inventory, equippedItems);
     window.playerInventory = normalized.inventory;
-    window.equippedItems = normalized.equippedItems;
+    const storedDeck = SHOP_ITEMS[normalized.equippedItems.deck];
+    window.equippedItems = getClassEquipmentByDeckType(storedDeck?.deckType || window.currentDeck || 'knight');
     const equippedDeck = SHOP_ITEMS[window.equippedItems.deck];
     if(equippedDeck?.deckType) window.currentDeck = equippedDeck.deckType;
-    const equippedBorder = SHOP_ITEMS[window.equippedItems.cardBorder];
     document.body.classList.remove('player-card-border-royal', 'player-card-border-elven', 'player-card-border-mage', 'player-card-border-rogue', 'player-card-border-oracle');
     document.body.style.removeProperty('--player-card-border-url');
-    if(equippedBorder?.cssClass) document.body.classList.add(`player-card-border-${equippedBorder.cssClass}`);
     window.refreshShopInventoryState?.();
     window.renderInventoryItems?.();
 }
 
 window.isPlayerCardSkinEquipped = function(itemId) {
-    return !!itemId && window.equippedItems?.cardBorder === itemId;
+    return !!itemId && getClassEquipmentByDeckType(window.currentDeck).cardBorder === itemId;
 };
 
 window.getEquippedCardBorderItem = function() {
-    return SHOP_ITEMS[window.equippedItems?.cardBorder] || null;
+    return SHOP_ITEMS[getClassEquipmentByDeckType(window.currentDeck).cardBorder] || null;
 };
-
-function getRandomShopItemIdBySlot(slot) {
-    const ids = Object.values(SHOP_ITEMS).filter(item => item.slot === slot).map(item => item.id);
-    if(ids.length === 0) return null;
-    return ids[Math.floor(Math.random() * ids.length)];
-}
-
-function createRandomAiEquipmentForPlayerEquipment(playerEquipment = {}) {
-    const aiEquipment = {};
-    Object.entries(playerEquipment || {}).forEach(([slot, itemId]) => {
-        if(!itemId) return;
-        const randomItemId = getRandomShopItemIdBySlot(slot);
-        if(randomItemId) aiEquipment[slot] = randomItemId;
-    });
-    return aiEquipment;
-}
 
 function getCardBorderItemForUnit(u) {
     if(!u) return null;
@@ -828,9 +838,14 @@ function getCardBorderItemForUnit(u) {
     return SHOP_ITEMS[borderId] || null;
 }
 
+function getUnitClassEquipment(u) {
+    const deckType = u?.deckType || (u === player ? window.currentDeck : window.opponentDeck) || 'knight';
+    return getClassEquipmentByDeckType(deckType);
+}
+
 function getUnitEquippedItemBySlot(u, slot) {
     if(!u || !slot) return null;
-    const itemId = u.equippedItems?.[slot] || (u === player ? window.equippedItems?.[slot] : null);
+    const itemId = getUnitClassEquipment(u)[slot];
     return SHOP_ITEMS[itemId] || null;
 }
 
@@ -938,7 +953,7 @@ window.purchaseShopItem = async function(itemId) {
     const nextGold = Math.max(0, (window.currentGoldCoins || 0) - price);
     try {
         const userRef = doc(db, "players", window.currentUser.uid);
-        await updateDoc(userRef, { goldCoins: nextGold, inventory: nextInventory, equippedItems: window.equippedItems || {} });
+        await updateDoc(userRef, { goldCoins: nextGold, inventory: nextInventory });
         updateLobbyGoldWallet(nextGold);
         updatePlayerInventoryState(nextInventory, window.equippedItems || {});
         window.syncLobbyShopGold?.();
@@ -949,27 +964,12 @@ window.purchaseShopItem = async function(itemId) {
 };
 
 window.toggleInventoryEquip = async function(itemId) {
-    const item = SHOP_ITEMS[itemId];
-    if(!item || !window.currentUser || !window.playerInventory?.includes(itemId)) return;
-    const nextEquipped = { ...(window.equippedItems || {}) };
-    if(item.slot === 'deck') nextEquipped.deck = itemId;
-    else if(nextEquipped[item.slot] === itemId) delete nextEquipped[item.slot];
-    else nextEquipped[item.slot] = itemId;
-    try {
-        const userRef = doc(db, "players", window.currentUser.uid);
-        await updateDoc(userRef, { equippedItems: nextEquipped });
-        updatePlayerInventoryState(window.playerInventory || [], nextEquipped);
-        if(item.slot === 'deck' && item.deckType) window.applyDeckTheme(item.deckType);
-        updateUI();
-    } catch(e) {
-        console.error("Erro ao equipar item:", e);
-    }
+    return false;
 };
 
 window.getShopItemState = function(itemId) {
-    const item = SHOP_ITEMS[itemId];
     const owned = window.playerInventory?.includes(itemId) === true;
-    const equipped = !!item?.slot && window.equippedItems?.[item.slot] === itemId;
+    const equipped = false;
     return { owned, equipped };
 };
 
@@ -1302,7 +1302,7 @@ window.inviteSelectedFriend = async function() {
             fromName: getPlayerFirstName(window.currentUser.displayName),
             fromGameId: window.currentPlayerGameId || null,
             fromDeckType: window.currentDeck || 'knight',
-            fromEquippedItems: { ...(window.equippedItems || {}) },
+            fromEquippedItems: getClassEquipmentByDeckType(window.currentDeck || 'knight'),
             toUid,
             status: 'pending',
             createdAt: Date.now()
@@ -1380,8 +1380,8 @@ async function createFriendlyMatch(invite) {
         rematchRound: 0,
         player1Rematch: false,
         player2Rematch: false,
-        player1: { uid: invite.fromUid, name: invite.fromName || "JOGADOR 1", gameId: invite.fromGameId || null, deckType: invite.fromDeckType || 'knight', equippedItems: { ...(invite.fromEquippedItems || {}) }, hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
-        player2: { uid: window.currentUser.uid, name: getPlayerFirstName(window.currentUser.displayName), gameId: window.currentPlayerGameId || null, deckType: window.currentDeck || 'knight', equippedItems: { ...(window.equippedItems || {}) }, hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
+        player1: { uid: invite.fromUid, name: invite.fromName || "JOGADOR 1", gameId: invite.fromGameId || null, deckType: invite.fromDeckType || 'knight', equippedItems: getClassEquipmentByDeckType(invite.fromDeckType || 'knight'), hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
+        player2: { uid: window.currentUser.uid, name: getPlayerFirstName(window.currentUser.displayName), gameId: window.currentPlayerGameId || null, deckType: window.currentDeck || 'knight', equippedItems: getClassEquipmentByDeckType(window.currentDeck || 'knight'), hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
         turn: 1,
         status: 'playing',
         createdAt: Date.now()
@@ -1411,7 +1411,7 @@ window.acceptFriendInvite = async function() {
     const invite = window.pendingFriendInvite;
     try {
         const matchId = await createFriendlyMatch(invite);
-        await updateDoc(doc(db, "friendInvites", invite.id), { status: 'accepted', matchId, acceptedAt: Date.now(), toDeckType: window.currentDeck || 'knight', toEquippedItems: { ...(window.equippedItems || {}) } });
+        await updateDoc(doc(db, "friendInvites", invite.id), { status: 'accepted', matchId, acceptedAt: Date.now(), toDeckType: window.currentDeck || 'knight', toEquippedItems: getClassEquipmentByDeckType(window.currentDeck || 'knight') });
         window.pendingFriendInvite = null;
         enterFriendlyMatch(matchId);
     } catch(e) {
@@ -1572,8 +1572,8 @@ function startGameFlow() {
             resetUnit(player, window.pvpStartData.player1.deck, 'player1'); resetUnit(monster, window.pvpStartData.player2.deck, 'player2');
             player.deckType = window.pvpStartData.player1.deckType || 'knight';
             monster.deckType = window.pvpStartData.player2.deckType || 'knight';
-            player.equippedItems = { ...(window.pvpStartData.player1.equippedItems || window.equippedItems || {}) };
-            monster.equippedItems = { ...(window.pvpStartData.player2.equippedItems || {}) };
+            player.equippedItems = getClassEquipmentByDeckType(player.deckType);
+            monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
             hydrateInitialPvPHand(player, window.pvpStartData.player1);
             hydrateInitialPvPHand(monster, window.pvpStartData.player2);
         } else {
@@ -1581,8 +1581,8 @@ function startGameFlow() {
             resetUnit(player, window.pvpStartData.player2.deck, 'player2'); resetUnit(monster, window.pvpStartData.player1.deck, 'player1');
             player.deckType = window.pvpStartData.player2.deckType || 'knight';
             monster.deckType = window.pvpStartData.player1.deckType || 'knight';
-            player.equippedItems = { ...(window.pvpStartData.player2.equippedItems || window.equippedItems || {}) };
-            monster.equippedItems = { ...(window.pvpStartData.player1.equippedItems || {}) };
+            player.equippedItems = getClassEquipmentByDeckType(player.deckType);
+            monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
             hydrateInitialPvPHand(player, window.pvpStartData.player2);
             hydrateInitialPvPHand(monster, window.pvpStartData.player1);
         }
@@ -1590,9 +1590,9 @@ function startGameFlow() {
         window.applyDeckTheme(window.currentDeck);
         resetUnit(player, null, 'pve'); resetUnit(monster, null, 'pve');
         player.deckType = window.currentDeck || 'knight';
-        player.equippedItems = window.isMobileSimpleMode ? {} : { ...(window.equippedItems || {}) };
-        monster.equippedItems = window.isMobileSimpleMode ? {} : createRandomAiEquipmentForPlayerEquipment(player.equippedItems);
-        monster.deckType = window.isMobileSimpleMode ? 'knight' : (SHOP_ITEMS[monster.equippedItems?.deck]?.deckType || player.deckType || 'knight');
+        player.equippedItems = getClassEquipmentByDeckType(player.deckType);
+        monster.deckType = player.deckType || 'knight';
+        monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
         baseDraw(monster, 6); baseDraw(player, 6);
     }
     window.opponentDeck = monster.deckType || 'knight';
@@ -1820,8 +1820,8 @@ function syncUnitFromServer(u, data, showPlayerDamage = false, syncXp = true) {
     if(data.bonusAtk !== undefined) u.bonusAtk = data.bonusAtk;
     if(data.bonusBlock !== undefined) u.bonusBlock = data.bonusBlock;
     if(data.disabled !== undefined) u.disabled = data.disabled;
-    if(data.equippedItems !== undefined) u.equippedItems = { ...(data.equippedItems || {}) };
     if(data.deckType !== undefined) u.deckType = data.deckType || 'knight';
+    u.equippedItems = getClassEquipmentByDeckType(u.deckType || 'knight');
     if(data.lastAction !== undefined) u.lastAction = data.lastAction || null;
     updateUI();
     if (showPlayerDamage) checkEndGame();
@@ -1839,7 +1839,7 @@ function serializeUnitState(u) {
         bonusBlock: u.bonusBlock || 0,
         deckType: u.deckType || 'knight',
         lastAction: u.lastAction || null,
-        equippedItems: { ...(u.equippedItems || {}) }
+        equippedItems: getClassEquipmentByDeckType(u.deckType || 'knight')
     };
 }
 
@@ -1986,8 +1986,7 @@ function playPlayerDamageGrunt(isFatal = false) {
 }
 
 function getUnitEquippedBorderId(u) {
-    if(u === player) return u.equippedItems?.cardBorder || window.equippedItems?.cardBorder || null;
-    return u?.equippedItems?.cardBorder || null;
+    return getUnitClassEquipment(u).cardBorder || null;
 }
 
 function getUnitBorderRewardRules(u) {
@@ -1995,12 +1994,12 @@ function getUnitBorderRewardRules(u) {
 }
 
 function getUnitXpAreaRewardRules(u) {
-    const xpAreaId = u?.equippedItems?.xpArea || (u === player ? window.equippedItems?.xpArea : null);
+    const xpAreaId = getUnitClassEquipment(u).xpArea;
     return XP_AREA_REWARD_RULES[xpAreaId] || null;
 }
 
 function getUnitClusterRewardRules(u) {
-    const clusterId = u?.equippedItems?.cluster || (u === player ? window.equippedItems?.cluster : null);
+    const clusterId = getUnitClassEquipment(u).cluster;
     return CLUSTER_REWARD_RULES[clusterId] || null;
 }
 
