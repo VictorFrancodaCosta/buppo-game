@@ -2261,11 +2261,29 @@ function animateRewardCoin(isPlayerReward, index = 0, onPop = null, interval = 1
     }, delay);
 }
 
+function animateRewardCoinDrain(isPlayerReward, index = 0, onDebit = null, interval = 170) {
+    const delay = index * interval;
+    setTimeout(() => {
+        if(typeof onDebit === 'function') onDebit();
+        playRewardCoinSound(0);
+        const reward = document.getElementById(isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold');
+        if(!reward) return;
+        reward.classList.remove('coin-pop-active');
+        void reward.offsetWidth;
+        reward.classList.add('coin-pop-active');
+        setTimeout(() => reward.classList.remove('coin-pop-active'), 1050);
+    }, delay);
+}
+
 function setRewardWalletDisplay(isPlayerReward, amount) {
     const cluster = document.getElementById(isPlayerReward ? 'p-stats-cluster' : 'm-stats-cluster');
-    if(!cluster || amount <= 0) return null;
+    if(!cluster) return null;
     const id = isPlayerReward ? 'p-match-reward-gold' : 'm-match-reward-gold';
     let reward = document.getElementById(id);
+    if(amount <= 0) {
+        if(reward) reward.remove();
+        return null;
+    }
     if(!reward) {
         reward = document.createElement('div');
         reward.id = id;
@@ -2275,6 +2293,15 @@ function setRewardWalletDisplay(isPlayerReward, amount) {
     reward.setAttribute('aria-label', `Ouro da partida: ${amount}`);
     reward.innerHTML = `<span class="reward-wallet-coin"><img src="assets/img/moeda_ouro.png" alt="Moeda de ouro"></span><span>x${amount}</span>`;
     return reward;
+}
+
+function cancelRewardCoinAnimationQueue(isPlayerReward) {
+    const side = isPlayerReward ? 'player' : 'opponent';
+    if(window.matchRewardAnimationTimers?.[side]) {
+        clearTimeout(window.matchRewardAnimationTimers[side]);
+        window.matchRewardAnimationTimers[side] = null;
+    }
+    if(window.matchRewardAnimationQueue?.[side]) window.matchRewardAnimationQueue[side] = [];
 }
 
 function queueRewardCoinAnimation(isPlayerReward, amount, label) {
@@ -2335,9 +2362,17 @@ function drainMatchRewardGoldFromUnit(target, amount = 0, label = 'SAQUE TATICO'
     const current = getMatchRewardGoldForUnit(target);
     const drained = Math.min(current, Math.max(0, Math.floor(amount)));
     if(drained <= 0) return 0;
-    setMatchRewardGoldForUnit(target, current - drained);
+    const isPlayerReward = target === player;
+    cancelRewardCoinAnimationQueue(isPlayerReward);
+    setRewardWalletDisplay(isPlayerReward, current);
+    if(target === player) window.matchRewardGold = current - drained;
+    else window.opponentMatchRewardGold = current - drained;
     showFloatingText(`${target.id}-stats-cluster`, `-${drained} OURO`, '#ff7675');
-    animateRewardCoinLabel(target === player, [label]);
+    animateRewardCoinLabel(isPlayerReward, [label]);
+    const coinInterval = getRewardCoinInterval(drained);
+    for(let i = 0; i < drained; i++) {
+        animateRewardCoinDrain(isPlayerReward, i, () => setRewardWalletDisplay(isPlayerReward, current - i - 1), coinInterval);
+    }
     return drained;
 }
 
@@ -3061,6 +3096,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             if(mAct === 'DESARMAR') triggerDisarmSeal(true, nextPlayerDisabled);
             if(pAct === 'DESARMAR') triggerDisarmSeal(false, nextMonsterDisabled);
         }
+        pendingDisarmSteals.forEach(applyDisarmPlaySteal);
         const weightPause = (pDmg >= 4 || mDmg >= 4) ? 220 : 120;
         if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
         setTimeout(phaseDamage, weightPause);
@@ -3137,7 +3173,6 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             levelChecksDone++;
             if(levelChecksDone < 2) return;
             flushRestMasteryHeals();
-            pendingDisarmSteals.forEach(applyDisarmPlaySteal);
             window.deferMasteryEndCheck = false;
             if(window.pendingLevelUpSync) {
                 syncLevelUpToDB(window.pendingLevelUpSync);

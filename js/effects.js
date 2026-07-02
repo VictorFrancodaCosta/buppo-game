@@ -776,7 +776,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .lobby-shop-title {
             position: absolute !important;
             left: 50% !important;
-            top: calc(50% - min(410px, 45vh) - 18px) !important;
+            top: calc(50% - min(410px, 45vh) - 74px) !important;
             transform: translateX(-50%) !important;
             z-index: 4 !important;
             margin: 0 !important;
@@ -1334,7 +1334,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             }
 
             .lobby-shop-title {
-                top: 42px !important;
+                top: 8px !important;
                 width: clamp(260px, 66vw, 400px) !important;
             }
 
