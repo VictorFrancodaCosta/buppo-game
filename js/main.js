@@ -17,6 +17,7 @@ let preloadFinished = false;
 window.gameAssets = [];
 window.pvpUnsubscribe = null;
 window.isProcessing = false;
+window.turnResolutionLocked = false;
 window.isLethalHover = false;
 let turnCount = 1;
 let playerHistory = [];
@@ -180,7 +181,7 @@ window.cleanupMatchState = function() {
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     window.currentMatchId = null; window.myRole = null; window.pvpStartData = null;
     window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.latestMatchData = null;
-    window.isProcessing = false;
+    window.isProcessing = false; window.turnResolutionLocked = false;
     clearHoverFocusState(true);
     clearPvPStatus();
     updatePvPReadyIndicator(false, false);
@@ -472,7 +473,7 @@ const SHOP_ITEMS = {
         name: 'DECK - CAVALEIRO',
         slot: 'deck',
         deckType: 'knight',
-        price: 150,
+        price: 30,
         asset: 'assets/img/deck_cavaleiro_loja.webp',
         shopAsset: 'assets/img/deck_cavaleiro_loja.webp'
     },
@@ -481,7 +482,7 @@ const SHOP_ITEMS = {
         name: 'DECK - MAGO',
         slot: 'deck',
         deckType: 'mage',
-        price: 150,
+        price: 30,
         asset: 'assets/img/deck_mago_loja.webp',
         shopAsset: 'assets/img/deck_mago_loja.webp'
     },
@@ -490,7 +491,7 @@ const SHOP_ITEMS = {
         name: 'DECK - ARQUEIRO',
         slot: 'deck',
         deckType: 'archer',
-        price: 150,
+        price: 30,
         asset: 'assets/img/deck_arqueiro_loja.webp',
         shopAsset: 'assets/img/deck_arqueiro_loja.webp'
     },
@@ -499,7 +500,7 @@ const SHOP_ITEMS = {
         name: 'DECK - LADINO',
         slot: 'deck',
         deckType: 'rogue',
-        price: 150,
+        price: 30,
         asset: 'assets/img/deck_ladino_loja.webp',
         shopAsset: 'assets/img/deck_ladino_loja.webp'
     },
@@ -508,7 +509,7 @@ const SHOP_ITEMS = {
         name: 'DECK - ORÁCULO',
         slot: 'deck',
         deckType: 'oracle',
-        price: 150,
+        price: 30,
         asset: 'assets/img/deck_oraculo_loja.webp',
         shopAsset: 'assets/img/deck_oraculo_loja.webp'
     },
@@ -815,8 +816,7 @@ const DECK_REWARD_RULES = {
 function normalizeInventoryDefaults(inventory = [], equippedItems = {}) {
     const nextInventory = Array.isArray(inventory) ? [...new Set(inventory)] : [];
     const nextEquipped = equippedItems && typeof equippedItems === 'object' ? { ...equippedItems } : {};
-    if(!nextInventory.includes('deck_knight')) nextInventory.push('deck_knight');
-    if(!nextEquipped.deck || !nextInventory.includes(nextEquipped.deck)) nextEquipped.deck = 'deck_knight';
+    if(nextEquipped.deck && !nextInventory.includes(nextEquipped.deck)) delete nextEquipped.deck;
     return { inventory: nextInventory, equippedItems: nextEquipped };
 }
 
@@ -1572,7 +1572,7 @@ function startGameFlow() {
     document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
     document.getElementById('end-screen').classList.remove('visible');
     window.isProcessing = false; window.isResolvingTurn = false; window.pvpSelectedCardIndex = null;
-    window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false;
+    window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.turnResolutionLocked = false;
     startCinematicLoop(); window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand'); if (handEl) { handEl.innerHTML = ''; handEl.classList.add('preparing'); }
     if (window.gameMode === 'pvp' && window.pvpStartData) {
@@ -1652,7 +1652,7 @@ function startPvPListener() {
                 setTimeout(() => {
                     const title = document.getElementById('end-title'); title.innerText = "VITÓRIA"; title.className = "win-theme";
                     showCenterText("OPONENTE DESISTIU!", "#ffd700"); playSound('sfx-win');
-                    triggerEndScreenFx('win'); showEndPoints(8);
+                    triggerEndScreenFx('win'); showEndPoints(8, getVictoryGoldReward('pvp'));
                     if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
                     document.getElementById('end-screen').classList.add('visible'); window.cleanupMatchState();
                 }, 500);
@@ -1802,6 +1802,7 @@ function finishPvPTurnResetIfReady(matchData = window.latestMatchData) {
     window.pvpSelectedCardIndex = null;
     window.isResolvingTurn = false;
     window.isProcessing = false;
+    window.turnResolutionLocked = false;
     resetHandCardVisualState();
     updateUI();
     clearPvPStatus();
@@ -1938,7 +1939,7 @@ function checkEndGame(){
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
             if(normalSecondaryBtn) normalSecondaryBtn.setAttribute('aria-label', 'Saguão');
             if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); if(!window.isMobileSimpleMode) showEndPoints(1); }
-            else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); if(!window.isMobileSimpleMode) showEndPoints(window.gameMode === 'pvp' ? 8 : 3); }
+            else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); if(!window.isMobileSimpleMode) showEndPoints(window.gameMode === 'pvp' ? 8 : 3, getVictoryGoldReward(window.gameMode)); }
             else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); if(!window.isMobileSimpleMode) showEndPoints(-3); }
 
             if(isTie) { if(window.registrarEmpateOnline) window.registrarEmpateOnline(window.gameMode); }
@@ -1946,7 +1947,7 @@ function checkEndGame(){
             else { if(window.registrarDerrotaOnline) window.registrarDerrotaOnline(window.gameMode); }
             document.getElementById('end-screen').classList.add('visible');
         }, 1000);
-    } else if (window.gameMode !== 'pvp' || !window.pvpWaitingForTurnReset) { window.isProcessing = false; }
+    } else if (!window.turnResolutionLocked && (window.gameMode !== 'pvp' || !window.pvpWaitingForTurnReset)) { window.isProcessing = false; }
 }
 
 function resetMatchRewardGold() {
@@ -1964,6 +1965,14 @@ function resetMatchRewardGold() {
     const enemyReward = document.getElementById('m-match-reward-gold');
     if(enemyReward) enemyReward.remove();
     document.querySelectorAll('.reward-coin-fly, .reward-coin-label-fly').forEach(el => el.remove());
+}
+
+function getVictoryGoldBonus(mode = window.gameMode) {
+    return mode === 'pvp' ? 10 : 2;
+}
+
+function getVictoryGoldReward(mode = window.gameMode) {
+    return Math.max(0, window.matchRewardGold || 0) + getVictoryGoldBonus(mode);
 }
 
 const MATCH_REWARD_LABELS = {
@@ -2521,7 +2530,7 @@ async function saveMatchHistory(result, pointsChange) {
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
-    const reward = await registrarVitoriaDB(window.currentUser, modoAtual, window.matchRewardGold || 0, 0);
+    const reward = await registrarVitoriaDB(window.currentUser, modoAtual, getVictoryGoldReward(modoAtual), 0);
     if(Number.isFinite(reward.gold)) updateLobbyGoldWallet((window.currentGoldCoins || 0) + reward.gold);
     if(Number.isFinite(reward.profileLevel) && Number.isFinite(reward.profileXp)) updateLobbyProfileProgress(reward.profileLevel, reward.profileXp);
     const pts = reward.points || 0;
@@ -2869,7 +2878,7 @@ function dealAllInitialCards() {
 }
 
 function onCardClick(index) {
-    if(window.isProcessing) return; if (!player.hand[index]) return;
+    if(window.isProcessing || window.turnResolutionLocked) return; if (!player.hand[index]) return;
     if (window.gameMode === 'pvp' && (window.isResolvingTurn || window.pvpWaitingForTurnReset)) return;
     if (window.gameMode === 'pvp' && window.pvpSelectedCardIndex !== null) return;
     let cardKey = player.hand[index];
@@ -2924,7 +2933,7 @@ async function lockInPvPMove(index, disarmChoice) {
 }
 
 async function playCardFlow(index, pDisarmChoice) {
-    window.isProcessing = true; let cardKey = player.hand.splice(index, 1)[0]; playerHistory.push(cardKey);
+    window.isProcessing = true; window.turnResolutionLocked = true; let cardKey = player.hand.splice(index, 1)[0]; playerHistory.push(cardKey);
     let aiMove = getBestAIMove(monster, player, playerHistory, turnCount);
     let mCardKey = 'ATAQUE'; let mDisarmTarget = null;
     if(aiMove) {
@@ -2965,7 +2974,7 @@ async function playCardFlow(index, pDisarmChoice) {
 
 async function resolvePvPTurn(matchData) {
     if (window.isResolvingTurn) return;
-    window.isResolvingTurn = true; window.isProcessing = true; window.pvpWaitingForTurnReset = true; window.pvpLocalResolutionComplete = false;
+    window.isResolvingTurn = true; window.isProcessing = true; window.turnResolutionLocked = true; window.pvpWaitingForTurnReset = true; window.pvpLocalResolutionComplete = false;
     clearPvPStatus();
     resetHandCardVisualState();
     hydratePvPResolutionState(matchData);
@@ -3009,14 +3018,14 @@ async function resolvePvPTurn(matchData) {
                 if (window.myRole === 'player1') {
                     publishResolvedPvPTurn().catch(err => {
                         console.error(err);
-                        window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.isResolvingTurn = false; window.isProcessing = false;
+                        window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.isResolvingTurn = false; window.isProcessing = false; window.turnResolutionLocked = false;
                     });
                 } else {
                     finishPvPTurnResetIfReady();
                 }
             });
         } catch (error) {
-            updateUI(); window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.isResolvingTurn = false; window.isProcessing = false;
+            updateUI(); window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.isResolvingTurn = false; window.isProcessing = false; window.turnResolutionLocked = false;
         }
     }, 600);
 }
@@ -3189,6 +3198,11 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
                 window.pendingLevelUpSync = null;
             }
             checkEndGame();
+            if(window.gameMode !== 'pvp' && player.hp > 0 && monster.hp > 0) {
+                window.isProcessing = false;
+                window.turnResolutionLocked = false;
+                updateUI();
+            }
             if(onComplete) onComplete();
         };
 
@@ -3197,7 +3211,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
                 player.xp.push(pAct); triggerXPGlow('p'); updateUI();
                 if (window.gameMode === 'pvp') commitTurnToDB(pAct);
             }
-            checkLevelUp(player, () => { if(player.hp > 0) { triggerDeckDrawGlow('p'); baseDraw(player, 1); turnCount++; updateUI(); showCombatCue("TURNO " + turnCount, "gold"); if(window.gameMode !== 'pvp') window.isProcessing = false; } finishLevelChecks(); });
+            checkLevelUp(player, () => { if(player.hp > 0) { triggerDeckDrawGlow('p'); baseDraw(player, 1); turnCount++; updateUI(); showCombatCue("TURNO " + turnCount, "gold"); } finishLevelChecks(); });
         }, false, false, true);
 
         animateFly('m-slot', 'm-xp', mAct, () => {
@@ -3361,7 +3375,7 @@ function updateUnit(u) {
         let deckImgEl = document.getElementById('p-deck-img');
         if(window.currentDeck === 'mage') deckImgEl.src = MAGE_ASSETS.DECK_IMG; else deckImgEl.src = 'assets/img/deck_verso_cavaleiro.webp';
         let hc=document.getElementById('player-hand'); hc.innerHTML='';
-        if (window.isProcessing) hc.style.pointerEvents = 'none'; else hc.style.pointerEvents = 'auto';
+        if (window.isProcessing || window.turnResolutionLocked) hc.style.pointerEvents = 'none'; else hc.style.pointerEvents = 'auto';
         const touchLayout = isTouchLayout();
         u.hand.forEach((k,i)=>{
             let c=document.createElement('div'); c.className=`card hand-card ${CARDS_DB[k].color}`; c.style.setProperty('--flare-col', CARDS_DB[k].fCol);
