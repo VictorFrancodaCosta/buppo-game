@@ -820,7 +820,15 @@ function applyXpAreaSkinForUnit(u) {
     const xpArea = document.getElementById(`${u.id}-xp`);
     if(!xpArea) return;
     const item = getUnitEquippedItemBySlot(u, 'xpArea');
-    xpArea.style.backgroundImage = item?.asset ? `url('${item.asset}')` : '';
+    if(item?.asset) {
+        xpArea.style.setProperty('--xp-area-bg-url', `url('${item.asset}')`);
+        xpArea.style.setProperty('--xp-area-bg-size', 'contain');
+        xpArea.style.setProperty('--xp-area-bg-position', 'center center');
+    } else {
+        xpArea.style.setProperty('--xp-area-bg-url', "url('assets/img/ui_area_xp.webp')");
+        xpArea.style.setProperty('--xp-area-bg-size', '148.4% 242%');
+        xpArea.style.setProperty('--xp-area-bg-position', '-73px -75px');
+    }
 }
 
 function applyClusterSkinForUnit(u) {
