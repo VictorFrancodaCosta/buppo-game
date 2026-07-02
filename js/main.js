@@ -2171,6 +2171,14 @@ function awardMasteryRewardGold(u, masteryKey) {
     }
 }
 
+function wouldPlayedActionTriggerMastery(u, actionKey) {
+    if(!u || !actionKey) return false;
+    const xpForLevelUp = [...(u.xp || []), actionKey];
+    if(xpForLevelUp.length < 5) return false;
+    const actionCount = xpForLevelUp.filter(card => card === actionKey).length;
+    return actionCount >= 3;
+}
+
 function playRewardCoinSound(delay = 0) {
     if(!window.sfxEnabled) return;
     setTimeout(() => {
@@ -3115,6 +3123,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             if(pDmg >= 3) triggerCriticalDamagePop(true);
             if(mAct === 'ATAQUE' && !pBlocks) awardAttackRewardGold(monster, pDmg);
             if(mBlocks && fatalDamage) awardLethalBlockRewardGold(monster);
+            if(fatalDamage && pAct === 'DESARMAR' && wouldPlayedActionTriggerMastery(player, 'DESARMAR')) awardMasteryRewardGold(player, 'DESARMAR');
             if(fatalDamage) triggerClusterExplosion(true, false);
         }
         if(mDmg > 0) {
@@ -3126,6 +3135,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             if(mDmg >= 3) triggerCriticalDamagePop(false);
             if(pAct === 'ATAQUE' && !mBlocks) awardAttackRewardGold(player, mDmg);
             if(pBlocks && hpBefore > 0 && monster.hp <= 0) awardLethalBlockRewardGold(player);
+            if(hpBefore > 0 && monster.hp <= 0 && mAct === 'DESARMAR' && wouldPlayedActionTriggerMastery(monster, 'DESARMAR')) awardMasteryRewardGold(monster, 'DESARMAR');
             if(hpBefore > 0 && monster.hp <= 0) triggerClusterExplosion(false);
         }
 
