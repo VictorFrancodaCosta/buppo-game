@@ -568,8 +568,10 @@ const SHOP_ITEMS = {
         price: 300,
         asset: 'assets/img/ui_area_xpcampodehonra.webp',
         shopAsset: 'assets/img/ax_cavaleiro_loja.webp',
-        xpAreaBgSize: '148.4% 242%',
-        xpAreaBgPosition: '-73px -75px'
+        xpAreaArtWidth: '148.4%',
+        xpAreaArtHeight: '242%',
+        xpAreaArtLeft: '-73px',
+        xpAreaArtTop: '-75px'
     },
     xp_circulo_arcano: {
         id: 'xp_circulo_arcano',
@@ -578,8 +580,10 @@ const SHOP_ITEMS = {
         price: 300,
         asset: 'assets/img/ui_area_xpcirculoarcano.webp',
         shopAsset: 'assets/img/ax_mago_loja.webp',
-        xpAreaBgSize: '148.4% 242%',
-        xpAreaBgPosition: '-73px -75px'
+        xpAreaArtWidth: '148.4%',
+        xpAreaArtHeight: '242%',
+        xpAreaArtLeft: '-73px',
+        xpAreaArtTop: '-75px'
     },
     xp_bosque_sentinela: {
         id: 'xp_bosque_sentinela',
@@ -588,8 +592,10 @@ const SHOP_ITEMS = {
         price: 300,
         asset: 'assets/img/ui_area_xpboquesentinela.webp',
         shopAsset: 'assets/img/ax_arqueiro_loja.webp',
-        xpAreaBgSize: '148.4% 242%',
-        xpAreaBgPosition: '-73px -75px'
+        xpAreaArtWidth: '148.4%',
+        xpAreaArtHeight: '242%',
+        xpAreaArtLeft: '-73px',
+        xpAreaArtTop: '-75px'
     },
     xp_rota_saque: {
         id: 'xp_rota_saque',
@@ -598,8 +604,10 @@ const SHOP_ITEMS = {
         price: 300,
         asset: 'assets/img/ui_area_xprotadosaque.webp',
         shopAsset: 'assets/img/ax_ladino_loja.webp',
-        xpAreaBgSize: '148.4% 242%',
-        xpAreaBgPosition: '-73px -75px'
+        xpAreaArtWidth: '148.4%',
+        xpAreaArtHeight: '242%',
+        xpAreaArtLeft: '-73px',
+        xpAreaArtTop: '-75px'
     },
     xp_altar_visao: {
         id: 'xp_altar_visao',
@@ -608,8 +616,10 @@ const SHOP_ITEMS = {
         price: 300,
         asset: 'assets/img/ui_area_xpaltardavisao.webp',
         shopAsset: 'assets/img/ax_oraculo_loja.webp',
-        xpAreaBgSize: '148.4% 242%',
-        xpAreaBgPosition: '-73px -75px'
+        xpAreaArtWidth: '148.4%',
+        xpAreaArtHeight: '242%',
+        xpAreaArtLeft: '-73px',
+        xpAreaArtTop: '-75px'
     },
     cluster_knight: {
         id: 'cluster_knight',
@@ -833,8 +843,12 @@ function applyXpAreaSkinForUnit(u) {
     const assetPath = item?.asset || 'assets/img/ui_area_xp.webp';
     const assetUrl = new URL(assetPath, window.location.href).href;
     xpArea.style.setProperty('--xp-area-bg-url', `url("${assetUrl}")`);
-    xpArea.style.setProperty('--xp-area-bg-size', item?.xpAreaBgSize || '148.4% 242%');
-    xpArea.style.setProperty('--xp-area-bg-position', item?.xpAreaBgPosition || '-73px -75px');
+    xpArea.style.setProperty('--xp-area-bg-size', '100% 100%');
+    xpArea.style.setProperty('--xp-area-bg-position', 'center');
+    xpArea.style.setProperty('--xp-area-art-width', item?.xpAreaArtWidth || '148.4%');
+    xpArea.style.setProperty('--xp-area-art-height', item?.xpAreaArtHeight || '242%');
+    xpArea.style.setProperty('--xp-area-art-left', item?.xpAreaArtLeft || '-73px');
+    xpArea.style.setProperty('--xp-area-art-top', item?.xpAreaArtTop || '-75px');
 }
 
 function applyClusterSkinForUnit(u) {
