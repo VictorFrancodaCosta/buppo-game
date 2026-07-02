@@ -835,15 +835,15 @@ function applyClusterSkinForUnit(u) {
     const cluster = document.getElementById(`${u.id}-stats-cluster`);
     if(!cluster) return;
     const item = getUnitEquippedItemBySlot(u, 'cluster');
-    const fallback = u === player ? 'assets/img/cluster_jogador.webp' : 'assets/img/cluster_inimigo.webp';
+    const fallback = 'assets/img/cluster_jogador.webp';
     const assetPath = item?.asset || fallback;
     const assetUrlObj = new URL(assetPath, window.location.href);
     const assetUrl = assetUrlObj.href;
     cluster.style.setProperty('--cluster-art-url', `url("${assetUrl}")`);
     cluster.style.setProperty('--cluster-art-height', '100%');
     cluster.style.setProperty('--cluster-art-top', '0%');
-    cluster.style.setProperty('--cluster-bg-size', item?.clusterBgSize || (u === player ? '131.3% 261.1%' : '100% 100%'));
-    cluster.style.setProperty('--cluster-bg-position', item?.clusterBgPosition || (u === player ? '-54px -107px' : 'center'));
+    cluster.style.setProperty('--cluster-bg-size', item?.clusterBgSize || '131.3% 261.1%');
+    cluster.style.setProperty('--cluster-bg-position', item?.clusterBgPosition || '-54px -107px');
 }
 
 function getCardBorderItemForSide(isPlayerSide = true) {
