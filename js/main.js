@@ -73,6 +73,7 @@ const DECK_THEME_BY_TYPE = {
     rogue: 'theme-ladino',
     oracle: 'theme-oraculo'
 };
+const DECK_TYPES = Object.keys(DECK_THEME_BY_TYPE);
 
 const ASSETS_TO_LOAD = {
     images: [
@@ -235,6 +236,10 @@ function selectOwnedDeckForMatch(deckType) {
     window.equippedItems = getClassEquipmentByDeckType(deckType);
     window.applyDeckTheme(deckType);
     return true;
+}
+
+function getRandomDeckType() {
+    return DECK_TYPES[Math.floor(Math.random() * DECK_TYPES.length)] || 'knight';
 }
 
 window.startLobbyModeWithDeck = async function(mode, deckType) {
@@ -780,25 +785,29 @@ const CLUSTER_REWARD_RULES = {
 const DECK_REWARD_RULES = {
     knight: {
         blockEffective: 2,
+        blockLethal: 3,
         mastery: { BLOQUEIO: 1 }
     },
     mage: {
-        attackEffective: 1,
+        attackEffective: 2,
         consecutiveAttack: 1,
         mastery: { ATAQUE: 1 }
     },
     archer: {
-        play: { DESCANSAR: 4 },
-        mastery: { DESCANSAR: 9 }
+        play: { DESCANSAR: 3 },
+        restoreBehind: 2,
+        mastery: { DESCANSAR: 3 }
     },
     rogue: {
-        play: { DESARMAR: 4 },
-        disarmClash: 4,
-        mastery: { DESARMAR: 4 }
+        play: { DESARMAR: 2 },
+        disarmSteal: 2,
+        disarmClash: 5,
+        mastery: { DESARMAR: 3 },
+        masteryDisarmStealHalf: true
     },
     oracle: {
         play: { TREINAR: 1 },
-        levelUp: 2,
+        anyLevelUp: 1,
         mastery: { TREINAR: 4 }
     }
 };
@@ -1591,7 +1600,7 @@ function startGameFlow() {
         resetUnit(player, null, 'pve'); resetUnit(monster, null, 'pve');
         player.deckType = window.currentDeck || 'knight';
         player.equippedItems = getClassEquipmentByDeckType(player.deckType);
-        monster.deckType = player.deckType || 'knight';
+        monster.deckType = getRandomDeckType();
         monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
         baseDraw(monster, 6); baseDraw(player, 6);
     }
@@ -2008,7 +2017,7 @@ function getUnitDeckRewardRules(u) {
 }
 
 function sumRewardRules(u, getter) {
-    return [getUnitDeckRewardRules(u), getUnitBorderRewardRules(u), getUnitXpAreaRewardRules(u), getUnitClusterRewardRules(u)]
+    return [getUnitDeckRewardRules(u)]
         .reduce((total, rules) => total + Math.max(0, Number(getter(rules) || 0)), 0);
 }
 
@@ -2017,17 +2026,21 @@ function getUnitRewardBonusSummary(u) {
     const rows = [
         { amount: sumRewardRules(u, rules => rules?.attackEffective), text: amount => `Seus ataques efetivos geram ${amount} ouro.` },
         { amount: sumRewardRules(u, rules => rules?.blockEffective), text: amount => `Seus bloqueios efetivos geram ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.blockLethal), text: amount => `Derrotar com Bloqueio efetivo gera ${amount} ouro.` },
         { amount: sumRewardRules(u, rules => rules?.play?.DESCANSAR), text: amount => `Jogar Restaurar gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.restoreBehind), text: amount => `Jogar Restaurar com menos vida que o oponente gera ${amount} ouro.` },
         { amount: sumRewardRules(u, rules => rules?.play?.DESARMAR), text: amount => `Jogar Desarmar gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.disarmSteal), text: amount => `Jogar Desarmar faz o oponente perder ${amount} ouro da partida.` },
         { amount: sumRewardRules(u, rules => rules?.play?.TREINAR), text: amount => `Jogar Treinar gera ${amount} ouro.` },
-        { amount: sumRewardRules(u, rules => rules?.levelUp), text: amount => `Subir de nível gera ${amount} ouro.` },
+        { amount: sumRewardRules(u, rules => rules?.anyLevelUp), text: amount => `Sempre que qualquer jogador subir de nível gera ${amount} ouro.` },
         { amount: sumRewardRules(u, rules => rules?.mastery?.ATAQUE), text: amount => `Realizar uma Maestria em Ataque gera ${amount} ouro.` },
         { amount: sumRewardRules(u, rules => rules?.mastery?.BLOQUEIO), text: amount => `Realizar uma Maestria em Bloqueio gera ${amount} ouro.` },
         { amount: sumRewardRules(u, rules => rules?.mastery?.DESCANSAR), text: amount => `Realizar uma Maestria em Restaurar gera ${amount} ouro.` },
         { amount: sumRewardRules(u, rules => rules?.mastery?.DESARMAR), text: amount => `Realizar uma Maestria em Desarmar gera ${amount} ouro.` },
         { amount: sumRewardRules(u, rules => rules?.mastery?.TREINAR), text: amount => `Realizar uma Maestria em Treinar gera ${amount} ouro.` },
         { amount: sumRewardRules(u, rules => rules?.consecutiveAttack), text: amount => `Jogar Ataque logo após já ter jogado Ataque gera ${amount} ouro.` },
-        { amount: sumRewardRules(u, rules => rules?.disarmClash), text: amount => `Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera ${amount} ouro.` }
+        { amount: sumRewardRules(u, rules => rules?.disarmClash), text: amount => `Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera ${amount} ouro.` },
+        { amount: getUnitDeckRewardRules(u)?.masteryDisarmStealHalf ? 1 : 0, text: () => 'Maestria em Desarmar faz o oponente perder metade do ouro da partida.' }
     ];
     return rows.filter(row => row.amount > 0).map(row => row.text(row.amount));
 }
@@ -2112,14 +2125,33 @@ function awardDisarmClashRewardGold(u) {
     if(amount > 0) awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.DISARM_CLASH);
 }
 
+function awardRestoreBehindRewardGold(u) {
+    const opponent = getOpponentUnit(u);
+    if(!opponent || u.hp >= opponent.hp) return;
+    const amount = sumRewardRules(u, rules => rules?.restoreBehind);
+    if(amount > 0) awardMatchRewardGoldFor(u, amount, 'RETOMADA VERDE');
+}
+
+function awardLethalBlockRewardGold(u) {
+    const amount = sumRewardRules(u, rules => rules?.blockLethal);
+    if(amount > 0) awardMatchRewardGoldFor(u, amount, 'VITORIA NA GUARDA');
+}
+
+function applyDisarmPlaySteal(u) {
+    const amount = sumRewardRules(u, rules => rules?.disarmSteal);
+    if(amount > 0) drainMatchRewardGoldFromUnit(getOpponentUnit(u), amount, 'SAQUE TATICO');
+}
+
 function awardBlockRewardGold(u) {
     const amount = sumRewardRules(u, rules => rules?.blockEffective);
     if(amount > 0) awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.PERFECT_DEFENSE);
 }
 
-function awardLevelRewardGold(u) {
-    const amount = sumRewardRules(u, rules => rules?.levelUp);
-    if(amount > 0) awardMatchRewardGoldFor(u, amount, MATCH_REWARD_LABELS.LEVEL_UP);
+function awardLevelRewardGold(levelingUnit) {
+    [player, monster].forEach(unit => {
+        const amount = sumRewardRules(unit, rules => rules?.anyLevelUp);
+        if(amount > 0) awardMatchRewardGoldFor(unit, amount, 'PRESSAGIO DO ORACULO');
+    });
 }
 
 function awardMasteryRewardGold(u, masteryKey) {
@@ -2133,6 +2165,10 @@ function awardMasteryRewardGold(u, masteryKey) {
         TREINAR: MATCH_REWARD_LABELS.MASTERY_TRAIN
     };
     awardMatchRewardGoldFor(u, amount, labels[masteryKey] || 'MAESTRIA');
+    if(masteryKey === 'DESARMAR' && getUnitDeckRewardRules(u)?.masteryDisarmStealHalf) {
+        const opponent = getOpponentUnit(u);
+        drainMatchRewardGoldFromUnit(opponent, Math.floor(getMatchRewardGoldForUnit(opponent) / 2), 'SAQUE TATICO');
+    }
 }
 
 function playRewardCoinSound(delay = 0) {
@@ -2275,6 +2311,34 @@ function awardMatchRewardGoldFor(u, amount = 1, label = MATCH_REWARD_LABELS.EFFE
         window.opponentMatchRewardGold = (window.opponentMatchRewardGold || 0) + amount;
     }
     queueRewardCoinAnimation(isPlayerReward, amount, label);
+}
+
+function getOpponentUnit(u) {
+    return u === player ? monster : player;
+}
+
+function getMatchRewardGoldForUnit(u) {
+    return u === player ? (window.matchRewardGold || 0) : (window.opponentMatchRewardGold || 0);
+}
+
+function setMatchRewardGoldForUnit(u, amount = 0) {
+    const nextAmount = Math.max(0, Math.floor(Number(amount) || 0));
+    if(u === player) window.matchRewardGold = nextAmount;
+    else window.opponentMatchRewardGold = nextAmount;
+    setRewardWalletDisplay(u === player, nextAmount, true);
+}
+
+function drainMatchRewardGoldFromUnit(target, amount = 0, label = 'SAQUE TATICO') {
+    if(window.isMobileSimpleMode) return 0;
+    if(isFriendlyMatch()) return 0;
+    if(!window.currentUser || !target || amount <= 0) return 0;
+    const current = getMatchRewardGoldForUnit(target);
+    const drained = Math.min(current, Math.max(0, Math.floor(amount)));
+    if(drained <= 0) return 0;
+    setMatchRewardGoldForUnit(target, current - drained);
+    showFloatingText(`${target.id}-stats-cluster`, `-${drained} OURO`, '#ff7675');
+    animateRewardCoinLabel(target === player, [label]);
+    return drained;
 }
 
 function renderMatchRewardGold(isPlayerReward = true) {
@@ -2928,6 +2992,7 @@ async function commitTurnToDB(pAct, extraCard = null) {
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null) {
     let pDmg = 0, mDmg = 0;
+    const pendingDisarmSteals = [];
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
 
@@ -2985,8 +3050,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         else if(mBlocks) awardBlockRewardGold(monster);
         awardConsecutiveAttackRewardGold(player, pAct);
         awardConsecutiveAttackRewardGold(monster, mAct);
-        if(mAct === 'DESARMAR') awardBorderPlayRewardGold(monster, 'DESARMAR');
-        if(pAct === 'DESARMAR') awardBorderPlayRewardGold(player, 'DESARMAR');
+        if(mAct === 'DESARMAR') { awardBorderPlayRewardGold(monster, 'DESARMAR'); pendingDisarmSteals.push(monster); }
+        if(pAct === 'DESARMAR') { awardBorderPlayRewardGold(player, 'DESARMAR'); pendingDisarmSteals.push(player); }
         if(disarmClash) {
             awardDisarmClashRewardGold(player);
             awardDisarmClashRewardGold(monster);
@@ -3013,6 +3078,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             triggerHpImpact(true);
             if(pDmg >= 3) triggerCriticalDamagePop(true);
             if(mAct === 'ATAQUE' && !pBlocks) awardAttackRewardGold(monster, pDmg);
+            if(mBlocks && fatalDamage) awardLethalBlockRewardGold(monster);
             if(fatalDamage) triggerClusterExplosion(true, false);
         }
         if(mDmg > 0) {
@@ -3023,6 +3089,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             triggerHpImpact(false);
             if(mDmg >= 3) triggerCriticalDamagePop(false);
             if(pAct === 'ATAQUE' && !mBlocks) awardAttackRewardGold(player, mDmg);
+            if(pBlocks && hpBefore > 0 && monster.hp <= 0) awardLethalBlockRewardGold(player);
             if(hpBefore > 0 && monster.hp <= 0) triggerClusterExplosion(false);
         }
 
@@ -3035,12 +3102,14 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
 
         if(!pDead && pAct === 'DESCANSAR') {
             awardBorderPlayRewardGold(player, 'DESCANSAR');
+            awardRestoreBehindRewardGold(player);
             let healAmount = (pDmg === 0) ? 3 : 2;
             player.hp = Math.min(player.maxHp, player.hp + healAmount);
             showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); triggerHealPulse(true); playSound('sfx-heal');
         }
         if(!mDead && mAct === 'DESCANSAR') {
             awardBorderPlayRewardGold(monster, 'DESCANSAR');
+            awardRestoreBehindRewardGold(monster);
             let healAmount = (mDmg === 0) ? 3 : 2;
             monster.hp = Math.min(monster.maxHp, monster.hp + healAmount);
             triggerHealEffect(false); triggerHealPulse(false); playSound('sfx-heal');
@@ -3068,6 +3137,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             levelChecksDone++;
             if(levelChecksDone < 2) return;
             flushRestMasteryHeals();
+            pendingDisarmSteals.forEach(applyDisarmPlaySteal);
             window.deferMasteryEndCheck = false;
             if(window.pendingLevelUpSync) {
                 syncLevelUpToDB(window.pendingLevelUpSync);
