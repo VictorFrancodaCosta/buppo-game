@@ -620,7 +620,6 @@ body.mastery-focus-active .xp-area {
     filter: drop-shadow(0 10px 0px rgba(0, 0, 0, 0.5));
 }
 
-#p-stats-cluster.pvp-ready-glow::before,
 #m-stats-cluster.pvp-ready-glow::before {
     filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.72)) brightness(1.22);
     animation: pvpReadyClusterGlow 1.45s ease-in-out infinite;
