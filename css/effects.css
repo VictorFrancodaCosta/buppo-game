@@ -622,18 +622,12 @@ body.mastery-focus-active .xp-area {
 
 #p-stats-cluster.pvp-ready-glow::before,
 #m-stats-cluster.pvp-ready-glow::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background-image: inherit;
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: center;
-    opacity: 0.42;
     filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.72)) brightness(1.22);
     animation: pvpReadyClusterGlow 1.45s ease-in-out infinite;
-    z-index: 0;
+}
+
+#m-stats-cluster.pvp-ready-glow::before {
+    transform: scaleX(-1);
 }
 
 #p-stats-cluster.pvp-ready-glow::after,
@@ -677,8 +671,8 @@ body.mastery-focus-active .xp-area {
 }
 
 @keyframes pvpReadyClusterGlow {
-    0%, 100% { opacity: 0.28; filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.48)) brightness(1.12); }
-    50% { opacity: 0.58; filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.78)) brightness(1.28); }
+    0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.48)) brightness(1.12); }
+    50% { opacity: 1; filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.78)) brightness(1.28); }
 }
 
 @keyframes readyBadgeJuice {

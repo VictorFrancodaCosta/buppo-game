@@ -103,6 +103,8 @@ const ASSETS_TO_LOAD = {
         'assets/img/cluster_cavaleiro_guardareal.webp', 'assets/img/cluster_cavaleiro_guardareal_shop.webp',
         'assets/img/cluster_mago_chamaarcana.webp', 'assets/img/cluster_mago_chamaarcana_shop.webp',
         'assets/img/cluster_arqueiro_sentinelaverde.webp', 'assets/img/cluster_arqueiro_sentinelaverde_shop.webp',
+        'assets/img/cluster_ladino_maodourada.webp', 'assets/img/cluster_ladino_maodourada_shop.webp',
+        'assets/img/cluster_oraculo_visaoastral.webp', 'assets/img/cluster_oraculo_visaoastral_shop.webp',
         'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
         'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
         'assets/img/botao_sair_loja_ui.png', 'assets/img/botao_sair_mochila_ui.png',
@@ -628,6 +630,26 @@ const SHOP_ITEMS = {
         shopAsset: 'assets/img/cluster_arqueiro_sentinelaverde_shop.webp',
         clusterBgSize: '131.3% 261.1%',
         clusterBgPosition: '-54px -107px'
+    },
+    cluster_rogue: {
+        id: 'cluster_rogue',
+        name: 'CLUSTER - MAO DOURADA',
+        slot: 'cluster',
+        price: 1500,
+        asset: 'assets/img/cluster_ladino_maodourada.webp',
+        shopAsset: 'assets/img/cluster_ladino_maodourada_shop.webp',
+        clusterBgSize: '131.3% 261.1%',
+        clusterBgPosition: '-54px -107px'
+    },
+    cluster_oracle: {
+        id: 'cluster_oracle',
+        name: 'CLUSTER - VISAO ASTRAL',
+        slot: 'cluster',
+        price: 1500,
+        asset: 'assets/img/cluster_oraculo_visaoastral.webp',
+        shopAsset: 'assets/img/cluster_oraculo_visaoastral_shop.webp',
+        clusterBgSize: '131.3% 261.1%',
+        clusterBgPosition: '-54px -107px'
     }
 };
 window.SHOP_ITEMS = SHOP_ITEMS;
@@ -697,6 +719,16 @@ const CLUSTER_REWARD_RULES = {
     cluster_archer: {
         play: { DESCANSAR: 16 },
         mastery: { DESCANSAR: 18 }
+    },
+    cluster_rogue: {
+        play: { DESARMAR: 17 },
+        disarmClash: 17,
+        mastery: { DESARMAR: 20 }
+    },
+    cluster_oracle: {
+        play: { TREINAR: 6 },
+        levelUp: 6,
+        mastery: { TREINAR: 18 }
     }
 };
 

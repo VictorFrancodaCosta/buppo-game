@@ -2876,7 +2876,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         const lobbyClusterItems = [
             { id: 'cluster_knight', type: 'cluster', name: 'CLUSTER - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/cluster_cavaleiro_guardareal.webp', shopAsset: 'assets/img/cluster_cavaleiro_guardareal_shop.webp' },
             { id: 'cluster_mage', type: 'cluster', name: 'CLUSTER - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/cluster_mago_chamaarcana.webp', shopAsset: 'assets/img/cluster_mago_chamaarcana_shop.webp' },
-            { id: 'cluster_archer', type: 'cluster', name: 'CLUSTER - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/cluster_arqueiro_sentinelaverde.webp', shopAsset: 'assets/img/cluster_arqueiro_sentinelaverde_shop.webp' }
+            { id: 'cluster_archer', type: 'cluster', name: 'CLUSTER - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/cluster_arqueiro_sentinelaverde.webp', shopAsset: 'assets/img/cluster_arqueiro_sentinelaverde_shop.webp' },
+            { id: 'cluster_rogue', type: 'cluster', name: 'CLUSTER - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/cluster_ladino_maodourada.webp', shopAsset: 'assets/img/cluster_ladino_maodourada_shop.webp' },
+            { id: 'cluster_oracle', type: 'cluster', name: 'CLUSTER - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/cluster_oraculo_visaoastral.webp', shopAsset: 'assets/img/cluster_oraculo_visaoastral_shop.webp' }
         ];
         const lobbyShopItemsByCategory = {
             decks: lobbyDeckItems,
@@ -2968,6 +2970,16 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             cluster_archer: [
                 'Jogar Restaurar gera 16 {coin}.',
                 'Realizar uma <strong>Maestria em Restaurar</strong> gera 18 {coin}.'
+            ],
+            cluster_rogue: [
+                'Jogar Desarmar gera 17 {coin}.',
+                'Realizar uma <strong>Maestria em Desarmar</strong> gera 20 {coin}.',
+                'Jogar Desarmar ao mesmo tempo que o oponente tamb\u00e9m jogar Desarmar gera 17 {coin}.'
+            ],
+            cluster_oracle: [
+                'Jogar Treinar gera 6 {coin}.',
+                'Subir de n\u00edvel gera 6 {coin}.',
+                'Realizar uma <strong>Maestria em Treinar</strong> gera 18 {coin}.'
             ]
         };
         const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';
