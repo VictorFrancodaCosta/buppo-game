@@ -753,8 +753,6 @@ function applyClusterSkinForUnit(u) {
     cluster.style.setProperty('--cluster-art-url', `url("${assetUrl}")`);
     cluster.style.setProperty('--cluster-art-height', '100%');
     cluster.style.setProperty('--cluster-art-top', '0%');
-    cluster.dataset.clusterSkin = '';
-    cluster.classList.remove('cluster-skin-equipped');
 }
 
 function getCardBorderItemForSide(isPlayerSide = true) {
