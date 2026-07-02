@@ -820,12 +820,13 @@ function applyXpAreaSkinForUnit(u) {
     const xpArea = document.getElementById(`${u.id}-xp`);
     if(!xpArea) return;
     const item = getUnitEquippedItemBySlot(u, 'xpArea');
+    const assetPath = item?.asset || 'assets/img/ui_area_xp.webp';
+    const assetUrl = new URL(assetPath, window.location.href).href;
+    xpArea.style.setProperty('--xp-area-bg-url', `url("${assetUrl}")`);
     if(item?.asset) {
-        xpArea.style.setProperty('--xp-area-bg-url', `url('${item.asset}')`);
         xpArea.style.setProperty('--xp-area-bg-size', 'contain');
         xpArea.style.setProperty('--xp-area-bg-position', 'center center');
     } else {
-        xpArea.style.setProperty('--xp-area-bg-url', "url('assets/img/ui_area_xp.webp')");
         xpArea.style.setProperty('--xp-area-bg-size', '148.4% 242%');
         xpArea.style.setProperty('--xp-area-bg-position', '-73px -75px');
     }
