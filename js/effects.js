@@ -2873,7 +2873,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             { id: 'xp_rota_saque', type: 'xpArea', name: '\u00c1REA DE XP - ROTA DO SAQUE', displayName: 'ROTA DO SAQUE', asset: 'assets/img/ui_area_xprotadosaque.webp', shopAsset: 'assets/img/ax_ladino_loja.webp' },
             { id: 'xp_altar_visao', type: 'xpArea', name: '\u00c1REA DE XP - ALTAR DA VIS\u00c3O', displayName: 'ALTAR DA VIS\u00c3O', asset: 'assets/img/ui_area_xpaltardavisao.webp', shopAsset: 'assets/img/ax_oraculo_loja.webp' }
         ];
-        const lobbyClusterItems = [];
+        const lobbyClusterItems = [
+            { id: 'cluster_knight', type: 'cluster', name: 'CLUSTER - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/cluster_cavaleiro_guardareal.webp', shopAsset: 'assets/img/cluster_cavaleiro_guardareal_shop.webp' }
+        ];
         const lobbyShopItemsByCategory = {
             decks: lobbyDeckItems,
             borders: lobbyCardBorderItems,
@@ -2951,6 +2953,10 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 'Jogar Treinar gera 1 {coin}.',
                 'Subir de nível gera 2 {coin}.',
                 'Realizar uma <strong>Maestria em Treinar</strong> gera 4 {coin}.'
+            ],
+            cluster_knight: [
+                'Seus Bloqueios efetivos geram 8 {coin}.',
+                'Realizar uma <strong>Maestria em Bloqueio</strong> gera 8 {coin}.'
             ]
         };
         const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';
