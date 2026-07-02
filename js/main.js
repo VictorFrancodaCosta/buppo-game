@@ -120,11 +120,6 @@ const ASSETS_TO_LOAD = {
         'assets/img/borda_cavaleiro_loja.webp?v=2026.06.24.16', 'assets/img/borda_mago_loja.webp?v=2026.06.24.16',
         'assets/img/borda_arqueiro_loja.webp?v=2026.06.24.16', 'assets/img/borda_ladino_loja.webp?v=2026.06.24.16',
         'assets/img/borda_oraculo_loja.webp?v=2026.06.24.16',
-        'assets/img/ui_area_xpcampodehonra.webp', 'assets/img/ui_area_xpcirculoarcano.webp',
-        'assets/img/ui_area_xpboquesentinela.webp', 'assets/img/ui_area_xprotadosaque.webp',
-        'assets/img/ui_area_xpaltardavisao.webp', 'assets/img/ax_cavaleiro_loja.webp',
-        'assets/img/ax_mago_loja.webp', 'assets/img/ax_arqueiro_loja.webp',
-        'assets/img/ax_ladino_loja.webp', 'assets/img/ax_oraculo_loja.webp',
         'assets/img/deck_cavaleiro_loja.webp', 'assets/img/deck_mago_loja.webp',
         'assets/img/deck_arqueiro_loja.webp', 'assets/img/deck_ladino_loja.webp',
         'assets/img/deck_oraculo_loja.webp',
@@ -561,46 +556,6 @@ const SHOP_ITEMS = {
         cssClass: 'oracle',
         asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5'
     },
-    xp_campo_honra: {
-        id: 'xp_campo_honra',
-        name: 'ÁREA DE XP - CAMPO DE HONRA',
-        slot: 'xpArea',
-        price: 300,
-        asset: 'assets/img/ui_area_xpcampodehonra.webp',
-        shopAsset: 'assets/img/ax_cavaleiro_loja.webp'
-    },
-    xp_circulo_arcano: {
-        id: 'xp_circulo_arcano',
-        name: 'ÁREA DE XP - CÍRCULO ARCANO',
-        slot: 'xpArea',
-        price: 300,
-        asset: 'assets/img/ui_area_xpcirculoarcano.webp',
-        shopAsset: 'assets/img/ax_mago_loja.webp'
-    },
-    xp_bosque_sentinela: {
-        id: 'xp_bosque_sentinela',
-        name: 'ÁREA DE XP - BOSQUE SENTINELA',
-        slot: 'xpArea',
-        price: 300,
-        asset: 'assets/img/ui_area_xpboquesentinela.webp',
-        shopAsset: 'assets/img/ax_arqueiro_loja.webp'
-    },
-    xp_rota_saque: {
-        id: 'xp_rota_saque',
-        name: 'ÁREA DE XP - ROTA DO SAQUE',
-        slot: 'xpArea',
-        price: 300,
-        asset: 'assets/img/ui_area_xprotadosaque.webp',
-        shopAsset: 'assets/img/ax_ladino_loja.webp'
-    },
-    xp_altar_visao: {
-        id: 'xp_altar_visao',
-        name: 'ÁREA DE XP - ALTAR DA VISÃO',
-        slot: 'xpArea',
-        price: 300,
-        asset: 'assets/img/ui_area_xpaltardavisao.webp',
-        shopAsset: 'assets/img/ax_oraculo_loja.webp'
-    },
     cluster_knight: {
         id: 'cluster_knight',
         name: 'CLUSTER - GUARDA REAL',
@@ -680,31 +635,7 @@ const BORDER_REWARD_RULES = {
     }
 };
 
-const XP_AREA_REWARD_RULES = {
-    xp_campo_honra: {
-        blockEffective: 4,
-        mastery: { BLOQUEIO: 2 }
-    },
-    xp_circulo_arcano: {
-        attackEffective: 2,
-        consecutiveAttack: 2,
-        mastery: { ATAQUE: 2 }
-    },
-    xp_bosque_sentinela: {
-        play: { DESCANSAR: 8 },
-        mastery: { DESCANSAR: 9 }
-    },
-    xp_rota_saque: {
-        play: { DESARMAR: 8 },
-        disarmClash: 8,
-        mastery: { DESARMAR: 8 }
-    },
-    xp_altar_visao: {
-        play: { TREINAR: 2 },
-        levelUp: 4,
-        mastery: { TREINAR: 8 }
-    }
-};
+const XP_AREA_REWARD_RULES = {};
 
 const CLUSTER_REWARD_RULES = {
     cluster_knight: {

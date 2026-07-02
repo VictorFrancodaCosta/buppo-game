@@ -1027,36 +1027,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             --item-glow-soft: rgba(179, 91, 255, 0.4);
         }
 
-        .lobby-shop-slot[data-shop-item="xp_campo_honra"],
-        .inventory-item[data-inventory-item="xp_campo_honra"] {
-            --item-glow: rgba(59, 176, 255, 0.9);
-            --item-glow-soft: rgba(59, 176, 255, 0.36);
-        }
-
-        .lobby-shop-slot[data-shop-item="xp_circulo_arcano"],
-        .inventory-item[data-inventory-item="xp_circulo_arcano"] {
-            --item-glow: rgba(255, 67, 54, 0.94);
-            --item-glow-soft: rgba(255, 67, 54, 0.38);
-        }
-
-        .lobby-shop-slot[data-shop-item="xp_bosque_sentinela"],
-        .inventory-item[data-inventory-item="xp_bosque_sentinela"] {
-            --item-glow: rgba(64, 224, 98, 0.9);
-            --item-glow-soft: rgba(64, 224, 98, 0.36);
-        }
-
-        .lobby-shop-slot[data-shop-item="xp_rota_saque"],
-        .inventory-item[data-inventory-item="xp_rota_saque"] {
-            --item-glow: rgba(255, 218, 37, 0.95);
-            --item-glow-soft: rgba(255, 218, 37, 0.38);
-        }
-
-        .lobby-shop-slot[data-shop-item="xp_altar_visao"],
-        .inventory-item[data-inventory-item="xp_altar_visao"] {
-            --item-glow: rgba(179, 91, 255, 0.94);
-            --item-glow-soft: rgba(179, 91, 255, 0.38);
-        }
-
         .lobby-shop-product {
             display: block !important;
             padding: 0 !important;
@@ -2866,13 +2836,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             { id: 'deck_rogue', type: 'deck', name: 'DECK - LADINO', displayName: 'LADINO', asset: 'assets/img/deck_ladino_loja.webp', shopAsset: 'assets/img/deck_ladino_loja.webp' },
             { id: 'deck_oracle', type: 'deck', name: 'DECK - ORÁCULO', displayName: 'ORÁCULO', asset: 'assets/img/deck_oraculo_loja.webp', shopAsset: 'assets/img/deck_oraculo_loja.webp' }
         ];
-        const lobbyXpAreaItems = [
-            { id: 'xp_campo_honra', type: 'xpArea', name: '\u00c1REA DE XP - CAMPO DE HONRA', displayName: 'CAMPO DE HONRA', asset: 'assets/img/ui_area_xpcampodehonra.webp', shopAsset: 'assets/img/ax_cavaleiro_loja.webp' },
-            { id: 'xp_circulo_arcano', type: 'xpArea', name: '\u00c1REA DE XP - C\u00cdRCULO ARCANO', displayName: 'C\u00cdRCULO ARCANO', asset: 'assets/img/ui_area_xpcirculoarcano.webp', shopAsset: 'assets/img/ax_mago_loja.webp' },
-            { id: 'xp_bosque_sentinela', type: 'xpArea', name: '\u00c1REA DE XP - BOSQUE SENTINELA', displayName: 'BOSQUE SENTINELA', asset: 'assets/img/ui_area_xpboquesentinela.webp', shopAsset: 'assets/img/ax_arqueiro_loja.webp' },
-            { id: 'xp_rota_saque', type: 'xpArea', name: '\u00c1REA DE XP - ROTA DO SAQUE', displayName: 'ROTA DO SAQUE', asset: 'assets/img/ui_area_xprotadosaque.webp', shopAsset: 'assets/img/ax_ladino_loja.webp' },
-            { id: 'xp_altar_visao', type: 'xpArea', name: '\u00c1REA DE XP - ALTAR DA VIS\u00c3O', displayName: 'ALTAR DA VIS\u00c3O', asset: 'assets/img/ui_area_xpaltardavisao.webp', shopAsset: 'assets/img/ax_oraculo_loja.webp' }
-        ];
         const lobbyClusterItems = [
             { id: 'cluster_knight', type: 'cluster', name: 'CLUSTER - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/cluster_cavaleiro_guardareal.webp', shopAsset: 'assets/img/cluster_cavaleiro_guardareal_shop.webp' },
             { id: 'cluster_mage', type: 'cluster', name: 'CLUSTER - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/cluster_mago_chamaarcana.webp', shopAsset: 'assets/img/cluster_mago_chamaarcana_shop.webp' },
@@ -2884,7 +2847,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             decks: lobbyDeckItems,
             borders: lobbyCardBorderItems,
             clusters: lobbyClusterItems,
-            xpAreas: lobbyXpAreaItems,
             pets: []
         };
         const lobbyShopSlotCount = 5;
@@ -2911,29 +2873,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 'Jogar Treinar gera 5 {coin}.',
                 'Subir de nível gera 10 {coin}.',
                 'Realizar uma <strong>Maestria em Treinar</strong> gera 10 {coin}.'
-            ],
-            xp_campo_honra: [
-                'Seus Bloqueios efetivos geram 4 {coin}.',
-                'Realizar uma <strong>Maestria em Bloqueio</strong> gera 2 {coin}.'
-            ],
-            xp_circulo_arcano: [
-                'Seus Ataques efetivos geram 2 {coin}.',
-                'Realizar uma <strong>Maestria em Ataque</strong> gera 2 {coin}.',
-                'Jogar Ataque logo ap\u00f3s j\u00e1 ter jogado Ataque gera 2 {coin}.'
-            ],
-            xp_bosque_sentinela: [
-                'Jogar Restaurar gera 8 {coin}.',
-                'Realizar uma <strong>Maestria em Restaurar</strong> gera 9 {coin}.'
-            ],
-            xp_rota_saque: [
-                'Jogar Desarmar gera 8 {coin}.',
-                'Realizar uma <strong>Maestria em Desarmar</strong> gera 8 {coin}.',
-                'Jogar Desarmar ao mesmo tempo que o oponente também jogar Desarmar gera 8 {coin}.'
-            ],
-            xp_altar_visao: [
-                'Jogar Treinar gera 2 {coin}.',
-                'Subir de nível gera 4 {coin}.',
-                'Realizar uma <strong>Maestria em Treinar</strong> gera 8 {coin}.'
             ],
             deck_knight: [
                 'Seus Bloqueios efetivos geram 2 {coin}.',
@@ -3058,7 +2997,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                         <div class="lobby-shop-title-stack">
                             <div class="lobby-shop-categories" aria-label="Categorias da loja">
                                 <button class="lobby-shop-category" type="button" data-shop-category="decks">DECKS</button>
-                                <button class="lobby-shop-category" type="button" data-shop-category="xpAreas">\u00c1REAS DE XP</button>
                                 <button class="lobby-shop-category active" type="button" data-shop-category="borders">BORDAS</button>
                                 <button class="lobby-shop-category" type="button" data-shop-category="clusters">CLUSTERS</button>
                                 <button class="lobby-shop-category" type="button" data-shop-category="pets">MASCOTES</button>
@@ -3094,7 +3032,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             if (!grid) return;
             document.getElementById('shop-info-tooltip')?.classList.remove('visible');
             grid.innerHTML = renderShopProducts(window.currentShopCategory || 'borders');
-            if (['decks', 'borders', 'xpAreas', 'clusters'].includes(window.currentShopCategory || 'borders')) {
+            if (['decks', 'borders', 'clusters'].includes(window.currentShopCategory || 'borders')) {
                 bindBorderInfoTooltips(grid, '[data-shop-item]', (product) => product.dataset.shopItem);
             }
             grid.querySelectorAll('[data-shop-item]').forEach((product) => {
@@ -3157,7 +3095,6 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 <div class="lobby-inventory-panel" role="dialog" aria-modal="true" aria-label="Mochila">
                     <div class="lobby-inventory-categories" aria-label="Categorias da mochila">
                         <button class="lobby-shop-category" type="button" data-inventory-category="decks">DECKS</button>
-                        <button class="lobby-shop-category" type="button" data-inventory-category="xpAreas">\u00c1REAS DE XP</button>
                         <button class="lobby-shop-category active" type="button" data-inventory-category="borders">BORDAS</button>
                         <button class="lobby-shop-category" type="button" data-inventory-category="clusters">CLUSTERS</button>
                         <button class="lobby-shop-category" type="button" data-inventory-category="pets">MASCOTES</button>
@@ -3223,7 +3160,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     window.toggleInventoryEquip?.(button.dataset.inventoryItem);
                 });
             });
-            if (['decks', 'borders', 'xpAreas', 'clusters'].includes(window.currentInventoryCategory || 'borders')) {
+            if (['decks', 'borders', 'clusters'].includes(window.currentInventoryCategory || 'borders')) {
                 bindBorderInfoTooltips(grid, '[data-inventory-item]', (button) => button.dataset.inventoryItem);
             }
         };
