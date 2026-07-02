@@ -2874,7 +2874,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             { id: 'xp_altar_visao', type: 'xpArea', name: '\u00c1REA DE XP - ALTAR DA VIS\u00c3O', displayName: 'ALTAR DA VIS\u00c3O', asset: 'assets/img/ui_area_xpaltardavisao.webp', shopAsset: 'assets/img/ax_oraculo_loja.webp' }
         ];
         const lobbyClusterItems = [
-            { id: 'cluster_knight', type: 'cluster', name: 'CLUSTER - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/cluster_cavaleiro_guardareal.webp', shopAsset: 'assets/img/cluster_cavaleiro_guardareal_shop.webp' }
+            { id: 'cluster_knight', type: 'cluster', name: 'CLUSTER - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/cluster_cavaleiro_guardareal.webp', shopAsset: 'assets/img/cluster_cavaleiro_guardareal_shop.webp' },
+            { id: 'cluster_mage', type: 'cluster', name: 'CLUSTER - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/cluster_mago_chamaarcana.webp', shopAsset: 'assets/img/cluster_mago_chamaarcana_shop.webp' },
+            { id: 'cluster_archer', type: 'cluster', name: 'CLUSTER - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/cluster_arqueiro_sentinelaverde.webp', shopAsset: 'assets/img/cluster_arqueiro_sentinelaverde_shop.webp' }
         ];
         const lobbyShopItemsByCategory = {
             decks: lobbyDeckItems,
@@ -2957,6 +2959,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             cluster_knight: [
                 'Seus Bloqueios efetivos geram 8 {coin}.',
                 'Realizar uma <strong>Maestria em Bloqueio</strong> gera 8 {coin}.'
+            ],
+            cluster_mage: [
+                'Seus Ataques efetivos geram 6 {coin}.',
+                'Realizar uma <strong>Maestria em Ataque</strong> gera 4 {coin}.',
+                'Jogar Ataque logo ap\u00f3s j\u00e1 ter jogado Ataque gera 4 {coin}.'
+            ],
+            cluster_archer: [
+                'Jogar Restaurar gera 16 {coin}.',
+                'Realizar uma <strong>Maestria em Restaurar</strong> gera 18 {coin}.'
             ]
         };
         const shopInfoCoin = '<img class="shop-info-coin" src="assets/img/moeda_ouro.png" alt="ouro">';

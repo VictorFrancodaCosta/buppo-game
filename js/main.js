@@ -101,6 +101,8 @@ const ASSETS_TO_LOAD = {
         'assets/img/carta_treinar_oraculo.webp',
         'assets/img/cluster_jogador.webp', 'assets/img/cluster_inimigo.webp',
         'assets/img/cluster_cavaleiro_guardareal.webp', 'assets/img/cluster_cavaleiro_guardareal_shop.webp',
+        'assets/img/cluster_mago_chamaarcana.webp', 'assets/img/cluster_mago_chamaarcana_shop.webp',
+        'assets/img/cluster_arqueiro_sentinelaverde.webp', 'assets/img/cluster_arqueiro_sentinelaverde_shop.webp',
         'assets/img/mochila.webp', 'assets/img/janela_mochila.webp', 'assets/img/titulo_mochila.webp',
         'assets/img/janela_loja.webp', 'assets/img/titulo_loja.webp', 'assets/img/box_compra.webp',
         'assets/img/botao_sair_loja_ui.png', 'assets/img/botao_sair_mochila_ui.png',
@@ -606,6 +608,26 @@ const SHOP_ITEMS = {
         shopAsset: 'assets/img/cluster_cavaleiro_guardareal_shop.webp',
         clusterBgSize: '131.3% 261.1%',
         clusterBgPosition: '-54px -107px'
+    },
+    cluster_mage: {
+        id: 'cluster_mage',
+        name: 'CLUSTER - CHAMA ARCANA',
+        slot: 'cluster',
+        price: 1500,
+        asset: 'assets/img/cluster_mago_chamaarcana.webp',
+        shopAsset: 'assets/img/cluster_mago_chamaarcana_shop.webp',
+        clusterBgSize: '131.3% 261.1%',
+        clusterBgPosition: '-54px -107px'
+    },
+    cluster_archer: {
+        id: 'cluster_archer',
+        name: 'CLUSTER - SENTINELA VERDE',
+        slot: 'cluster',
+        price: 1500,
+        asset: 'assets/img/cluster_arqueiro_sentinelaverde.webp',
+        shopAsset: 'assets/img/cluster_arqueiro_sentinelaverde_shop.webp',
+        clusterBgSize: '131.3% 261.1%',
+        clusterBgPosition: '-54px -107px'
     }
 };
 window.SHOP_ITEMS = SHOP_ITEMS;
@@ -666,6 +688,15 @@ const CLUSTER_REWARD_RULES = {
     cluster_knight: {
         blockEffective: 8,
         mastery: { BLOQUEIO: 8 }
+    },
+    cluster_mage: {
+        attackEffective: 6,
+        consecutiveAttack: 4,
+        mastery: { ATAQUE: 4 }
+    },
+    cluster_archer: {
+        play: { DESCANSAR: 16 },
+        mastery: { DESCANSAR: 18 }
     }
 };
 
