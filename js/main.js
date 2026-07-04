@@ -811,31 +811,31 @@ const CLUSTER_REWARD_RULES = {
 
 const DECK_REWARD_RULES = {
     knight: {
-        blockEffective: 2,
-        blockLethal: 3,
-        mastery: { BLOQUEIO: 1 }
+        blockEffective: 4,
+        blockLethal: 10,
+        mastery: { BLOQUEIO: 4 }
     },
     mage: {
-        attackEffective: 2,
-        consecutiveAttack: 1,
-        mastery: { ATAQUE: 1 }
+        attackEffective: 1,
+        consecutiveAttack: 2,
+        mastery: { ATAQUE: 3 }
     },
     archer: {
-        play: { DESCANSAR: 3 },
-        restoreBehind: 2,
-        mastery: { DESCANSAR: 3 }
+        play: { DESCANSAR: 2 },
+        restoreBehind: 5,
+        mastery: { DESCANSAR: 10 }
     },
     rogue: {
-        play: { DESARMAR: 2 },
+        play: { DESARMAR: 1 },
         disarmSteal: 2,
-        disarmClash: 5,
-        mastery: { DESARMAR: 3 },
+        disarmClash: 10,
+        mastery: { DESARMAR: 8 },
         masteryDisarmStealHalf: true
     },
     oracle: {
         play: { TREINAR: 1 },
         anyLevelUp: 1,
-        mastery: { TREINAR: 4 }
+        mastery: { TREINAR: 8 }
     }
 };
 
@@ -2138,10 +2138,17 @@ function getUnitDeckRewardRules(u) {
     return scaleDeckRewardRules(DECK_REWARD_RULES[u.deckType], u.deckLevel || 1);
 }
 
-function scaleRewardAmount(value, deckLevel = 1) {
+function getDeckRewardScaleType(key, nestedKey = null) {
+    if(key === 'mastery') return 'rare';
+    if(['blockLethal', 'restoreBehind', 'disarmClash'].includes(key)) return 'rare';
+    return 'common';
+}
+
+function scaleRewardAmount(value, deckLevel = 1, scaleType = 'common') {
     const amount = Number(value) || 0;
     const level = Math.max(1, Math.floor(Number(deckLevel) || 1));
-    return Math.ceil(amount * (1 + ((level - 1) * 0.5)));
+    const growth = scaleType === 'rare' ? 0.5 : 0.25;
+    return Math.ceil(amount * (1 + ((level - 1) * growth)));
 }
 
 function scaleDeckRewardRules(rules, deckLevel = 1) {
@@ -2151,10 +2158,10 @@ function scaleDeckRewardRules(rules, deckLevel = 1) {
         if(value && typeof value === 'object' && !Array.isArray(value)) {
             scaled[key] = {};
             Object.entries(value).forEach(([nestedKey, nestedValue]) => {
-                scaled[key][nestedKey] = typeof nestedValue === 'number' ? scaleRewardAmount(nestedValue, deckLevel) : nestedValue;
+                scaled[key][nestedKey] = typeof nestedValue === 'number' ? scaleRewardAmount(nestedValue, deckLevel, getDeckRewardScaleType(key, nestedKey)) : nestedValue;
             });
         } else {
-            scaled[key] = typeof value === 'number' ? scaleRewardAmount(value, deckLevel) : value;
+            scaled[key] = typeof value === 'number' ? scaleRewardAmount(value, deckLevel, getDeckRewardScaleType(key)) : value;
         }
     });
     return scaled;
