@@ -1035,23 +1035,23 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .shop-level-ribbon {
-            left: -8px !important;
-            top: 10px !important;
-            transform: rotate(-8deg) !important;
+            left: -12px !important;
+            top: -12px !important;
+            transform: rotate(-7deg) !important;
             width: auto !important;
             height: auto !important;
-            padding: 7px 13px 5px !important;
-            border: 3px solid rgba(255, 244, 173, 0.96) !important;
+            padding: 7px 14px 5px !important;
+            border: 3px solid rgba(255, 255, 255, 0.98) !important;
             border-radius: 8px !important;
             background: linear-gradient(180deg, #fff176 0%, #f2b528 48%, #a95612 100%) !important;
-            color: #ffe27a !important;
+            color: #050505 !important;
             font-size: clamp(18px, 1.45vw, 24px) !important;
             line-height: 1 !important;
             font-family: 'Bangers', cursive !important;
             letter-spacing: 0 !important;
-            -webkit-text-stroke: 1.4px #180701 !important;
+            -webkit-text-stroke: 1.15px #ffffff !important;
             paint-order: stroke fill !important;
-            text-shadow: 2px 2px 0 #180701, 0 0 10px rgba(255, 215, 0, 0.48) !important;
+            text-shadow: 1px 1px 0 #ffffff, 0 0 7px rgba(255, 255, 255, 0.6) !important;
         }
 
         .shop-upgrade-cost {
@@ -1077,11 +1077,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .shop-upgrade-btn {
             display: block !important;
             bottom: 11px !important;
-            min-width: 154px !important;
-            padding-inline: 12px !important;
-            background: linear-gradient(180deg, #ffe27a, #d88c1f 52%, #8f4310) !important;
-            font-size: 10px !important;
+            min-width: 132px !important;
+            padding: 8px 14px !important;
+            border-color: rgba(238, 238, 238, 0.94) !important;
+            background: linear-gradient(180deg, #2a2a2d 0%, #111113 58%, #050506 100%) !important;
+            color: #f5f5f5 !important;
+            font-size: 11px !important;
             white-space: nowrap !important;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.9), 0 0 12px rgba(255,255,255,0.16) !important;
+            text-shadow: 1px 1px 0 #000 !important;
         }
 
         .lobby-shop-product.deck-upgraded {
@@ -2682,7 +2686,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     rules.masteryDisarmStealHalf ? 'Maestria em Desarmar reduz pela metade o ouro da partida do oponente.' : ''
                 ].filter(Boolean);
                 return `
-                    <div class="shop-info-title">${item.name} - NIVEL ${state.level || 1}</div>
+                    <div class="shop-info-title">${item.name} - NV. ${state.level || 1}</div>
                     <p><strong>Proxima melhoria:</strong> ${state.upgradeCost || 30} ${shopInfoCoin}</p>
                     ${lines.map(line => `<p>${line.replaceAll('{coin}', shopInfoCoin)}</p>`).join('')}`;
             }
@@ -2728,8 +2732,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                         <div class="lobby-shop-slot lobby-shop-product" role="button" tabindex="0" data-shop-item="${item.id}">
                             <div class="shop-product-name">${getItemDisplayName(item)}</div>
                             ${renderBorderPreview(item, 'shop')}
-                            <span class="shop-owned-ribbon shop-level-ribbon" data-owned-ribbon="${item.id}">NIVEL ${state.level || 1}</span>
-                            <button class="shop-buy-btn shop-upgrade-btn" type="button" data-buy-item="${item.id}">SUBIR DE NÍVEL ${state.upgradeCost || 30} OURO</button>
+                            <span class="shop-owned-ribbon shop-level-ribbon" data-owned-ribbon="${item.id}">NV. ${state.level || 1}</span>
+                            <button class="shop-buy-btn shop-upgrade-btn" type="button" data-buy-item="${item.id}">SUBIR DE NÍVEL</button>
                         </div>`;
             }).join('');
             const emptyCount = Math.max(0, lobbyShopSlotCount - Math.min(items.length, lobbyShopSlotCount));
@@ -2796,9 +2800,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 const ribbon = product?.querySelector(`[data-owned-ribbon="${button.dataset.buyItem}"]`);
                 if (ribbon) {
                     ribbon.hidden = false;
-                    ribbon.textContent = `NIVEL ${state.level || 1}`;
+                    ribbon.textContent = `NV. ${state.level || 1}`;
                 }
-                button.textContent = `SUBIR DE NÍVEL ${state.upgradeCost || 30} OURO`;
+                button.textContent = 'SUBIR DE NÍVEL';
             });
         };
 
