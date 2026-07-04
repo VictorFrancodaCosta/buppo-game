@@ -46,11 +46,21 @@ async function findOpponentInQueue() {
         const q = query(queueRef, orderBy("timestamp", "desc"), limit(20));
         const querySnapshot = await getDocs(q);
         let opponentDoc = null; const now = Date.now();
+        const myDeckLevel = Math.max(1, Number(window.getDeckLevelByType?.(window.currentDeck) || 1));
+        let bestLevelGap = Infinity;
+        let bestTimestamp = Infinity;
         for (const docSnap of querySnapshot.docs) {
             const data = docSnap.data();
             if (data.uid === window.currentUser.uid || data.matchId !== null || data.cancelled === true) continue;
             if (now - data.timestamp > 120000) continue;
-            opponentDoc = docSnap; break;
+            const opponentLevel = Math.max(1, Number(data.deckLevel || 1));
+            const levelGap = Math.abs(opponentLevel - myDeckLevel);
+            const timestamp = Number(data.timestamp) || now;
+            if(levelGap < bestLevelGap || (levelGap === bestLevelGap && timestamp < bestTimestamp)) {
+                opponentDoc = docSnap;
+                bestLevelGap = levelGap;
+                bestTimestamp = timestamp;
+            }
         }
         if (opponentDoc) {
             if (searchInterval) clearInterval(searchInterval);

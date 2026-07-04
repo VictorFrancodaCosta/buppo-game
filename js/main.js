@@ -690,7 +690,6 @@ window.SHOP_ITEMS = SHOP_ITEMS;
 
 const DEFAULT_DECK_ITEM_IDS = Object.values(SHOP_ITEMS).filter(item => item.slot === 'deck').map(item => item.id);
 const DECK_LEVEL_BASE_COST = 30;
-const DECK_LEVEL_COST_STEP = 5;
 
 const CLASS_EQUIPMENT_BY_DECK = {
     knight: {
@@ -869,7 +868,7 @@ function getDeckLevelByType(deckType) {
 }
 
 function getDeckUpgradeCostByLevel(level = 1) {
-    return DECK_LEVEL_BASE_COST + Math.max(0, Math.floor(Number(level) || 1) - 1) * DECK_LEVEL_COST_STEP;
+    return Math.ceil(DECK_LEVEL_BASE_COST * Math.pow(1.2, Math.max(0, Math.floor(Number(level) || 1) - 1)));
 }
 
 window.getDeckLevelById = getDeckLevelById;
@@ -1709,7 +1708,7 @@ function startGameFlow() {
         player.deckLevel = getDeckLevelByType(player.deckType);
         player.equippedItems = getClassEquipmentByDeckType(player.deckType);
         monster.deckType = getRandomDeckType();
-        monster.deckLevel = 1;
+        monster.deckLevel = player.deckLevel;
         monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
         baseDraw(monster, 6); baseDraw(player, 6);
     }
