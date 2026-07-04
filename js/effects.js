@@ -1035,39 +1035,27 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .shop-level-ribbon {
-            top: 38px !important;
-            transform: translateX(-50%) !important;
+            left: -8px !important;
+            top: 10px !important;
+            transform: rotate(-8deg) !important;
             width: auto !important;
             height: auto !important;
-            padding: 5px 13px 4px !important;
-            border: 2px solid rgba(255, 244, 173, 0.92) !important;
-            border-radius: 999px !important;
-            background: linear-gradient(180deg, rgba(31, 16, 5, 0.96), rgba(96, 45, 9, 0.96)) !important;
+            padding: 7px 13px 5px !important;
+            border: 3px solid rgba(255, 244, 173, 0.96) !important;
+            border-radius: 8px !important;
+            background: linear-gradient(180deg, #fff176 0%, #f2b528 48%, #a95612 100%) !important;
             color: #ffe27a !important;
-            font-size: 13px !important;
+            font-size: clamp(18px, 1.45vw, 24px) !important;
             line-height: 1 !important;
-            font-family: 'Russo One', sans-serif !important;
-            text-shadow: 1px 1px 0 #120501, 0 0 8px rgba(255, 215, 0, 0.38) !important;
+            font-family: 'Bangers', cursive !important;
+            letter-spacing: 0 !important;
+            -webkit-text-stroke: 1.4px #180701 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 2px 2px 0 #180701, 0 0 10px rgba(255, 215, 0, 0.48) !important;
         }
 
         .shop-upgrade-cost {
-            position: absolute !important;
-            left: 50% !important;
-            bottom: 48px !important;
-            z-index: 4 !important;
-            transform: translateX(-50%) !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 5px !important;
-            min-width: 118px !important;
-            padding: 5px 9px !important;
-            border-radius: 7px !important;
-            background: rgba(16, 7, 2, 0.78) !important;
-            color: #fff6c8 !important;
-            font-family: 'Russo One', sans-serif !important;
-            font-size: 11px !important;
-            box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.3), 0 3px 8px rgba(0,0,0,0.36) !important;
+            display: none !important;
         }
 
         .shop-upgrade-cost span {
@@ -1089,8 +1077,38 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         .shop-upgrade-btn {
             display: block !important;
             bottom: 11px !important;
-            min-width: 122px !important;
+            min-width: 154px !important;
+            padding-inline: 12px !important;
             background: linear-gradient(180deg, #ffe27a, #d88c1f 52%, #8f4310) !important;
+            font-size: 10px !important;
+            white-space: nowrap !important;
+        }
+
+        .lobby-shop-product.deck-upgraded {
+            animation: deckUpgradePulse 1.05s ease-out both !important;
+        }
+
+        .lobby-shop-product.deck-upgraded::before {
+            content: "" !important;
+            position: absolute !important;
+            inset: -10px !important;
+            border-radius: 14px !important;
+            border: 3px solid rgba(255, 232, 117, 0.95) !important;
+            pointer-events: none !important;
+            box-shadow: 0 0 18px rgba(255, 215, 0, 0.95), 0 0 42px var(--item-glow-soft, rgba(255, 215, 0, 0.5)) !important;
+            animation: deckUpgradeRing 1.05s ease-out both !important;
+        }
+
+        @keyframes deckUpgradePulse {
+            0% { filter: brightness(1); transform: translateY(0) scale(1); }
+            18% { filter: brightness(1.55); transform: translateY(-6px) scale(1.045); }
+            100% { filter: brightness(1); transform: translateY(0) scale(1); }
+        }
+
+        @keyframes deckUpgradeRing {
+            0% { opacity: 0; transform: scale(0.88); }
+            18% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.16); }
         }
 
         .shop-info-tooltip {
@@ -2711,8 +2729,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                             <div class="shop-product-name">${getItemDisplayName(item)}</div>
                             ${renderBorderPreview(item, 'shop')}
                             <span class="shop-owned-ribbon shop-level-ribbon" data-owned-ribbon="${item.id}">NIVEL ${state.level || 1}</span>
-                            <div class="shop-upgrade-cost"><span>PROXIMA FORJA</span><strong>${state.upgradeCost || 30}</strong><img src="assets/img/moeda_ouro.png" alt="ouro"></div>
-                            <button class="shop-buy-btn shop-upgrade-btn" type="button" data-buy-item="${item.id}">MELHORAR</button>
+                            <button class="shop-buy-btn shop-upgrade-btn" type="button" data-buy-item="${item.id}">SUBIR DE NÍVEL ${state.upgradeCost || 30} OURO</button>
                         </div>`;
             }).join('');
             const emptyCount = Math.max(0, lobbyShopSlotCount - Math.min(items.length, lobbyShopSlotCount));
@@ -2781,9 +2798,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                     ribbon.hidden = false;
                     ribbon.textContent = `NIVEL ${state.level || 1}`;
                 }
-                const cost = product?.querySelector('.shop-upgrade-cost strong');
-                if(cost) cost.textContent = state.upgradeCost || 30;
+                button.textContent = `SUBIR DE NÍVEL ${state.upgradeCost || 30} OURO`;
             });
+        };
+
+        window.triggerDeckUpgradeFeedback = (deckId) => {
+            const product = document.querySelector(`[data-shop-item="${deckId}"]`);
+            if(!product) return;
+            product.classList.remove('deck-upgraded');
+            void product.offsetWidth;
+            product.classList.add('deck-upgraded');
+            setTimeout(() => product.classList.remove('deck-upgraded'), 1150);
         };
 
         window.openLobbyShop = () => {

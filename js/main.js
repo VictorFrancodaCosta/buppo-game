@@ -1043,6 +1043,8 @@ window.upgradeDeckLevel = async function(deckId) {
         window.syncLobbyShopGold?.();
         window.renderLobbyShopItems?.();
         window.refreshShopInventoryState?.();
+        playSound('sfx-levelup');
+        window.triggerDeckUpgradeFeedback?.(deckId);
     } catch(e) {
         console.error("Erro ao melhorar deck:", e);
     }
