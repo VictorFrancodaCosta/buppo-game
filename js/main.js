@@ -60,6 +60,7 @@ window.currentProfileLevel = 1;
 window.currentProfileXp = 0;
 window.currentLobbyRank = null;
 window.currentLobbyScore = 0;
+window.currentLobbyWins = 0;
 window.initialPreloadComplete = false;
 window.isMobileSimpleMode = window.BUPPO_MOBILE_SIMPLE === true;
 if (window.isMobileSimpleMode) {
@@ -379,10 +380,11 @@ window.goToLobby = async function(isAutoLogin = false) {
         await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: defaults.inventory, equippedItems: defaults.equippedItems, deckLevels, lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
         window.currentPlayerGameId = gameId;
         window.currentLobbyScore = 0;
+        window.currentLobbyWins = 0;
         updatePlayerInventoryState(defaults.inventory, defaults.equippedItems, deckLevels);
         updateLobbyProfileProgress(1, 0);
         renderLobbyIdentity(window.currentUser.displayName, gameId);
-        document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | OURO: 0`;
         updateLobbyGoldWallet(0);
         window.musicEnabled = true;
         window.sfxEnabled = true;
@@ -400,11 +402,12 @@ window.goToLobby = async function(isAutoLogin = false) {
             await updateDoc(userRef, { inventory: normalizedInventory.inventory, equippedItems: normalizedInventory.equippedItems, deckLevels: normalizedDeckLevels });
         }
         window.currentPlayerGameId = gameId;
-        window.currentLobbyScore = Math.max(0, Number(d.score) || 0);
+        window.currentLobbyScore = Math.max(0, Number(d.goldCoins) || 0);
+        window.currentLobbyWins = Math.max(0, Number(d.totalWins) || 0);
         updatePlayerInventoryState(normalizedInventory.inventory, normalizedInventory.equippedItems, normalizedDeckLevels);
         updateLobbyProfileProgress(d.profileLevel || 1, d.profileXp || 0);
         renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
-        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
+        document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | OURO: ${d.goldCoins || 0}`;
 
         updateLobbyGoldWallet(d.goldCoins || 0);
 
@@ -441,9 +444,9 @@ window.goToLobby = async function(isAutoLogin = false) {
     startFriendsPanel();
     window.refreshShopInventoryState?.();
     window.renderInventoryItems?.();
-    const q = query(collection(db, "players"), orderBy("score", "desc"));
+    const q = query(collection(db, "players"), orderBy("goldCoins", "desc"));
     onSnapshot(q, (snapshot) => {
-        let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>PTS</th></tr></thead><tbody>';
+        let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>OURO</th></tr></thead><tbody>';
         let pos = 1;
         let myRank = null;
         snapshot.forEach((doc) => {
@@ -451,7 +454,7 @@ window.goToLobby = async function(isAutoLogin = false) {
             if(window.currentUser && doc.id === window.currentUser.uid) myRank = pos;
             if(pos <= 10) {
                 let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : ""));
-                html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${p.name.split(' ')[0].toUpperCase()}</td><td>${p.score}</td></tr>`;
+                html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${(p.name || 'JOGADOR').split(' ')[0].toUpperCase()}</td><td>${Math.max(0, Number(p.goldCoins) || 0)}</td></tr>`;
             }
             pos++;
         });
@@ -483,8 +486,11 @@ window.startMobileSimpleMatch = function() {
 
 function updateLobbyGoldWallet(amount = 0) {
     window.currentGoldCoins = Math.max(0, amount || 0);
+    window.currentLobbyScore = window.currentGoldCoins;
     const count = document.getElementById('lobby-gold-count');
     if(count) count.innerText = window.currentGoldCoins;
+    const stats = document.getElementById('lobby-stats');
+    if(stats) stats.innerText = `VITÓRIAS: ${window.currentLobbyWins || 0} | OURO: ${window.currentGoldCoins}`;
     updateLobbyBottomProfileBar();
     window.syncLobbyShopGold?.();
 }
@@ -1762,7 +1768,7 @@ function startPvPListener() {
                 setTimeout(() => {
                     const title = document.getElementById('end-title'); title.innerText = "VITÓRIA"; title.className = "win-theme";
                     showCenterText("OPONENTE DESISTIU!", "#ffd700"); playSound('sfx-win');
-                    triggerEndScreenFx('win'); showEndPoints(8, getVictoryGoldReward('pvp'));
+                    triggerEndScreenFx('win'); showEndPoints(0, getVictoryGoldReward('pvp'));
                     if(window.registrarVitoriaOnline) window.registrarVitoriaOnline('pvp');
                     document.getElementById('end-screen').classList.add('visible'); window.cleanupMatchState();
                 }, 500);
@@ -2050,9 +2056,9 @@ function checkEndGame(){
             }
             const normalSecondaryBtn = document.querySelector('#end-screen .secondary-btn');
             if(normalSecondaryBtn) normalSecondaryBtn.setAttribute('aria-label', 'Saguão');
-            if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); if(!window.isMobileSimpleMode) showEndPoints(1); }
-            else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); if(!window.isMobileSimpleMode) showEndPoints(window.gameMode === 'pvp' ? 8 : 3, getVictoryGoldReward(window.gameMode)); }
-            else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); if(!window.isMobileSimpleMode) showEndPoints(-3); }
+            if(isTie) { title.innerText = "EMPATE"; title.className = "tie-theme"; playSound('sfx-tie'); triggerEndScreenFx('tie'); if(!window.isMobileSimpleMode) showEndPoints(0); }
+            else if(isWin) { title.innerText = "VITÓRIA"; title.className = "win-theme"; playSound('sfx-win'); triggerEndScreenFx('win'); if(!window.isMobileSimpleMode) showEndPoints(0, getVictoryGoldReward(window.gameMode)); }
+            else { title.innerText = "DERROTA"; title.className = "lose-theme"; playSound('sfx-lose'); triggerEndScreenFx('loss'); if(!window.isMobileSimpleMode) showEndPoints(-1); }
 
             if(isTie) { if(window.registrarEmpateOnline) window.registrarEmpateOnline(window.gameMode); }
             else if(isWin) { if(window.registrarVitoriaOnline) window.registrarVitoriaOnline(window.gameMode); }
@@ -2579,22 +2585,10 @@ function showEndPoints(points, goldReward = null) {
         if(title && title.nextSibling) content.insertBefore(rewardStack, title.nextSibling);
         else content.appendChild(rewardStack);
     }
-    let el = document.getElementById('end-points');
-    if(!el) {
-        el = document.createElement('div');
-        el.id = 'end-points';
-        rewardStack.appendChild(el);
-    } else if(el.parentElement !== rewardStack) {
-        rewardStack.appendChild(el);
-    }
-    el.className = points < 0 ? 'points-loss' : (points === 1 ? 'points-tie' : 'points-win');
-    const pointIcon = points < 0 ? 'down' : 'up';
-    el.innerHTML = `<span class="end-points-arrow ${pointIcon}" aria-hidden="true"></span><span class="end-points-count"></span>`;
-    const pointSpan = el.querySelector('.end-points-count');
-    const pointSign = points > 0 ? '+' : (points < 0 ? '-' : '');
-    animateEndCounter(pointSpan, points, value => `${pointSign}${value} PTS`);
+    const pointsEl = document.getElementById('end-points');
+    if(pointsEl) pointsEl.remove();
 
-    const reward = goldReward !== null ? Math.max(0, goldReward || 0) : (points > 1 ? (window.matchRewardGold || 0) : 0);
+    const reward = goldReward !== null ? Math.max(0, goldReward || 0) : 0;
     const lostGold = points < 0 ? Math.min(window.currentGoldCoins || 0, window.opponentMatchRewardGold || 0) : 0;
     let goldEl = document.getElementById('end-gold-reward');
     if(reward > 0 || lostGold > 0) {
@@ -2679,14 +2673,10 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
     const reward = await registrarVitoriaDB(window.currentUser, modoAtual, getVictoryGoldReward(modoAtual), 0);
+    window.currentLobbyWins = Math.max(0, Number(window.currentLobbyWins) || 0) + 1;
     if(Number.isFinite(reward.gold)) updateLobbyGoldWallet((window.currentGoldCoins || 0) + reward.gold);
     if(Number.isFinite(reward.profileLevel) && Number.isFinite(reward.profileXp)) updateLobbyProfileProgress(reward.profileLevel, reward.profileXp);
-    const pts = reward.points || 0;
-    if(pts !== 0) {
-        window.currentLobbyScore = Math.max(0, (Number(window.currentLobbyScore) || 0) + pts);
-        updateLobbyBottomProfileBar();
-    }
-    if(pts > 0) await saveMatchHistory('WIN', pts);
+    if((reward.gold || 0) > 0) await saveMatchHistory('WIN', reward.gold);
 };
 
 window.registrarDerrotaOnline = async function(modo = 'pve') {
@@ -2694,22 +2684,13 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
     const result = await registrarDerrotaDB(window.currentUser, modoAtual, window.opponentMatchRewardGold || 0);
     if(Number.isFinite(result.goldLost)) updateLobbyGoldWallet((window.currentGoldCoins || 0) - result.goldLost);
-    const pts = result.points || 0;
-    if(pts !== 0) {
-        window.currentLobbyScore = Math.max(0, (Number(window.currentLobbyScore) || 0) + pts);
-        updateLobbyBottomProfileBar();
-    }
-    if(pts !== 0) await saveMatchHistory('LOSS', pts);
+    if((result.goldLost || 0) > 0) await saveMatchHistory('LOSS', -result.goldLost);
 };
 
 window.registrarEmpateOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
     const pts = await registrarEmpateDB(window.currentUser, modoAtual);
-    if(pts > 0) {
-        window.currentLobbyScore = Math.max(0, (Number(window.currentLobbyScore) || 0) + pts);
-        updateLobbyBottomProfileBar();
-    }
     if(pts > 0) await saveMatchHistory('TIE', pts);
 };
 
@@ -3486,7 +3467,7 @@ window.openHistory = async function() {
             const h = doc.data(); const date = new Date(h.timestamp); const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
             const resultClass = h.result === 'WIN' ? 'win' : (h.result === 'TIE' ? 'tie' : 'loss'); const resultTxt = h.result === 'WIN' ? 'VIT\u00d3RIA' : (h.result === 'TIE' ? 'EMPATE' : 'DERROTA'); const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
             let vsText = ""; if (h.opponent === 'PVE' || h.mode === 'pve') { vsText = `${resultTxt} PVE`; } else { vsText = `${resultTxt} vs ${h.opponent}`; }
-            html += `<div class="history-item ${resultClass}"><div><div class="h-vs">${vsText}</div><div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div></div><div class="h-score">${scoreTxt} PTS</div></div>`;
+            html += `<div class="history-item ${resultClass}"><div><div class="h-vs">${vsText}</div><div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div></div><div class="h-score">${scoreTxt} OURO</div></div>`;
         });
         container.innerHTML = html;
     } catch(e) { container.innerHTML = '<div style="color:red; text-align:center;">Erro ao carregar.</div>'; }

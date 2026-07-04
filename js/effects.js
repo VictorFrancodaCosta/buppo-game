@@ -2851,8 +2851,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 <div class="lobby-mode-flares" aria-hidden="true"></div>
                 <div class="lobby-mode-title">SELECIONE SUA PARTIDA</div>
                 <div class="lobby-mode-choices">
-                    <button id="btn-mode-pve" class="lobby-mode-btn lobby-mode-pve" type="button" data-points="(+1 ponto)" aria-label="Partida PVE"></button>
-                    <button id="btn-mode-pvp" class="lobby-mode-btn lobby-mode-pvp" type="button" data-points="(+3 pontos)" aria-label="Partida PVP"></button>
+                    <button id="btn-mode-pve" class="lobby-mode-btn lobby-mode-pve" type="button" data-points="(+2 ouro)" aria-label="Partida PVE"></button>
+                    <button id="btn-mode-pvp" class="lobby-mode-btn lobby-mode-pvp" type="button" data-points="(+10 ouro)" aria-label="Partida PVP"></button>
                 </div>
                 <div class="lobby-mode-deck-title">SELECIONE SEU DECK</div>
                 <div class="lobby-mode-decks" aria-label="Escolha seu deck">
