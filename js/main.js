@@ -191,9 +191,11 @@ window.cleanupMatchState = function() {
 }
 
 window.applyDeckTheme = function(deckType = window.currentDeck) {
-    window.currentDeck = deckType || 'knight';
+    window.currentDeck = deckType || null;
     document.body.classList.remove(...DECK_THEME_CLASSES);
-    document.body.classList.add(DECK_THEME_BY_TYPE[window.currentDeck] || DECK_THEME_BY_TYPE.knight);
+    if(window.currentDeck && DECK_THEME_BY_TYPE[window.currentDeck]) {
+        document.body.classList.add(DECK_THEME_BY_TYPE[window.currentDeck]);
+    }
 }
 
 window.selectDeck = async function(deckType) {
@@ -239,6 +241,20 @@ function selectOwnedDeckForMatch(deckType) {
     return true;
 }
 
+function getOwnedDeckItems() {
+    return Object.values(SHOP_ITEMS).filter(item => item.slot === 'deck' && window.playerInventory?.includes(item.id));
+}
+
+window.hasOwnedDecks = function() {
+    return getOwnedDeckItems().length > 0;
+};
+
+function clearSelectedDeckForMatch() {
+    window.currentDeck = null;
+    window.equippedItems = {};
+    document.body.classList.remove(...DECK_THEME_CLASSES);
+}
+
 function getRandomDeckType() {
     return DECK_TYPES[Math.floor(Math.random() * DECK_TYPES.length)] || 'knight';
 }
@@ -246,13 +262,18 @@ function getRandomDeckType() {
 window.startLobbyModeWithDeck = async function(mode, deckType) {
     if(mode !== 'pvp' && mode !== 'pve') return;
     if(mode === 'pvp' && !window.currentUser) return;
-    const targetDeckType = deckType || window.currentDeck || 'knight';
+    const hasDecks = window.hasOwnedDecks?.() === true;
+    const targetDeckType = hasDecks ? (deckType || window.currentDeck || null) : null;
+    if(!targetDeckType) {
+        clearSelectedDeckForMatch();
+    } else if(!selectOwnedDeckForMatch(targetDeckType)) {
+        return;
+    }
     const deckItem = Object.values(SHOP_ITEMS).find(item => item.slot === 'deck' && item.deckType === targetDeckType);
     if(deckItem && !window.playerInventory?.includes(deckItem.id)) {
         window.openModal?.('DECK BLOQUEADO', 'Compre este deck no arsenal para jogar com ele.', ['OK']);
         return;
     }
-    if(!selectOwnedDeckForMatch(targetDeckType)) return;
     if(audios['sfx-deck-select'] && window.sfxEnabled) {
         try {
             audios['sfx-deck-select'].currentTime = 0;
@@ -699,8 +720,9 @@ const CLASS_EQUIPMENT_BY_DECK = {
     }
 };
 
-function getClassEquipmentByDeckType(deckType = 'knight') {
-    return { ...(CLASS_EQUIPMENT_BY_DECK[deckType] || CLASS_EQUIPMENT_BY_DECK.knight) };
+function getClassEquipmentByDeckType(deckType = null) {
+    if(!deckType) return {};
+    return { ...(CLASS_EQUIPMENT_BY_DECK[deckType] || {}) };
 }
 
 window.getClassEquipmentByDeckType = getClassEquipmentByDeckType;
@@ -824,9 +846,13 @@ function updatePlayerInventoryState(inventory = [], equippedItems = {}) {
     const normalized = normalizeInventoryDefaults(inventory, equippedItems);
     window.playerInventory = normalized.inventory;
     const storedDeck = SHOP_ITEMS[normalized.equippedItems.deck];
-    window.equippedItems = getClassEquipmentByDeckType(storedDeck?.deckType || window.currentDeck || 'knight');
-    const equippedDeck = SHOP_ITEMS[window.equippedItems.deck];
-    if(equippedDeck?.deckType) window.currentDeck = equippedDeck.deckType;
+    if(storedDeck?.deckType) {
+        window.equippedItems = getClassEquipmentByDeckType(storedDeck.deckType);
+        window.currentDeck = storedDeck.deckType;
+    } else {
+        window.equippedItems = {};
+        window.currentDeck = null;
+    }
     document.body.classList.remove('player-card-border-royal', 'player-card-border-elven', 'player-card-border-mage', 'player-card-border-rogue', 'player-card-border-oracle');
     document.body.style.removeProperty('--player-card-border-url');
     window.refreshShopInventoryState?.();
@@ -848,7 +874,8 @@ function getCardBorderItemForUnit(u) {
 }
 
 function getUnitClassEquipment(u) {
-    const deckType = u?.deckType || (u === player ? window.currentDeck : window.opponentDeck) || 'knight';
+    if(u?.equippedItems && typeof u.equippedItems === 'object') return { ...u.equippedItems };
+    const deckType = u?.deckType ?? (u === player ? window.currentDeck : window.opponentDeck);
     return getClassEquipmentByDeckType(deckType);
 }
 
@@ -1310,8 +1337,8 @@ window.inviteSelectedFriend = async function() {
             fromUid: window.currentUser.uid,
             fromName: getPlayerFirstName(window.currentUser.displayName),
             fromGameId: window.currentPlayerGameId || null,
-            fromDeckType: window.currentDeck || 'knight',
-            fromEquippedItems: getClassEquipmentByDeckType(window.currentDeck || 'knight'),
+            fromDeckType: window.currentDeck || null,
+            fromEquippedItems: getClassEquipmentByDeckType(window.currentDeck),
             toUid,
             status: 'pending',
             createdAt: Date.now()
@@ -1389,8 +1416,8 @@ async function createFriendlyMatch(invite) {
         rematchRound: 0,
         player1Rematch: false,
         player2Rematch: false,
-        player1: { uid: invite.fromUid, name: invite.fromName || "JOGADOR 1", gameId: invite.fromGameId || null, deckType: invite.fromDeckType || 'knight', equippedItems: getClassEquipmentByDeckType(invite.fromDeckType || 'knight'), hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
-        player2: { uid: window.currentUser.uid, name: getPlayerFirstName(window.currentUser.displayName), gameId: window.currentPlayerGameId || null, deckType: window.currentDeck || 'knight', equippedItems: getClassEquipmentByDeckType(window.currentDeck || 'knight'), hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
+        player1: { uid: invite.fromUid, name: invite.fromName || "JOGADOR 1", gameId: invite.fromGameId || null, deckType: invite.fromDeckType || null, equippedItems: getClassEquipmentByDeckType(invite.fromDeckType), hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
+        player2: { uid: window.currentUser.uid, name: getPlayerFirstName(window.currentUser.displayName), gameId: window.currentPlayerGameId || null, deckType: window.currentDeck || null, equippedItems: getClassEquipmentByDeckType(window.currentDeck), hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
         turn: 1,
         status: 'playing',
         createdAt: Date.now()
@@ -1420,7 +1447,7 @@ window.acceptFriendInvite = async function() {
     const invite = window.pendingFriendInvite;
     try {
         const matchId = await createFriendlyMatch(invite);
-        await updateDoc(doc(db, "friendInvites", invite.id), { status: 'accepted', matchId, acceptedAt: Date.now(), toDeckType: window.currentDeck || 'knight', toEquippedItems: getClassEquipmentByDeckType(window.currentDeck || 'knight') });
+        await updateDoc(doc(db, "friendInvites", invite.id), { status: 'accepted', matchId, acceptedAt: Date.now(), toDeckType: window.currentDeck || null, toEquippedItems: getClassEquipmentByDeckType(window.currentDeck) });
         window.pendingFriendInvite = null;
         enterFriendlyMatch(matchId);
     } catch(e) {
@@ -1579,8 +1606,8 @@ function startGameFlow() {
         if (window.myRole === 'player1') {
             window.applyDeckTheme(window.pvpStartData.player1.deckType);
             resetUnit(player, window.pvpStartData.player1.deck, 'player1'); resetUnit(monster, window.pvpStartData.player2.deck, 'player2');
-            player.deckType = window.pvpStartData.player1.deckType || 'knight';
-            monster.deckType = window.pvpStartData.player2.deckType || 'knight';
+            player.deckType = window.pvpStartData.player1.deckType || null;
+            monster.deckType = window.pvpStartData.player2.deckType || null;
             player.equippedItems = getClassEquipmentByDeckType(player.deckType);
             monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
             hydrateInitialPvPHand(player, window.pvpStartData.player1);
@@ -1588,8 +1615,8 @@ function startGameFlow() {
         } else {
             window.applyDeckTheme(window.pvpStartData.player2.deckType);
             resetUnit(player, window.pvpStartData.player2.deck, 'player2'); resetUnit(monster, window.pvpStartData.player1.deck, 'player1');
-            player.deckType = window.pvpStartData.player2.deckType || 'knight';
-            monster.deckType = window.pvpStartData.player1.deckType || 'knight';
+            player.deckType = window.pvpStartData.player2.deckType || null;
+            monster.deckType = window.pvpStartData.player1.deckType || null;
             player.equippedItems = getClassEquipmentByDeckType(player.deckType);
             monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
             hydrateInitialPvPHand(player, window.pvpStartData.player2);
@@ -1598,13 +1625,13 @@ function startGameFlow() {
     } else {
         window.applyDeckTheme(window.currentDeck);
         resetUnit(player, null, 'pve'); resetUnit(monster, null, 'pve');
-        player.deckType = window.currentDeck || 'knight';
+        player.deckType = window.currentDeck || null;
         player.equippedItems = getClassEquipmentByDeckType(player.deckType);
         monster.deckType = getRandomDeckType();
         monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
         baseDraw(monster, 6); baseDraw(player, 6);
     }
-    window.opponentDeck = monster.deckType || 'knight';
+    window.opponentDeck = monster.deckType || null;
     turnCount = 1; playerHistory = [];
     resetMatchRewardGold();
     updateUI(); dealAllInitialCards();
@@ -1830,8 +1857,8 @@ function syncUnitFromServer(u, data, showPlayerDamage = false, syncXp = true) {
     if(data.bonusAtk !== undefined) u.bonusAtk = data.bonusAtk;
     if(data.bonusBlock !== undefined) u.bonusBlock = data.bonusBlock;
     if(data.disabled !== undefined) u.disabled = data.disabled;
-    if(data.deckType !== undefined) u.deckType = data.deckType || 'knight';
-    u.equippedItems = getClassEquipmentByDeckType(u.deckType || 'knight');
+    if(data.deckType !== undefined) u.deckType = data.deckType || null;
+    u.equippedItems = getClassEquipmentByDeckType(u.deckType);
     if(data.lastAction !== undefined) u.lastAction = data.lastAction || null;
     updateUI();
     if (showPlayerDamage) checkEndGame();
@@ -1847,9 +1874,9 @@ function serializeUnitState(u) {
         disabled: u.disabled || null,
         bonusAtk: u.bonusAtk || 0,
         bonusBlock: u.bonusBlock || 0,
-        deckType: u.deckType || 'knight',
+        deckType: u.deckType || null,
         lastAction: u.lastAction || null,
-        equippedItems: getClassEquipmentByDeckType(u.deckType || 'knight')
+        equippedItems: getClassEquipmentByDeckType(u.deckType)
     };
 }
 
@@ -2022,7 +2049,8 @@ function getUnitClusterRewardRules(u) {
 }
 
 function getUnitDeckRewardRules(u) {
-    return DECK_REWARD_RULES[u?.deckType || 'knight'] || null;
+    if(!u?.deckType) return null;
+    return DECK_REWARD_RULES[u.deckType] || null;
 }
 
 function sumRewardRules(u, getter) {
@@ -2588,7 +2616,7 @@ window.restartMatch = function() {
     document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
 
     if(window.gameMode === 'pvp') {
-        const selectedDeck = window.currentDeck || 'knight';
+        const selectedDeck = window.currentDeck || null;
         window.cleanupMatchState();
         window.gameMode = 'pvp';
         window.applyDeckTheme(selectedDeck);

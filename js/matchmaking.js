@@ -25,7 +25,7 @@ export async function initiateMatchmaking() {
 
     try {
         myQueueRef = doc(collection(db, "queue"));
-        const myData = { uid: window.currentUser.uid, name: window.currentUser.displayName, gameId: window.currentPlayerGameId || null, deck: window.currentDeck, equippedItems: window.getClassEquipmentByDeckType?.(window.currentDeck) || {}, timestamp: Date.now(), matchId: null, cancelled: false, status: 'waiting' };
+        const myData = { uid: window.currentUser.uid, name: window.currentUser.displayName, gameId: window.currentPlayerGameId || null, deck: window.currentDeck || null, equippedItems: window.getClassEquipmentByDeckType?.(window.currentDeck) || {}, timestamp: Date.now(), matchId: null, cancelled: false, status: 'waiting' };
         await setDoc(myQueueRef, myData);
         queueListener = onSnapshot(myQueueRef, (docSnap) => {
             if (docSnap.exists()) { const data = docSnap.data(); if (data.matchId) enterMatch(data.matchId); }
@@ -67,7 +67,7 @@ async function findOpponentInQueue() {
 async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1GameId, p2GameId, p1DeckType, p2DeckType, p1EquippedItems, p2EquippedItems, p1DeckCards, p2DeckCards) {
     const matchRef = doc(db, "matches", matchId);
     const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1"; const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
-    const d1Type = p1DeckType || 'knight'; const d2Type = p2DeckType || 'knight';
+    const d1Type = p1DeckType || null; const d2Type = p2DeckType || null;
     const p1Hand = []; const p2Hand = [];
     for(let i = 0; i < 6; i++) {
         if(p1DeckCards.length > 0) p1Hand.push(p1DeckCards.pop());

@@ -2786,13 +2786,18 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             modeOverlay.querySelectorAll('.lobby-mode-btn').forEach(button => {
                 button.classList.toggle('selected', button.id === `btn-mode-${mode}`);
             });
+            let visibleDecks = 0;
             modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deckButton => {
                 const item = Object.values(window.SHOP_ITEMS || {}).find(shopItem => shopItem.slot === 'deck' && shopItem.deckType === deckButton.dataset.deck);
                 const owned = !item || window.playerInventory?.includes(item.id);
                 deckButton.hidden = !owned;
                 deckButton.disabled = !owned;
                 deckButton.classList.remove('deck-locked');
+                if(owned) visibleDecks += 1;
             });
+            if(visibleDecks === 0) {
+                setTimeout(() => window.startLobbyModeWithDeck?.(mode, null), 320);
+            }
             const flareLayer = modeOverlay.querySelector('.lobby-mode-flares');
             if(flareLayer) {
                 flareLayer.innerHTML = '';
