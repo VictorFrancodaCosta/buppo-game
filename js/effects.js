@@ -1034,6 +1034,65 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             display: none !important;
         }
 
+        .shop-level-ribbon {
+            top: 38px !important;
+            transform: translateX(-50%) !important;
+            width: auto !important;
+            height: auto !important;
+            padding: 5px 13px 4px !important;
+            border: 2px solid rgba(255, 244, 173, 0.92) !important;
+            border-radius: 999px !important;
+            background: linear-gradient(180deg, rgba(31, 16, 5, 0.96), rgba(96, 45, 9, 0.96)) !important;
+            color: #ffe27a !important;
+            font-size: 13px !important;
+            line-height: 1 !important;
+            font-family: 'Russo One', sans-serif !important;
+            text-shadow: 1px 1px 0 #120501, 0 0 8px rgba(255, 215, 0, 0.38) !important;
+        }
+
+        .shop-upgrade-cost {
+            position: absolute !important;
+            left: 50% !important;
+            bottom: 48px !important;
+            z-index: 4 !important;
+            transform: translateX(-50%) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 5px !important;
+            min-width: 118px !important;
+            padding: 5px 9px !important;
+            border-radius: 7px !important;
+            background: rgba(16, 7, 2, 0.78) !important;
+            color: #fff6c8 !important;
+            font-family: 'Russo One', sans-serif !important;
+            font-size: 11px !important;
+            box-shadow: inset 0 0 0 1px rgba(255, 215, 0, 0.3), 0 3px 8px rgba(0,0,0,0.36) !important;
+        }
+
+        .shop-upgrade-cost span {
+            color: #d8a84a !important;
+            font-size: 8px !important;
+        }
+
+        .shop-upgrade-cost strong {
+            color: #ffffff !important;
+            font-size: 14px !important;
+        }
+
+        .shop-upgrade-cost img {
+            width: 16px !important;
+            height: 16px !important;
+            object-fit: contain !important;
+        }
+
+        .shop-upgrade-btn {
+            display: block !important;
+            bottom: 11px !important;
+            min-width: 122px !important;
+            background: linear-gradient(180deg, #ffe27a, #d88c1f 52%, #8f4310) !important;
+        }
+
         .shop-info-tooltip {
             position: fixed !important;
             z-index: 98000 !important;
@@ -2583,6 +2642,32 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             return tooltip;
         };
         const renderShopInfo = (item) => {
+            if(item.type === 'deck') {
+                const state = window.getShopItemState?.(item.id) || { level: 1, upgradeCost: 30 };
+                const rules = window.getScaledDeckRewardRulesById?.(item.id) || {};
+                const lines = [
+                    rules.attackEffective ? `Ataques efetivos geram ${rules.attackEffective} {coin}.` : '',
+                    rules.blockEffective ? `Bloqueios efetivos geram ${rules.blockEffective} {coin}.` : '',
+                    rules.blockLethal ? `Derrotar com Bloqueio efetivo gera ${rules.blockLethal} {coin}.` : '',
+                    rules.play?.DESCANSAR ? `Jogar Restaurar gera ${rules.play.DESCANSAR} {coin}.` : '',
+                    rules.restoreBehind ? `Jogar Restaurar com menos vida gera ${rules.restoreBehind} {coin}.` : '',
+                    rules.play?.DESARMAR ? `Jogar Desarmar gera ${rules.play.DESARMAR} {coin}.` : '',
+                    rules.disarmSteal ? `Jogar Desarmar remove ${rules.disarmSteal} {coin} do oponente.` : '',
+                    rules.disarmClash ? `Desarmar contra Desarmar gera ${rules.disarmClash} {coin}.` : '',
+                    rules.play?.TREINAR ? `Jogar Treinar gera ${rules.play.TREINAR} {coin}.` : '',
+                    rules.anyLevelUp ? `Sempre que alguem subir de nivel gera ${rules.anyLevelUp} {coin}.` : '',
+                    rules.mastery?.ATAQUE ? `Maestria em Ataque gera ${rules.mastery.ATAQUE} {coin}.` : '',
+                    rules.mastery?.BLOQUEIO ? `Maestria em Bloqueio gera ${rules.mastery.BLOQUEIO} {coin}.` : '',
+                    rules.mastery?.DESCANSAR ? `Maestria em Restaurar gera ${rules.mastery.DESCANSAR} {coin}.` : '',
+                    rules.mastery?.DESARMAR ? `Maestria em Desarmar gera ${rules.mastery.DESARMAR} {coin}.` : '',
+                    rules.mastery?.TREINAR ? `Maestria em Treinar gera ${rules.mastery.TREINAR} {coin}.` : '',
+                    rules.masteryDisarmStealHalf ? 'Maestria em Desarmar reduz pela metade o ouro da partida do oponente.' : ''
+                ].filter(Boolean);
+                return `
+                    <div class="shop-info-title">${item.name} - NIVEL ${state.level || 1}</div>
+                    <p><strong>Proxima melhoria:</strong> ${state.upgradeCost || 30} ${shopInfoCoin}</p>
+                    ${lines.map(line => `<p>${line.replaceAll('{coin}', shopInfoCoin)}</p>`).join('')}`;
+            }
             const lines = shopBorderInfo[item.id] || [];
             return `
                 <div class="shop-info-title">${item.name}</div>
@@ -2619,13 +2704,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
         const renderShopProducts = () => {
             const items = lobbyShopItemsByCategory.decks || [];
-            const productsHtml = items.slice(0, lobbyShopSlotCount).map(item => `
+            const productsHtml = items.slice(0, lobbyShopSlotCount).map(item => {
+                const state = window.getShopItemState?.(item.id) || { level: 1, upgradeCost: 30 };
+                return `
                         <div class="lobby-shop-slot lobby-shop-product" role="button" tabindex="0" data-shop-item="${item.id}">
                             <div class="shop-product-name">${getItemDisplayName(item)}</div>
                             ${renderBorderPreview(item, 'shop')}
-                            <span class="shop-owned-ribbon" data-owned-ribbon="${item.id}" hidden>COMPRADO</span>
-                            <button class="shop-buy-btn" type="button" data-buy-item="${item.id}">COMPRAR</button>
-                        </div>`).join('');
+                            <span class="shop-owned-ribbon shop-level-ribbon" data-owned-ribbon="${item.id}">NIVEL ${state.level || 1}</span>
+                            <div class="shop-upgrade-cost"><span>PROXIMA FORJA</span><strong>${state.upgradeCost || 30}</strong><img src="assets/img/moeda_ouro.png" alt="ouro"></div>
+                            <button class="shop-buy-btn shop-upgrade-btn" type="button" data-buy-item="${item.id}">MELHORAR</button>
+                        </div>`;
+            }).join('');
             const emptyCount = Math.max(0, lobbyShopSlotCount - Math.min(items.length, lobbyShopSlotCount));
             const emptySlotsHtml = Array.from({ length: emptyCount }, () => `
                         <div class="lobby-shop-slot" aria-hidden="true"></div>`).join('');
@@ -2664,14 +2753,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             bindBorderInfoTooltips(grid, '[data-shop-item]', (product) => product.dataset.shopItem);
             grid.querySelectorAll('[data-shop-item]').forEach((product) => {
                 product.addEventListener('click', () => {
-                    const state = window.getShopItemState?.(product.dataset.shopItem) || { owned: false };
-                    if (!state.owned) window.confirmShopPurchase?.(product.dataset.shopItem);
+                    window.confirmShopPurchase?.(product.dataset.shopItem);
                 });
                 product.addEventListener('keydown', (event) => {
                     if (event.key !== 'Enter' && event.key !== ' ') return;
                     event.preventDefault();
-                    const state = window.getShopItemState?.(product.dataset.shopItem) || { owned: false };
-                    if (!state.owned) window.confirmShopPurchase?.(product.dataset.shopItem);
+                    window.confirmShopPurchase?.(product.dataset.shopItem);
                 });
             });
             window.refreshShopInventoryState?.();
@@ -2685,12 +2772,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         window.refreshShopInventoryState = () => {
             document.querySelectorAll('[data-buy-item]').forEach((button) => {
                 const state = window.getShopItemState?.(button.dataset.buyItem) || { owned: false, equipped: false };
-                button.textContent = 'COMPRAR';
-                button.hidden = state.owned;
-                button.disabled = state.owned;
+                button.textContent = 'MELHORAR';
+                button.hidden = false;
+                button.disabled = false;
                 const product = button.closest('[data-shop-item]');
                 const ribbon = product?.querySelector(`[data-owned-ribbon="${button.dataset.buyItem}"]`);
-                if (ribbon) ribbon.hidden = !state.owned;
+                if (ribbon) {
+                    ribbon.hidden = false;
+                    ribbon.textContent = `NIVEL ${state.level || 1}`;
+                }
+                const cost = product?.querySelector('.shop-upgrade-cost strong');
+                if(cost) cost.textContent = state.upgradeCost || 30;
             });
         };
 

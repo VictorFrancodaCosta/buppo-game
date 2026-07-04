@@ -26,6 +26,7 @@ window.isMatchStarting = false;
 window.currentDeck = 'knight';
 window.playerInventory = [];
 window.equippedItems = {};
+window.playerDeckLevels = {};
 window.myRole = null;
 window.currentMatchId = null;
 window.pvpSelectedCardIndex = null;
@@ -237,6 +238,7 @@ function selectOwnedDeckForMatch(deckType) {
     const deckItem = Object.values(SHOP_ITEMS).find(item => item.slot === 'deck' && item.deckType === deckType);
     if(!deckItem || !window.playerInventory?.includes(deckItem.id)) return false;
     window.equippedItems = getClassEquipmentByDeckType(deckType);
+    window.currentDeckLevel = getDeckLevelById(deckItem.id);
     window.applyDeckTheme(deckType);
     return true;
 }
@@ -262,11 +264,8 @@ function getRandomDeckType() {
 window.startLobbyModeWithDeck = async function(mode, deckType) {
     if(mode !== 'pvp' && mode !== 'pve') return;
     if(mode === 'pvp' && !window.currentUser) return;
-    const hasDecks = window.hasOwnedDecks?.() === true;
-    const targetDeckType = hasDecks ? (deckType || window.currentDeck || null) : null;
-    if(!targetDeckType) {
-        clearSelectedDeckForMatch();
-    } else if(!selectOwnedDeckForMatch(targetDeckType)) {
+    const targetDeckType = deckType || window.currentDeck || 'knight';
+    if(!selectOwnedDeckForMatch(targetDeckType)) {
         return;
     }
     const deckItem = Object.values(SHOP_ITEMS).find(item => item.slot === 'deck' && item.deckType === targetDeckType);
@@ -376,10 +375,11 @@ window.goToLobby = async function(isAutoLogin = false) {
     if (!userSnap.exists()) {
         const gameId = await generateUniqueGameId(window.currentUser.uid);
         const defaults = normalizeInventoryDefaults([], {});
-        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: defaults.inventory, equippedItems: defaults.equippedItems, lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
+        const deckLevels = normalizeDeckLevels({});
+        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: defaults.inventory, equippedItems: defaults.equippedItems, deckLevels, lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
         window.currentPlayerGameId = gameId;
         window.currentLobbyScore = 0;
-        updatePlayerInventoryState(defaults.inventory, defaults.equippedItems);
+        updatePlayerInventoryState(defaults.inventory, defaults.equippedItems, deckLevels);
         updateLobbyProfileProgress(1, 0);
         renderLobbyIdentity(window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: 0 | PONTOS: 0`;
@@ -395,12 +395,13 @@ window.goToLobby = async function(isAutoLogin = false) {
         const d = userSnap.data();
         const gameId = await ensurePlayerGameId(userRef, d);
         const normalizedInventory = normalizeInventoryDefaults(d.inventory || [], d.equippedItems || {});
-        if(JSON.stringify(normalizedInventory.inventory) !== JSON.stringify(d.inventory || []) || JSON.stringify(normalizedInventory.equippedItems) !== JSON.stringify(d.equippedItems || {})) {
-            await updateDoc(userRef, { inventory: normalizedInventory.inventory, equippedItems: normalizedInventory.equippedItems });
+        const normalizedDeckLevels = normalizeDeckLevels(d.deckLevels || {});
+        if(JSON.stringify(normalizedInventory.inventory) !== JSON.stringify(d.inventory || []) || JSON.stringify(normalizedInventory.equippedItems) !== JSON.stringify(d.equippedItems || {}) || JSON.stringify(normalizedDeckLevels) !== JSON.stringify(d.deckLevels || {})) {
+            await updateDoc(userRef, { inventory: normalizedInventory.inventory, equippedItems: normalizedInventory.equippedItems, deckLevels: normalizedDeckLevels });
         }
         window.currentPlayerGameId = gameId;
         window.currentLobbyScore = Math.max(0, Number(d.score) || 0);
-        updatePlayerInventoryState(normalizedInventory.inventory, normalizedInventory.equippedItems);
+        updatePlayerInventoryState(normalizedInventory.inventory, normalizedInventory.equippedItems, normalizedDeckLevels);
         updateLobbyProfileProgress(d.profileLevel || 1, d.profileXp || 0);
         renderLobbyIdentity(d.name || window.currentUser.displayName, gameId);
         document.getElementById('lobby-stats').innerText = `VITÓRIAS: ${d.totalWins || 0} | PONTOS: ${d.score || 0}`;
@@ -687,6 +688,10 @@ const SHOP_ITEMS = {
 };
 window.SHOP_ITEMS = SHOP_ITEMS;
 
+const DEFAULT_DECK_ITEM_IDS = Object.values(SHOP_ITEMS).filter(item => item.slot === 'deck').map(item => item.id);
+const DECK_LEVEL_BASE_COST = 30;
+const DECK_LEVEL_COST_STEP = 5;
+
 const CLASS_EQUIPMENT_BY_DECK = {
     knight: {
         deck: 'deck_knight',
@@ -836,15 +841,45 @@ const DECK_REWARD_RULES = {
 };
 
 function normalizeInventoryDefaults(inventory = [], equippedItems = {}) {
-    const nextInventory = Array.isArray(inventory) ? [...new Set(inventory)] : [];
+    const nextInventory = [...new Set([...(Array.isArray(inventory) ? inventory : []), ...DEFAULT_DECK_ITEM_IDS])];
     const nextEquipped = equippedItems && typeof equippedItems === 'object' ? { ...equippedItems } : {};
     if(nextEquipped.deck && !nextInventory.includes(nextEquipped.deck)) delete nextEquipped.deck;
     return { inventory: nextInventory, equippedItems: nextEquipped };
 }
 
-function updatePlayerInventoryState(inventory = [], equippedItems = {}) {
+function normalizeDeckLevels(deckLevels = {}) {
+    const source = deckLevels && typeof deckLevels === 'object' ? deckLevels : {};
+    return DEFAULT_DECK_ITEM_IDS.reduce((levels, deckId) => {
+        levels[deckId] = Math.max(1, Math.floor(Number(source[deckId]) || 1));
+        return levels;
+    }, {});
+}
+
+function getDeckItemByType(deckType) {
+    return Object.values(SHOP_ITEMS).find(item => item.slot === 'deck' && item.deckType === deckType) || null;
+}
+
+function getDeckLevelById(deckId) {
+    return Math.max(1, Math.floor(Number(window.playerDeckLevels?.[deckId]) || 1));
+}
+
+function getDeckLevelByType(deckType) {
+    const deckItem = getDeckItemByType(deckType);
+    return deckItem ? getDeckLevelById(deckItem.id) : 1;
+}
+
+function getDeckUpgradeCostByLevel(level = 1) {
+    return DECK_LEVEL_BASE_COST + Math.max(0, Math.floor(Number(level) || 1) - 1) * DECK_LEVEL_COST_STEP;
+}
+
+window.getDeckLevelById = getDeckLevelById;
+window.getDeckLevelByType = getDeckLevelByType;
+window.getDeckUpgradeCostByLevel = getDeckUpgradeCostByLevel;
+
+function updatePlayerInventoryState(inventory = [], equippedItems = {}, deckLevels = window.playerDeckLevels || {}) {
     const normalized = normalizeInventoryDefaults(inventory, equippedItems);
     window.playerInventory = normalized.inventory;
+    window.playerDeckLevels = normalizeDeckLevels(deckLevels);
     const storedDeck = SHOP_ITEMS[normalized.equippedItems.deck];
     if(storedDeck?.deckType) {
         window.equippedItems = getClassEquipmentByDeckType(storedDeck.deckType);
@@ -959,7 +994,7 @@ window.openPurchaseConfirm = function(itemName, price, onConfirm) {
     const question = overlay.querySelector('.purchase-confirm-question');
     if(question) {
         question.innerHTML = `
-            <span class="purchase-confirm-kicker">Comprar</span>
+            <span class="purchase-confirm-kicker">Confirmar</span>
             <strong class="purchase-confirm-item">${itemName}?</strong>
             <span class="purchase-confirm-cost">${Math.max(0, price || 0)} <img src="assets/img/moeda_ouro.png" alt="ouro"></span>`;
     }
@@ -970,11 +1005,48 @@ window.openPurchaseConfirm = function(itemName, price, onConfirm) {
 window.confirmShopPurchase = function(itemId) {
     const item = SHOP_ITEMS[itemId];
     if(!item) return;
+    if(item.slot === 'deck') {
+        window.confirmDeckUpgrade(itemId);
+        return;
+    }
     if(window.playerInventory?.includes(itemId)) {
         window.openModal?.('JÁ COMPRADO', 'Este deck já está no seu arsenal.', ['OK']);
         return;
     }
     window.openPurchaseConfirm(item.name, Math.max(0, item.price || 0), () => window.purchaseShopItem(itemId));
+};
+
+window.confirmDeckUpgrade = function(deckId) {
+    const item = SHOP_ITEMS[deckId];
+    if(!item || item.slot !== 'deck') return;
+    const level = getDeckLevelById(deckId);
+    const cost = getDeckUpgradeCostByLevel(level);
+    window.openPurchaseConfirm(`${item.name} - NIVEL ${level + 1}`, cost, () => window.upgradeDeckLevel(deckId));
+};
+
+window.upgradeDeckLevel = async function(deckId) {
+    const item = SHOP_ITEMS[deckId];
+    if(!item || item.slot !== 'deck' || !window.currentUser) return;
+    const level = getDeckLevelById(deckId);
+    const cost = getDeckUpgradeCostByLevel(level);
+    if((window.currentGoldCoins || 0) < cost) {
+        window.openModal('OURO INSUFICIENTE', `VOCE PRECISA DE ${cost} OURO PARA ELEVAR ESTE DECK.`, ['OK']);
+        return;
+    }
+    const nextDeckLevels = normalizeDeckLevels({ ...(window.playerDeckLevels || {}), [deckId]: level + 1 });
+    const nextInventory = normalizeInventoryDefaults(window.playerInventory || [], window.equippedItems || {}).inventory;
+    const nextGold = Math.max(0, (window.currentGoldCoins || 0) - cost);
+    try {
+        const userRef = doc(db, "players", window.currentUser.uid);
+        await updateDoc(userRef, { goldCoins: nextGold, inventory: nextInventory, deckLevels: nextDeckLevels });
+        updateLobbyGoldWallet(nextGold);
+        updatePlayerInventoryState(nextInventory, window.equippedItems || {}, nextDeckLevels);
+        window.syncLobbyShopGold?.();
+        window.renderLobbyShopItems?.();
+        window.refreshShopInventoryState?.();
+    } catch(e) {
+        console.error("Erro ao melhorar deck:", e);
+    }
 };
 
 window.purchaseShopItem = async function(itemId) {
@@ -1004,9 +1076,12 @@ window.toggleInventoryEquip = async function(itemId) {
 };
 
 window.getShopItemState = function(itemId) {
-    const owned = window.playerInventory?.includes(itemId) === true;
+    const item = SHOP_ITEMS[itemId];
+    const owned = item?.slot === 'deck' || window.playerInventory?.includes(itemId) === true;
     const equipped = false;
-    return { owned, equipped };
+    const level = item?.slot === 'deck' ? getDeckLevelById(itemId) : 0;
+    const upgradeCost = item?.slot === 'deck' ? getDeckUpgradeCostByLevel(level) : 0;
+    return { owned, equipped, level, upgradeCost };
 };
 
 function updateLobbyProfileProgress(level = 1, xp = 0) {
@@ -1338,6 +1413,7 @@ window.inviteSelectedFriend = async function() {
             fromName: getPlayerFirstName(window.currentUser.displayName),
             fromGameId: window.currentPlayerGameId || null,
             fromDeckType: window.currentDeck || null,
+            fromDeckLevel: getDeckLevelByType(window.currentDeck),
             fromEquippedItems: getClassEquipmentByDeckType(window.currentDeck),
             toUid,
             status: 'pending',
@@ -1416,8 +1492,8 @@ async function createFriendlyMatch(invite) {
         rematchRound: 0,
         player1Rematch: false,
         player2Rematch: false,
-        player1: { uid: invite.fromUid, name: invite.fromName || "JOGADOR 1", gameId: invite.fromGameId || null, deckType: invite.fromDeckType || null, equippedItems: getClassEquipmentByDeckType(invite.fromDeckType), hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
-        player2: { uid: window.currentUser.uid, name: getPlayerFirstName(window.currentUser.displayName), gameId: window.currentPlayerGameId || null, deckType: window.currentDeck || null, equippedItems: getClassEquipmentByDeckType(window.currentDeck), hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
+        player1: { uid: invite.fromUid, name: invite.fromName || "JOGADOR 1", gameId: invite.fromGameId || null, deckType: invite.fromDeckType || null, deckLevel: Math.max(1, Number(invite.fromDeckLevel) || 1), equippedItems: getClassEquipmentByDeckType(invite.fromDeckType), hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
+        player2: { uid: window.currentUser.uid, name: getPlayerFirstName(window.currentUser.displayName), gameId: window.currentPlayerGameId || null, deckType: window.currentDeck || null, deckLevel: getDeckLevelByType(window.currentDeck), equippedItems: getClassEquipmentByDeckType(window.currentDeck), hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
         turn: 1,
         status: 'playing',
         createdAt: Date.now()
@@ -1447,7 +1523,7 @@ window.acceptFriendInvite = async function() {
     const invite = window.pendingFriendInvite;
     try {
         const matchId = await createFriendlyMatch(invite);
-        await updateDoc(doc(db, "friendInvites", invite.id), { status: 'accepted', matchId, acceptedAt: Date.now(), toDeckType: window.currentDeck || null, toEquippedItems: getClassEquipmentByDeckType(window.currentDeck) });
+        await updateDoc(doc(db, "friendInvites", invite.id), { status: 'accepted', matchId, acceptedAt: Date.now(), toDeckType: window.currentDeck || null, toDeckLevel: getDeckLevelByType(window.currentDeck), toEquippedItems: getClassEquipmentByDeckType(window.currentDeck) });
         window.pendingFriendInvite = null;
         enterFriendlyMatch(matchId);
     } catch(e) {
@@ -1608,6 +1684,8 @@ function startGameFlow() {
             resetUnit(player, window.pvpStartData.player1.deck, 'player1'); resetUnit(monster, window.pvpStartData.player2.deck, 'player2');
             player.deckType = window.pvpStartData.player1.deckType || null;
             monster.deckType = window.pvpStartData.player2.deckType || null;
+            player.deckLevel = Math.max(1, Number(window.pvpStartData.player1.deckLevel) || 1);
+            monster.deckLevel = Math.max(1, Number(window.pvpStartData.player2.deckLevel) || 1);
             player.equippedItems = getClassEquipmentByDeckType(player.deckType);
             monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
             hydrateInitialPvPHand(player, window.pvpStartData.player1);
@@ -1617,6 +1695,8 @@ function startGameFlow() {
             resetUnit(player, window.pvpStartData.player2.deck, 'player2'); resetUnit(monster, window.pvpStartData.player1.deck, 'player1');
             player.deckType = window.pvpStartData.player2.deckType || null;
             monster.deckType = window.pvpStartData.player1.deckType || null;
+            player.deckLevel = Math.max(1, Number(window.pvpStartData.player2.deckLevel) || 1);
+            monster.deckLevel = Math.max(1, Number(window.pvpStartData.player1.deckLevel) || 1);
             player.equippedItems = getClassEquipmentByDeckType(player.deckType);
             monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
             hydrateInitialPvPHand(player, window.pvpStartData.player2);
@@ -1626,8 +1706,10 @@ function startGameFlow() {
         window.applyDeckTheme(window.currentDeck);
         resetUnit(player, null, 'pve'); resetUnit(monster, null, 'pve');
         player.deckType = window.currentDeck || null;
+        player.deckLevel = getDeckLevelByType(player.deckType);
         player.equippedItems = getClassEquipmentByDeckType(player.deckType);
         monster.deckType = getRandomDeckType();
+        monster.deckLevel = 1;
         monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
         baseDraw(monster, 6); baseDraw(player, 6);
     }
@@ -1858,6 +1940,7 @@ function syncUnitFromServer(u, data, showPlayerDamage = false, syncXp = true) {
     if(data.bonusBlock !== undefined) u.bonusBlock = data.bonusBlock;
     if(data.disabled !== undefined) u.disabled = data.disabled;
     if(data.deckType !== undefined) u.deckType = data.deckType || null;
+    if(data.deckLevel !== undefined) u.deckLevel = Math.max(1, Number(data.deckLevel) || 1);
     u.equippedItems = getClassEquipmentByDeckType(u.deckType);
     if(data.lastAction !== undefined) u.lastAction = data.lastAction || null;
     updateUI();
@@ -1875,6 +1958,7 @@ function serializeUnitState(u) {
         bonusAtk: u.bonusAtk || 0,
         bonusBlock: u.bonusBlock || 0,
         deckType: u.deckType || null,
+        deckLevel: Math.max(1, Number(u.deckLevel) || 1),
         lastAction: u.lastAction || null,
         equippedItems: getClassEquipmentByDeckType(u.deckType)
     };
@@ -2050,8 +2134,36 @@ function getUnitClusterRewardRules(u) {
 
 function getUnitDeckRewardRules(u) {
     if(!u?.deckType) return null;
-    return DECK_REWARD_RULES[u.deckType] || null;
+    return scaleDeckRewardRules(DECK_REWARD_RULES[u.deckType], u.deckLevel || 1);
 }
+
+function scaleRewardAmount(value, deckLevel = 1) {
+    const amount = Number(value) || 0;
+    const level = Math.max(1, Math.floor(Number(deckLevel) || 1));
+    return Math.ceil(amount * (1 + ((level - 1) * 0.5)));
+}
+
+function scaleDeckRewardRules(rules, deckLevel = 1) {
+    if(!rules) return null;
+    const scaled = {};
+    Object.entries(rules).forEach(([key, value]) => {
+        if(value && typeof value === 'object' && !Array.isArray(value)) {
+            scaled[key] = {};
+            Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+                scaled[key][nestedKey] = typeof nestedValue === 'number' ? scaleRewardAmount(nestedValue, deckLevel) : nestedValue;
+            });
+        } else {
+            scaled[key] = typeof value === 'number' ? scaleRewardAmount(value, deckLevel) : value;
+        }
+    });
+    return scaled;
+}
+
+window.getScaledDeckRewardRulesById = function(deckId) {
+    const item = SHOP_ITEMS[deckId];
+    if(!item?.deckType) return null;
+    return scaleDeckRewardRules(DECK_REWARD_RULES[item.deckType], getDeckLevelById(deckId));
+};
 
 function sumRewardRules(u, getter) {
     return [getUnitDeckRewardRules(u)]
