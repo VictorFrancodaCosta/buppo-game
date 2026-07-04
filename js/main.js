@@ -254,6 +254,7 @@ window.hasOwnedDecks = function() {
 
 function clearSelectedDeckForMatch() {
     window.currentDeck = null;
+    window.currentDeckLevel = 1;
     window.equippedItems = {};
     document.body.classList.remove(...DECK_THEME_CLASSES);
 }
@@ -873,6 +874,12 @@ function getDeckLevelByType(deckType) {
     return deckItem ? getDeckLevelById(deckItem.id) : 1;
 }
 
+function getSelectedDeckLevelForMatch(deckType = window.currentDeck) {
+    const selectedLevel = Math.max(1, Math.floor(Number(window.currentDeckLevel) || 0));
+    if(selectedLevel > 0 && deckType === window.currentDeck) return selectedLevel;
+    return getDeckLevelByType(deckType);
+}
+
 function getDeckUpgradeCostByLevel(level = 1) {
     return Math.ceil(DECK_LEVEL_BASE_COST * Math.pow(1.2, Math.max(0, Math.floor(Number(level) || 1) - 1)));
 }
@@ -889,9 +896,11 @@ function updatePlayerInventoryState(inventory = [], equippedItems = {}, deckLeve
     if(storedDeck?.deckType) {
         window.equippedItems = getClassEquipmentByDeckType(storedDeck.deckType);
         window.currentDeck = storedDeck.deckType;
+        window.currentDeckLevel = getDeckLevelById(storedDeck.id);
     } else {
         window.equippedItems = {};
         window.currentDeck = null;
+        window.currentDeckLevel = 1;
     }
     document.body.classList.remove('player-card-border-royal', 'player-card-border-elven', 'player-card-border-mage', 'player-card-border-rogue', 'player-card-border-oracle');
     document.body.style.removeProperty('--player-card-border-url');
@@ -1713,14 +1722,15 @@ function startGameFlow() {
         window.applyDeckTheme(window.currentDeck);
         resetUnit(player, null, 'pve'); resetUnit(monster, null, 'pve');
         player.deckType = window.currentDeck || null;
-        player.deckLevel = getDeckLevelByType(player.deckType);
+        player.deckLevel = getSelectedDeckLevelForMatch(player.deckType);
         player.equippedItems = getClassEquipmentByDeckType(player.deckType);
         monster.deckType = getRandomDeckType();
-        monster.deckLevel = player.deckLevel;
+        monster.deckLevel = Math.max(1, Number(player.deckLevel) || 1);
         monster.equippedItems = getClassEquipmentByDeckType(monster.deckType);
         baseDraw(monster, 6); baseDraw(player, 6);
     }
     window.opponentDeck = monster.deckType || null;
+    window.opponentDeckLevel = Math.max(1, Number(monster.deckLevel) || 1);
     turnCount = 1; playerHistory = [];
     resetMatchRewardGold();
     updateUI(); dealAllInitialCards();
@@ -2221,8 +2231,12 @@ function ensureClusterRewardTooltip() {
 
 function renderClusterRewardTooltip(u, title) {
     const lines = getUnitRewardBonusSummary(u);
+    const deckItem = getDeckItemByType(u?.deckType);
+    const deckName = deckItem ? (deckItem.displayName || deckItem.name.replace(/^DECK\s*-\s*/i, '')) : 'SEM DECK';
+    const deckLevel = Math.max(1, Number(u?.deckLevel) || 1);
     return `
         <div class="cluster-reward-title">${title}</div>
+        <div class="cluster-reward-line">Deck: ${deckName} - NV. ${deckLevel}</div>
         ${lines.length
             ? lines.map(line => `<div class="cluster-reward-line">${line}</div>`).join('')
             : '<div class="cluster-reward-empty">Nenhum bônus de ouro ativo.</div>'}
