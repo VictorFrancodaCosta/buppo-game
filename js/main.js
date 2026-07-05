@@ -828,20 +828,20 @@ const DECK_REWARD_RULES = {
         mastery: { ATAQUE: 3 }
     },
     archer: {
-        play: { DESCANSAR: 2 },
+        play: { DESCANSAR: 3 },
         restoreBehind: 5,
-        mastery: { DESCANSAR: 10 }
+        mastery: { DESCANSAR: 9 }
     },
     rogue: {
-        play: { DESARMAR: 1 },
+        play: { DESARMAR: 2 },
         disarmSteal: 2,
         disarmClash: 10,
         mastery: { DESARMAR: 8 },
         masteryDisarmStealHalf: true
     },
     oracle: {
-        play: { TREINAR: 1 },
-        anyLevelUp: 1,
+        play: { TREINAR: 3 },
+        anyLevelUp: 2,
         mastery: { TREINAR: 8 }
     }
 };
@@ -2163,8 +2163,9 @@ function getDeckRewardScaleType(key, nestedKey = null) {
 function scaleRewardAmount(value, deckLevel = 1, scaleType = 'common') {
     const amount = Number(value) || 0;
     const level = Math.max(1, Math.floor(Number(deckLevel) || 1));
-    const growth = scaleType === 'rare' ? 0.5 : 0.25;
-    return Math.ceil(amount * (1 + ((level - 1) * growth)));
+    const growth = scaleType === 'rare' ? 0.32 : 0.18;
+    const progression = Math.pow(Math.max(0, level - 1), 0.85);
+    return Math.ceil(amount * (1 + (progression * growth)));
 }
 
 function scaleDeckRewardRules(rules, deckLevel = 1) {
