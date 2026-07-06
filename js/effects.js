@@ -710,15 +710,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             width: min(1180px, 94vw) !important;
             max-width: 1180px !important;
             height: min(820px, 88vh) !important;
-            padding: 24px 28px 24px !important;
-            border: 5px solid #2a1004 !important;
-            border-radius: 10px !important;
+            padding: clamp(72px, 8vh, 92px) clamp(58px, 7vw, 88px) clamp(58px, 7vh, 78px) !important;
+            border: 0 !important;
+            border-radius: 18px !important;
             background:
-                radial-gradient(circle at 12% 10%, rgba(255, 214, 65, 0.16), transparent 28%),
-                linear-gradient(180deg, rgba(106, 48, 13, 0.98), rgba(30, 12, 4, 0.98)) !important;
-            box-shadow: 0 18px 0 rgba(30, 11, 3, 0.92), 0 0 42px rgba(255, 201, 54, 0.24) !important;
+                url('assets/img/janela_diario_batalha.webp') center / 100% 100% no-repeat,
+                radial-gradient(circle at 50% 42%, rgba(255, 201, 54, 0.12), transparent 46%),
+                linear-gradient(180deg, rgba(59, 25, 7, 0.98), rgba(18, 7, 2, 0.98)) !important;
+            box-shadow: 0 22px 0 rgba(13, 5, 2, 0.94), 0 0 48px rgba(255, 201, 54, 0.26) !important;
             align-items: stretch !important;
             color: #fff !important;
+            overflow: hidden !important;
         }
 
         #history-screen .history-panel > h2 {
@@ -738,7 +740,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             border: 0 !important;
             margin: 0 !important;
             padding: 0 8px 2px 0 !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
             overflow-y: auto !important;
+        }
+
+        #history-screen .history-panel > .mini-btn {
+            align-self: center !important;
+            margin-top: 12px !important;
+            flex: 0 0 auto !important;
         }
 
         .history-dashboard {
@@ -896,6 +906,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         @media (max-width: 760px) {
+            #history-screen .history-panel {
+                padding: 64px 28px 54px !important;
+            }
             .history-dashboard,
             .history-hero {
                 grid-template-columns: 1fr !important;
