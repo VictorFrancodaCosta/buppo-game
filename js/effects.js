@@ -723,6 +723,33 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             animation-delay: 0.72s !important;
             animation-duration: 2.15s !important;
         }
+        #lobby-screen .lobby-arsenal-sparks {
+            position: absolute !important;
+            inset: -32% -18% -18% -18% !important;
+            z-index: 5 !important;
+            pointer-events: none !important;
+            overflow: visible !important;
+        }
+        #lobby-screen .lobby-arsenal-sparks i {
+            position: absolute !important;
+            left: var(--spark-x, 50%) !important;
+            top: var(--spark-y, 72%) !important;
+            width: var(--spark-size, 7px) !important;
+            height: var(--spark-size, 7px) !important;
+            border-radius: 999px !important;
+            background: radial-gradient(circle, #ffffff 0 18%, #fff29a 20% 42%, #ff9d1d 45% 70%, rgba(255, 89, 0, 0) 72%) !important;
+            box-shadow: 0 0 7px #ffcf4e, 0 0 15px rgba(255, 88, 0, 0.86) !important;
+            opacity: 0 !important;
+            transform: translate3d(0, 0, 0) scale(0.5) !important;
+            animation: lobbyArsenalSparkDot var(--spark-duration, 1.7s) ease-out infinite !important;
+            animation-delay: var(--spark-delay, 0s) !important;
+        }
+        #lobby-screen .lobby-arsenal-sparks i:nth-child(1) { --spark-x: 16%; --spark-y: 78%; --spark-size: 8px; --spark-duration: 1.65s; --spark-delay: -0.2s; }
+        #lobby-screen .lobby-arsenal-sparks i:nth-child(2) { --spark-x: 29%; --spark-y: 68%; --spark-size: 6px; --spark-duration: 2.1s; --spark-delay: -1.05s; }
+        #lobby-screen .lobby-arsenal-sparks i:nth-child(3) { --spark-x: 45%; --spark-y: 82%; --spark-size: 7px; --spark-duration: 1.85s; --spark-delay: -0.72s; }
+        #lobby-screen .lobby-arsenal-sparks i:nth-child(4) { --spark-x: 63%; --spark-y: 70%; --spark-size: 6px; --spark-duration: 2.25s; --spark-delay: -1.46s; }
+        #lobby-screen .lobby-arsenal-sparks i:nth-child(5) { --spark-x: 78%; --spark-y: 78%; --spark-size: 8px; --spark-duration: 1.95s; --spark-delay: -0.42s; }
+        #lobby-screen .lobby-arsenal-sparks i:nth-child(6) { --spark-x: 88%; --spark-y: 64%; --spark-size: 5px; --spark-duration: 2.45s; --spark-delay: -1.8s; }
         @keyframes lobbyArsenalForgeSparks {
             0% {
                 opacity: 0;
@@ -738,6 +765,23 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             100% {
                 opacity: 0;
                 transform: translate3d(18px, -42px, 0) scale(0.58) rotate(12deg);
+            }
+        }
+        @keyframes lobbyArsenalSparkDot {
+            0% {
+                opacity: 0;
+                transform: translate3d(0, 8px, 0) scale(0.45);
+            }
+            10% {
+                opacity: 1;
+            }
+            52% {
+                opacity: 0.92;
+                transform: translate3d(var(--spark-dx, 10px), -20px, 0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate3d(calc(var(--spark-dx, 10px) * 1.7), -46px, 0) scale(0.35);
             }
         }
         #lobby-screen .lobby-main-tutorial { background-image: url('assets/img/botao_tutorial.webp') !important; }
@@ -2515,6 +2559,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         const shopButton = ensureLobbyMenuButton('btn-lobby-main-shop', 'lobby-main-shop', 'Arsenal', () => window.openLobbyShop?.());
+        shopButton.innerHTML = '<span class="lobby-arsenal-sparks" aria-hidden="true"><i style="--spark-dx:-14px"></i><i style="--spark-dx:-6px"></i><i style="--spark-dx:8px"></i><i style="--spark-dx:14px"></i><i style="--spark-dx:4px"></i><i style="--spark-dx:18px"></i></span>';
         const historyMainButton = ensureLobbyMenuButton('btn-lobby-main-history', 'lobby-main-history', 'Hist\u00f3rico de partidas', () => window.openHistory?.());
         const rankingMainButton = ensureLobbyMenuButton('btn-lobby-main-ranking', 'lobby-main-ranking', 'Ranking', () => window.openLobbyRanking?.());
         const tutorialMainButton = ensureLobbyMenuButton('btn-lobby-main-tutorial', 'lobby-main-tutorial', 'Tutorial', () => {});
