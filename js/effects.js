@@ -693,6 +693,9 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .lobby-main-shop {
             background-image: url('assets/img/botao_arsenal.webp') !important;
             isolation: isolate !important;
+            width: min(70%, 235px) !important;
+            min-width: 195px !important;
+            aspect-ratio: 1345 / 471 !important;
         }
         #lobby-screen .lobby-main-shop::before,
         #lobby-screen .lobby-main-shop::after {
@@ -750,6 +753,36 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .lobby-arsenal-sparks i:nth-child(4) { --spark-x: 63%; --spark-y: 70%; --spark-size: 6px; --spark-duration: 2.25s; --spark-delay: -1.46s; }
         #lobby-screen .lobby-arsenal-sparks i:nth-child(5) { --spark-x: 78%; --spark-y: 78%; --spark-size: 8px; --spark-duration: 1.95s; --spark-delay: -0.42s; }
         #lobby-screen .lobby-arsenal-sparks i:nth-child(6) { --spark-x: 88%; --spark-y: 64%; --spark-size: 5px; --spark-duration: 2.45s; --spark-delay: -1.8s; }
+        #lobby-screen .lobby-arsenal-sparks-overlay {
+            position: fixed !important;
+            left: var(--arsenal-sparks-left, -9999px) !important;
+            top: var(--arsenal-sparks-top, -9999px) !important;
+            width: var(--arsenal-sparks-width, 220px) !important;
+            height: var(--arsenal-sparks-height, 78px) !important;
+            z-index: 80 !important;
+            pointer-events: none !important;
+            overflow: visible !important;
+            transform: translate3d(0, 0, 0) !important;
+        }
+        #lobby-screen .lobby-arsenal-sparks-overlay i {
+            position: absolute !important;
+            left: var(--spark-x, 50%) !important;
+            top: var(--spark-y, 72%) !important;
+            width: var(--spark-size, 8px) !important;
+            height: var(--spark-size, 8px) !important;
+            border-radius: 999px !important;
+            background: radial-gradient(circle, #ffffff 0 18%, #fff7a8 19% 42%, #ff9c1b 43% 72%, rgba(255, 76, 0, 0) 74%) !important;
+            box-shadow: 0 0 8px #ffd44d, 0 0 16px rgba(255, 78, 0, 0.92), 0 0 26px rgba(255, 78, 0, 0.42) !important;
+            opacity: 0 !important;
+            animation: lobbyArsenalSparkDot var(--spark-duration, 1.8s) ease-out infinite !important;
+            animation-delay: var(--spark-delay, 0s) !important;
+        }
+        #lobby-screen .lobby-arsenal-sparks-overlay i:nth-child(1) { --spark-x: 13%; --spark-y: 78%; --spark-size: 9px; --spark-duration: 1.5s; --spark-delay: -0.2s; --spark-dx: -18px; }
+        #lobby-screen .lobby-arsenal-sparks-overlay i:nth-child(2) { --spark-x: 27%; --spark-y: 66%; --spark-size: 7px; --spark-duration: 1.95s; --spark-delay: -1.1s; --spark-dx: -8px; }
+        #lobby-screen .lobby-arsenal-sparks-overlay i:nth-child(3) { --spark-x: 43%; --spark-y: 84%; --spark-size: 8px; --spark-duration: 1.7s; --spark-delay: -0.75s; --spark-dx: 9px; }
+        #lobby-screen .lobby-arsenal-sparks-overlay i:nth-child(4) { --spark-x: 62%; --spark-y: 70%; --spark-size: 7px; --spark-duration: 2.05s; --spark-delay: -1.45s; --spark-dx: 16px; }
+        #lobby-screen .lobby-arsenal-sparks-overlay i:nth-child(5) { --spark-x: 78%; --spark-y: 80%; --spark-size: 9px; --spark-duration: 1.8s; --spark-delay: -0.45s; --spark-dx: 8px; }
+        #lobby-screen .lobby-arsenal-sparks-overlay i:nth-child(6) { --spark-x: 88%; --spark-y: 63%; --spark-size: 6px; --spark-duration: 2.35s; --spark-delay: -1.85s; --spark-dx: 22px; }
         @keyframes lobbyArsenalForgeSparks {
             0% {
                 opacity: 0;
@@ -2287,6 +2320,12 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 aspect-ratio: 1345 / 471 !important;
             }
 
+            #lobby-screen .lobby-main-shop {
+                width: min(70%, 225px) !important;
+                min-width: 180px !important;
+                aspect-ratio: 1345 / 471 !important;
+            }
+
             .lobby-mode-panel {
                 width: 100vw !important;
                 height: 100vh !important;
@@ -2560,6 +2599,32 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         const shopButton = ensureLobbyMenuButton('btn-lobby-main-shop', 'lobby-main-shop', 'Arsenal', () => window.openLobbyShop?.());
         shopButton.innerHTML = '<span class="lobby-arsenal-sparks" aria-hidden="true"><i style="--spark-dx:-14px"></i><i style="--spark-dx:-6px"></i><i style="--spark-dx:8px"></i><i style="--spark-dx:14px"></i><i style="--spark-dx:4px"></i><i style="--spark-dx:18px"></i></span>';
+        let arsenalSparksOverlay = document.getElementById('lobby-arsenal-sparks-overlay');
+        if(!arsenalSparksOverlay) {
+            arsenalSparksOverlay = document.createElement('span');
+            arsenalSparksOverlay.id = 'lobby-arsenal-sparks-overlay';
+            arsenalSparksOverlay.className = 'lobby-arsenal-sparks-overlay';
+            arsenalSparksOverlay.setAttribute('aria-hidden', 'true');
+            arsenalSparksOverlay.innerHTML = '<i></i><i></i><i></i><i></i><i></i><i></i>';
+            lobbyScreen.appendChild(arsenalSparksOverlay);
+        }
+        const syncArsenalSparksOverlay = () => {
+            const button = document.getElementById('btn-lobby-main-shop');
+            const overlayEl = document.getElementById('lobby-arsenal-sparks-overlay');
+            if(!button || !overlayEl) return;
+            const rect = button.getBoundingClientRect();
+            overlayEl.style.setProperty('--arsenal-sparks-left', `${rect.left}px`);
+            overlayEl.style.setProperty('--arsenal-sparks-top', `${rect.top}px`);
+            overlayEl.style.setProperty('--arsenal-sparks-width', `${rect.width}px`);
+            overlayEl.style.setProperty('--arsenal-sparks-height', `${rect.height}px`);
+        };
+        syncArsenalSparksOverlay();
+        if(window.arsenalSparksOverlayRaf) cancelAnimationFrame(window.arsenalSparksOverlayRaf);
+        const tickArsenalSparksOverlay = () => {
+            syncArsenalSparksOverlay();
+            window.arsenalSparksOverlayRaf = requestAnimationFrame(tickArsenalSparksOverlay);
+        };
+        window.arsenalSparksOverlayRaf = requestAnimationFrame(tickArsenalSparksOverlay);
         const historyMainButton = ensureLobbyMenuButton('btn-lobby-main-history', 'lobby-main-history', 'Hist\u00f3rico de partidas', () => window.openHistory?.());
         const rankingMainButton = ensureLobbyMenuButton('btn-lobby-main-ranking', 'lobby-main-ranking', 'Ranking', () => window.openLobbyRanking?.());
         const tutorialMainButton = ensureLobbyMenuButton('btn-lobby-main-tutorial', 'lobby-main-tutorial', 'Tutorial', () => {});
