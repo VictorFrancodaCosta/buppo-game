@@ -1,6 +1,6 @@
 // ARQUIVO: js/main.js
 import { CARDS_DB, ACTION_KEYS } from './data.js';
-import { auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, registrarEmpateDB, notifyAbandonmentDB } from './firebase_network.js?v=2026.06.19.7';
+import { auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, registrarEmpateDB, notifyAbandonmentDB } from './firebase_network.js?v=2026.07.06.1';
 import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIMove, checkCardLethality, generateShuffledDeck } from './game_logic.js';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -63,6 +63,7 @@ window.currentLobbyScore = 0;
 window.currentLobbyWins = 0;
 window.initialPreloadComplete = false;
 window.isMobileSimpleMode = window.BUPPO_MOBILE_SIMPLE === true;
+window.currentMatchStats = null;
 if (window.isMobileSimpleMode) {
     document.documentElement.classList.add('mobile-simple');
     document.body?.classList.add('mobile-simple');
@@ -77,6 +78,80 @@ const DECK_THEME_BY_TYPE = {
     oracle: 'theme-oraculo'
 };
 const DECK_TYPES = Object.keys(DECK_THEME_BY_TYPE);
+
+const MATCH_STAT_ACTIONS = ['ATAQUE', 'BLOQUEIO', 'DESCANSAR', 'TREINAR', 'DESARMAR'];
+
+function createEmptyMatchStats() {
+    const actionCounts = MATCH_STAT_ACTIONS.reduce((acc, key) => ({ ...acc, [key]: 0 }), {});
+    return {
+        turns: 0,
+        actions: { ...actionCounts },
+        opponentActions: { ...actionCounts },
+        effectiveAttacks: 0,
+        effectiveBlocks: 0,
+        maxDamageDealt: 0,
+        maxDamageTaken: 0,
+        totalDamageDealt: 0,
+        totalDamageTaken: 0,
+        totalHealed: 0,
+        levelUps: 0,
+        masteries: { ...actionCounts },
+        goldEarned: 0,
+        goldLost: 0
+    };
+}
+
+function beginMatchStats() {
+    window.currentMatchStats = createEmptyMatchStats();
+}
+
+function getMatchStats() {
+    if(!window.currentMatchStats) beginMatchStats();
+    return window.currentMatchStats;
+}
+
+function recordMatchTurnActions(playerAction, opponentAction) {
+    const stats = getMatchStats();
+    stats.turns += 1;
+    if(stats.actions[playerAction] !== undefined) stats.actions[playerAction] += 1;
+    if(stats.opponentActions[opponentAction] !== undefined) stats.opponentActions[opponentAction] += 1;
+}
+
+function recordMatchDamage(target, amount) {
+    const stats = getMatchStats();
+    const value = Math.max(0, Number(amount) || 0);
+    if(value <= 0) return;
+    if(target === monster) {
+        stats.totalDamageDealt += value;
+        stats.maxDamageDealt = Math.max(stats.maxDamageDealt, value);
+    } else if(target === player) {
+        stats.totalDamageTaken += value;
+        stats.maxDamageTaken = Math.max(stats.maxDamageTaken, value);
+    }
+}
+
+function recordMatchHeal(unit, amount) {
+    if(unit !== player) return;
+    getMatchStats().totalHealed += Math.max(0, Number(amount) || 0);
+}
+
+function recordMatchMastery(unit, masteryKey) {
+    if(unit !== player) return;
+    const stats = getMatchStats();
+    if(stats.masteries[masteryKey] !== undefined) stats.masteries[masteryKey] += 1;
+}
+
+function recordMatchLevelUp(unit) {
+    if(unit === player) getMatchStats().levelUps += 1;
+}
+
+function recordEffectiveAttack(unit) {
+    if(unit === player) getMatchStats().effectiveAttacks += 1;
+}
+
+function recordEffectiveBlock(unit) {
+    if(unit === player) getMatchStats().effectiveBlocks += 1;
+}
 
 const ASSETS_TO_LOAD = {
     images: [
@@ -1732,6 +1807,7 @@ function startGameFlow() {
     window.opponentDeck = monster.deckType || null;
     window.opponentDeckLevel = Math.max(1, Number(monster.deckLevel) || 1);
     turnCount = 1; playerHistory = [];
+    beginMatchStats();
     resetMatchRewardGold();
     updateUI(); dealAllInitialCards();
     if(window.gameMode === 'pvp') startPvPListener();
@@ -2334,6 +2410,7 @@ function awardLevelRewardGold(levelingUnit) {
 
 function awardMasteryRewardGold(u, masteryKey) {
     const amount = sumRewardRules(u, rules => rules?.mastery?.[masteryKey]);
+    recordMatchMastery(u, masteryKey);
     if(amount <= 0) return;
     const labels = {
         ATAQUE: MATCH_REWARD_LABELS.MASTERY_ATTACK,
@@ -2681,7 +2758,18 @@ async function saveMatchHistory(result, pointsChange) {
         }
         if(enemyName) enemyName = enemyName.split(' ')[0].toUpperCase();
     }
-    await saveMatchHistoryDB(window.currentUser, enemyName, window.gameMode, window.currentDeck, pointsChange, result);
+    const stats = getMatchStats();
+    stats.goldEarned = Math.max(0, window.matchRewardGold || 0);
+    stats.goldLost = Math.max(0, window.opponentMatchRewardGold || 0);
+    await saveMatchHistoryDB(window.currentUser, enemyName, window.gameMode, window.currentDeck, pointsChange, result, {
+        deckLevel: Math.max(1, Number(player.deckLevel || window.currentDeckLevel) || 1),
+        opponentDeck: window.opponentDeck || monster.deckType || null,
+        opponentDeckLevel: Math.max(1, Number(monster.deckLevel || window.opponentDeckLevel) || 1),
+        playerFinalHp: Math.max(0, Number(player.hp) || 0),
+        opponentFinalHp: Math.max(0, Number(monster.hp) || 0),
+        turns: stats.turns || 0,
+        stats
+    });
 }
 
 window.registrarVitoriaOnline = async function(modo = 'pve') {
@@ -2699,14 +2787,14 @@ window.registrarDerrotaOnline = async function(modo = 'pve') {
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
     const result = await registrarDerrotaDB(window.currentUser, modoAtual, window.opponentMatchRewardGold || 0);
     if(Number.isFinite(result.goldLost)) updateLobbyGoldWallet((window.currentGoldCoins || 0) - result.goldLost);
-    if((result.goldLost || 0) > 0) await saveMatchHistory('LOSS', -result.goldLost);
+    await saveMatchHistory('LOSS', -(result.goldLost || 0));
 };
 
 window.registrarEmpateOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
     const pts = await registrarEmpateDB(window.currentUser, modoAtual);
-    if(pts > 0) await saveMatchHistory('TIE', pts);
+    await saveMatchHistory('TIE', 0);
 };
 
 window.restartMatch = function() {
@@ -3189,6 +3277,7 @@ async function commitTurnToDB(pAct, extraCard = null) {
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null) {
     let pDmg = 0, mDmg = 0;
     const pendingDisarmSteals = [];
+    recordMatchTurnActions(pAct, mAct);
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
 
@@ -3242,8 +3331,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             triggerBlockShield(false, 'center', blockerDeck);
             triggerBlockEffect(false, blockerDeck);
         }
-        if(pBlocks) awardBlockRewardGold(player);
-        else if(mBlocks) awardBlockRewardGold(monster);
+        if(pBlocks) { recordEffectiveBlock(player); awardBlockRewardGold(player); }
+        else if(mBlocks) { recordEffectiveBlock(monster); awardBlockRewardGold(monster); }
         awardConsecutiveAttackRewardGold(player, pAct);
         awardConsecutiveAttackRewardGold(monster, mAct);
         if(mAct === 'DESARMAR') { awardBorderPlayRewardGold(monster, 'DESARMAR'); pendingDisarmSteals.push(monster); }
@@ -3274,7 +3363,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             if (!mBlocks) { triggerDamageEffect(true, !fatalDamage && soundOn, monster.deckType || window.opponentDeck || 'knight'); }
             triggerHpImpact(true);
             if(pDmg >= 3) triggerCriticalDamagePop(true);
-            if(mAct === 'ATAQUE' && !pBlocks) awardAttackRewardGold(monster, pDmg);
+            recordMatchDamage(player, pDmg);
+            if(mAct === 'ATAQUE' && !pBlocks) { recordEffectiveAttack(monster); awardAttackRewardGold(monster, pDmg); }
             if(mBlocks && fatalDamage) awardLethalBlockRewardGold(monster);
             if(fatalDamage && pAct === 'DESARMAR' && wouldPlayedActionTriggerMastery(player, 'DESARMAR')) awardMasteryRewardGold(player, 'DESARMAR');
             if(fatalDamage) triggerClusterExplosion(true, false);
@@ -3286,7 +3376,8 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             let soundOn = !(clash && pAct === 'BLOQUEIO'); triggerDamageEffect(false, soundOn, player.deckType || window.currentDeck || 'knight');
             triggerHpImpact(false);
             if(mDmg >= 3) triggerCriticalDamagePop(false);
-            if(pAct === 'ATAQUE' && !mBlocks) awardAttackRewardGold(player, mDmg);
+            recordMatchDamage(monster, mDmg);
+            if(pAct === 'ATAQUE' && !mBlocks) { recordEffectiveAttack(player); awardAttackRewardGold(player, mDmg); }
             if(pBlocks && hpBefore > 0 && monster.hp <= 0) awardLethalBlockRewardGold(player);
             if(hpBefore > 0 && monster.hp <= 0 && mAct === 'DESARMAR' && wouldPlayedActionTriggerMastery(monster, 'DESARMAR')) awardMasteryRewardGold(monster, 'DESARMAR');
             if(hpBefore > 0 && monster.hp <= 0) triggerClusterExplosion(false);
@@ -3304,6 +3395,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             awardRestoreBehindRewardGold(player);
             let healAmount = (pDmg === 0) ? 3 : 2;
             player.hp = Math.min(player.maxHp, player.hp + healAmount);
+            recordMatchHeal(player, healAmount);
             showFloatingText('p-lvl', `+${healAmount} HP`, "#55efc4"); triggerHealEffect(true); triggerHealPulse(true); playSound('sfx-heal');
         }
         if(!mDead && mAct === 'DESCANSAR') {
@@ -3311,6 +3403,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             awardRestoreBehindRewardGold(monster);
             let healAmount = (mDmg === 0) ? 3 : 2;
             monster.hp = Math.min(monster.maxHp, monster.hp + healAmount);
+            recordMatchHeal(monster, healAmount);
             triggerHealEffect(false); triggerHealPulse(false); playSound('sfx-heal');
         }
 
@@ -3397,6 +3490,7 @@ function checkLevelUp(u, doneCb) {
 
             setTimeout(() => processMasteries(u, triggers, () => {
                 let lvlEl = document.getElementById(u.id+'-lvl'); u.lvl++;
+                recordMatchLevelUp(u);
                 awardLevelRewardGold(u);
                 lvlEl.classList.add('level-up-anim'); triggerLevelUpVisuals(u.id); playSound('sfx-levelup'); setTimeout(() => lvlEl.classList.remove('level-up-anim'), 1000);
                 xpForLevelUp.forEach(x => u.deck.push(x)); u.xp = [];
@@ -3472,19 +3566,102 @@ async function syncLevelUpToDB(u) {
 window.openHistory = async function() {
     if(!window.currentUser) return;
     window.playNavSound(); const screen = document.getElementById('history-screen'); const container = document.getElementById('history-list-container');
-    screen.style.display = 'flex'; container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Consultando arquivos...</div>';
+    screen.style.display = 'flex'; container.innerHTML = '<div style="color:#f5d58b; text-align:center; margin-top:20px; font-weight:900;">Consultando arquivos da guilda...</div>';
     try {
         const historyRef = collection(db, "players", window.currentUser.uid, "history");
-        const q = query(historyRef, orderBy("timestamp", "desc"), limit(20)); const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) { container.innerHTML = '<div style="color:#888; text-align:center; margin-top:20px;">Nenhuma batalha registrada ainda.</div>'; return; }
-        let html = '';
-        querySnapshot.forEach((doc) => {
-            const h = doc.data(); const date = new Date(h.timestamp); const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-            const resultClass = h.result === 'WIN' ? 'win' : (h.result === 'TIE' ? 'tie' : 'loss'); const resultTxt = h.result === 'WIN' ? 'VIT\u00d3RIA' : (h.result === 'TIE' ? 'EMPATE' : 'DERROTA'); const scoreTxt = h.points > 0 ? `+${h.points}` : `${h.points}`;
-            let vsText = ""; if (h.opponent === 'PVE' || h.mode === 'pve') { vsText = `${resultTxt} PVE`; } else { vsText = `${resultTxt} vs ${h.opponent}`; }
-            html += `<div class="history-item ${resultClass}"><div><div class="h-vs">${vsText}</div><div class="h-date">${dateStr} | ${h.mode.toUpperCase()}</div></div><div class="h-score">${scoreTxt} OURO</div></div>`;
-        });
-        container.innerHTML = html;
+        const q = query(historyRef, orderBy("timestamp", "desc"), limit(50)); const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) { container.innerHTML = '<div style="color:#f5d58b; text-align:center; margin-top:20px; font-weight:900;">Nenhuma batalha registrada ainda.</div>'; return; }
+        const matches = [];
+        querySnapshot.forEach((doc) => matches.push({ id: doc.id, ...doc.data() }));
+        const sum = (getter) => matches.reduce((total, h) => total + Math.max(0, Number(getter(h)) || 0), 0);
+        const wins = matches.filter(h => h.result === 'WIN').length;
+        const losses = matches.filter(h => h.result === 'LOSS').length;
+        const ties = matches.filter(h => h.result === 'TIE').length;
+        const winRate = matches.length ? Math.round((wins / matches.length) * 100) : 0;
+        const goldNet = matches.reduce((total, h) => total + (Number(h.points) || 0), 0);
+        const actionTotals = MATCH_STAT_ACTIONS.reduce((acc, action) => {
+            acc[action] = sum(h => h.stats?.actions?.[action]);
+            return acc;
+        }, {});
+        const maxAction = Math.max(1, ...Object.values(actionTotals));
+        const effectiveAttacks = sum(h => h.stats?.effectiveAttacks);
+        const effectiveBlocks = sum(h => h.stats?.effectiveBlocks);
+        const totalDamage = sum(h => h.stats?.totalDamageDealt);
+        const maxDamage = Math.max(0, ...matches.map(h => Number(h.stats?.maxDamageDealt) || 0));
+        const totalHealed = sum(h => h.stats?.totalHealed);
+        const levelUps = sum(h => h.stats?.levelUps);
+        const deckCounts = matches.reduce((acc, h) => {
+            const key = h.deck || 'sem deck';
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+        const favoriteDeck = Object.entries(deckCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'sem deck';
+        const recommendations = [];
+        if(winRate < 45) recommendations.push('Sua taxa de vitórias está baixa: foque em sobreviver mais turnos e criar maestrias antes de buscar dano final.');
+        if(effectiveBlocks < Math.max(2, effectiveAttacks * 0.45)) recommendations.push('Você bloqueia pouco de forma efetiva. Tente guardar Bloqueio para responder a padrões agressivos.');
+        if(levelUps < matches.length * 0.8) recommendations.push('Você está subindo pouco de nível. Treinar e administrar a área de XP pode aumentar muito sua consistência.');
+        if(totalHealed < matches.length * 2) recommendations.push('Restaurar aparece pouco nas suas partidas. Use cura para virar corridas de dano e ativar bônus de Arqueiro.');
+        if(recommendations.length === 0) recommendations.push('Seu desempenho está equilibrado. O próximo passo é otimizar escolhas por matchup e deck do oponente.');
+        const actionLabel = { ATAQUE: 'Ataque', BLOQUEIO: 'Bloqueio', DESCANSAR: 'Restaurar', TREINAR: 'Treinar', DESARMAR: 'Desarmar' };
+        const barsHtml = MATCH_STAT_ACTIONS.map(action => `
+            <div class="history-bar-row">
+                <span>${actionLabel[action]}</span>
+                <div class="history-bar-track"><div class="history-bar-fill" style="--bar:${Math.round((actionTotals[action] / maxAction) * 100)}%"></div></div>
+                <b>${actionTotals[action]}</b>
+            </div>`).join('');
+        const battlesHtml = matches.map((h) => {
+            const date = new Date(h.timestamp); const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+            const resultClass = h.result === 'WIN' ? 'win' : (h.result === 'TIE' ? 'tie' : 'loss');
+            const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : (h.result === 'TIE' ? 'EMPATE' : 'DERROTA');
+            const scoreTxt = (Number(h.points) || 0) > 0 ? `+${h.points}` : `${Number(h.points) || 0}`;
+            const vsText = (h.opponent === 'PVE' || h.mode === 'pve') ? `${resultTxt} PVE` : `${resultTxt} vs ${h.opponent || 'OPONENTE'}`;
+            const s = h.stats || {};
+            return `<div class="history-item ${resultClass}">
+                <div>
+                    <div class="h-vs">${vsText}</div>
+                    <div class="h-date">${dateStr} | ${(h.mode || 'pve').toUpperCase()} | ${String(h.deck || 'sem deck').toUpperCase()} NV. ${h.deckLevel || 1}</div>
+                </div>
+                <div class="history-detail">
+                    Turnos: ${s.turns || h.turns || '-'}<br>
+                    Dano: ${s.totalDamageDealt || 0} | Maior golpe: ${s.maxDamageDealt || 0}<br>
+                    Atq. efetivos: ${s.effectiveAttacks || 0} | Bloq. efetivos: ${s.effectiveBlocks || 0}
+                </div>
+                <div>
+                    <div class="h-score">${scoreTxt} OURO</div>
+                    <div class="history-pill-row">
+                        <span class="history-pill">Cura ${s.totalHealed || 0}</span>
+                        <span class="history-pill">Níveis ${s.levelUps || 0}</span>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+        container.innerHTML = `
+            <div class="history-dashboard">
+                <section class="history-hero">
+                    <div class="history-stat"><strong>${matches.length}</strong><span>Partidas analisadas</span></div>
+                    <div class="history-stat"><strong>${winRate}%</strong><span>Taxa de vitórias</span></div>
+                    <div class="history-stat"><strong>${goldNet >= 0 ? '+' : ''}${goldNet}</strong><span>Ouro líquido</span></div>
+                    <div class="history-stat"><strong>${maxDamage}</strong><span>Maior dano</span></div>
+                    <div class="history-stat"><strong>${wins}/${losses}/${ties}</strong><span>V/D/E</span></div>
+                </section>
+                <section class="history-card">
+                    <h3>Mapa de Jogadas</h3>
+                    <div class="history-bars">${barsHtml}</div>
+                </section>
+                <section class="history-card">
+                    <h3>Diagnóstico do Mestre</h3>
+                    <div class="history-recommendation">
+                        Deck mais usado: <strong>${String(favoriteDeck).toUpperCase()}</strong><br>
+                        Dano total causado: <strong>${totalDamage}</strong><br>
+                        Cura total: <strong>${totalHealed}</strong><br><br>
+                        ${recommendations.map(text => `• ${text}`).join('<br>')}
+                    </div>
+                </section>
+                <section class="history-feed">
+                    <h3>Registro das Batalhas</h3>
+                    <div class="history-battle-list">${battlesHtml}</div>
+                </section>
+            </div>`;
     } catch(e) { container.innerHTML = '<div style="color:red; text-align:center;">Erro ao carregar.</div>'; }
 };
 

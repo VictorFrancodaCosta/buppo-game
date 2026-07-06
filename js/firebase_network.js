@@ -31,7 +31,7 @@ export async function logoutGoogle() {
     await signOut(auth);
 }
 
-export async function saveMatchHistoryDB(currentUser, enemyName, gameMode, currentDeck, pointsChange, result = null) {
+export async function saveMatchHistoryDB(currentUser, enemyName, gameMode, currentDeck, pointsChange, result = null, details = {}) {
     if (!currentUser) return;
     try {
         const historyRef = collection(db, "players", currentUser.uid, "history");
@@ -41,6 +41,7 @@ export async function saveMatchHistoryDB(currentUser, enemyName, gameMode, curre
             mode: gameMode || 'pve',
             deck: currentDeck,
             points: pointsChange,
+            ...details,
             timestamp: Date.now()
         });
         console.log("Histórico salvo para oponente:", enemyName);

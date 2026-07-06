@@ -700,6 +700,214 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .lobby-main-tutorial { background-image: url('assets/img/botao_tutorial.webp') !important; }
         #lobby-screen .lobby-main-exit { background-image: url('assets/img/botao_sair.webp') !important; }
 
+        #history-screen {
+            z-index: 85000 !important;
+            background: rgba(8, 3, 1, 0.72) !important;
+            backdrop-filter: blur(8px) saturate(0.88) !important;
+        }
+
+        #history-screen .history-panel {
+            width: min(1180px, 94vw) !important;
+            max-width: 1180px !important;
+            height: min(820px, 88vh) !important;
+            padding: 24px 28px 24px !important;
+            border: 5px solid #2a1004 !important;
+            border-radius: 10px !important;
+            background:
+                radial-gradient(circle at 12% 10%, rgba(255, 214, 65, 0.16), transparent 28%),
+                linear-gradient(180deg, rgba(106, 48, 13, 0.98), rgba(30, 12, 4, 0.98)) !important;
+            box-shadow: 0 18px 0 rgba(30, 11, 3, 0.92), 0 0 42px rgba(255, 201, 54, 0.24) !important;
+            align-items: stretch !important;
+            color: #fff !important;
+        }
+
+        #history-screen .history-panel > h2 {
+            margin: 0 0 14px !important;
+            color: #fff2a8 !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(42px, 5vw, 74px) !important;
+            line-height: 0.92 !important;
+            letter-spacing: 0 !important;
+            text-align: center !important;
+            -webkit-text-stroke: 2px #130601 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 4px 4px 0 #130601, 0 0 18px rgba(255, 213, 67, 0.48) !important;
+        }
+
+        #history-screen #history-list-container {
+            border: 0 !important;
+            margin: 0 !important;
+            padding: 0 8px 2px 0 !important;
+            overflow-y: auto !important;
+        }
+
+        .history-dashboard {
+            display: grid !important;
+            grid-template-columns: 1.05fr 0.95fr !important;
+            gap: 18px !important;
+        }
+
+        .history-hero,
+        .history-card,
+        .history-feed {
+            border: 3px solid rgba(255, 225, 126, 0.62) !important;
+            border-radius: 8px !important;
+            background: rgba(15, 7, 3, 0.68) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 0 rgba(0,0,0,0.28) !important;
+        }
+
+        .history-hero {
+            grid-column: 1 / -1 !important;
+            display: grid !important;
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            gap: 12px !important;
+            padding: 14px !important;
+        }
+
+        .history-stat {
+            min-height: 84px !important;
+            padding: 12px 10px !important;
+            border-radius: 7px !important;
+            background: linear-gradient(180deg, rgba(255, 206, 68, 0.16), rgba(0,0,0,0.24)) !important;
+            text-align: center !important;
+        }
+
+        .history-stat strong {
+            display: block !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(28px, 3vw, 44px) !important;
+            line-height: 0.9 !important;
+            color: #fff1a6 !important;
+            -webkit-text-stroke: 1.2px #160600 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 3px 3px 0 #160600 !important;
+        }
+
+        .history-stat span {
+            display: block !important;
+            margin-top: 7px !important;
+            font-size: 11px !important;
+            font-weight: 900 !important;
+            color: #f5d58b !important;
+            text-transform: uppercase !important;
+        }
+
+        .history-card {
+            padding: 16px !important;
+        }
+
+        .history-card h3,
+        .history-feed h3 {
+            margin: 0 0 12px !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: 30px !important;
+            color: #fff6c5 !important;
+            -webkit-text-stroke: 1.2px #120501 !important;
+            paint-order: stroke fill !important;
+            text-shadow: 2px 2px 0 #120501 !important;
+        }
+
+        .history-bars {
+            display: grid !important;
+            gap: 10px !important;
+        }
+
+        .history-bar-row {
+            display: grid !important;
+            grid-template-columns: 116px 1fr 42px !important;
+            align-items: center !important;
+            gap: 10px !important;
+            font-size: 12px !important;
+            font-weight: 900 !important;
+            color: #f7deb0 !important;
+            text-transform: uppercase !important;
+        }
+
+        .history-bar-track {
+            height: 14px !important;
+            border-radius: 999px !important;
+            background: rgba(0,0,0,0.42) !important;
+            overflow: hidden !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.58) !important;
+        }
+
+        .history-bar-fill {
+            width: var(--bar, 0%) !important;
+            height: 100% !important;
+            border-radius: inherit !important;
+            background: linear-gradient(90deg, #ffcf3c, #ff6b1a) !important;
+            box-shadow: 0 0 12px rgba(255, 164, 31, 0.58) !important;
+        }
+
+        .history-recommendation {
+            padding: 12px 14px !important;
+            border-radius: 8px !important;
+            background: rgba(255, 234, 143, 0.12) !important;
+            color: #fff6d8 !important;
+            font-weight: 800 !important;
+            line-height: 1.35 !important;
+        }
+
+        .history-feed {
+            grid-column: 1 / -1 !important;
+            padding: 16px !important;
+        }
+
+        .history-battle-list {
+            display: grid !important;
+            gap: 10px !important;
+        }
+
+        #history-screen .history-item {
+            display: grid !important;
+            grid-template-columns: 1.2fr 0.8fr auto !important;
+            gap: 12px !important;
+            align-items: center !important;
+            margin: 0 !important;
+            padding: 12px 14px !important;
+            border: 2px solid rgba(255,255,255,0.08) !important;
+            border-left-width: 7px !important;
+            border-radius: 8px !important;
+            background: rgba(0,0,0,0.28) !important;
+        }
+
+        .history-detail {
+            color: #f4dcb6 !important;
+            font-size: 12px !important;
+            font-weight: 800 !important;
+            line-height: 1.35 !important;
+        }
+
+        .history-pill-row {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 6px !important;
+            justify-content: flex-end !important;
+        }
+
+        .history-pill {
+            padding: 5px 8px !important;
+            border-radius: 999px !important;
+            background: rgba(255,255,255,0.1) !important;
+            color: #fff6d8 !important;
+            font-size: 11px !important;
+            font-weight: 900 !important;
+            white-space: nowrap !important;
+        }
+
+        @media (max-width: 760px) {
+            .history-dashboard,
+            .history-hero {
+                grid-template-columns: 1fr !important;
+            }
+            #history-screen .history-item {
+                grid-template-columns: 1fr !important;
+            }
+            .history-pill-row {
+                justify-content: flex-start !important;
+            }
+        }
+
         .lobby-ranking-modal {
             position: fixed !important;
             inset: 0 !important;
@@ -2038,6 +2246,48 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             transform: translateX(-50%) translateY(6px) !important;
         }
 
+        .lobby-mode-deck .deck-level-comic {
+            position: absolute !important;
+            left: 50% !important;
+            top: -34px !important;
+            z-index: 8 !important;
+            min-width: 74px !important;
+            padding: 8px 13px 7px !important;
+            border: 3px solid #160600 !important;
+            border-radius: 14px !important;
+            background: #fff4a8 !important;
+            color: #080402 !important;
+            font-family: 'Bangers', cursive !important;
+            font-size: clamp(19px, 1.8vw, 30px) !important;
+            line-height: 0.9 !important;
+            letter-spacing: 0 !important;
+            text-align: center !important;
+            box-shadow: 4px 5px 0 rgba(0,0,0,0.58), 0 0 14px rgba(255, 219, 74, 0.42) !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateX(-50%) translateY(8px) rotate(-4deg) scale(0.82) !important;
+            transition: opacity 0.14s ease, transform 0.16s cubic-bezier(0.15, 1.2, 0.24, 1) !important;
+        }
+
+        .lobby-mode-deck .deck-level-comic::after {
+            content: "" !important;
+            position: absolute !important;
+            left: 50% !important;
+            bottom: -12px !important;
+            width: 18px !important;
+            height: 18px !important;
+            background: #fff4a8 !important;
+            border-right: 3px solid #160600 !important;
+            border-bottom: 3px solid #160600 !important;
+            transform: translateX(-50%) rotate(45deg) !important;
+        }
+
+        .lobby-mode-deck:hover .deck-level-comic,
+        .lobby-mode-deck:focus-visible .deck-level-comic {
+            opacity: 1 !important;
+            transform: translateX(-50%) translateY(0) rotate(-4deg) scale(1) !important;
+        }
+
         .lobby-mode-history {
             position: fixed !important;
             left: 50% !important;
@@ -2872,18 +3122,23 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 <div class="lobby-mode-deck-title">SELECIONE SEU DECK</div>
                 <div class="lobby-mode-decks" aria-label="Escolha seu deck">
                     <button class="lobby-mode-deck" type="button" data-deck="knight" data-name="Forjado pela honra, guiado pela espada" aria-label="Deck Cavaleiro">
+                        <span class="deck-level-comic">NV. 1</span>
                         <img src="assets/img/card_selecao_cavaleiro.webp" alt="Deck Cavaleiro">
                     </button>
                     <button class="lobby-mode-deck" type="button" data-deck="mage" data-name="Magia em estado puro" aria-label="Deck Mago">
+                        <span class="deck-level-comic">NV. 1</span>
                         <img src="assets/img/card_selecao_mago.webp" alt="Deck Mago">
                     </button>
                     <button class="lobby-mode-deck" type="button" data-deck="archer" data-name="Precis\u00e3o natural, ritmo de ca\u00e7a" aria-label="Deck Arqueiro">
+                        <span class="deck-level-comic">NV. 1</span>
                         <img src="assets/img/card_selecao_arqueiro.webp" alt="Deck Arqueiro">
                     </button>
                     <button class="lobby-mode-deck" type="button" data-deck="rogue" data-name="Astúcia afiada, saque preciso" aria-label="Deck Ladino">
+                        <span class="deck-level-comic">NV. 1</span>
                         <img src="assets/img/card_selecao_ladino.webp" alt="Deck Ladino">
                     </button>
                     <button class="lobby-mode-deck" type="button" data-deck="oracle" data-name="Visões antigas, preparo perfeito" aria-label="Deck Oráculo">
+                        <span class="deck-level-comic">NV. 1</span>
                         <img src="assets/img/card_selecao_oraculo.webp" alt="Deck Oráculo">
                     </button>
                 </div>
@@ -2905,7 +3160,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             modeOverlay.dataset.selectedMode = '';
         };
         window.closeLobbyModeChooser = closeModeChooser;
+        const refreshModeDeckLevels = () => {
+            modeOverlay.querySelectorAll('.lobby-mode-deck').forEach(deckButton => {
+                const deckType = deckButton.dataset.deck;
+                const level = Math.max(1, Number(window.getDeckLevelByType?.(deckType)) || 1);
+                const badge = deckButton.querySelector('.deck-level-comic');
+                if(badge) badge.textContent = `NV. ${level}`;
+                deckButton.dataset.level = `NV. ${level}`;
+            });
+        };
         window.openLobbyModeChooser = () => {
+            refreshModeDeckLevels();
             modeOverlay.classList.add('visible');
             document.body.classList.add('lobby-mode-choice-open');
         };
@@ -2915,6 +3180,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         const selectMode = (mode) => {
+            refreshModeDeckLevels();
             modeOverlay.dataset.selectedMode = mode;
             modeOverlay.classList.add('mode-selected');
             modeOverlay.classList.toggle('selected-pve', mode === 'pve');
