@@ -690,7 +690,53 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             background-image: url('assets/img/botao_historico.webp') !important;
         }
         #lobby-screen .lobby-main-ranking { background-image: url('assets/img/botao_ranking.webp') !important; }
-        #lobby-screen .lobby-main-shop { background-image: url('assets/img/botao_arsenal.webp') !important; }
+        #lobby-screen .lobby-main-shop {
+            background-image: url('assets/img/botao_arsenal.webp') !important;
+            isolation: isolate !important;
+        }
+        #lobby-screen .lobby-main-shop::before,
+        #lobby-screen .lobby-main-shop::after {
+            content: "" !important;
+            position: absolute !important;
+            inset: -18% -10% -12% -10% !important;
+            z-index: -1 !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+            background:
+                radial-gradient(circle, rgba(255, 246, 151, 0.98) 0 2px, rgba(255, 148, 33, 0.84) 2px 4px, transparent 5px) 19% 74% / 8px 8px no-repeat,
+                radial-gradient(circle, rgba(255, 207, 78, 0.92) 0 1.5px, rgba(255, 106, 0, 0.78) 2px 3.5px, transparent 5px) 34% 68% / 7px 7px no-repeat,
+                radial-gradient(circle, rgba(255, 241, 165, 0.82) 0 1px, rgba(255, 123, 28, 0.7) 1.5px 3px, transparent 4px) 53% 78% / 6px 6px no-repeat,
+                radial-gradient(circle, rgba(255, 225, 99, 0.9) 0 1.5px, rgba(255, 90, 0, 0.66) 2px 3px, transparent 5px) 71% 69% / 7px 7px no-repeat !important;
+            filter: drop-shadow(0 0 5px rgba(255, 126, 24, 0.88)) drop-shadow(0 0 11px rgba(255, 76, 0, 0.42)) !important;
+            transform: translate3d(0, 10px, 0) scale(0.92) !important;
+            animation: lobbyArsenalForgeSparks 2.35s ease-out infinite !important;
+        }
+        #lobby-screen .lobby-main-shop::after {
+            inset: -24% -7% -8% -14% !important;
+            background:
+                radial-gradient(circle, rgba(255, 252, 184, 0.95) 0 1.5px, rgba(255, 151, 27, 0.82) 2px 3px, transparent 5px) 24% 72% / 7px 7px no-repeat,
+                radial-gradient(circle, rgba(255, 215, 87, 0.86) 0 1px, rgba(255, 96, 8, 0.68) 1.5px 3px, transparent 4px) 46% 82% / 6px 6px no-repeat,
+                radial-gradient(circle, rgba(255, 243, 140, 0.92) 0 1.5px, rgba(255, 123, 0, 0.72) 2px 3px, transparent 5px) 83% 76% / 7px 7px no-repeat !important;
+            animation-delay: 1.08s !important;
+            animation-duration: 2.8s !important;
+        }
+        @keyframes lobbyArsenalForgeSparks {
+            0% {
+                opacity: 0;
+                transform: translate3d(-3px, 12px, 0) scale(0.88) rotate(-2deg);
+            }
+            13% {
+                opacity: 0.9;
+            }
+            58% {
+                opacity: 0.68;
+                transform: translate3d(7px, -12px, 0) scale(1.04) rotate(5deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate3d(16px, -31px, 0) scale(0.64) rotate(12deg);
+            }
+        }
         #lobby-screen .lobby-main-tutorial { background-image: url('assets/img/botao_tutorial.webp') !important; }
         #lobby-screen .lobby-main-exit { background-image: url('assets/img/botao_sair.webp') !important; }
 
@@ -2465,14 +2511,17 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             return button;
         };
 
-        ensureLobbyMenuButton('btn-lobby-main-history', 'lobby-main-history', 'Hist\u00f3rico de partidas', () => window.openHistory?.());
-        ensureLobbyMenuButton('btn-lobby-main-ranking', 'lobby-main-ranking', 'Ranking', () => window.openLobbyRanking?.());
-        ensureLobbyMenuButton('btn-lobby-main-shop', 'lobby-main-shop', 'Arsenal', () => window.openLobbyShop?.());
-        ensureLobbyMenuButton('btn-lobby-main-tutorial', 'lobby-main-tutorial', 'Tutorial', () => {});
-        ensureLobbyMenuButton('btn-lobby-main-exit', 'lobby-main-exit', 'Sair', () => {
+        const shopButton = ensureLobbyMenuButton('btn-lobby-main-shop', 'lobby-main-shop', 'Arsenal', () => window.openLobbyShop?.());
+        const historyMainButton = ensureLobbyMenuButton('btn-lobby-main-history', 'lobby-main-history', 'Hist\u00f3rico de partidas', () => window.openHistory?.());
+        const rankingMainButton = ensureLobbyMenuButton('btn-lobby-main-ranking', 'lobby-main-ranking', 'Ranking', () => window.openLobbyRanking?.());
+        const tutorialMainButton = ensureLobbyMenuButton('btn-lobby-main-tutorial', 'lobby-main-tutorial', 'Tutorial', () => {});
+        const exitMainButton = ensureLobbyMenuButton('btn-lobby-main-exit', 'lobby-main-exit', 'Sair', () => {
             if (window.buppoDesktop?.quit) {
                 window.buppoDesktop.quit();
             }
+        });
+        [playButton, shopButton, historyMainButton, rankingMainButton, tutorialMainButton, exitMainButton].forEach((button) => {
+            if(button) playCenter.appendChild(button);
         });
 
         playCenter.querySelectorAll('.lobby-menu-button').forEach((button) => {
