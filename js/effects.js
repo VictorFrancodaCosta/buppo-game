@@ -698,27 +698,30 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #lobby-screen .lobby-main-shop::after {
             content: "" !important;
             position: absolute !important;
-            inset: -18% -10% -12% -10% !important;
-            z-index: -1 !important;
+            inset: -22% -14% -18% -14% !important;
+            z-index: 2 !important;
             pointer-events: none !important;
             opacity: 0 !important;
             background:
-                radial-gradient(circle, rgba(255, 246, 151, 0.98) 0 2px, rgba(255, 148, 33, 0.84) 2px 4px, transparent 5px) 19% 74% / 8px 8px no-repeat,
-                radial-gradient(circle, rgba(255, 207, 78, 0.92) 0 1.5px, rgba(255, 106, 0, 0.78) 2px 3.5px, transparent 5px) 34% 68% / 7px 7px no-repeat,
-                radial-gradient(circle, rgba(255, 241, 165, 0.82) 0 1px, rgba(255, 123, 28, 0.7) 1.5px 3px, transparent 4px) 53% 78% / 6px 6px no-repeat,
-                radial-gradient(circle, rgba(255, 225, 99, 0.9) 0 1.5px, rgba(255, 90, 0, 0.66) 2px 3px, transparent 5px) 71% 69% / 7px 7px no-repeat !important;
-            filter: drop-shadow(0 0 5px rgba(255, 126, 24, 0.88)) drop-shadow(0 0 11px rgba(255, 76, 0, 0.42)) !important;
+                radial-gradient(circle, #fff8a8 0 2px, #ff991f 2px 4px, transparent 5px) 15% 72% / 10px 10px no-repeat,
+                radial-gradient(circle, #ffd24e 0 2px, #ff6500 2px 4px, transparent 5px) 31% 62% / 9px 9px no-repeat,
+                radial-gradient(circle, #fff3a1 0 1.5px, #ff7b1c 2px 4px, transparent 5px) 54% 76% / 8px 8px no-repeat,
+                radial-gradient(circle, #ffe163 0 2px, #ff5a00 2px 4px, transparent 5px) 76% 64% / 9px 9px no-repeat,
+                radial-gradient(circle, rgba(255,255,255,0.95) 0 1px, rgba(255,120,0,0.9) 1.5px 3px, transparent 4px) 88% 82% / 7px 7px no-repeat !important;
+            filter: drop-shadow(0 0 6px rgba(255, 164, 31, 0.95)) drop-shadow(0 0 14px rgba(255, 72, 0, 0.65)) !important;
+            mix-blend-mode: screen !important;
             transform: translate3d(0, 10px, 0) scale(0.92) !important;
-            animation: lobbyArsenalForgeSparks 2.35s ease-out infinite !important;
+            animation: lobbyArsenalForgeSparks 1.85s ease-out infinite !important;
         }
         #lobby-screen .lobby-main-shop::after {
-            inset: -24% -7% -8% -14% !important;
+            inset: -28% -10% -15% -18% !important;
             background:
-                radial-gradient(circle, rgba(255, 252, 184, 0.95) 0 1.5px, rgba(255, 151, 27, 0.82) 2px 3px, transparent 5px) 24% 72% / 7px 7px no-repeat,
-                radial-gradient(circle, rgba(255, 215, 87, 0.86) 0 1px, rgba(255, 96, 8, 0.68) 1.5px 3px, transparent 4px) 46% 82% / 6px 6px no-repeat,
-                radial-gradient(circle, rgba(255, 243, 140, 0.92) 0 1.5px, rgba(255, 123, 0, 0.72) 2px 3px, transparent 5px) 83% 76% / 7px 7px no-repeat !important;
-            animation-delay: 1.08s !important;
-            animation-duration: 2.8s !important;
+                radial-gradient(circle, #fffcb8 0 2px, #ff971b 2px 4px, transparent 5px) 22% 71% / 9px 9px no-repeat,
+                radial-gradient(circle, #ffd757 0 1.5px, #ff6008 2px 4px, transparent 5px) 43% 84% / 8px 8px no-repeat,
+                radial-gradient(circle, #fff38c 0 2px, #ff7b00 2px 4px, transparent 5px) 83% 75% / 9px 9px no-repeat,
+                radial-gradient(circle, #ffffff 0 1px, #ff9d1d 1.5px 3px, transparent 4px) 64% 57% / 7px 7px no-repeat !important;
+            animation-delay: 0.72s !important;
+            animation-duration: 2.15s !important;
         }
         @keyframes lobbyArsenalForgeSparks {
             0% {
@@ -726,15 +729,15 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
                 transform: translate3d(-3px, 12px, 0) scale(0.88) rotate(-2deg);
             }
             13% {
-                opacity: 0.9;
+                opacity: 1;
             }
             58% {
-                opacity: 0.68;
-                transform: translate3d(7px, -12px, 0) scale(1.04) rotate(5deg);
+                opacity: 0.82;
+                transform: translate3d(8px, -18px, 0) scale(1.08) rotate(5deg);
             }
             100% {
                 opacity: 0;
-                transform: translate3d(16px, -31px, 0) scale(0.64) rotate(12deg);
+                transform: translate3d(18px, -42px, 0) scale(0.58) rotate(12deg);
             }
         }
         #lobby-screen .lobby-main-tutorial { background-image: url('assets/img/botao_tutorial.webp') !important; }
