@@ -1035,8 +1035,8 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         }
 
         .shop-level-ribbon {
-            left: -12px !important;
-            top: -12px !important;
+            left: -46px !important;
+            top: -16px !important;
             transform: rotate(-7deg) !important;
             width: auto !important;
             height: auto !important;
@@ -1076,7 +1076,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         .shop-upgrade-btn {
             display: block !important;
-            bottom: 11px !important;
+            bottom: -14px !important;
             min-width: 132px !important;
             padding: 8px 14px !important;
             border-color: rgba(238, 238, 238, 0.94) !important;
