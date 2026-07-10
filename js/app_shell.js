@@ -51,13 +51,35 @@ function setNetworkStatus(message, type = 'offline', autoHide = false) {
 }
 
 function syncOnlineStatus() {
+    const loginButton = document.getElementById('btn-login');
+    if(loginButton) {
+        loginButton.disabled = !navigator.onLine;
+        loginButton.setAttribute('aria-disabled', navigator.onLine ? 'false' : 'true');
+        loginButton.title = navigator.onLine ? '' : 'O login requer conexão com a internet';
+    }
     if (navigator.onLine) setNetworkStatus('CONEXÃO RESTABELECIDA', 'reconnected', true);
-    else setNetworkStatus('SEM CONEXÃO • A PARTIDA ONLINE SERÁ RETOMADA QUANDO POSSÍVEL');
+    else setNetworkStatus('SEM CONEXÃO • TUTORIAL DISPONÍVEL • RECURSOS ONLINE PAUSADOS');
 }
 
 window.reportBuppoConnectivityIssue = function(message = 'NÃO FOI POSSÍVEL CONECTAR AO SERVIDOR') {
     setNetworkStatus(message);
 };
+
+function captureClientError(source, error) {
+    const item = {
+        source,
+        message: String(error?.message || error || 'Erro desconhecido').slice(0, 240),
+        build: window.BUPPO_BUILD_VERSION || 'desconhecida',
+        timestamp: Date.now()
+    };
+    window.__buppoClientErrors = [...(window.__buppoClientErrors || []).slice(-19), item];
+    if(typeof window.BUPPO_ERROR_REPORTER === 'function') {
+        try { window.BUPPO_ERROR_REPORTER(item); } catch(reporterError) {}
+    }
+}
+
+window.addEventListener('error', (event) => captureClientError('window.error', event.error || event.message));
+window.addEventListener('unhandledrejection', (event) => captureClientError('unhandledrejection', event.reason));
 
 function createTutorial() {
     let overlay = document.getElementById('tutorial-overlay');

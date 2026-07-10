@@ -1,4 +1,4 @@
-import { DECK_TEMPLATE } from './data.js';
+import { DECK_TEMPLATE } from './data.js?v=2026.07.10.3';
 
 export function stringToSeed(str) {
     let hash = 0;
@@ -100,4 +100,39 @@ export function checkCardLethality(cardKey, player, monster) {
         return reflect >= monster.hp ? 'blue' : false; 
     } 
     return false; 
+}
+
+export function resolveBaseCombat(playerAction, monsterAction, player, monster) {
+    let playerDamage = 0;
+    let monsterDamage = 0;
+    if(monsterAction === 'ATAQUE') playerDamage += Math.max(0, Number(monster.lvl) || 0);
+    if(playerAction === 'ATAQUE') monsterDamage += Math.max(0, Number(player.lvl) || 0);
+    if(playerAction === 'BLOQUEIO') {
+        playerDamage = 0;
+        if(monsterAction === 'ATAQUE') monsterDamage += 1 + Math.max(0, Number(player.bonusBlock) || 0);
+    }
+    if(monsterAction === 'BLOQUEIO') {
+        monsterDamage = 0;
+        if(playerAction === 'ATAQUE') playerDamage += 1 + Math.max(0, Number(monster.bonusBlock) || 0);
+    }
+    const playerBlocked = playerAction === 'BLOQUEIO' && monsterAction === 'ATAQUE';
+    const monsterBlocked = monsterAction === 'BLOQUEIO' && playerAction === 'ATAQUE';
+    return {
+        playerDamage,
+        monsterDamage,
+        playerBlocked,
+        monsterBlocked,
+        clash: playerBlocked || monsterBlocked
+    };
+}
+
+export function resolveDisarmState(playerAction, monsterAction, playerChoice = null, monsterChoice = null) {
+    let playerDisabled = monsterAction === 'DESARMAR' ? (monsterChoice || 'ATAQUE') : null;
+    let monsterDisabled = playerAction === 'DESARMAR' ? playerChoice : null;
+    const clash = playerAction === 'DESARMAR' && monsterAction === 'DESARMAR';
+    if(clash) {
+        playerDisabled = null;
+        monsterDisabled = null;
+    }
+    return { playerDisabled, monsterDisabled, clash };
 }

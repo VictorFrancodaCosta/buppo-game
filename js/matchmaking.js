@@ -1,7 +1,8 @@
 // ARQUIVO: js/matchmaking.js
-import { db } from './firebase_network.js';
-import { doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { generateShuffledDeck } from './game_logic.js';
+import { db, FIRESTORE_SCHEMA_VERSION } from './firebase_network.js?v=2026.07.10.3';
+import { doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, getDocs, runTransaction, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { generateShuffledDeck } from './game_logic.js?v=2026.07.10.3';
+import { createSecureId } from './security.js?v=2026.07.10.3';
 
 export let matchTimerInterval = null;
 export let matchSeconds = 0;
@@ -25,7 +26,7 @@ export async function initiateMatchmaking() {
 
     try {
         myQueueRef = doc(collection(db, "queue"));
-        const myData = { uid: window.currentUser.uid, name: window.currentUser.displayName, gameId: window.currentPlayerGameId || null, deck: window.currentDeck || null, deckLevel: window.getDeckLevelByType?.(window.currentDeck) || 1, equippedItems: window.getClassEquipmentByDeckType?.(window.currentDeck) || {}, timestamp: Date.now(), matchId: null, cancelled: false, status: 'waiting' };
+        const myData = { uid: window.currentUser.uid, name: window.currentUser.displayName, gameId: window.currentPlayerGameId || null, deck: window.currentDeck || null, deckLevel: window.getDeckLevelByType?.(window.currentDeck) || 1, equippedItems: window.getClassEquipmentByDeckType?.(window.currentDeck) || {}, timestamp: Date.now(), createdAt: serverTimestamp(), expiresAt: Timestamp.fromMillis(Date.now() + 2 * 60 * 1000), matchId: null, cancelled: false, status: 'waiting', schemaVersion: FIRESTORE_SCHEMA_VERSION };
         await setDoc(myQueueRef, myData);
         queueListener = onSnapshot(myQueueRef, (docSnap) => {
             if (docSnap.exists()) { const data = docSnap.data(); if (data.matchId) enterMatch(data.matchId); }
@@ -66,7 +67,7 @@ async function findOpponentInQueue() {
             }
         }
         if (opponentDoc) {
-            const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+            const matchId = createSecureId('match');
             const oppRef = opponentDoc.ref;
             const p1DeckCards = generateShuffledDeck(); const p2DeckCards = generateShuffledDeck();
             const matchRef = doc(db, "matches", matchId);
@@ -80,8 +81,8 @@ async function findOpponentInQueue() {
                 if(!isWaiting(mine) || !isWaiting(opponent)) throw new Error('ALREADY_CLAIMED');
                 const matchData = buildMatchDocumentData(matchId, mine.uid, opponent.uid, mine.name, opponent.name, mine.gameId, opponent.gameId, mine.deck, opponent.deck, mine.deckLevel, opponent.deckLevel, mine.equippedItems, opponent.equippedItems, p1DeckCards, p2DeckCards);
                 transaction.set(matchRef, matchData);
-                transaction.update(myQueueRef, { matchId, status: 'matched', matchedAt: Date.now() });
-                transaction.update(oppRef, { matchId, status: 'matched', matchedAt: Date.now() });
+                transaction.update(myQueueRef, { matchId, status: 'matched', matchedAt: Date.now(), updatedAt: serverTimestamp() });
+                transaction.update(oppRef, { matchId, status: 'matched', matchedAt: Date.now(), updatedAt: serverTimestamp() });
             });
             if (searchInterval) clearInterval(searchInterval);
         }
@@ -106,7 +107,7 @@ function buildMatchDocumentData(matchId, p1Id, p2Id, p1Name, p2Name, p1GameId, p
         id: matchId,
         player1: { uid: p1Id, name: cleanName1, gameId: p1GameId || null, deckType: d1Type, deckLevel: Math.max(1, Number(p1DeckLevel) || 1), equippedItems: { ...(p1EquippedItems || {}) }, hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
         player2: { uid: p2Id, name: cleanName2, gameId: p2GameId || null, deckType: d2Type, deckLevel: Math.max(1, Number(p2DeckLevel) || 1), equippedItems: { ...(p2EquippedItems || {}) }, hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
-        turn: 1, status: 'playing', createdAt: Date.now()
+        turn: 1, status: 'playing', createdAt: Date.now(), createdAtServer: serverTimestamp(), expiresAt: Timestamp.fromMillis(Date.now() + 30 * 24 * 60 * 60 * 1000), schemaVersion: FIRESTORE_SCHEMA_VERSION
     };
 }
 
@@ -115,7 +116,7 @@ window.cancelPvPSearch = async function() {
     if (searchInterval) clearInterval(searchInterval);
     const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'none';
     if(window.updatePresence) window.updatePresence();
-    if (myQueueRef) { await updateDoc(myQueueRef, { cancelled: true, status: 'cancelled', cancelledAt: Date.now() }).catch(() => {}); myQueueRef = null; }
+    if (myQueueRef) { await updateDoc(myQueueRef, { cancelled: true, status: 'cancelled', cancelledAt: Date.now(), updatedAt: serverTimestamp() }).catch(() => {}); myQueueRef = null; }
     if(window.transitionToLobby) window.transitionToLobby(true);
 };
 

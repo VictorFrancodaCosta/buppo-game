@@ -1,4 +1,4 @@
-const VERSION = '2026.07.10.2';
+const VERSION = '2026.07.10.3';
 const STATIC_CACHE = `buppo-static-${VERSION}`;
 const RUNTIME_CACHE = `buppo-runtime-${VERSION}`;
 
@@ -12,6 +12,17 @@ const APP_SHELL = [
     './css/game.css',
     './css/effects.css',
     './css/accessibility.css',
+    './js/data.js',
+    './js/game_logic.js',
+    './js/match_protocol.js',
+    './js/security.js',
+    './js/firebase_network.js',
+    './js/matchmaking.js',
+    './js/audio_controller.js',
+    './js/ui_controller.js',
+    './js/effects.js',
+    './js/mobile_simple.js',
+    './js/main.js',
     './js/app_shell.js',
     './js/pwa.js',
     './assets/img/logo_buppo.webp',

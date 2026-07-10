@@ -1,14 +1,16 @@
 // ARQUIVO: js/main.js
-import { CARDS_DB, ACTION_KEYS } from './data.js';
-import { auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, registrarEmpateDB, notifyAbandonmentDB } from './firebase_network.js?v=2026.07.06.1';
-import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIMove, checkCardLethality, generateShuffledDeck } from './game_logic.js';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limit, onSnapshot, increment, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { CARDS_DB, ACTION_KEYS } from './data.js?v=2026.07.10.3';
+import { auth, db, FIRESTORE_SCHEMA_VERSION, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, registrarEmpateDB, notifyAbandonmentDB } from './firebase_network.js?v=2026.07.10.3';
+import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIMove, checkCardLethality, generateShuffledDeck, resolveBaseCombat, resolveDisarmState } from './game_logic.js?v=2026.07.10.3';
+import { createSecureId, escapeHTML, safeInteger } from './security.js?v=2026.07.10.3';
+import { isSameTurnSnapshot, validateMoveSubmission } from './match_protocol.js?v=2026.07.10.3';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limit, onSnapshot, increment, getDocs, getCountFromServer, runTransaction, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MODULOS
-import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.06.22.4';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.06.26.2';
-import { initiateMatchmaking } from './matchmaking.js?v=2026.06.24.25';
+import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.07.10.3';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.07.10.3';
+import { initiateMatchmaking } from './matchmaking.js?v=2026.07.10.3';
 
 // --- VARIAVEIS GLOBAIS DE ESTADO ---
 window.currentUser = null;
@@ -191,10 +193,10 @@ const ASSETS_TO_LOAD = {
         'assets/img/botaojogarnovamente.webp', 'assets/img/botaosaguao.webp',
         'assets/img/borda_cavaleiro_loja.webp', 'assets/img/borda_mago_loja.webp', 'assets/img/borda_arqueiro_loja.webp',
         'assets/img/borda_ladino_loja.webp', 'assets/img/borda_oraculo_loja.webp',
-        'assets/img/janela_loja.webp?v=2026.06.24.19', 'assets/img/titulo_arsenal.webp',
-        'assets/img/borda_cavaleiro_loja.webp?v=2026.06.24.16', 'assets/img/borda_mago_loja.webp?v=2026.06.24.16',
-        'assets/img/borda_arqueiro_loja.webp?v=2026.06.24.16', 'assets/img/borda_ladino_loja.webp?v=2026.06.24.16',
-        'assets/img/borda_oraculo_loja.webp?v=2026.06.24.16',
+        'assets/img/janela_loja.webp?v=2026.07.10.3', 'assets/img/titulo_arsenal.webp',
+        'assets/img/borda_cavaleiro_loja.webp?v=2026.07.10.3', 'assets/img/borda_mago_loja.webp?v=2026.07.10.3',
+        'assets/img/borda_arqueiro_loja.webp?v=2026.07.10.3', 'assets/img/borda_ladino_loja.webp?v=2026.07.10.3',
+        'assets/img/borda_oraculo_loja.webp?v=2026.07.10.3',
         'assets/img/ui_area_xpcampodehonra.webp', 'assets/img/ui_area_xpcirculoarcano.webp',
         'assets/img/ui_area_xpboquesentinela.webp', 'assets/img/ui_area_xprotadosaque.webp',
         'assets/img/ui_area_xpaltardavisao.webp', 'assets/img/ax_cavaleiro_loja.webp',
@@ -204,8 +206,8 @@ const ASSETS_TO_LOAD = {
         'assets/img/deck_arqueiro_loja.webp', 'assets/img/deck_ladino_loja.webp',
         'assets/img/deck_oraculo_loja.webp',
         'assets/img/ui_selo_pronto.png', 'assets/img/borda_metalica_card.webp',
-        'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5', 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5',
-        'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5',
+        'assets/img/borda_bosque_elfico_card.webp?v=2026.07.10.3', 'assets/img/borda_chama_arcana_card.webp?v=2026.07.10.3',
+        'assets/img/borda_mao_dourada_card.webp?v=2026.07.10.3', 'assets/img/borda_visao_astral_card.webp?v=2026.07.10.3',
         'assets/img/moeda_ouro.png', 'assets/img/comprado_title.webp',
         'assets/img/final_vitoria.webp', 'assets/img/final_empate.webp', 'assets/img/final_derrota.webp',
         'assets/img/apple-touch-icon-180.png', 'assets/img/pwa-icon-192.png', 'assets/img/pwa-icon-512.png',
@@ -465,7 +467,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         const gameId = await generateUniqueGameId(window.currentUser.uid);
         const defaults = normalizeInventoryDefaults([], {});
         const deckLevels = normalizeDeckLevels({});
-        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: defaults.inventory, equippedItems: defaults.equippedItems, deckLevels, lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false, reduceMotion: window.reducedMotionEnabled === true } });
+        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: defaults.inventory, equippedItems: defaults.equippedItems, deckLevels, lastSeen: Date.now(), lastSeenAt: serverTimestamp(), presenceExpiresAt: Timestamp.fromMillis(Date.now() + 120000), schemaVersion: FIRESTORE_SCHEMA_VERSION, settings: { vol: 0.5, music: true, sfx: true, fullscreen: false, reduceMotion: window.reducedMotionEnabled === true } });
         window.currentPlayerGameId = gameId;
         window.currentLobbyScore = 0;
         window.currentLobbyWins = 0;
@@ -533,7 +535,8 @@ window.goToLobby = async function(isAutoLogin = false) {
     startFriendsPanel();
     window.refreshShopInventoryState?.();
     window.renderInventoryItems?.();
-    const q = query(collection(db, "players"), orderBy("goldCoins", "desc"));
+    const playersRef = collection(db, "players");
+    const q = query(playersRef, orderBy("goldCoins", "desc"), limit(10));
     if(window.rankingUnsubscribe) {
         window.rankingUnsubscribe();
         window.rankingUnsubscribe = null;
@@ -547,7 +550,8 @@ window.goToLobby = async function(isAutoLogin = false) {
             if(window.currentUser && doc.id === window.currentUser.uid) myRank = pos;
             if(pos <= 10) {
                 let rankClass = pos === 1 ? "rank-1" : (pos === 2 ? "rank-2" : (pos === 3 ? "rank-3" : ""));
-                html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${(p.name || 'JOGADOR').split(' ')[0].toUpperCase()}</td><td>${Math.max(0, Number(p.goldCoins) || 0)}</td></tr>`;
+                const safePlayerName = escapeHTML(getPlayerFirstName(p.name || 'JOGADOR').toUpperCase());
+                html += `<tr class="${rankClass}"><td class="rank-pos">${pos}</td><td>${safePlayerName}</td><td>${Math.max(0, Number(p.goldCoins) || 0)}</td></tr>`;
             }
             pos++;
         });
@@ -555,6 +559,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         document.getElementById('ranking-content').innerHTML = html;
         window.currentLobbyRank = myRank;
         updateLobbyBottomProfileBar();
+        if(myRank === null) refreshCurrentPlayerRank(playersRef);
     }, () => {
         const ranking = document.getElementById('ranking-content');
         if(ranking) ranking.innerHTML = '<div class="loading-text">Ranking temporariamente indisponível.</div>';
@@ -565,6 +570,19 @@ window.goToLobby = async function(isAutoLogin = false) {
     document.getElementById('btn-config-toggle').style.display = 'flex';
     window.setTimeout(() => window.applyDeferredBuppoUpdate?.(), 250);
 };
+
+async function refreshCurrentPlayerRank(playersRef = collection(db, "players")) {
+    if(!window.currentUser) return;
+    try {
+        const currentGold = Math.max(0, Number(window.currentGoldCoins) || 0);
+        const higherPlayers = query(playersRef, where("goldCoins", ">", currentGold));
+        const snapshot = await getCountFromServer(higherPlayers);
+        window.currentLobbyRank = snapshot.data().count + 1;
+        updateLobbyBottomProfileBar();
+    } catch(error) {
+        window.currentLobbyRank = null;
+    }
+}
 
 window.startMobileSimpleMatch = function() {
     window.isMobileSimpleMode = true;
@@ -653,7 +671,7 @@ const SHOP_ITEMS = {
         slot: 'cardBorder',
         price: 600,
         cssClass: 'elven',
-        asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5'
+        asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.07.10.3'
     },
     mage_fire_border: {
         id: 'mage_fire_border',
@@ -661,7 +679,7 @@ const SHOP_ITEMS = {
         slot: 'cardBorder',
         price: 600,
         cssClass: 'mage',
-        asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5'
+        asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.07.10.3'
     },
     rogue_gold_border: {
         id: 'rogue_gold_border',
@@ -669,7 +687,7 @@ const SHOP_ITEMS = {
         slot: 'cardBorder',
         price: 600,
         cssClass: 'rogue',
-        asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5'
+        asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.07.10.3'
     },
     oracle_border: {
         id: 'oracle_border',
@@ -677,7 +695,7 @@ const SHOP_ITEMS = {
         slot: 'cardBorder',
         price: 600,
         cssClass: 'oracle',
-        asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5'
+        asset: 'assets/img/borda_visao_astral_card.webp?v=2026.07.10.3'
     },
     xp_campo_honra: {
         id: 'xp_campo_honra',
@@ -1233,7 +1251,7 @@ function updateLobbyBottomProfileBar() {
     const gameId = window.currentPlayerGameId || '----';
     const score = Math.max(0, Number(window.currentLobbyScore) || 0);
     const elo = getLobbyElo(score);
-    if(nameEl) nameEl.innerHTML = `${name} <span class="profile-asset-id-inline" id="profile-asset-id">#${gameId}</span>`;
+    if(nameEl) nameEl.innerHTML = `${escapeHTML(name)} <span class="profile-asset-id-inline" id="profile-asset-id">#${escapeHTML(gameId)}</span>`;
     if(ranking) {
         ranking.textContent = `${elo.label} #${score}`;
         ranking.className = `profile-asset-ranking elo-${elo.key}`;
@@ -1355,10 +1373,6 @@ function handleTurnTimeout() {
 
 function getPlayerFirstName(name = "JOGADOR") {
     return String(name || "JOGADOR").split(' ')[0].toUpperCase();
-}
-
-function escapeHTML(value = "") {
-    return String(value).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 }
 
 function renderLobbyIdentity(name, gameId) {
@@ -1491,13 +1505,17 @@ function startFriendsPanel() {
     refreshFriendsList();
     listenForFriendInvites();
     if(window.friendsRefreshInterval) clearInterval(window.friendsRefreshInterval);
-    window.friendsRefreshInterval = setInterval(refreshFriendsList, 12000);
+    window.friendsRefreshInterval = setInterval(() => {
+        if(document.visibilityState === 'visible') refreshFriendsList();
+    }, 30000);
 }
 
 function startPresenceHeartbeat() {
     updatePresence();
     if(window.presenceInterval) clearInterval(window.presenceInterval);
-    window.presenceInterval = setInterval(updatePresence, 10000);
+    window.presenceInterval = setInterval(() => {
+        if(document.visibilityState === 'visible') updatePresence();
+    }, 30000);
 }
 
 async function updatePresence() {
@@ -1507,7 +1525,7 @@ async function updatePresence() {
         const queueActive = document.getElementById('matchmaking-screen') && document.getElementById('matchmaking-screen').style.display === 'flex';
         const deckActive = document.getElementById('deck-selection-screen') && document.getElementById('deck-selection-screen').classList.contains('active');
         const activityStatus = gameActive ? 'in_match' : ((queueActive || deckActive) ? 'queue' : 'online');
-        await setDoc(doc(db, "players", window.currentUser.uid), { lastSeen: Date.now(), activityStatus }, { merge: true });
+        await setDoc(doc(db, "players", window.currentUser.uid), { lastSeen: Date.now(), lastSeenAt: serverTimestamp(), presenceExpiresAt: Timestamp.fromMillis(Date.now() + 120000), activityStatus, schemaVersion: FIRESTORE_SCHEMA_VERSION }, { merge: true });
     } catch(e) {}
 }
 window.updatePresence = updatePresence;
@@ -1559,7 +1577,10 @@ window.inviteSelectedFriend = async function() {
             fromEquippedItems: getClassEquipmentByDeckType(window.currentDeck),
             toUid,
             status: 'pending',
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            createdAtServer: serverTimestamp(),
+            expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            schemaVersion: FIRESTORE_SCHEMA_VERSION
         });
         showPvPStatus("CONVITE ENVIADO");
         setTimeout(clearPvPStatus, 1400);
@@ -1618,7 +1639,7 @@ function listenForFriendInvites() {
 }
 
 async function createFriendlyMatch(invite) {
-    const matchId = "friend_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+    const matchId = createSecureId('friend');
     const p1DeckCards = generateShuffledDeck();
     const p2DeckCards = generateShuffledDeck();
     const p1Hand = [];
@@ -1638,7 +1659,10 @@ async function createFriendlyMatch(invite) {
         player2: { uid: window.currentUser.uid, name: getPlayerFirstName(window.currentUser.displayName), gameId: window.currentPlayerGameId || null, deckType: window.currentDeck || null, deckLevel: getDeckLevelByType(window.currentDeck), equippedItems: getClassEquipmentByDeckType(window.currentDeck), hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
         turn: 1,
         status: 'playing',
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        createdAtServer: serverTimestamp(),
+        expiresAt: Timestamp.fromMillis(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        schemaVersion: FIRESTORE_SCHEMA_VERSION
     });
     return matchId;
 }
@@ -1729,7 +1753,10 @@ window.addFriendByGameId = async function() {
             toName: getPlayerFirstName(friendSnap.data().name),
             toGameId: friendSnap.data().gameId || null,
             status: 'pending',
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            createdAtServer: serverTimestamp(),
+            expiresAt: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            schemaVersion: FIRESTORE_SCHEMA_VERSION
         });
         setFriendAddStatus('Solicitacao enviada!', 'success');
         setTimeout(() => window.closeAddFriendModal(), 700);
@@ -1818,7 +1845,7 @@ function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     window.isProcessing = false; window.isResolvingTurn = false; window.pvpSelectedCardIndex = null;
     window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.turnResolutionLocked = false;
-    window.matchSettlementId = window.currentMatchId || `pve_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    window.matchSettlementId = window.currentMatchId || createSecureId('pve');
     startCinematicLoop(); window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand'); if (handEl) { handEl.innerHTML = ''; handEl.classList.add('preparing'); }
     if (window.gameMode === 'pvp' && window.pvpStartData) {
@@ -2080,6 +2107,7 @@ function syncUnitFromServer(u, data, showPlayerDamage = false, syncXp = true) {
             triggerDamageEffect(true, !fatalDamage, monster.deckType || window.opponentDeck || 'knight');
         }
     }
+    if(Array.isArray(data.hand)) u.hand = [...data.hand];
     if(data.deck) u.deck = [...data.deck];
     if(syncXp && data.xp) u.xp = [...data.xp];
     if(data.lvl) u.lvl = data.lvl;
@@ -2100,6 +2128,7 @@ function serializeUnitState(u) {
         hp: u.hp,
         maxHp: u.maxHp,
         lvl: u.lvl,
+        hand: [...u.hand],
         deck: [...u.deck],
         xp: [...u.xp],
         disabled: u.disabled || null,
@@ -2155,20 +2184,27 @@ function hydratePvPResolutionState(matchData) {
 async function publishResolvedPvPTurn() {
     if (!window.currentMatchId || window.myRole !== 'player1') return;
     const matchRef = doc(db, "matches", window.currentMatchId);
-    const updates = {
-        p1Move: null,
-        p2Move: null,
-        p1Disarm: null,
-        p2Disarm: null,
-        turn: increment(1)
-    };
-    if (window.myRole === 'player1') {
-        Object.assign(updates, {
-            player1: { ...window.latestMatchData.player1, ...serializeUnitState(player) },
-            player2: { ...window.latestMatchData.player2, ...serializeUnitState(monster) }
+    const expectedTurn = Number(window.latestMatchData?.turn) || 1;
+    const expectedP1Move = window.latestMatchData?.p1Move;
+    const expectedP2Move = window.latestMatchData?.p2Move;
+    await runTransaction(db, async (transaction) => {
+        const snapshot = await transaction.get(matchRef);
+        if(!snapshot.exists()) throw new Error('MATCH_NOT_FOUND');
+        const data = snapshot.data();
+        if(data.player1?.uid !== window.currentUser?.uid || data.status !== 'playing') throw new Error('MATCH_STATE_INVALID');
+        if(!isSameTurnSnapshot(data, { turn: expectedTurn, p1Move: expectedP1Move, p2Move: expectedP2Move })) throw new Error('TURN_ALREADY_RESOLVED');
+        transaction.update(matchRef, {
+            p1Move: null,
+            p2Move: null,
+            p1Disarm: null,
+            p2Disarm: null,
+            turn: increment(1),
+            player1: { ...data.player1, ...serializeUnitState(player) },
+            player2: { ...data.player2, ...serializeUnitState(monster) },
+            updatedAt: serverTimestamp(),
+            schemaVersion: FIRESTORE_SCHEMA_VERSION
         });
-    }
-    await updateDoc(matchRef, updates);
+    });
 }
 
 function checkEndGame(){
@@ -3226,7 +3262,14 @@ async function lockInPvPMove(index, disarmChoice) {
     const disarmField = (window.myRole === 'player1') ? 'p1Disarm' : 'p2Disarm';
 
     try {
-        await updateDoc(matchRef, { [updateField]: cardKey, [disarmField]: disarmChoice || null });
+        await runTransaction(db, async (transaction) => {
+            const snapshot = await transaction.get(matchRef);
+            if(!snapshot.exists()) throw new Error('MATCH_NOT_FOUND');
+            const data = snapshot.data();
+            const protocol = validateMoveSubmission(data, window.currentUser?.uid, cardKey, disarmChoice || null);
+            if(protocol.role !== window.myRole || protocol.moveField !== updateField || protocol.disarmField !== disarmField) throw new Error('MATCH_STATE_INVALID');
+            transaction.update(matchRef, { [protocol.moveField]: cardKey, [protocol.disarmField]: disarmChoice || null, updatedAt: serverTimestamp() });
+        });
     } catch (e) {
         window.isProcessing = false; window.pvpSelectedCardIndex = null;
         if(cardEl) cardEl.classList.remove('card-selected');
@@ -3301,6 +3344,8 @@ async function resolvePvPTurn(matchData) {
             const idx = player.hand.indexOf(myMove); if(idx > -1) player.hand.splice(idx, 1); window.pvpSelectedCardIndex = null;
         }
         playerHistory.push(myMove);
+        const enemyHandIndex = monster.hand.indexOf(enemyMove);
+        if(enemyHandIndex > -1) monster.hand.splice(enemyHandIndex, 1);
 
         animateFly(startRect || 'player-hand', 'p-slot', myMove, () => { 
             renderTable(myMove, 'p-slot', true); 
@@ -3346,25 +3391,18 @@ async function commitTurnToDB(pAct, extraCard = null) {
 }
 
 function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null) {
-    let pDmg = 0, mDmg = 0;
+    const baseCombat = resolveBaseCombat(pAct, mAct, player, monster);
+    let pDmg = baseCombat.playerDamage, mDmg = baseCombat.monsterDamage;
     const pendingDisarmSteals = [];
     recordMatchTurnActions(pAct, mAct);
     if(pAct === 'TREINAR' || mAct === 'TREINAR') playSound('sfx-train');
     if(pAct === 'DESARMAR' || mAct === 'DESARMAR') playSound('sfx-disarm');
 
-    if(mAct === 'ATAQUE') pDmg += monster.lvl;
-    if(pAct === 'ATAQUE') mDmg += player.lvl;
-    if(pAct === 'BLOQUEIO') { pDmg = 0; if(mAct === 'ATAQUE') mDmg += (1 + player.bonusBlock); }
-    if(mAct === 'BLOQUEIO') { mDmg = 0; if(pAct === 'ATAQUE') pDmg += (1 + monster.bonusBlock); }
+    let clash = baseCombat.clash; let pBlocks = baseCombat.playerBlocked; let mBlocks = baseCombat.monsterBlocked;
 
-    let clash = false; let pBlocks = (pAct === 'BLOQUEIO' && mAct === 'ATAQUE'); let mBlocks = (mAct === 'BLOQUEIO' && pAct === 'ATAQUE');
-    if(pBlocks || mBlocks) clash = true;
-
-    let nextPlayerDisabled = null; let nextMonsterDisabled = null;
-    if(mAct === 'DESARMAR') { if(mDisarmTarget) nextPlayerDisabled = mDisarmTarget; else nextPlayerDisabled = 'ATAQUE'; }
-    if(pAct === 'DESARMAR') { nextMonsterDisabled = pDisarmChoice; }
-    const disarmClash = (pAct === 'DESARMAR' && mAct === 'DESARMAR');
-    if(disarmClash) { nextPlayerDisabled = null; nextMonsterDisabled = null; }
+    const disarmState = resolveDisarmState(pAct, mAct, pDisarmChoice, mDisarmTarget);
+    let nextPlayerDisabled = disarmState.playerDisabled; let nextMonsterDisabled = disarmState.monsterDisabled;
+    const disarmClash = disarmState.clash;
 
     player.disabled = nextPlayerDisabled; monster.disabled = nextMonsterDisabled;
 
@@ -3681,27 +3719,32 @@ window.openHistory = async function() {
                 <b>${actionTotals[action]}</b>
             </div>`).join('');
         const battlesHtml = matches.map((h) => {
-            const date = new Date(h.timestamp); const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+            const timestamp = safeInteger(h.timestamp, Date.now(), 0);
+            const date = new Date(timestamp); const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
             const resultClass = h.result === 'WIN' ? 'win' : (h.result === 'TIE' ? 'tie' : 'loss');
             const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : (h.result === 'TIE' ? 'EMPATE' : 'DERROTA');
-            const scoreTxt = (Number(h.points) || 0) > 0 ? `+${h.points}` : `${Number(h.points) || 0}`;
-            const vsText = (h.opponent === 'PVE' || h.mode === 'pve') ? `${resultTxt} PVE` : `${resultTxt} vs ${h.opponent || 'OPONENTE'}`;
+            const points = Number(h.points) || 0;
+            const scoreTxt = points > 0 ? `+${points}` : `${points}`;
+            const safeOpponent = escapeHTML(h.opponent || 'OPONENTE');
+            const safeMode = escapeHTML(String(h.mode || 'pve').toUpperCase());
+            const safeDeck = escapeHTML(String(h.deck || 'sem deck').toUpperCase());
+            const vsText = (h.opponent === 'PVE' || h.mode === 'pve') ? `${resultTxt} PVE` : `${resultTxt} vs ${safeOpponent}`;
             const s = h.stats || {};
             return `<div class="history-item ${resultClass}">
                 <div>
                     <div class="h-vs">${vsText}</div>
-                    <div class="h-date">${dateStr} | ${(h.mode || 'pve').toUpperCase()} | ${String(h.deck || 'sem deck').toUpperCase()} NV. ${h.deckLevel || 1}</div>
+                    <div class="h-date">${dateStr} | ${safeMode} | ${safeDeck} NV. ${safeInteger(h.deckLevel, 1, 1, 999)}</div>
                 </div>
                 <div class="history-detail">
-                    Turnos: ${s.turns || h.turns || '-'}<br>
-                    Dano: ${s.totalDamageDealt || 0} | Maior golpe: ${s.maxDamageDealt || 0}<br>
-                    Atq. efetivos: ${s.effectiveAttacks || 0} | Bloq. efetivos: ${s.effectiveBlocks || 0}
+                    Turnos: ${safeInteger(s.turns ?? h.turns, 0, 0, 9999) || '-'}<br>
+                    Dano: ${safeInteger(s.totalDamageDealt)} | Maior golpe: ${safeInteger(s.maxDamageDealt)}<br>
+                    Atq. efetivos: ${safeInteger(s.effectiveAttacks)} | Bloq. efetivos: ${safeInteger(s.effectiveBlocks)}
                 </div>
                 <div>
                     <div class="h-score">${scoreTxt} OURO</div>
                     <div class="history-pill-row">
-                        <span class="history-pill">Cura ${s.totalHealed || 0}</span>
-                        <span class="history-pill">Níveis ${s.levelUps || 0}</span>
+                        <span class="history-pill">Cura ${safeInteger(s.totalHealed)}</span>
+                        <span class="history-pill">Níveis ${safeInteger(s.levelUps)}</span>
                     </div>
                 </div>
             </div>`;
@@ -3722,7 +3765,7 @@ window.openHistory = async function() {
                 <section class="history-card">
                     <h3>Diagnóstico do Mestre</h3>
                     <div class="history-recommendation">
-                        Deck mais usado: <strong>${String(favoriteDeck).toUpperCase()}</strong><br>
+                        Deck mais usado: <strong>${escapeHTML(String(favoriteDeck).toUpperCase())}</strong><br>
                         Dano total causado: <strong>${totalDamage}</strong><br>
                         Cura total: <strong>${totalHealed}</strong><br><br>
                         ${recommendations.map(text => `• ${text}`).join('<br>')}

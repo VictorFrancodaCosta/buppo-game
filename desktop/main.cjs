@@ -18,13 +18,29 @@ const authHosts = new Set([
   'accounts.google.com',
   'apis.google.com',
   'buppo-game.firebaseapp.com',
-  'www.googleapis.com'
+  'www.googleapis.com',
+  'oauth2.googleapis.com'
 ]);
+
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://www.gstatic.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https://lh3.googleusercontent.com",
+  "media-src 'self' blob:",
+  "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.gstatic.com",
+  "frame-src https://accounts.google.com https://buppo-game.firebaseapp.com",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self' https://accounts.google.com",
+  "frame-ancestors 'self'"
+].join('; ');
 
 function isAuthUrl(url) {
   try {
     const parsed = new URL(url);
-    return authHosts.has(parsed.hostname) || parsed.hostname.endsWith('.google.com');
+    return parsed.protocol === 'https:' && authHosts.has(parsed.hostname);
   } catch (e) {
     return false;
   }
@@ -76,7 +92,8 @@ function startLocalServer() {
           'X-Content-Type-Options': 'nosniff',
           'Referrer-Policy': 'no-referrer',
           'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-          'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+          'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+          'Content-Security-Policy': contentSecurityPolicy
         });
         res.end(data);
       });
@@ -195,14 +212,26 @@ async function createWindow() {
       shell.openExternal(url);
       return { action: 'deny' };
     }
-    return { action: 'allow' };
+    return { action: 'deny' };
+  });
+
+  win.webContents.on('did-create-window', (childWindow) => {
+    childWindow.webContents.setWindowOpenHandler(({ url }) => {
+      if (/^https?:\/\//i.test(url)) shell.openExternal(url);
+      return { action: 'deny' };
+    });
+    childWindow.webContents.on('will-navigate', (event, url) => {
+      if (isAuthUrl(url)) return;
+      event.preventDefault();
+      if (/^https?:\/\//i.test(url)) shell.openExternal(url);
+    });
   });
 
   win.webContents.on('will-navigate', (event, url) => {
     if (url.startsWith(origin)) return;
     if (isAuthUrl(url)) return;
+    event.preventDefault();
     if (/^https?:\/\//i.test(url)) {
-      event.preventDefault();
       shell.openExternal(url);
     }
   });

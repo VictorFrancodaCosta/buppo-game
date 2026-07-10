@@ -1,6 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, setDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { safeDisplayName, safeIdentifier, safeInteger } from './security.js?v=2026.07.10.3';
+
+export const FIRESTORE_SCHEMA_VERSION = 1;
 
 const firebaseConfig = {
     apiKey: "AIzaSyCVLhOcKqF6igMGRmOWO_GEY9O4gz892Fo",
@@ -37,14 +40,16 @@ export async function saveMatchHistoryDB(currentUser, enemyName, gameMode, curre
         const historyRef = collection(db, "players", currentUser.uid, "history");
         const historyData = {
             result: result || (pointsChange < 0 ? 'LOSS' : (pointsChange === 1 ? 'TIE' : 'WIN')),
-            opponent: enemyName,
+            opponent: safeDisplayName(enemyName, 'OPONENTE'),
             mode: gameMode || 'pve',
             deck: currentDeck,
-            points: pointsChange,
+            points: Number(pointsChange) || 0,
             ...details,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            createdAt: serverTimestamp(),
+            schemaVersion: FIRESTORE_SCHEMA_VERSION
         };
-        const settlementId = String(details.settlementId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 120);
+        const settlementId = safeIdentifier(details.settlementId);
         if(settlementId) await setDoc(doc(historyRef, settlementId), historyData);
         else await addDoc(historyRef, historyData);
         console.log("Histórico salvo para oponente:", enemyName);
@@ -59,17 +64,19 @@ export async function registrarVitoriaDB(currentUser, gameMode, bonusGold = 0, s
         const userRef = doc(db, "players", currentUser.uid);
         let moedasGanhas = Math.max(0, bonusGold || 0) + Math.max(0, stolenGold || 0);
         const xpGained = (gameMode === 'pvp') ? 16 : 5;
-        const safeSettlementId = String(settlementId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 120);
+        const safeSettlementId = safeIdentifier(settlementId);
+        const settlementRef = safeSettlementId && globalThis.BUPPO_ENABLE_SETTLEMENT_LEDGER === true ? doc(db, "players", currentUser.uid, "settlements", safeSettlementId) : null;
         return await runTransaction(db, async (transaction) => {
             const userSnap = await transaction.get(userRef);
+            const settlementSnap = settlementRef ? await transaction.get(settlementRef) : null;
             if(!userSnap.exists()) return { points: 0, gold: 0, xpGained: 0, profileLevel: 1, profileXp: 0, totalGold: 0, totalWins: 0 };
             const data = userSnap.data();
             const processedSettlements = Array.isArray(data.processedSettlements) ? data.processedSettlements.filter(Boolean).slice(-49) : [];
-            if(safeSettlementId && processedSettlements.includes(safeSettlementId)) {
+            if((settlementSnap && settlementSnap.exists()) || (safeSettlementId && processedSettlements.includes(safeSettlementId))) {
                 return { points: 0, gold: 0, xpGained: 0, profileLevel: Math.max(1, data.profileLevel || 1), profileXp: Math.max(0, data.profileXp || 0), totalGold: Math.max(0, data.goldCoins || 0), totalWins: Math.max(0, data.totalWins || 0), duplicate: true };
             }
-            let profileLevel = Math.max(1, data.profileLevel || 1);
-            let profileXp = Math.max(0, data.profileXp || 0) + xpGained;
+            let profileLevel = safeInteger(data.profileLevel, 1, 1, 9999);
+            let profileXp = safeInteger(data.profileXp, 0, 0) + xpGained;
             while(profileXp >= 100) {
                 profileXp -= 100;
                 profileLevel += 1;
@@ -82,8 +89,11 @@ export async function registrarVitoriaDB(currentUser, gameMode, bonusGold = 0, s
                 goldCoins: totalGold,
                 profileLevel,
                 profileXp,
+                schemaVersion: FIRESTORE_SCHEMA_VERSION,
+                updatedAt: serverTimestamp(),
                 ...(safeSettlementId ? { processedSettlements: [...processedSettlements, safeSettlementId] } : {})
             });
+            if(settlementRef) transaction.set(settlementRef, { settlementId: safeSettlementId, result: 'WIN', mode: gameMode || 'pve', goldDelta: moedasGanhas, xpDelta: xpGained, createdAt: serverTimestamp(), schemaVersion: FIRESTORE_SCHEMA_VERSION });
             return result;
         });
     } catch(e) { 
@@ -96,19 +106,22 @@ export async function registrarDerrotaDB(currentUser, gameMode, goldLost = 0, se
     if(!currentUser) return { points: 0, goldLost: 0 };
     try {
         const userRef = doc(db, "players", currentUser.uid);
-        const safeSettlementId = String(settlementId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 120);
+        const safeSettlementId = safeIdentifier(settlementId);
+        const settlementRef = safeSettlementId && globalThis.BUPPO_ENABLE_SETTLEMENT_LEDGER === true ? doc(db, "players", currentUser.uid, "settlements", safeSettlementId) : null;
         return await runTransaction(db, async (transaction) => {
             const userSnap = await transaction.get(userRef);
+            const settlementSnap = settlementRef ? await transaction.get(settlementRef) : null;
             if(!userSnap.exists()) return { points: 0, goldLost: 0, totalGold: 0 };
             const data = userSnap.data();
             const processedSettlements = Array.isArray(data.processedSettlements) ? data.processedSettlements.filter(Boolean).slice(-49) : [];
-            if(safeSettlementId && processedSettlements.includes(safeSettlementId)) {
+            if((settlementSnap && settlementSnap.exists()) || (safeSettlementId && processedSettlements.includes(safeSettlementId))) {
                 return { points: 0, goldLost: 0, totalGold: Math.max(0, data.goldCoins || 0), duplicate: true };
             }
             const moedasPerdidas = Math.min(Math.max(0, data.goldCoins || 0), Math.max(0, goldLost || 0));
             const totalGold = Math.max(0, (data.goldCoins || 0) - moedasPerdidas);
             const result = { points: 0, goldLost: moedasPerdidas, totalGold };
-            transaction.update(userRef, { goldCoins: totalGold, ...(safeSettlementId ? { processedSettlements: [...processedSettlements, safeSettlementId] } : {}) });
+            transaction.update(userRef, { goldCoins: totalGold, schemaVersion: FIRESTORE_SCHEMA_VERSION, updatedAt: serverTimestamp(), ...(safeSettlementId ? { processedSettlements: [...processedSettlements, safeSettlementId] } : {}) });
+            if(settlementRef) transaction.set(settlementRef, { settlementId: safeSettlementId, result: 'LOSS', mode: gameMode || 'pve', goldDelta: -moedasPerdidas, xpDelta: 0, createdAt: serverTimestamp(), schemaVersion: FIRESTORE_SCHEMA_VERSION });
             return result;
         });
     } catch(e) { 
@@ -132,7 +145,9 @@ export async function notifyAbandonmentDB(matchId, userId) {
     try {
         await updateDoc(doc(db, "matches", matchId), {
             status: 'abandoned',
-            abandonedBy: userId
+            abandonedBy: userId,
+            updatedAt: serverTimestamp(),
+            schemaVersion: FIRESTORE_SCHEMA_VERSION
         });
     } catch (e) { 
         console.error("Erro ao notificar abandono:", e); 

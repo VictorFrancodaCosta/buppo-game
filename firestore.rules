@@ -1,0 +1,132 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isMatchParticipant(data) {
+      return signedIn()
+        && data.player1.uid is string
+        && data.player2.uid is string
+        && request.auth.uid in [data.player1.uid, data.player2.uid];
+    }
+
+    function validMove(move) {
+      return move == null || move in ['ATAQUE', 'BLOQUEIO', 'DESCANSAR', 'TREINAR', 'DESARMAR'];
+    }
+
+    function validMatchMoves(data) {
+      return (!data.keys().hasAny(['p1Move']) || validMove(data.p1Move))
+        && (!data.keys().hasAny(['p2Move']) || validMove(data.p2Move))
+        && (!data.keys().hasAny(['p1Disarm']) || validMove(data.p1Disarm))
+        && (!data.keys().hasAny(['p2Disarm']) || validMove(data.p2Disarm));
+    }
+
+    function validFriendListMutation() {
+      let before = resource.data.friends is list ? resource.data.friends : [];
+      let after = request.resource.data.friends is list ? request.resource.data.friends : [];
+      return signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friends'])
+        && (
+          (after.size() == before.size() + 1 && after.toSet().difference(before.toSet()).hasOnly([request.auth.uid]))
+          || (before.size() == after.size() + 1 && before.toSet().difference(after.toSet()).hasOnly([request.auth.uid]))
+        );
+    }
+
+    match /players/{uid} {
+      allow read: if signedIn();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) || validFriendListMutation();
+      allow delete: if false;
+
+      match /history/{historyId} {
+        allow read, create, update: if isOwner(uid);
+        allow delete: if false;
+      }
+
+      match /settlements/{settlementId} {
+        allow read, create: if isOwner(uid);
+        allow update, delete: if false;
+      }
+    }
+
+    match /playerIds/{gameId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if signedIn()
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /queue/{queueId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'waiting'
+        && request.resource.data.matchId == null;
+      allow update: if signedIn() && (
+        resource.data.uid == request.auth.uid
+        || (
+          resource.data.status == 'waiting'
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.status == 'matched'
+          && request.resource.data.matchId is string
+          && isMatchParticipant(getAfter(/databases/$(database)/documents/matches/$(request.resource.data.matchId)).data)
+        )
+      );
+      allow delete: if false;
+    }
+
+    match /matches/{matchId} {
+      allow read: if isMatchParticipant(resource.data);
+      allow create: if isMatchParticipant(request.resource.data)
+        && request.resource.data.status == 'playing'
+        && validMatchMoves(request.resource.data);
+      allow update: if isMatchParticipant(resource.data)
+        && isMatchParticipant(request.resource.data)
+        && request.resource.data.player1.uid == resource.data.player1.uid
+        && request.resource.data.player2.uid == resource.data.player2.uid
+        && validMatchMoves(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /friendRequests/{requestId} {
+      allow read: if signedIn()
+        && request.auth.uid in [resource.data.fromUid, resource.data.toUid];
+      allow create: if signedIn()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid is string
+        && request.resource.data.status == 'pending';
+      allow update: if signedIn()
+        && request.auth.uid in [resource.data.fromUid, resource.data.toUid]
+        && request.resource.data.fromUid == resource.data.fromUid
+        && request.resource.data.toUid == resource.data.toUid;
+      allow delete: if false;
+    }
+
+    match /friendInvites/{inviteId} {
+      allow read: if signedIn()
+        && request.auth.uid in [resource.data.fromUid, resource.data.toUid];
+      allow create: if signedIn()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid is string
+        && request.resource.data.status == 'pending';
+      allow update: if signedIn()
+        && request.auth.uid in [resource.data.fromUid, resource.data.toUid]
+        && request.resource.data.fromUid == resource.data.fromUid
+        && request.resource.data.toUid == resource.data.toUid;
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -993,7 +993,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             min-height: min(820px, 90vh) !important;
             padding: 110px 104px 90px !important;
             box-sizing: border-box !important;
-            background: url('assets/img/janela_loja.webp?v=2026.06.24.19') center / 100% 100% no-repeat !important;
+            background: url('assets/img/janela_loja.webp?v=2026.07.10.3') center / 100% 100% no-repeat !important;
             border: 0 !important;
             border-radius: 8px !important;
             box-shadow: none !important;
@@ -1590,7 +1590,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
             padding: 0 !important;
             border: 0 !important;
             border-radius: 0 !important;
-            background: url('assets/img/botao_sair_loja_ui.png?v=2026.06.28.1') center / contain no-repeat !important;
+            background: url('assets/img/botao_sair_loja_ui.png?v=2026.07.10.3') center / contain no-repeat !important;
             color: transparent !important;
             font-size: 0 !important;
             line-height: 0 !important;
@@ -2806,11 +2806,11 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         };
 
         const lobbyCardBorderItems = [
-            { id: 'metallic_border', name: 'BORDA - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/borda_metalica_card.webp', shopAsset: 'assets/img/borda_cavaleiro_loja.webp?v=2026.06.24.16' },
-            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_mago_loja.webp?v=2026.06.24.16' },
-            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_arqueiro_loja.webp?v=2026.06.24.16' },
-            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_ladino_loja.webp?v=2026.06.24.16' },
-            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5', shopAsset: 'assets/img/borda_oraculo_loja.webp?v=2026.06.24.16' }
+            { id: 'metallic_border', name: 'BORDA - GUARDA REAL', displayName: 'GUARDA REAL', asset: 'assets/img/borda_metalica_card.webp', shopAsset: 'assets/img/borda_cavaleiro_loja.webp?v=2026.07.10.3' },
+            { id: 'mage_fire_border', name: 'BORDA - CHAMA ARCANA', displayName: 'CHAMA ARCANA', asset: 'assets/img/borda_chama_arcana_card.webp?v=2026.07.10.3', shopAsset: 'assets/img/borda_mago_loja.webp?v=2026.07.10.3' },
+            { id: 'elven_forest_border', name: 'BORDA - SENTINELA VERDE', displayName: 'SENTINELA VERDE', asset: 'assets/img/borda_bosque_elfico_card.webp?v=2026.07.10.3', shopAsset: 'assets/img/borda_arqueiro_loja.webp?v=2026.07.10.3' },
+            { id: 'rogue_gold_border', name: 'BORDA - M\u00c3O DOURADA', displayName: 'M\u00c3O DOURADA', asset: 'assets/img/borda_mao_dourada_card.webp?v=2026.07.10.3', shopAsset: 'assets/img/borda_ladino_loja.webp?v=2026.07.10.3' },
+            { id: 'oracle_border', name: 'BORDA - VIS\u00c3O ASTRAL', displayName: 'VIS\u00c3O ASTRAL', asset: 'assets/img/borda_visao_astral_card.webp?v=2026.07.10.3', shopAsset: 'assets/img/borda_oraculo_loja.webp?v=2026.07.10.3' }
         ];
         const lobbyDeckItems = [
             { id: 'deck_knight', type: 'deck', name: 'DECK - CAVALEIRO', displayName: 'CAVALEIRO', asset: 'assets/img/deck_cavaleiro_loja.webp', shopAsset: 'assets/img/deck_cavaleiro_loja.webp' },

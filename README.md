@@ -14,6 +14,8 @@ BUPPO é um jogo de duelo de cartas com PvE, PvP, cinco classes temáticas, prog
 
 - `index.html`: estrutura principal das telas.
 - `js/game_logic.js`: funções puras da base de jogo e IA PvE.
+- `js/match_protocol.js`: validações puras do protocolo PvP.
+- `js/security.js`: normalização e escape de dados remotos.
 - `js/main.js`: orquestração dos fluxos atuais.
 - `js/matchmaking.js`: fila e criação atômica de partidas PvP.
 - `js/firebase_network.js`: autenticação, histórico e liquidação transacional.
@@ -38,7 +40,7 @@ Abra `http://127.0.0.1:4173/index.html`.
 npm run check
 ```
 
-O comando valida todas as referências estáticas de assets e executa os testes unitários da lógica isolada.
+O comando valida sintaxe, versão, controles estáticos de segurança, referências de assets e testes unitários.
 
 ## Windows
 
@@ -51,7 +53,7 @@ O atualizador baixa novas versões em segundo plano e aplica a instalação apen
 
 ## Firebase
 
-As chaves de configuração do SDK web identificam o projeto, mas a proteção real depende de Authentication, App Check, Firestore Rules e de um serviço autoritativo para resultados competitivos. Consulte [docs/FIREBASE_HARDENING.md](docs/FIREBASE_HARDENING.md).
+As chaves de configuração do SDK web identificam o projeto, mas a proteção real depende de Authentication, App Check, Firestore Rules e de um serviço autoritativo para resultados competitivos. Consulte [docs/FIREBASE_HARDENING.md](docs/FIREBASE_HARDENING.md) e [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Publicação
 
