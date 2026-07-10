@@ -10,6 +10,7 @@
   "scripts": {
     "desktop": "electron .",
     "test": "node --test tests/*.test.js",
+    "test:rules": "firebase emulators:exec --only firestore --project buppo-game-rules-test \"node --test tests/firestore.rules.emulator.js\"",
     "check:syntax": "node scripts/check-syntax.mjs",
     "validate:security": "node scripts/validate-security.mjs",
     "validate:version": "node scripts/validate-version.mjs",
@@ -65,7 +66,10 @@
     "electron-updater": "^6.3.9"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
     "electron": "^31.7.7",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "firebase": "^12.16.0",
+    "firebase-tools": "^15.23.0"
   }
 }

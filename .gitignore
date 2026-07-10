@@ -7,6 +7,7 @@ _codex_contact_sheets/
 .codex_restore_backup_*/
 *.log
 .firebase/
+.firebase-cli/
 firebase-debug.log*
 firestore-debug.log*
 ui-debug.log*

@@ -24,6 +24,8 @@ Também não estão ativos:
 - função autoritativa de resolução e liquidação;
 - auditoria remota e alertas de fraude.
 
+A auditoria autenticada encontrou as Rules de produção completamente abertas para leitura e escrita pública. Consulte [FIREBASE_DEPLOYMENT_STATE.md](FIREBASE_DEPLOYMENT_STATE.md). A substituição é prioridade crítica, mas só deve ocorrer depois que a suíte ampliada do emulador passar integralmente.
+
 ## Etapa externa necessária antes de competição pública
 
 1. Habilitar Firebase App Check para web e desktop.
