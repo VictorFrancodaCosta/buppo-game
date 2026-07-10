@@ -244,7 +244,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #btn-play-pvp {
             width: 96% !important;
             aspect-ratio: 2048 / 650 !important;
-            background: transparent url('assets/img/btn_pvp_ranked.webp?v=2') center / 100% 100% no-repeat !important;
+            background: transparent url('assets/img/botao_pvp.webp') center / 100% 100% no-repeat !important;
             filter: drop-shadow(6px 8px 0 rgba(26, 11, 4, 0.82))
                     drop-shadow(0 14px 18px rgba(0, 0, 0, 0.26)) !important;
         }
@@ -252,7 +252,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         #btn-play-pve {
             width: 80% !important;
             aspect-ratio: 2048 / 760 !important;
-            background: transparent url('assets/img/btn_pve_training.webp?v=2') center / 100% 100% no-repeat !important;
+            background: transparent url('assets/img/botao_pve.webp') center / 100% 100% no-repeat !important;
             filter: drop-shadow(6px 8px 0 rgba(23, 9, 29, 0.78))
                     drop-shadow(0 13px 17px rgba(0, 0, 0, 0.24)) !important;
         }
@@ -2743,10 +2743,14 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
         const shopButton = ensureLobbyMenuButton('btn-lobby-main-shop', 'lobby-main-shop', 'Arsenal', () => window.openLobbyShop?.());
         const historyMainButton = ensureLobbyMenuButton('btn-lobby-main-history', 'lobby-main-history', 'Hist\u00f3rico de partidas', () => window.openHistory?.());
         const rankingMainButton = ensureLobbyMenuButton('btn-lobby-main-ranking', 'lobby-main-ranking', 'Ranking', () => window.openLobbyRanking?.());
-        const tutorialMainButton = ensureLobbyMenuButton('btn-lobby-main-tutorial', 'lobby-main-tutorial', 'Tutorial', () => {});
+        const tutorialMainButton = ensureLobbyMenuButton('btn-lobby-main-tutorial', 'lobby-main-tutorial', 'Tutorial', () => document.dispatchEvent(new CustomEvent('buppo:open-tutorial')));
         const exitMainButton = ensureLobbyMenuButton('btn-lobby-main-exit', 'lobby-main-exit', 'Sair', () => {
             if (window.buppoDesktop?.quit) {
                 window.buppoDesktop.quit();
+            } else if (window.handleLogout && window.currentUser) {
+                window.handleLogout();
+            } else {
+                window.showScreen?.('start-screen');
             }
         });
         [playButton, shopButton, historyMainButton, rankingMainButton, tutorialMainButton, exitMainButton].forEach((button) => {

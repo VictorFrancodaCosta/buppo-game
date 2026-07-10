@@ -2,7 +2,7 @@
 import { CARDS_DB, ACTION_KEYS } from './data.js';
 import { auth, db, loginWithGoogle, logoutGoogle, saveMatchHistoryDB, registrarVitoriaDB, registrarDerrotaDB, registrarEmpateDB, notifyAbandonmentDB } from './firebase_network.js?v=2026.07.06.1';
 import { stringToSeed, shuffle, drawCardLogic as baseDraw, resetUnit, getBestAIMove, checkCardLethality, generateShuffledDeck } from './game_logic.js';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limit, onSnapshot, increment, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limit, onSnapshot, increment, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MODULOS
@@ -158,12 +158,11 @@ const ASSETS_TO_LOAD = {
         'assets/img/logo_buppo.webp', 'assets/img/mesa_cavaleiro.webp', 'assets/img/mesa_mago.webp',
         'assets/img/mesa_arqueiro.webp', 'assets/img/mesa_ladino.webp', 'assets/img/mesa_oraculo.webp',
         'assets/img/profile_asset.webp', 'assets/img/barra_profile.webp', 'assets/img/avatar_moldura_madeira.png',
-        'assets/img/bg_saguao.webp', 'assets/img/bg_saguao_cartas_teste.png', 'assets/img/ui_moldura_perfil.webp', 'assets/img/ui_placa_selecao.webp',
+        'assets/img/bg_saguao_cartas_teste.png', 'assets/img/ui_placa_selecao.webp',
         'assets/img/card_selecao_cavaleiro.webp', 'assets/img/card_selecao_mago.webp',
         'assets/img/card_selecao_arqueiro.webp', 'assets/img/card_selecao_ladino.webp',
         'assets/img/card_selecao_oraculo.webp',
-        'assets/img/deck_verso_cavaleiro.webp', 'assets/img/deck_verso_mago.webp',
-        'assets/img/card_verso_padrao.webp', 'assets/img/ui_mesa_deck.webp', 'assets/img/ui_area_xp.webp',
+        'assets/img/mobile/card_back.png', 'assets/img/ui_area_xp.webp',
         'assets/img/carta_ataque_cavaleiro.webp', 'assets/img/carta_bloqueio_cavaleiro.webp',
         'assets/img/carta_descansar_cavaleiro.webp', 'assets/img/carta_desarmar_cavaleiro.webp',
         'assets/img/carta_treinar_cavaleiro.webp', 'assets/img/carta_ataque_mago.webp',
@@ -188,8 +187,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/botao_sair_loja_ui.png',
         'assets/img/botao_jogar.webp', 'assets/img/botao_historico.webp', 'assets/img/botao_ranking.webp', 'assets/img/botao_arsenal.webp',
         'assets/img/botao_tutorial.webp', 'assets/img/botao_sair.webp', 'assets/img/botao_pvp.webp', 'assets/img/botao_pve.webp',
-        'assets/img/btn_pvp_ranked.webp', 'assets/img/btn_pvp_ranked.webp?v=2',
-        'assets/img/btn_pve_training.webp', 'assets/img/btn_pve_training.webp?v=2',
+        'assets/img/botao_pvp.webp', 'assets/img/botao_pve.webp',
         'assets/img/botaojogarnovamente.webp', 'assets/img/botaosaguao.webp',
         'assets/img/borda_cavaleiro_loja.webp', 'assets/img/borda_mago_loja.webp', 'assets/img/borda_arqueiro_loja.webp',
         'assets/img/borda_ladino_loja.webp', 'assets/img/borda_oraculo_loja.webp',
@@ -210,7 +208,7 @@ const ASSETS_TO_LOAD = {
         'assets/img/borda_mao_dourada_card.webp?v=2026.06.24.5', 'assets/img/borda_visao_astral_card.webp?v=2026.06.24.5',
         'assets/img/moeda_ouro.png', 'assets/img/comprado_title.webp',
         'assets/img/final_vitoria.webp', 'assets/img/final_empate.webp', 'assets/img/final_derrota.webp',
-        'assets/img/cursor_normal.webp', 'assets/img/apple-touch-icon-180.png', 'assets/img/pwa-icon-192.png', 'assets/img/pwa-icon-512.png',
+        'assets/img/apple-touch-icon-180.png', 'assets/img/pwa-icon-192.png', 'assets/img/pwa-icon-512.png',
         'assets/img/pwa-icon-maskable-192.png', 'assets/img/pwa-icon-maskable-512.png'
     ],
     audio: [
@@ -249,6 +247,20 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-tie', src: 'assets/audio/sfx_empate.mp3' }
     ]
 };
+const CRITICAL_PRELOAD_IMAGES = new Set([
+    'assets/img/logo_buppo.webp',
+    'assets/img/bg_saguao_cartas_teste.png',
+    'assets/img/profile_asset.webp',
+    'assets/img/barra_profile.webp',
+    'assets/img/avatar_moldura_madeira.png',
+    'assets/img/botao_jogar.webp',
+    'assets/img/botao_tutorial.webp',
+    'assets/img/botao_sair.webp',
+    'assets/img/botao_pvp.webp',
+    'assets/img/botao_pve.webp',
+    'assets/img/moeda_ouro.png'
+]);
+const CRITICAL_PRELOAD_AUDIO = new Set(['bgm-menu', 'sfx-nav', 'sfx-button', 'sfx-ui-hover']);
 let totalAssets = 1;
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
@@ -453,7 +465,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         const gameId = await generateUniqueGameId(window.currentUser.uid);
         const defaults = normalizeInventoryDefaults([], {});
         const deckLevels = normalizeDeckLevels({});
-        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: defaults.inventory, equippedItems: defaults.equippedItems, deckLevels, lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false } });
+        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: defaults.inventory, equippedItems: defaults.equippedItems, deckLevels, lastSeen: Date.now(), settings: { vol: 0.5, music: true, sfx: true, fullscreen: false, reduceMotion: window.reducedMotionEnabled === true } });
         window.currentPlayerGameId = gameId;
         window.currentLobbyScore = 0;
         window.currentLobbyWins = 0;
@@ -492,6 +504,7 @@ window.goToLobby = async function(isAutoLogin = false) {
             window.musicEnabled = d.settings.music !== undefined ? d.settings.music : true;
             window.sfxEnabled = d.settings.sfx !== undefined ? d.settings.sfx : true;
             window.fullscreenEnabled = d.settings.fullscreen === true;
+            window.applyReducedMotionPreference?.(d.settings.reduceMotion === true);
 
             let slider = document.getElementById('vol-slider'); if(slider) slider.value = window.masterVol;
             let chkM = document.getElementById('check-music'); if(chkM) chkM.checked = window.musicEnabled;
@@ -521,7 +534,11 @@ window.goToLobby = async function(isAutoLogin = false) {
     window.refreshShopInventoryState?.();
     window.renderInventoryItems?.();
     const q = query(collection(db, "players"), orderBy("goldCoins", "desc"));
-    onSnapshot(q, (snapshot) => {
+    if(window.rankingUnsubscribe) {
+        window.rankingUnsubscribe();
+        window.rankingUnsubscribe = null;
+    }
+    window.rankingUnsubscribe = onSnapshot(q, (snapshot) => {
         let html = '<table id="ranking-table"><thead><tr><th>#</th><th>JOGADOR</th><th>OURO</th></tr></thead><tbody>';
         let pos = 1;
         let myRank = null;
@@ -538,10 +555,15 @@ window.goToLobby = async function(isAutoLogin = false) {
         document.getElementById('ranking-content').innerHTML = html;
         window.currentLobbyRank = myRank;
         updateLobbyBottomProfileBar();
+    }, () => {
+        const ranking = document.getElementById('ranking-content');
+        if(ranking) ranking.innerHTML = '<div class="loading-text">Ranking temporariamente indisponível.</div>';
+        window.reportBuppoConnectivityIssue?.('RANKING TEMPORARIAMENTE INDISPONÍVEL');
     });
     if(document.activeElement && document.activeElement.closest && document.activeElement.closest('#end-screen')) document.activeElement.blur();
     window.showScreen('lobby-screen'); document.getElementById('end-screen').classList.remove('visible');
     document.getElementById('btn-config-toggle').style.display = 'flex';
+    window.setTimeout(() => window.applyDeferredBuppoUpdate?.(), 250);
 };
 
 window.startMobileSimpleMatch = function() {
@@ -1122,20 +1144,32 @@ window.upgradeDeckLevel = async function(deckId) {
         window.openModal('OURO INSUFICIENTE', `VOCE PRECISA DE ${cost} OURO PARA ELEVAR ESTE DECK.`, ['OK']);
         return;
     }
-    const nextDeckLevels = normalizeDeckLevels({ ...(window.playerDeckLevels || {}), [deckId]: level + 1 });
-    const nextInventory = normalizeInventoryDefaults(window.playerInventory || [], window.equippedItems || {}).inventory;
-    const nextGold = Math.max(0, (window.currentGoldCoins || 0) - cost);
     try {
         const userRef = doc(db, "players", window.currentUser.uid);
-        await updateDoc(userRef, { goldCoins: nextGold, inventory: nextInventory, deckLevels: nextDeckLevels });
-        updateLobbyGoldWallet(nextGold);
-        updatePlayerInventoryState(nextInventory, window.equippedItems || {}, nextDeckLevels);
+        const result = await runTransaction(db, async (transaction) => {
+            const snapshot = await transaction.get(userRef);
+            if(!snapshot.exists()) throw new Error('PLAYER_NOT_FOUND');
+            const data = snapshot.data();
+            const serverLevels = normalizeDeckLevels(data.deckLevels || {});
+            const serverLevel = Math.max(1, Number(serverLevels[deckId]) || 1);
+            const serverCost = getDeckUpgradeCostByLevel(serverLevel);
+            const serverGold = Math.max(0, Number(data.goldCoins) || 0);
+            if(serverGold < serverCost) throw new Error('INSUFFICIENT_GOLD');
+            const nextDeckLevels = normalizeDeckLevels({ ...serverLevels, [deckId]: serverLevel + 1 });
+            const normalized = normalizeInventoryDefaults(data.inventory || [], data.equippedItems || {});
+            const nextGold = serverGold - serverCost;
+            transaction.update(userRef, { goldCoins: nextGold, inventory: normalized.inventory, deckLevels: nextDeckLevels });
+            return { nextGold, nextInventory: normalized.inventory, nextEquippedItems: normalized.equippedItems, nextDeckLevels };
+        });
+        updateLobbyGoldWallet(result.nextGold);
+        updatePlayerInventoryState(result.nextInventory, result.nextEquippedItems, result.nextDeckLevels);
         window.syncLobbyShopGold?.();
         window.renderLobbyShopItems?.();
         window.refreshShopInventoryState?.();
         playSound('sfx-levelup');
         window.triggerDeckUpgradeFeedback?.(deckId);
     } catch(e) {
+        if(e?.message === 'INSUFFICIENT_GOLD') window.openModal('OURO INSUFICIENTE', 'SEU SALDO FOI ATUALIZADO. CONFIRA O VALOR NO SAGUÃO.', ['OK']);
         console.error("Erro ao melhorar deck:", e);
     }
 };
@@ -1148,16 +1182,27 @@ window.purchaseShopItem = async function(itemId) {
         window.openModal('OURO INSUFICIENTE', `VOCÊ PRECISA DE ${price} OURO.`, ['OK']);
         return;
     }
-    const nextInventory = [...new Set([...(window.playerInventory || []), itemId])];
-    const nextGold = Math.max(0, (window.currentGoldCoins || 0) - price);
     try {
         const userRef = doc(db, "players", window.currentUser.uid);
-        await updateDoc(userRef, { goldCoins: nextGold, inventory: nextInventory });
-        updateLobbyGoldWallet(nextGold);
-        updatePlayerInventoryState(nextInventory, window.equippedItems || {});
+        const result = await runTransaction(db, async (transaction) => {
+            const snapshot = await transaction.get(userRef);
+            if(!snapshot.exists()) throw new Error('PLAYER_NOT_FOUND');
+            const data = snapshot.data();
+            const normalized = normalizeInventoryDefaults(data.inventory || [], data.equippedItems || {});
+            const serverGold = Math.max(0, Number(data.goldCoins) || 0);
+            if(normalized.inventory.includes(itemId)) return { nextGold: serverGold, nextInventory: normalized.inventory, nextEquippedItems: normalized.equippedItems, alreadyOwned: true };
+            if(serverGold < price) throw new Error('INSUFFICIENT_GOLD');
+            const nextInventory = [...new Set([...normalized.inventory, itemId])];
+            const nextGold = serverGold - price;
+            transaction.update(userRef, { goldCoins: nextGold, inventory: nextInventory });
+            return { nextGold, nextInventory, nextEquippedItems: normalized.equippedItems, alreadyOwned: false };
+        });
+        updateLobbyGoldWallet(result.nextGold);
+        updatePlayerInventoryState(result.nextInventory, result.nextEquippedItems);
         window.syncLobbyShopGold?.();
         window.refreshShopInventoryState?.();
     } catch(e) {
+        if(e?.message === 'INSUFFICIENT_GOLD') window.openModal('OURO INSUFICIENTE', 'SEU SALDO FOI ATUALIZADO. CONFIRA O VALOR NO SAGUÃO.', ['OK']);
         console.error("Erro ao comprar item:", e);
     }
 };
@@ -1390,8 +1435,8 @@ function renderFriendsList(friends = [], requests = []) {
         const presence = getPresenceState(friend);
         const safeName = escapeHTML(getPlayerFirstName(friend.name));
         const safeId = escapeHTML(friend.gameId || '----');
-        return `<div class="friend-row ${presence.clickable ? 'online' : ''}" data-friend-uid="${escapeHTML(friend.uid)}" data-friend-name="${safeName}" data-can-invite="${presence.clickable ? '1' : '0'}">
-            <span class="friend-status-dot ${presence.status}"></span>
+        return `<div class="friend-row ${presence.clickable ? 'online' : ''}" role="button" tabindex="0" aria-label="${safeName}, ${presence.label}" data-friend-uid="${escapeHTML(friend.uid)}" data-friend-name="${safeName}" data-can-invite="${presence.clickable ? '1' : '0'}">
+            <span class="friend-status-dot ${presence.status}" aria-hidden="true"></span>
             <div class="friend-main">
                 <div class="friend-name">${safeName}</div>
                 <div class="friend-meta">#${safeId} - ${presence.label}</div>
@@ -1400,9 +1445,15 @@ function renderFriendsList(friends = [], requests = []) {
     }).join('')}` : '';
     list.innerHTML = requestsHtml + friendsHtml;
     list.querySelectorAll('.friend-row').forEach(row => {
-        row.addEventListener('click', (e) => {
+        const openActions = (e) => {
             e.stopPropagation();
             showFriendActionPopover(row);
+        };
+        row.addEventListener('click', openActions);
+        row.addEventListener('keydown', (event) => {
+            if(event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            openActions(event);
         });
     });
 }
@@ -1767,6 +1818,7 @@ function startGameFlow() {
     document.getElementById('end-screen').classList.remove('visible');
     window.isProcessing = false; window.isResolvingTurn = false; window.pvpSelectedCardIndex = null;
     window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.turnResolutionLocked = false;
+    window.matchSettlementId = window.currentMatchId || `pve_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
     startCinematicLoop(); window.isMatchStarting = true;
     const handEl = document.getElementById('player-hand'); if (handEl) { handEl.innerHTML = ''; handEl.classList.add('preparing'); }
     if (window.gameMode === 'pvp' && window.pvpStartData) {
@@ -1942,6 +1994,9 @@ function startPvPListener() {
                 }
             }
         }
+    }, () => {
+        showPvPStatus('RECONECTANDO...');
+        window.reportBuppoConnectivityIssue?.('CONEXÃO DA PARTIDA INTERROMPIDA • RECONECTANDO');
     });
 }
 
@@ -2762,6 +2817,7 @@ async function saveMatchHistory(result, pointsChange) {
     stats.goldEarned = Math.max(0, window.matchRewardGold || 0);
     stats.goldLost = Math.max(0, window.opponentMatchRewardGold || 0);
     await saveMatchHistoryDB(window.currentUser, enemyName, window.gameMode, window.currentDeck, pointsChange, result, {
+        settlementId: window.matchSettlementId || null,
         deckLevel: Math.max(1, Number(player.deckLevel || window.currentDeckLevel) || 1),
         opponentDeck: window.opponentDeck || monster.deckType || null,
         opponentDeckLevel: Math.max(1, Number(monster.deckLevel || window.opponentDeckLevel) || 1),
@@ -2775,9 +2831,10 @@ async function saveMatchHistory(result, pointsChange) {
 window.registrarVitoriaOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
-    const reward = await registrarVitoriaDB(window.currentUser, modoAtual, getVictoryGoldReward(modoAtual), 0);
-    window.currentLobbyWins = Math.max(0, Number(window.currentLobbyWins) || 0) + 1;
-    if(Number.isFinite(reward.gold)) updateLobbyGoldWallet((window.currentGoldCoins || 0) + reward.gold);
+    const reward = await registrarVitoriaDB(window.currentUser, modoAtual, getVictoryGoldReward(modoAtual), 0, window.matchSettlementId);
+    window.currentLobbyWins = Number.isFinite(reward.totalWins) ? reward.totalWins : Math.max(0, Number(window.currentLobbyWins) || 0) + (reward.duplicate ? 0 : 1);
+    if(Number.isFinite(reward.totalGold)) updateLobbyGoldWallet(reward.totalGold);
+    else if(Number.isFinite(reward.gold) && !reward.duplicate) updateLobbyGoldWallet((window.currentGoldCoins || 0) + reward.gold);
     if(Number.isFinite(reward.profileLevel) && Number.isFinite(reward.profileXp)) updateLobbyProfileProgress(reward.profileLevel, reward.profileXp);
     if((reward.gold || 0) > 0) await saveMatchHistory('WIN', reward.gold);
 };
@@ -2785,8 +2842,9 @@ window.registrarVitoriaOnline = async function(modo = 'pve') {
 window.registrarDerrotaOnline = async function(modo = 'pve') {
     if(!window.currentUser) return;
     let modoAtual = (window.gameMode === 'pvp' || modo === 'pvp') ? 'pvp' : 'pve';
-    const result = await registrarDerrotaDB(window.currentUser, modoAtual, window.opponentMatchRewardGold || 0);
-    if(Number.isFinite(result.goldLost)) updateLobbyGoldWallet((window.currentGoldCoins || 0) - result.goldLost);
+    const result = await registrarDerrotaDB(window.currentUser, modoAtual, window.opponentMatchRewardGold || 0, window.matchSettlementId);
+    if(Number.isFinite(result.totalGold)) updateLobbyGoldWallet(result.totalGold);
+    else if(Number.isFinite(result.goldLost) && !result.duplicate) updateLobbyGoldWallet((window.currentGoldCoins || 0) - result.goldLost);
     await saveMatchHistory('LOSS', -(result.goldLost || 0));
 };
 
@@ -2863,9 +2921,7 @@ function withRuntimeVersion(src) {
 
 function preloadSourceVariants(src) {
     if(!src || /^(data:|blob:)/i.test(src)) return [];
-    const exact = src;
-    const versioned = withRuntimeVersion(src);
-    return [...new Set([exact, versioned])];
+    return [src];
 }
 
 function preloadImage(src, markDone) {
@@ -2928,14 +2984,35 @@ function preloadGame() {
     preloadFinished = false;
     window.gameAssets = [];
     window.initialPreloadComplete = false;
-    const imageSources = [...new Set(ASSETS_TO_LOAD.images.flatMap(preloadSourceVariants))];
-    totalAssets = imageSources.length + ASSETS_TO_LOAD.audio.length + 1;
+    const imageSources = [...new Set(ASSETS_TO_LOAD.images.filter(src => CRITICAL_PRELOAD_IMAGES.has(src.split('?')[0])).flatMap(preloadSourceVariants))];
+    const audioSources = ASSETS_TO_LOAD.audio.filter(asset => CRITICAL_PRELOAD_AUDIO.has(asset.id));
+    totalAssets = imageSources.length + audioSources.length + 1;
     const fill = document.getElementById('loader-fill');
     if(fill) fill.style.width = '0%';
 
     imageSources.forEach(src => preloadImage(src, updateLoader));
-    ASSETS_TO_LOAD.audio.forEach(asset => preloadAudioAsset(asset, updateLoader));
+    audioSources.forEach(asset => preloadAudioAsset(asset, updateLoader));
     preloadFonts(updateLoader);
+}
+
+function queueDeferredImagePreload() {
+    const pending = [...new Set(ASSETS_TO_LOAD.images.map(src => src.split('?')[0]).filter(src => !CRITICAL_PRELOAD_IMAGES.has(src)))];
+    let active = 0;
+    const pump = () => {
+        while(active < 4 && pending.length) {
+            active++;
+            const img = new Image();
+            const finish = () => {
+                active--;
+                window.setTimeout(pump, 24);
+            };
+            img.onload = finish;
+            img.onerror = finish;
+            img.src = pending.shift();
+        }
+    };
+    const schedule = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 800));
+    schedule(pump, { timeout: 2500 });
 }
 
 let desktopUpdateWaiters = [];
@@ -2983,7 +3060,8 @@ function setupDesktopUpdaterBridge() {
         } else if(status.state === 'progress') {
             setLoaderText(`BAIXANDO ATUALIZACAO... ${percent}%`);
         } else if(status.state === 'downloaded') {
-            setLoaderText('INSTALANDO ATUALIZACAO...');
+            setLoaderText('ATUALIZAÇÃO PRONTA PARA A PRÓXIMA ABERTURA');
+            resolveDesktopUpdateWaiters();
         } else if(status.state === 'not-available' || status.state === 'error' || status.state === 'disabled') {
             resolveDesktopUpdateWaiters();
         }
@@ -3006,17 +3084,9 @@ function waitForDesktopUpdateCheck() {
 async function refreshRuntimeCaches() {
     try {
         await waitForDesktopUpdateCheck();
-        setLoaderText('VERIFICANDO CACHE...');
-        if('serviceWorker' in navigator) {
-            const regs = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(regs.map(reg => reg.unregister().catch(()=>{})));
-        }
-        if(window.caches && caches.keys) {
-            const keys = await caches.keys();
-            await Promise.all(keys.map(key => caches.delete(key).catch(()=>{})));
-        }
+        setLoaderText('PREPARANDO RECURSOS...');
     } catch(e) {
-        console.warn('Atualizacao de cache ignorada:', e);
+        console.warn('Preparação de recursos ignorada:', e);
     } finally {
         setLoaderText('CARREGANDO RECURSOS...');
         window.cacheRefreshComplete = true;
@@ -3035,6 +3105,7 @@ function updateLoader() {
             const loading = document.getElementById('loading-screen');
             if(loading) { loading.style.opacity = '0'; setTimeout(() => loading.style.display = 'none', 500); }
             if(!window.hoverLogicInitialized) { initGlobalHoverLogic(); window.hoverLogicInitialized = true; }
+            queueDeferredImagePreload();
         }, 800);
     }
 }
@@ -3043,7 +3114,7 @@ window.onload = function() {
     initClusterRewardTooltips();
     const deckScreen = document.getElementById('deck-selection-screen');
     if (deckScreen) {
-        let backBtn = deckScreen.querySelector('.btn-back') || deckScreen.querySelector('.circle-btn') || deckScreen.querySelector('button');
+        let backBtn = deckScreen.querySelector('.btn-back') || deckScreen.querySelector('.return-btn');
         if (backBtn) {
             backBtn.style.zIndex = "9999"; backBtn.style.pointerEvents = "all";
             backBtn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); window.playNavSound(); window.transitionToLobby(true); };
@@ -3052,7 +3123,7 @@ window.onload = function() {
 };
 
 document.addEventListener('click', function(e) {
-    const target = e.target.closest('#deck-selection-screen .circle-btn, #deck-selection-screen .btn-back, #deck-selection-screen button, .return-btn');
+    const target = e.target.closest('#deck-selection-screen .btn-back, #deck-selection-screen .return-btn');
     if (target) { e.stopPropagation(); window.playNavSound(); window.transitionToLobby(true); }
 });
 
@@ -3694,7 +3765,7 @@ function updateUnit(u) {
 
     if(u === player) {
         let deckImgEl = document.getElementById('p-deck-img');
-        if(window.currentDeck === 'mage') deckImgEl.src = MAGE_ASSETS.DECK_IMG; else deckImgEl.src = 'assets/img/deck_verso_cavaleiro.webp';
+        if(window.currentDeck === 'mage') deckImgEl.src = MAGE_ASSETS.DECK_IMG; else deckImgEl.src = 'assets/img/mobile/card_back.png';
         let hc=document.getElementById('player-hand'); hc.innerHTML='';
         if (window.isProcessing || window.turnResolutionLocked) hc.style.pointerEvents = 'none'; else hc.style.pointerEvents = 'auto';
         const touchLayout = isTouchLayout();
@@ -3787,7 +3858,7 @@ window.saveAudioSettings = async function() {
     if (!window.currentUser) return;
     try {
         const userRef = doc(db, "players", window.currentUser.uid);
-        await updateDoc(userRef, { settings: { vol: window.masterVol, music: window.musicEnabled, sfx: window.sfxEnabled, fullscreen: window.fullscreenEnabled === true } });
+        await updateDoc(userRef, { settings: { vol: window.masterVol, music: window.musicEnabled, sfx: window.sfxEnabled, fullscreen: window.fullscreenEnabled === true, reduceMotion: window.reducedMotionEnabled === true } });
     } catch(e) { console.error("Erro ao salvar config", e); }
 }
 

@@ -2,10 +2,14 @@
   "name": "buppo-game",
   "version": "0.1.1",
   "description": "BUPPO desktop build",
+  "type": "module",
   "main": "desktop/main.cjs",
   "private": true,
   "scripts": {
     "desktop": "electron .",
+    "test": "node --test tests/game_logic.test.js",
+    "validate:assets": "node scripts/validate-assets.mjs",
+    "check": "npm run validate:assets && npm test",
     "dist:win": "electron-builder --win nsis portable",
     "dist:win:installer": "electron-builder --win nsis"
   },

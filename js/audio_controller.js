@@ -43,6 +43,7 @@ const CORE_AUDIO_ASSETS = [
     { id: 'sfx-lose', src: 'assets/audio/sfx_derrota.mp3' },
     { id: 'sfx-tie', src: 'assets/audio/sfx_empate.mp3' }
 ];
+const EAGER_AUDIO_IDS = new Set(['bgm-menu', 'sfx-nav', 'sfx-button', 'sfx-ui-hover']);
 
 let lastHoverTime = 0;
 let lastLobbyButtonHoverTime = 0;
@@ -85,7 +86,7 @@ function ensureAudioRegistry() {
         }
         const audio = new Audio();
         audio.src = withBuildVersion(asset.src);
-        audio.preload = 'auto';
+        audio.preload = EAGER_AUDIO_IDS.has(asset.id) ? 'metadata' : 'none';
         audio.loop = asset.loop === true;
         audios[asset.id] = registerAudioNode(audio, asset.id);
         setAudioVolume(asset.id, audio);

@@ -2,3 +2,7 @@ node_modules/
 dist-desktop/
 .desktop-tools/
 npm-debug.log*
+tmp/
+_codex_contact_sheets/
+.codex_restore_backup_*/
+*.log

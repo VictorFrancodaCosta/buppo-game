@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUPPO | Sem conexão</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at top, #3b2115, #080403 68%); color: #fff; font-family: Arial, sans-serif; text-align: center; }
+        main { width: min(92vw, 540px); padding: 34px; border: 3px solid #ffd700; border-radius: 24px; background: rgba(25, 12, 7, 0.94); box-shadow: 0 24px 55px #000; }
+        img { width: min(300px, 75vw); height: auto; }
+        h1 { margin: 18px 0 10px; color: #ffd700; }
+        p { line-height: 1.55; color: rgba(255,255,255,.86); }
+        button { margin-top: 14px; padding: 13px 24px; border: 2px solid #fff; border-radius: 999px; background: #d99a19; color: #261006; font-weight: 900; cursor: pointer; }
+        button:focus-visible { outline: 3px solid #fff5a8; outline-offset: 4px; }
+    </style>
+</head>
+<body>
+    <main>
+        <img src="assets/img/logo_buppo.webp" alt="BUPPO">
+        <h1>SEM CONEXÃO</h1>
+        <p>O BUPPO não conseguiu acessar a internet. Reconecte-se para entrar, sincronizar seu perfil e disputar partidas online.</p>
+        <button type="button" onclick="location.reload()">TENTAR NOVAMENTE</button>
+    </main>
+</body>
+</html>

@@ -54,8 +54,9 @@ function startLocalServer() {
       const decodedPath = decodeURIComponent(requestUrl.pathname);
       const relativePath = decodedPath === '/' ? 'index.html' : decodedPath.replace(/^\/+/, '');
       const requestedPath = path.normalize(path.join(rootDir, relativePath));
+      const pathInsideRoot = path.relative(rootDir, requestedPath);
 
-      if (!requestedPath.startsWith(rootDir)) {
+      if (pathInsideRoot.startsWith('..') || path.isAbsolute(pathInsideRoot)) {
         res.writeHead(403);
         res.end('Forbidden');
         return;
@@ -71,7 +72,11 @@ function startLocalServer() {
         const ext = path.extname(requestedPath).toLowerCase();
         res.writeHead(200, {
           'Content-Type': mimeTypes[ext] || 'application/octet-stream',
-          'Cache-Control': 'no-store'
+          'Cache-Control': 'no-store',
+          'X-Content-Type-Options': 'nosniff',
+          'Referrer-Policy': 'no-referrer',
+          'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+          'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
         });
         res.end(data);
       });
@@ -124,13 +129,6 @@ function setupAutoUpdater(win) {
 
   autoUpdater.on('update-downloaded', () => {
     sendUpdateStatus({ state: 'downloaded' });
-    setTimeout(() => {
-      try {
-        autoUpdater.quitAndInstall(false, true);
-      } catch (e) {
-        sendUpdateStatus({ state: 'error', message: e.message });
-      }
-    }, 900);
   });
 
   autoUpdater.on('error', (error) => {
@@ -162,7 +160,7 @@ async function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: true,
       nativeWindowOpen: true,
       preload: path.join(__dirname, 'preload.cjs'),
       partition: 'persist:buppo'
@@ -186,7 +184,7 @@ async function createWindow() {
           webPreferences: {
             contextIsolation: true,
             nodeIntegration: false,
-            sandbox: false,
+            sandbox: true,
             preload: path.join(__dirname, 'preload.cjs'),
             partition: 'persist:buppo'
           }

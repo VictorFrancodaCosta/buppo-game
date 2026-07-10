@@ -3,7 +3,7 @@
 <head>
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BUPPO</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="css/lobby.css?v=2026.06.20.1">
     <link rel="stylesheet" href="css/game.css?v=2026.06.26.4">
     <link rel="stylesheet" href="css/effects.css?v=2026.06.22.4">
+    <link rel="stylesheet" href="css/accessibility.css?v=2026.07.10.2">
 
     <link rel="icon" type="image/webp" href="assets/img/logo_buppo.webp">
     <link rel="manifest" href="manifest.json">
@@ -25,7 +26,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BUPPO">
     <script>
-        window.BUPPO_BUILD_VERSION = '2026.06.26.4';
+        window.BUPPO_BUILD_VERSION = '2026.07.10.2';
     </script>
     <script>
         (function () {
@@ -90,9 +91,9 @@
     
     <div id="game-container">
         <div id="top-left-controls">
-            <div class="circle-btn" onclick="window.toggleConfig()" id="btn-config-toggle" title="Configurações">
+            <button class="circle-btn" type="button" onclick="window.toggleConfig()" id="btn-config-toggle" title="Configurações" aria-label="Abrir configurações">
                 <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.49l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c-0.24,0-0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
-            </div>
+            </button>
         </div>
 
         <button id="btn-fullscreen" type="button" onclick="toggleFullScreen()" aria-label="Tela cheia"></button>
@@ -102,7 +103,8 @@
             <img src="assets/img/logo_buppo.webp" alt="BUPPO LOGO" class="game-logo">
             <button id="btn-mobile-play" type="button" onclick="window.startMobileSimpleMatch()">JOGAR</button>
             <button id="btn-login" onclick="googleLogin()"><span id="btn-text">LOGIN COM GOOGLE</span></button>
-            <p id="login-status" style="color: #888; font-family: 'Montserrat'; font-size: 12px; margin-top:-20px;"></p>
+            <button id="btn-start-tutorial" type="button">COMO JOGAR</button>
+            <p id="login-status" role="status" aria-live="polite" style="color: #aaa; font-family: 'Montserrat'; font-size: 12px; margin-top:-20px;"></p>
         </div>
 
         <div id="lobby-screen" class="screen">
@@ -127,7 +129,7 @@
                 </div>
             </aside>
             <div class="lobby-frame-container">
-                <img src="assets/img/ui_moldura_perfil.webp" class="lobby-frame-img">
+                <img src="assets/img/profile_asset.webp" alt="Perfil do jogador" class="lobby-frame-img">
                 <div class="lobby-ui-overlay">
                     <div class="lobby-player-card">
                         <div class="lobby-avatar" id="lobby-avatar">B</div>
@@ -161,7 +163,7 @@
 
         <div id="add-friend-screen" class="modal-overlay">
             <div class="modal-box add-friend-box">
-            <h2 class="cfg-title">CONFIGURAÇÕES</h2>
+            <h2 class="cfg-title">ADICIONAR AMIGO</h2>
                 <p class="add-friend-copy">Digite o ID do jogador</p>
                 <input id="friend-id-input" class="friend-id-input" maxlength="8" placeholder="#ABCD">
                 <div id="friend-add-status" class="friend-add-status"></div>
@@ -179,8 +181,8 @@
 
         <div id="friend-invite-screen" class="modal-overlay">
             <div class="modal-box add-friend-box">
-            <h2 class="cfg-title">CONFIGURAÇÕES</h2>
-                <p id="friend-invite-text" class="add-friend-copy">Jogador est? te convidando para uma partida.</p>
+            <h2 class="cfg-title">CONVITE DE PARTIDA</h2>
+                <p id="friend-invite-text" class="add-friend-copy">Um jogador está convidando você para uma partida.</p>
                 <div class="modal-btns">
                     <button class="mini-btn" onclick="window.acceptFriendInvite()">ACEITAR</button>
                     <button class="mini-btn cancel-btn" onclick="window.declineFriendInvite()">RECUSAR</button>
@@ -191,8 +193,8 @@
         <div id="deck-selection-screen" class="screen">
            <img src="assets/img/ui_placa_selecao.webp" alt="Selecione seu Deck" class="img-titulo-placa">
             <div class="deck-options-container">
-                <div class="deck-option" onclick="selectDeck('knight')" data-name="Forjado pela honra, guiado pela espada"><img src="assets/img/card_selecao_cavaleiro.webp" alt="Deck Cavaleiro"></div>
-                <div class="deck-option" onclick="selectDeck('mage')" data-name="Magia em estado puro"><img src="assets/img/card_selecao_mago.webp" alt="Deck Mago"></div>
+                <button class="deck-option" type="button" onclick="selectDeck('knight')" data-name="Forjado pela honra, guiado pela espada" aria-label="Selecionar deck Cavaleiro"><img src="assets/img/card_selecao_cavaleiro.webp" alt="Deck Cavaleiro"></button>
+                <button class="deck-option" type="button" onclick="selectDeck('mage')" data-name="Magia em estado puro" aria-label="Selecionar deck Mago"><img src="assets/img/card_selecao_mago.webp" alt="Deck Mago"></button>
             </div>
             <button class="return-btn" onclick="playNavSound(); window.goToLobby()">VOLTAR AO SAGUÃO</button>
         </div>
@@ -218,7 +220,7 @@
                 <div class="lvl-circle" id="m-lvl">1</div>
                 <div class="unit-info">
                     <span class="unit-name" style="color:var(--accent-red)">INIMIGO</span>
-                    <div class="hp-tube"><div class="hp-liquid" id="m-hp-fill" style="background: #ff7675;"></div><span class="hp-txt" id="m-hp-txt">6/6</span></div>
+                <div class="hp-tube" id="m-hp-bar" role="progressbar" aria-label="Vida do oponente" aria-valuemin="0" aria-valuemax="6" aria-valuenow="6"><div class="hp-liquid" id="m-hp-fill" style="background: #ff7675;"></div><span class="hp-txt" id="m-hp-txt">6/6</span></div>
                     <div class="mastery-row" id="m-masteries" style="justify-content: flex-end;"></div>
                 </div>
             </div>
@@ -226,13 +228,13 @@
                 <div class="lvl-circle" id="p-lvl">1</div>
                 <div class="unit-info">
                     <span class="unit-name" style="color:var(--accent-blue)">VOCÊ</span>
-                    <div class="hp-tube"><div class="hp-liquid" id="p-hp-fill" style="background: #00cec9;"></div><span class="hp-txt" id="p-hp-txt">6/6</span></div>
+                    <div class="hp-tube" id="p-hp-bar" role="progressbar" aria-label="Sua vida" aria-valuemin="0" aria-valuemax="6" aria-valuenow="6"><div class="hp-liquid" id="p-hp-fill" style="background: #00cec9;"></div><span class="hp-txt" id="p-hp-txt">6/6</span></div>
                     <div class="mastery-row" id="p-masteries"></div>
                 </div>
             </div>
             <div class="xp-area" id="p-xp"></div>
             <div id="p-deck-container">
-                <img src="assets/img/deck_verso_cavaleiro.webp" alt="Deck" id="p-deck-img">
+                <img src="assets/img/mobile/card_back.png" alt="Deck" id="p-deck-img">
                 <div class="deck-count" id="p-deck-count">30</div>
             </div>
             <div class="middle-area">
@@ -267,6 +269,11 @@
                     <span class="checkmark" id="chk-fullscreen-mark"></span>
                     TELA CHEIA
                 </label>
+                <label class="cfg-check-container">
+                    <input type="checkbox" id="check-reduced-motion" onchange="window.toggleReducedMotionPreference?.()">
+                    <span class="checkmark" id="chk-reduced-motion-mark"></span>
+                    REDUZIR ANIMAÇÕES
+                </label>
             </div>
             <div id="abandon-area" style="display: none; width: 100%;">
                 <hr class="cfg-hr">
@@ -283,12 +290,14 @@
         </div>
     </div>
 
-    <div id="tooltip-box"><h3 id="tt-title"></h3><div id="tt-content"></div></div>
+    <div id="tooltip-box" role="tooltip"><h3 id="tt-title"></h3><div id="tt-content"></div></div>
     <div id="modal-overlay" class="modal-overlay" onclick="cancelModal()"><div class="modal-box" onclick="event.stopPropagation()"><h2 id="modal-title"></h2><p id="modal-desc"></p><div class="modal-btns" id="modal-btns"></div></div></div>
 
     <script src="js/effects.js?v=2026.07.06.2"></script> 
+    <script type="module" src="js/app_shell.js?v=2026.07.10.2"></script>
     <script type="module" src="js/mobile_simple.js?v=2026.06.30.1"></script>
     <script type="module" src="js/main.js?v=2026.07.06.1"></script>
+    <script type="module" src="js/pwa.js?v=2026.07.10.2"></script>
 </body>
 </html>
 

@@ -8,7 +8,7 @@ export const MAGE_ASSETS = {
     'DESCANSAR': 'assets/img/carta_descansar_mago.webp',
     'DESARMAR': 'assets/img/carta_desarmar_mago.webp',
     'TREINAR': 'assets/img/carta_treinar_mago.webp',
-    'DECK_IMG': 'assets/img/deck_verso_mago.webp',
+    'DECK_IMG': 'assets/img/mobile/card_back.png',
     'DECK_SELECT': 'assets/img/card_selecao_mago.webp'
 };
 

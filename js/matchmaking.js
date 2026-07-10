@@ -1,6 +1,6 @@
 // ARQUIVO: js/matchmaking.js
 import { db } from './firebase_network.js';
-import { doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, setDoc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { generateShuffledDeck } from './game_logic.js';
 
 export let matchTimerInterval = null;
@@ -29,6 +29,8 @@ export async function initiateMatchmaking() {
         await setDoc(myQueueRef, myData);
         queueListener = onSnapshot(myQueueRef, (docSnap) => {
             if (docSnap.exists()) { const data = docSnap.data(); if (data.matchId) enterMatch(data.matchId); }
+        }, () => {
+            window.reportBuppoConnectivityIssue?.('CONEXÃO COM A FILA INTERROMPIDA');
         });
         if (searchInterval) clearInterval(searchInterval);
         findOpponentInQueue();
@@ -52,6 +54,7 @@ async function findOpponentInQueue() {
         for (const docSnap of querySnapshot.docs) {
             const data = docSnap.data();
             if (data.uid === window.currentUser.uid || data.matchId !== null || data.cancelled === true) continue;
+            if(data.status && data.status !== 'waiting') continue;
             if (now - data.timestamp > 120000) continue;
             const opponentLevel = Math.max(1, Number(data.deckLevel || 1));
             const levelGap = Math.abs(opponentLevel - myDeckLevel);
@@ -63,19 +66,34 @@ async function findOpponentInQueue() {
             }
         }
         if (opponentDoc) {
-            if (searchInterval) clearInterval(searchInterval);
             const matchId = "match_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
             const oppRef = opponentDoc.ref;
             const p1DeckCards = generateShuffledDeck(); const p2DeckCards = generateShuffledDeck();
-            await createMatchDocument(matchId, window.currentUser.uid, opponentDoc.data().uid, window.currentUser.displayName, opponentDoc.data().name, window.currentPlayerGameId || null, opponentDoc.data().gameId || null, window.currentDeck, opponentDoc.data().deck, window.getDeckLevelByType?.(window.currentDeck) || 1, opponentDoc.data().deckLevel || 1, window.getClassEquipmentByDeckType?.(window.currentDeck) || {}, window.getClassEquipmentByDeckType?.(opponentDoc.data().deck) || {}, p1DeckCards, p2DeckCards);
-            await updateDoc(oppRef, { matchId: matchId });
-            if (myQueueRef) await updateDoc(myQueueRef, { matchId: matchId });
+            const matchRef = doc(db, "matches", matchId);
+            await runTransaction(db, async (transaction) => {
+                if(!myQueueRef) throw new Error('QUEUE_CANCELLED');
+                const [mineSnap, opponentSnap] = await Promise.all([transaction.get(myQueueRef), transaction.get(oppRef)]);
+                if(!mineSnap.exists() || !opponentSnap.exists()) throw new Error('QUEUE_ENTRY_MISSING');
+                const mine = mineSnap.data();
+                const opponent = opponentSnap.data();
+                const isWaiting = (entry) => entry.cancelled !== true && !entry.matchId && (!entry.status || entry.status === 'waiting');
+                if(!isWaiting(mine) || !isWaiting(opponent)) throw new Error('ALREADY_CLAIMED');
+                const matchData = buildMatchDocumentData(matchId, mine.uid, opponent.uid, mine.name, opponent.name, mine.gameId, opponent.gameId, mine.deck, opponent.deck, mine.deckLevel, opponent.deckLevel, mine.equippedItems, opponent.equippedItems, p1DeckCards, p2DeckCards);
+                transaction.set(matchRef, matchData);
+                transaction.update(myQueueRef, { matchId, status: 'matched', matchedAt: Date.now() });
+                transaction.update(oppRef, { matchId, status: 'matched', matchedAt: Date.now() });
+            });
+            if (searchInterval) clearInterval(searchInterval);
         }
-    } catch (e) { console.error("Erro ao buscar oponente:", e); }
+    } catch (e) {
+        if(!['ALREADY_CLAIMED', 'QUEUE_CANCELLED', 'QUEUE_ENTRY_MISSING'].includes(e?.message)) {
+            console.error("Erro ao buscar oponente:", e);
+            window.reportBuppoConnectivityIssue?.('NÃO FOI POSSÍVEL CONSULTAR A FILA');
+        }
+    }
 }
 
-async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1GameId, p2GameId, p1DeckType, p2DeckType, p1DeckLevel, p2DeckLevel, p1EquippedItems, p2EquippedItems, p1DeckCards, p2DeckCards) {
-    const matchRef = doc(db, "matches", matchId);
+function buildMatchDocumentData(matchId, p1Id, p2Id, p1Name, p2Name, p1GameId, p2GameId, p1DeckType, p2DeckType, p1DeckLevel, p2DeckLevel, p1EquippedItems, p2EquippedItems, p1DeckCards, p2DeckCards) {
     const cleanName1 = p1Name ? p1Name.split(' ')[0].toUpperCase() : "JOGADOR 1"; const cleanName2 = p2Name ? p2Name.split(' ')[0].toUpperCase() : "JOGADOR 2";
     const d1Type = p1DeckType || null; const d2Type = p2DeckType || null;
     const p1Hand = []; const p2Hand = [];
@@ -84,11 +102,12 @@ async function createMatchDocument(matchId, p1Id, p2Id, p1Name, p2Name, p1GameId
         if(p2DeckCards.length > 0) p2Hand.push(p2DeckCards.pop());
     }
     p1Hand.sort(); p2Hand.sort();
-    await setDoc(matchRef, {
-        player1: { uid: p1Id, name: cleanName1, gameId: p1GameId || null, deckType: d1Type, deckLevel: Math.max(1, Number(p1DeckLevel) || 1), equippedItems: window.getClassEquipmentByDeckType?.(d1Type) || { ...(p1EquippedItems || {}) }, hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
-        player2: { uid: p2Id, name: cleanName2, gameId: p2GameId || null, deckType: d2Type, deckLevel: Math.max(1, Number(p2DeckLevel) || 1), equippedItems: window.getClassEquipmentByDeckType?.(d2Type) || { ...(p2EquippedItems || {}) }, hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
+    return {
+        id: matchId,
+        player1: { uid: p1Id, name: cleanName1, gameId: p1GameId || null, deckType: d1Type, deckLevel: Math.max(1, Number(p1DeckLevel) || 1), equippedItems: { ...(p1EquippedItems || {}) }, hp: 6, status: 'selecting', hand: p1Hand, deck: p1DeckCards, xp: [] },
+        player2: { uid: p2Id, name: cleanName2, gameId: p2GameId || null, deckType: d2Type, deckLevel: Math.max(1, Number(p2DeckLevel) || 1), equippedItems: { ...(p2EquippedItems || {}) }, hp: 6, status: 'selecting', hand: p2Hand, deck: p2DeckCards, xp: [] },
         turn: 1, status: 'playing', createdAt: Date.now()
-    });
+    };
 }
 
 window.cancelPvPSearch = async function() {
@@ -96,7 +115,7 @@ window.cancelPvPSearch = async function() {
     if (searchInterval) clearInterval(searchInterval);
     const mmScreen = document.getElementById('matchmaking-screen'); mmScreen.style.display = 'none';
     if(window.updatePresence) window.updatePresence();
-    if (myQueueRef) { await updateDoc(myQueueRef, { cancelled: true }); myQueueRef = null; }
+    if (myQueueRef) { await updateDoc(myQueueRef, { cancelled: true, status: 'cancelled', cancelledAt: Date.now() }).catch(() => {}); myQueueRef = null; }
     if(window.transitionToLobby) window.transitionToLobby(true);
 };
 

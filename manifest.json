@@ -1,21 +1,39 @@
 {
+  "id": "./",
   "name": "BUPPO - Card Game",
   "short_name": "BUPPO",
-  "start_url": "./index.html",
+  "description": "Duelo de cartas com partidas rápidas e visual medieval.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
   "display": "fullscreen",
   "background_color": "#000000",
   "theme_color": "#ffd700",
   "orientation": "landscape",
   "icons": [
     {
-      "src": "assets/img/logo_buppo.webp",
+      "src": "assets/img/pwa-icon-192.png",
       "sizes": "192x192",
-      "type": "image/webp"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "assets/img/logo_buppo.webp",
+      "src": "assets/img/pwa-icon-512.png",
       "sizes": "512x512",
-      "type": "image/webp"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/pwa-icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/img/pwa-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
