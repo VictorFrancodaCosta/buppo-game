@@ -248,6 +248,19 @@ window.playBuppoSfx = function(key, fallbackKey = null, volume = null) {
     return playSfx(key, fallbackKey, volume);
 };
 
+window.setBuppoLethalCinematic = function(active) {
+    window.isLethalHover = active === true;
+    const cine = audios['sfx-cine'];
+    if(window.isLethalHover && cine && window.sfxEnabled) {
+        try {
+            cine.loop = true;
+            cine.muted = false;
+            if(cine.paused) cine.play().catch(() => {});
+        } catch(e) {}
+    }
+    updateAudioMixer();
+};
+
 export const MusicController = {
     currentTrackId: null,
     play(trackId, options = {}) {
@@ -498,4 +511,14 @@ function updateAudioMixer() {
         if(cineAudio.volume < target) cineAudio.volume = Math.min(target, cineAudio.volume + 0.05);
         else if(cineAudio.volume > target) cineAudio.volume = Math.max(target, cineAudio.volume - 0.05);
     } catch(e) {}
+
+    const music = MusicController.currentTrackId ? audios[MusicController.currentTrackId] : null;
+    if(music && window.musicEnabled) {
+        const normal = baseVolume(MusicController.currentTrackId) * (window.masterVol || 0);
+        const musicTarget = window.isLethalHover ? normal * 0.16 : normal;
+        try {
+            if(music.volume < musicTarget) music.volume = Math.min(musicTarget, music.volume + 0.035);
+            else if(music.volume > musicTarget) music.volume = Math.max(musicTarget, music.volume - 0.055);
+        } catch(e) {}
+    }
 }

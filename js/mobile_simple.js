@@ -1,6 +1,6 @@
 import { CARDS_DB, ACTION_KEYS } from './data.js?v=2026.07.10.3';
 import { resetUnit, drawCardLogic, getBestAIMove, generateShuffledDeck } from './game_logic.js?v=2026.07.10.3';
-import { MusicController, playSound } from './audio_controller.js?v=2026.07.10.3';
+import { MusicController, playSound } from './audio_controller.js?v=2026.07.10.3.rev3';
 
 const MOBILE_ART = {
     ATAQUE: 'assets/img/mobile/card_attack.png',

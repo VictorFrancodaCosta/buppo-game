@@ -8,7 +8,7 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limi
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MODULOS
-import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.07.10.3';
+import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.07.10.3.rev3';
 import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.07.10.3.rev2';
 import { initiateMatchmaking } from './matchmaking.js?v=2026.07.10.3';
 
@@ -2070,7 +2070,7 @@ function clearHoverFocusState(force = false) {
     const activeHover = document.querySelector('.hand-card:hover, .xp-mini:hover');
     if(force || !activeHover) {
         document.body.classList.remove('focus-hand', 'focus-xp', 'cinematic-active', 'tension-active');
-        window.isLethalHover = false;
+        window.setBuppoLethalCinematic?.(false);
         const tooltip = document.getElementById('tooltip-box');
         if(tooltip) tooltip.style.display = 'none';
     }
@@ -3826,8 +3826,9 @@ function updateUnit(u) {
             c.onclick=()=>onCardClick(i);
             if(!touchLayout) {
                 bindFixedTooltip(c,k);
-                c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand'); document.body.classList.add('cinematic-active'); if(lethalType) { window.isLethalHover = true; document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
-                c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active'); window.isLethalHover = false; };
+                c.classList.toggle('lethal-card', Boolean(lethalType));
+                c.onmouseenter = (e) => { bindFixedTooltip(c,k).onmouseenter(e); document.body.classList.add('focus-hand', 'cinematic-active'); if(lethalType) { window.setBuppoLethalCinematic?.(true); document.body.classList.add('tension-active'); } playSound('sfx-hover'); };
+                c.onmouseleave = (e) => { tt.style.display='none'; document.body.classList.remove('focus-hand', 'cinematic-active', 'tension-active'); window.setBuppoLethalCinematic?.(false); };
             }
             hc.appendChild(c); apply3DTilt(c, true);
         });

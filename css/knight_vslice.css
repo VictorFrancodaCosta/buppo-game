@@ -17,6 +17,18 @@ body.theme-cavaleiro #game-background::before { content:""; position:fixed; inse
 body.theme-cavaleiro.knight-danger #game-background { filter:saturate(.78) contrast(1.14) brightness(.76) sepia(.15); }
 body.theme-cavaleiro.knight-danger #knight-cinema .knight-grade { background:radial-gradient(ellipse at 50% 44%,transparent 16%,rgba(82,0,0,.18) 60%,rgba(14,0,0,.82) 100%); animation:knightDangerBreath 1.3s ease-in-out infinite; }
 
+/* O golpe letal precisa vencer a color grade do tema, que é carregada depois de game.css. */
+body.theme-cavaleiro.tension-active #game-background { filter:blur(8px) grayscale(1) brightness(.16) contrast(1.18)!important; transform:scale(1.045); transition:filter .28s ease,transform .55s ease; }
+body.theme-cavaleiro.tension-active .middle-area,
+body.theme-cavaleiro.tension-active .avatar-cluster,
+body.theme-cavaleiro.tension-active .deck-area,
+body.theme-cavaleiro.tension-active #p-deck-container,
+body.theme-cavaleiro.tension-active .xp-area { filter:blur(7px) grayscale(1) brightness(.18)!important; opacity:.48; transition:filter .28s ease,opacity .28s ease; }
+body.theme-cavaleiro.tension-active #knight-cinema .knight-caustic,
+body.theme-cavaleiro.tension-active #knight-cinema .knight-dust { opacity:.08; transition:opacity .25s ease; }
+body.theme-cavaleiro.tension-active #knight-cinema .knight-grade { background:radial-gradient(circle at 50% 76%,transparent 0 11%,rgba(0,0,0,.72) 34%,rgba(0,0,0,.96) 76%); mix-blend-mode:multiply; }
+body.theme-cavaleiro.tension-active .hand-card.lethal-card { filter:brightness(1.12) saturate(1.14)!important; box-shadow:0 0 0 2px rgba(255,244,190,.92),0 0 34px rgba(255,190,37,.85),0 52px 90px #000!important; }
+
 body.theme-cavaleiro .card { --knight-card-glow: rgba(255,199,56,.68); backface-visibility:hidden; }
 body.theme-cavaleiro .hand-card:not(.disabled-card) { box-shadow:0 12px 24px rgba(12,5,0,.74),0 2px 0 rgba(255,220,123,.28); }
 body.theme-cavaleiro .hand-card:not(.disabled-card):hover { box-shadow:0 0 0 1px rgba(255,244,192,.7),0 0 26px var(--knight-card-glow),0 45px 78px rgba(0,0,0,.9)!important; }
