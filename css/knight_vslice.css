@@ -8,8 +8,6 @@ body.theme-cavaleiro #knight-cinema { opacity: 1; }
 #knight-cinema .knight-caustic { position: absolute; inset: -25%; opacity: .42; background: conic-gradient(from 205deg at 49% 48%, transparent 0 18%, rgba(255,226,139,.16) 20%, transparent 24% 54%, rgba(83,151,255,.12) 57%, transparent 61%); filter: blur(22px); animation: knightCaustic 12s ease-in-out infinite alternate; }
 #knight-cinema .knight-dust { position: absolute; inset: 0; }
 .knight-dust-mote { position: absolute; width: var(--size); height: var(--size); border-radius: 50%; background: #ffe6a3; box-shadow: 0 0 9px #ffc247,0 0 18px rgba(255,145,28,.5); opacity: 0; animation: knightDustRise var(--duration) linear var(--delay) infinite; }
-#knight-impact-overlay { position: fixed; inset: -4%; z-index: 12950; pointer-events: none; background: #000 url('../assets/img/fx_cavaleiro_impacto.webp') center/cover no-repeat; mix-blend-mode: screen; opacity: 0; transform: scale(.72); filter: saturate(1.1) contrast(1.12); }
-#knight-impact-overlay.active { animation: knightImpactReveal .64s cubic-bezier(.12,.72,.1,1) both; }
 #knight-edge-light { position: fixed; inset: 0; z-index: 12940; pointer-events:none; opacity:0; box-shadow: inset 0 0 80px 20px rgba(255,197,56,.7), inset 0 0 18px 5px #fff2c0; }
 #knight-edge-light.active { animation: knightEdgeFlash .5s ease-out both; }
 .knight-spark { position:fixed; left:var(--x); top:var(--y); z-index:13020; width:var(--w); height:2px; border-radius:100%; pointer-events:none; background:linear-gradient(90deg,transparent,#fff7d1 35%,#ffc83d); box-shadow:0 0 8px #ffad21; transform:rotate(var(--r)) translateX(-20px); animation:knightSparkFly var(--t) cubic-bezier(.15,.7,.25,1) both; }
@@ -38,13 +36,11 @@ body.theme-cavaleiro.knight-blocking #game-background::before { animation:knight
 body.theme-cavaleiro.knight-healing #p-stats-cluster { filter:drop-shadow(0 10px 0 rgba(0,0,0,.5)) drop-shadow(0 0 26px rgba(80,211,255,.8)); }
 
 body.theme-cavaleiro.end-win-active #end-screen { background:radial-gradient(circle at 50% 42%,rgba(27,72,145,.40),rgba(1,3,10,.94) 68%); }
-body.theme-cavaleiro.end-win-active #end-screen::before { content:""; position:absolute; inset:0; background:#000 url('../assets/img/fx_cavaleiro_impacto.webp') center/cover no-repeat; mix-blend-mode:screen; opacity:.34; animation:knightVictoryHalo 4s ease-in-out infinite; }
 body.theme-cavaleiro.end-win-active #end-title { filter:drop-shadow(0 0 18px #fff0b0) drop-shadow(0 0 42px #e6a71b); }
 
 @keyframes knightDustRise { 0%{opacity:0;transform:translate3d(0,12vh,0) scale(.4)} 12%{opacity:.65} 75%{opacity:.35} 100%{opacity:0;transform:translate3d(var(--drift),-105vh,0) scale(1.4)} }
 @keyframes knightCaustic { to{transform:translate3d(4%,-3%,0) rotate(3deg) scale(1.05)} }
 @keyframes knightLivingMetal { 0%,100%{opacity:.55;transform:translateX(-2%)} 50%{opacity:1;transform:translateX(2%)} }
-@keyframes knightImpactReveal { 0%{opacity:0;transform:scale(.72);filter:brightness(2.2) saturate(.4)} 12%{opacity:.88} 38%{opacity:.5;transform:scale(1.02);filter:brightness(1.35) saturate(1.2)} 100%{opacity:0;transform:scale(1.14);filter:brightness(.9) saturate(1.2)} }
 @keyframes knightEdgeFlash { 0%{opacity:0} 16%{opacity:1} 100%{opacity:0} }
 @keyframes knightSparkFly { 0%{opacity:0;transform:rotate(var(--r)) translateX(-12px) scaleX(.2)} 16%{opacity:1} 100%{opacity:0;transform:rotate(var(--r)) translateX(var(--d)) scaleX(1)} }
 @keyframes knightCardSlam { 0%{transform:translateY(-28px) scale(1.16) rotateX(5deg);filter:brightness(1.8)} 42%{transform:translateY(6px) scale(.96);filter:brightness(1.1)} 68%{transform:translateY(-3px) scale(1.025)} 100%{transform:translateY(0) scale(1);filter:brightness(1)} }
@@ -52,8 +48,5 @@ body.theme-cavaleiro.end-win-active #end-title { filter:drop-shadow(0 0 18px #ff
 @keyframes knightTableRecoil { 0%,100%{transform:scale(1.025) translate3d(var(--knight-parallax-x),var(--knight-parallax-y),0)} 18%{transform:scale(1.045) translate3d(calc(var(--knight-parallax-x) + 7px),calc(var(--knight-parallax-y) - 4px),0)} 38%{transform:scale(1.015) translate3d(calc(var(--knight-parallax-x) - 5px),calc(var(--knight-parallax-y) + 3px),0)} }
 @keyframes knightBlockWash { 0%{opacity:.3;filter:hue-rotate(0)} 18%{opacity:1;filter:hue-rotate(18deg) brightness(1.8)} 100%{opacity:.55;filter:none} }
 @keyframes knightDangerBreath { 50%{opacity:.88} }
-@keyframes knightVictoryHalo { 0%,100%{opacity:.26;transform:scale(1)} 50%{opacity:.45;transform:scale(1.045)} }
-
-@media (max-width:980px){ #knight-cinema .knight-caustic{filter:blur(14px)} .knight-dust-mote:nth-child(2n){display:none} #knight-impact-overlay{inset:0} }
+@media (max-width:980px){ #knight-cinema .knight-caustic{filter:blur(14px)} .knight-dust-mote:nth-child(2n){display:none} }
 @media (prefers-reduced-motion:reduce){ #knight-cinema .knight-caustic,.knight-dust-mote,body.theme-cavaleiro #p-stats-cluster::after,body.theme-cavaleiro #m-stats-cluster::after{animation:none!important} body.theme-cavaleiro #game-background{transform:none} }
-

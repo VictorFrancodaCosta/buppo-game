@@ -11,7 +11,6 @@
         cinema.setAttribute('aria-hidden', 'true');
         cinema.innerHTML = '<div class="knight-grade"></div><div class="knight-caustic"></div><div class="knight-dust"></div>';
         document.body.appendChild(cinema);
-        const impact = document.createElement('div'); impact.id = 'knight-impact-overlay'; impact.setAttribute('aria-hidden','true'); document.body.appendChild(impact);
         const edge = document.createElement('div'); edge.id = 'knight-edge-light'; edge.setAttribute('aria-hidden','true'); document.body.appendChild(edge);
         const dust = cinema.querySelector('.knight-dust');
         for(let i=0;i<22;i++) {
@@ -45,17 +44,17 @@
         }
     }
 
-    function flashImage() {
+    function flashEdge() {
         if(reduceMotion()) return;
-        for(const id of ['knight-impact-overlay','knight-edge-light']) {
-            const el=document.getElementById(id); if(!el) continue; el.classList.remove('active'); void el.offsetWidth; el.classList.add('active');
-            setTimeout(()=>el.classList.remove('active'),720);
-        }
+        const el=document.getElementById('knight-edge-light');
+        if(!el) return;
+        el.classList.remove('active'); void el.offsetWidth; el.classList.add('active');
+        setTimeout(()=>el.classList.remove('active'),560);
     }
 
     function impact(kind, targetIsPlayer=false, deckType='knight') {
         if(deckType !== 'knight' || !active()) return;
-        if(kind==='attack') { pulseClass('knight-impacting',560); flashImage(); sparks(targetIsPlayer, reduceMotion()?5:24); }
+        if(kind==='attack') { pulseClass('knight-impacting',560); flashEdge(); sparks(targetIsPlayer, reduceMotion()?5:24); }
         if(kind==='block') { pulseClass('knight-blocking',820); sparks(targetIsPlayer, reduceMotion()?4:14); }
         if(kind==='heal') pulseClass('knight-healing',950);
     }
@@ -77,6 +76,6 @@
     new MutationObserver(syncVitals).observe(document.body,{attributes:true,attributeFilter:['class']});
     const hpText = document.getElementById('p-hp-txt');
     if(hpText) new MutationObserver(syncVitals).observe(hpText,{subtree:true,childList:true,characterData:true});
-    window.KnightVisuals={impact,syncVitals,victory(){ if(active()) { flashImage(); sparks(false,reduceMotion()?8:42); } }};
+    window.KnightVisuals={impact,syncVitals,victory(){ if(active()) { flashEdge(); sparks(false,reduceMotion()?8:42); } }};
     syncVitals();
 })();
