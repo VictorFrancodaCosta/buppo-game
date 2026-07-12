@@ -127,6 +127,9 @@ function showCue(text, color = '#ffd700') {
 
 function startGame() {
     setupMobileShell();
+    window.applyDeckTheme?.('knight');
+    if(!document.body.classList.contains('theme-cavaleiro')) document.body.classList.add('theme-cavaleiro');
+    document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
     turn = 1;
     history = [];
     processing = false;
@@ -181,12 +184,15 @@ function applyCombat(pCard, mCard, pDisarm, mDisarm) {
     const pAttacks = pCard === 'ATAQUE';
     const mAttacks = mCard === 'ATAQUE';
 
-    if (pAttacks && !mBlocks) monster.hp -= player.lvl + player.bonusAtk;
-    if (mAttacks && !pBlocks) player.hp -= monster.lvl + monster.bonusAtk;
+    if (pAttacks && !mBlocks) { monster.hp -= player.lvl + player.bonusAtk; window.KnightVisuals?.impact('attack', false, 'knight'); }
+    if (mAttacks && !pBlocks) { player.hp -= monster.lvl + monster.bonusAtk; window.KnightVisuals?.impact('attack', true, 'knight'); }
     if (pBlocks && mAttacks) monster.hp -= 1 + player.bonusBlock;
     if (mBlocks && pAttacks) player.hp -= 1 + monster.bonusBlock;
 
-    if (pCard === 'DESCANSAR') player.hp += pAttacks ? 2 : 3;
+    if (pBlocks && mAttacks) window.KnightVisuals?.impact('block', true, 'knight');
+    if (mBlocks && pAttacks) window.KnightVisuals?.impact('block', false, 'knight');
+
+    if (pCard === 'DESCANSAR') { player.hp += pAttacks ? 2 : 3; window.KnightVisuals?.impact('heal', false, 'knight'); }
     if (mCard === 'DESCANSAR') monster.hp += mAttacks ? 2 : 3;
     if (pCard === 'DESARMAR') monster.disabled = pDisarm;
     else monster.disabled = null;
@@ -228,6 +234,9 @@ function checkEnd() {
     render();
     const title = document.getElementById('end-title');
     const result = player.hp <= 0 && monster.hp <= 0 ? 'EMPATE' : (monster.hp <= 0 ? 'VITORIA' : 'DERROTA');
+    document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
+    document.body.classList.add(result === 'VITORIA' ? 'end-win-active' : (result === 'EMPATE' ? 'end-tie-active' : 'end-loss-active'));
+    if(result === 'VITORIA') window.KnightVisuals?.victory();
     if (title) {
         title.textContent = result;
         title.className = result === 'VITORIA' ? 'win-theme' : (result === 'EMPATE' ? 'tie-theme' : 'lose-theme');

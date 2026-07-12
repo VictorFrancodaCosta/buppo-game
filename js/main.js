@@ -2797,6 +2797,7 @@ function showEndPoints(points, goldReward = null) {
 function triggerEndScreenFx(result) {
     document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
     document.body.classList.add(`end-${result}-active`);
+    if(result === 'win') window.KnightVisuals?.victory();
     if(result !== 'win') return;
     for(let i = 0; i < 46; i++) {
         const conf = document.createElement('span');
