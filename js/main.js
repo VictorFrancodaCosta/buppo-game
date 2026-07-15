@@ -80,6 +80,7 @@ const DECK_THEME_BY_TYPE = {
     oracle: 'theme-oraculo'
 };
 const DECK_TYPES = Object.keys(DECK_THEME_BY_TYPE);
+const AUDIO_SETTINGS_VERSION = 2;
 
 const MATCH_STAT_ACTIONS = ['ATAQUE', 'BLOQUEIO', 'DESCANSAR', 'TREINAR', 'DESARMAR'];
 
@@ -467,7 +468,7 @@ window.goToLobby = async function(isAutoLogin = false) {
         const gameId = await generateUniqueGameId(window.currentUser.uid);
         const defaults = normalizeInventoryDefaults([], {});
         const deckLevels = normalizeDeckLevels({});
-        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: defaults.inventory, equippedItems: defaults.equippedItems, deckLevels, lastSeen: Date.now(), lastSeenAt: serverTimestamp(), presenceExpiresAt: Timestamp.fromMillis(Date.now() + 120000), schemaVersion: FIRESTORE_SCHEMA_VERSION, settings: { vol: 0.5, music: true, sfx: true, fullscreen: false, reduceMotion: window.reducedMotionEnabled === true } });
+        await setDoc(userRef, { name: window.currentUser.displayName, gameId, score: 0, totalWins: 0, goldCoins: 0, profileLevel: 1, profileXp: 0, friends: [], inventory: defaults.inventory, equippedItems: defaults.equippedItems, deckLevels, lastSeen: Date.now(), lastSeenAt: serverTimestamp(), presenceExpiresAt: Timestamp.fromMillis(Date.now() + 120000), schemaVersion: FIRESTORE_SCHEMA_VERSION, settings: { vol: 0.5, music: true, sfx: true, audioVersion: AUDIO_SETTINGS_VERSION, fullscreen: false, reduceMotion: window.reducedMotionEnabled === true } });
         window.currentPlayerGameId = gameId;
         window.currentLobbyScore = 0;
         window.currentLobbyWins = 0;
@@ -502,9 +503,15 @@ window.goToLobby = async function(isAutoLogin = false) {
         updateLobbyGoldWallet(d.goldCoins || 0);
 
         if(d.settings) {
-            window.masterVol = d.settings.vol !== undefined ? d.settings.vol : 0.5;
-            window.musicEnabled = d.settings.music !== undefined ? d.settings.music : true;
-            window.sfxEnabled = d.settings.sfx !== undefined ? d.settings.sfx : true;
+            const hasReliableAudioSettings = Number(d.settings.audioVersion) >= AUDIO_SETTINGS_VERSION;
+            const storedVolume = Number(d.settings.vol);
+            window.masterVol = hasReliableAudioSettings
+                ? (Number.isFinite(storedVolume) ? Math.max(0, Math.min(1, storedVolume)) : 0.5)
+                : (Number.isFinite(storedVolume) && storedVolume > 0 ? Math.min(1, storedVolume) : 0.5);
+            // Versões antigas podiam gravar "false" durante a inicialização/login.
+            // Reative uma vez; preferências salvas a partir da v2 continuam sendo respeitadas.
+            window.musicEnabled = hasReliableAudioSettings ? d.settings.music !== false : true;
+            window.sfxEnabled = hasReliableAudioSettings ? d.settings.sfx !== false : true;
             window.fullscreenEnabled = d.settings.fullscreen === true;
             window.applyReducedMotionPreference?.(d.settings.reduceMotion === true);
 
@@ -3905,7 +3912,7 @@ window.saveAudioSettings = async function() {
     if (!window.currentUser) return;
     try {
         const userRef = doc(db, "players", window.currentUser.uid);
-        await updateDoc(userRef, { settings: { vol: window.masterVol, music: window.musicEnabled, sfx: window.sfxEnabled, fullscreen: window.fullscreenEnabled === true, reduceMotion: window.reducedMotionEnabled === true } });
+        await updateDoc(userRef, { settings: { vol: window.masterVol, music: window.musicEnabled, sfx: window.sfxEnabled, audioVersion: AUDIO_SETTINGS_VERSION, fullscreen: window.fullscreenEnabled === true, reduceMotion: window.reducedMotionEnabled === true } });
     } catch(e) { console.error("Erro ao salvar config", e); }
 }
 
