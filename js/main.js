@@ -8,8 +8,8 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limi
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MODULOS
-import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.07.10.3.rev4';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.07.10.3.rev4';
+import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.07.10.3.rev5';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.07.10.3.rev5';
 import { initiateMatchmaking } from './matchmaking.js?v=2026.07.10.3';
 
 // --- VARIAVEIS GLOBAIS DE ESTADO ---
@@ -234,9 +234,6 @@ const ASSETS_TO_LOAD = {
         { id: 'sfx-levelup', src: 'assets/audio/sfx_levelup.mp3' },
         { id: 'sfx-train', src: 'assets/audio/sfx_treinar.mp3' },
         { id: 'sfx-disarm', src: 'assets/audio/sfx_desarmar.mp3' },
-        { id: 'sfx-grunt-damage', src: 'assets/audio/sfx_gruntdamage.mp3' },
-        { id: 'sfx-grunt-damage-2', src: 'assets/audio/sfx_gruntdamage2.mp3' },
-        { id: 'sfx-grunt-lose', src: 'assets/audio/sfx_gruntlose.mp3' },
         { id: 'sfx-clusterbreak', src: 'assets/audio/sfx_clusterbreak.mp3' },
         { id: 'sfx-mastery', src: 'assets/audio/maestria_bonus.mp3' },
         { id: 'sfx-cine', src: 'assets/audio/ambience_cine.mp3', loop: true },
@@ -2108,10 +2105,8 @@ function syncUnitFromServer(u, data, showPlayerDamage = false, syncXp = true) {
         const oldHp = u.hp;
         u.hp = data.hp;
         if (showPlayerDamage && data.hp < oldHp) {
-            const fatalDamage = oldHp > 0 && data.hp <= 0;
             showFloatingText('p-lvl', `-${oldHp - data.hp}`, "#ff7675");
-            playPlayerDamageGrunt(fatalDamage);
-            triggerDamageEffect(true, !fatalDamage, monster.deckType || window.opponentDeck || 'knight');
+            triggerDamageEffect(true, true, monster.deckType || window.opponentDeck || 'knight');
         }
     }
     if(Array.isArray(data.hand)) u.hand = [...data.hand];
@@ -2295,14 +2290,6 @@ const MATCH_REWARD_LABELS = {
 
 function awardMatchRewardGold(amount = 1, label = MATCH_REWARD_LABELS.EFFECTIVE_ATTACK) {
     awardMatchRewardGoldFor(player, amount, label);
-}
-
-function playPlayerDamageGrunt(isFatal = false) {
-    if(isFatal) {
-        playSound('sfx-grunt-lose');
-        return;
-    }
-    playSound(Math.random() < 0.5 ? 'sfx-grunt-damage' : 'sfx-grunt-damage-2');
 }
 
 function getUnitEquippedBorderId(u) {
@@ -3473,13 +3460,10 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
 
     const phaseDamage = () => {
         if(pDmg > 0) {
-            const hpBefore = player.hp;
             player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675");
-            const fatalDamage = hpBefore > 0 && player.hp <= 0;
-            playPlayerDamageGrunt(fatalDamage);
             let soundOn = !(clash && mAct === 'BLOQUEIO');
             if(mAct === 'ATAQUE') triggerAttackSlash(true);
-            if (!mBlocks) { triggerDamageEffect(true, !fatalDamage && soundOn, monster.deckType || window.opponentDeck || 'knight'); }
+            if (!mBlocks) { triggerDamageEffect(true, soundOn, monster.deckType || window.opponentDeck || 'knight'); }
             triggerHpImpact(true);
             if(pDmg >= 3) triggerCriticalDamagePop(true);
             recordMatchDamage(player, pDmg);
@@ -3668,7 +3652,7 @@ function flushRestMasteryHeals() {
     updateUI();
 }
 
-function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; const fatalPlayerDamage = target === player && hpBefore > 0 && target.hp <= 0; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); if(target === player) playPlayerDamageGrunt(fatalPlayerDamage); triggerAttackSlash(target === player); triggerDamageEffect(u !== player, !fatalPlayerDamage, u.deckType || (u === player ? window.currentDeck : window.opponentDeck) || 'knight'); triggerHpImpact(target === player); if(u.bonusAtk >= 3) triggerCriticalDamagePop(target === player); awardMasteryRewardGold(u, 'ATAQUE'); if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player, !fatalPlayerDamage); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; awardMasteryRewardGold(u, 'BLOQUEIO'); triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { awardMasteryRewardGold(u, 'DESCANSAR'); queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
+function applyMastery(u, k) { if(k === 'ATAQUE') { u.bonusAtk++; let target = (u === player) ? monster : player; const hpBefore = target.hp; target.hp -= u.bonusAtk; showFloatingText(target.id + '-lvl', `-${u.bonusAtk}`, "#ff7675"); triggerAttackSlash(target === player); triggerDamageEffect(u !== player, true, u.deckType || (u === player ? window.currentDeck : window.opponentDeck) || 'knight'); triggerHpImpact(target === player); if(u.bonusAtk >= 3) triggerCriticalDamagePop(target === player); awardMasteryRewardGold(u, 'ATAQUE'); if(hpBefore > 0 && target.hp <= 0) triggerClusterExplosion(target === player, true); if(!window.deferMasteryEndCheck) checkEndGame(); } if(k === 'BLOQUEIO') { u.bonusBlock++; awardMasteryRewardGold(u, 'BLOQUEIO'); triggerBlockShield(u === player, 'cluster'); } if(k === 'DESCANSAR') { awardMasteryRewardGold(u, 'DESCANSAR'); queueRestMasteryHeal(u); triggerRestAura(u === player); } updateUI(); }
 
 async function syncLevelUpToDB(u) {
     if (!window.currentMatchId) return;
@@ -3684,55 +3668,50 @@ async function syncLevelUpToDB(u) {
 
 window.openHistory = async function() {
     if(!window.currentUser) return;
-    window.playNavSound(); const screen = document.getElementById('history-screen'); const container = document.getElementById('history-list-container');
-    screen.style.display = 'flex'; container.innerHTML = '<div style="color:#f5d58b; text-align:center; margin-top:20px; font-weight:900;">Consultando arquivos da guilda...</div>';
+    window.playNavSound();
+    const screen = document.getElementById('history-screen');
+    const rateContainer = document.getElementById('history-winrate-container');
+    const container = document.getElementById('history-list-container');
+    screen.style.display = 'flex';
+    screen.setAttribute('aria-hidden', 'false');
+    rateContainer.innerHTML = '<div class="history-loading">Calculando desempenho...</div>';
+    container.innerHTML = '<div class="history-loading">Carregando batalhas...</div>';
     try {
         const historyRef = collection(db, "players", window.currentUser.uid, "history");
-        const q = query(historyRef, orderBy("timestamp", "desc"), limit(50)); const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) { container.innerHTML = '<div style="color:#f5d58b; text-align:center; margin-top:20px; font-weight:900;">Nenhuma batalha registrada ainda.</div>'; return; }
+        const q = query(historyRef, orderBy("timestamp", "desc"), limit(100));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            rateContainer.innerHTML = '<div class="history-empty">Nenhuma partida para calcular.</div>';
+            container.innerHTML = '<div class="history-empty">Nenhuma batalha registrada ainda.</div>';
+            return;
+        }
         const matches = [];
         querySnapshot.forEach((doc) => matches.push({ id: doc.id, ...doc.data() }));
-        const sum = (getter) => matches.reduce((total, h) => total + Math.max(0, Number(getter(h)) || 0), 0);
-        const wins = matches.filter(h => h.result === 'WIN').length;
-        const losses = matches.filter(h => h.result === 'LOSS').length;
-        const ties = matches.filter(h => h.result === 'TIE').length;
-        const winRate = matches.length ? Math.round((wins / matches.length) * 100) : 0;
-        const goldNet = matches.reduce((total, h) => total + (Number(h.points) || 0), 0);
-        const actionTotals = MATCH_STAT_ACTIONS.reduce((acc, action) => {
-            acc[action] = sum(h => h.stats?.actions?.[action]);
-            return acc;
-        }, {});
-        const maxAction = Math.max(1, ...Object.values(actionTotals));
-        const effectiveAttacks = sum(h => h.stats?.effectiveAttacks);
-        const effectiveBlocks = sum(h => h.stats?.effectiveBlocks);
-        const totalDamage = sum(h => h.stats?.totalDamageDealt);
-        const maxDamage = Math.max(0, ...matches.map(h => Number(h.stats?.maxDamageDealt) || 0));
-        const totalHealed = sum(h => h.stats?.totalHealed);
-        const levelUps = sum(h => h.stats?.levelUps);
-        const deckCounts = matches.reduce((acc, h) => {
-            const key = h.deck || 'sem deck';
-            acc[key] = (acc[key] || 0) + 1;
-            return acc;
-        }, {});
-        const favoriteDeck = Object.entries(deckCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'sem deck';
-        const recommendations = [];
-        if(winRate < 45) recommendations.push('Sua taxa de vitórias está baixa: foque em sobreviver mais turnos e criar maestrias antes de buscar dano final.');
-        if(effectiveBlocks < Math.max(2, effectiveAttacks * 0.45)) recommendations.push('Você bloqueia pouco de forma efetiva. Tente guardar Bloqueio para responder a padrões agressivos.');
-        if(levelUps < matches.length * 0.8) recommendations.push('Você está subindo pouco de nível. Treinar e administrar a área de XP pode aumentar muito sua consistência.');
-        if(totalHealed < matches.length * 2) recommendations.push('Restaurar aparece pouco nas suas partidas. Use cura para virar corridas de dano e ativar bônus de Arqueiro.');
-        if(recommendations.length === 0) recommendations.push('Seu desempenho está equilibrado. O próximo passo é otimizar escolhas por matchup e deck do oponente.');
-        const actionLabel = { ATAQUE: 'Ataque', BLOQUEIO: 'Bloqueio', DESCANSAR: 'Restaurar', TREINAR: 'Treinar', DESARMAR: 'Desarmar' };
-        const barsHtml = MATCH_STAT_ACTIONS.map(action => `
-            <div class="history-bar-row">
-                <span>${actionLabel[action]}</span>
-                <div class="history-bar-track"><div class="history-bar-fill" style="--bar:${Math.round((actionTotals[action] / maxAction) * 100)}%"></div></div>
-                <b>${actionTotals[action]}</b>
-            </div>`).join('');
-        const battlesHtml = matches.map((h) => {
+
+        const deckLabels = { knight: 'CAVALEIRO', mage: 'MAGO', archer: 'ARQUEIRO', rogue: 'LADINO', oracle: 'ORÁCULO' };
+        const ratesHtml = DECK_TYPES.map((deckType) => {
+            const deckMatches = matches.filter(h => String(h.deck || '').toLowerCase() === deckType);
+            if(deckMatches.length === 0) return '';
+            const wins = deckMatches.filter(h => String(h.result || '').toUpperCase() === 'WIN').length;
+            const rate = Math.round((wins / deckMatches.length) * 100);
+            const matchLabel = deckMatches.length === 1 ? 'partida' : 'partidas';
+            const winLabel = wins === 1 ? 'vitória' : 'vitórias';
+            return `<article class="history-rate-card deck-${deckType}">
+                <div class="history-rate-ring" style="--rate:${rate}%"><strong>${rate}%</strong></div>
+                <div class="history-rate-copy">
+                    <h4>${deckLabels[deckType]}</h4>
+                    <span>${wins} ${winLabel} · ${deckMatches.length} ${matchLabel}</span>
+                </div>
+            </article>`;
+        }).join('');
+        rateContainer.innerHTML = ratesHtml || '<div class="history-empty">Nenhum deck identificado nas últimas partidas.</div>';
+
+        const battlesHtml = matches.slice(0, 50).map((h) => {
             const timestamp = safeInteger(h.timestamp, Date.now(), 0);
             const date = new Date(timestamp); const dateStr = `${date.getDate()}/${date.getMonth()+1} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-            const resultClass = h.result === 'WIN' ? 'win' : (h.result === 'TIE' ? 'tie' : 'loss');
-            const resultTxt = h.result === 'WIN' ? 'VITÓRIA' : (h.result === 'TIE' ? 'EMPATE' : 'DERROTA');
+            const result = String(h.result || '').toUpperCase();
+            const resultClass = result === 'WIN' ? 'win' : (result === 'TIE' ? 'tie' : 'loss');
+            const resultTxt = result === 'WIN' ? 'VITÓRIA' : (result === 'TIE' ? 'EMPATE' : 'DERROTA');
             const points = Number(h.points) || 0;
             const scoreTxt = points > 0 ? `+${points}` : `${points}`;
             const safeOpponent = escapeHTML(h.opponent || 'OPONENTE');
@@ -3759,37 +3738,21 @@ window.openHistory = async function() {
                 </div>
             </div>`;
         }).join('');
-        container.innerHTML = `
-            <div class="history-dashboard">
-                <section class="history-hero">
-                    <div class="history-stat"><strong>${matches.length}</strong><span>Partidas analisadas</span></div>
-                    <div class="history-stat"><strong>${winRate}%</strong><span>Taxa de vitórias</span></div>
-                    <div class="history-stat"><strong>${goldNet >= 0 ? '+' : ''}${goldNet}</strong><span>Ouro líquido</span></div>
-                    <div class="history-stat"><strong>${maxDamage}</strong><span>Maior dano</span></div>
-                    <div class="history-stat"><strong>${wins}/${losses}/${ties}</strong><span>V/D/E</span></div>
-                </section>
-                <section class="history-card">
-                    <h3>Mapa de Jogadas</h3>
-                    <div class="history-bars">${barsHtml}</div>
-                </section>
-                <section class="history-card">
-                    <h3>Diagnóstico do Mestre</h3>
-                    <div class="history-recommendation">
-                        Deck mais usado: <strong>${escapeHTML(String(favoriteDeck).toUpperCase())}</strong><br>
-                        Dano total causado: <strong>${totalDamage}</strong><br>
-                        Cura total: <strong>${totalHealed}</strong><br><br>
-                        ${recommendations.map(text => `• ${text}`).join('<br>')}
-                    </div>
-                </section>
-                <section class="history-feed">
-                    <h3>Registro das Batalhas</h3>
-                    <div class="history-battle-list">${battlesHtml}</div>
-                </section>
-            </div>`;
-    } catch(e) { container.innerHTML = '<div style="color:red; text-align:center;">Erro ao carregar.</div>'; }
+        container.innerHTML = `<div class="history-battle-list">${battlesHtml}</div>`;
+    } catch(e) {
+        console.error('Erro ao carregar histórico', e);
+        rateContainer.innerHTML = '<div class="history-error">Não foi possível calcular o desempenho.</div>';
+        container.innerHTML = '<div class="history-error">Não foi possível carregar as batalhas.</div>';
+    }
 };
 
-window.closeHistory = function() { window.playNavSound(); document.getElementById('history-screen').style.display = 'none'; };
+window.closeHistory = function() {
+    const screen = document.getElementById('history-screen');
+    if(!screen || screen.style.display === 'none') return;
+    window.playNavSound();
+    screen.style.display = 'none';
+    screen.setAttribute('aria-hidden', 'true');
+};
 
 function updateUI() {
     updateUnit(player);

@@ -1,6 +1,6 @@
 // ARQUIVO: js/ui_controller.js
 import { CARDS_DB } from './data.js?v=2026.07.10.3';
-import { playSound } from './audio_controller.js?v=2026.07.10.3.rev4';
+import { playSound } from './audio_controller.js?v=2026.07.10.3.rev5';
 
 export const MAGE_ASSETS = {
     'ATAQUE': 'assets/img/carta_ataque_mago.webp',
