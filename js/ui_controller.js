@@ -615,6 +615,7 @@ export function apply3DTilt(element, isHand = false) {
 }
 
 export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isToTable = false, isPlayer = false) {
+    const visualGeneration = Number(window.battleVisualGeneration) || 0;
     let s; if (typeof startId === 'string') { let el = document.getElementById(startId); if (!el) s = { top: 0, left: 0, width: 0, height: 0 }; else s = el.getBoundingClientRect(); } else { s = startId; }
     let e = { top: 0, left: 0, width: 0, height: 0 }; let destEl = document.getElementById(endId); if(destEl) e = destEl.getBoundingClientRect();
     const fly = document.createElement('div'); fly.className = `card flying-card ${CARDS_DB[cardKey].color}`;
@@ -653,6 +654,7 @@ export function animateFly(startId, endId, cardKey, cb, initialDeal = false, isT
     setTimeout(() => {
         if(isToTable) playSound('sfx-play');
         fly.remove();
+        if(visualGeneration !== (Number(window.battleVisualGeneration) || 0)) return;
         if(cb) cb();
     }, 460);
 }

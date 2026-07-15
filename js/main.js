@@ -9,7 +9,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 
 // IMPORTANDO OS NOVOS MODULOS
 import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.07.10.3.rev5';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.07.10.3.rev5';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.07.10.3.rev6';
 import { initiateMatchmaking } from './matchmaking.js?v=2026.07.10.3';
 
 // --- VARIAVEIS GLOBAIS DE ESTADO ---
@@ -265,8 +265,15 @@ let totalAssets = 1;
 let player = { id:'p', name:'Você', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 let monster = { id:'m', name:'Monstro', hp:6, maxHp:6, lvl:1, hand:[], deck:[], xp:[], disabled:null, bonusBlock:0, bonusAtk:0, originalRole: 'pve' };
 
+function clearBattleTableCards() {
+    window.battleVisualGeneration = (Number(window.battleVisualGeneration) || 0) + 1;
+    ['p-slot', 'm-slot'].forEach(id => document.getElementById(id)?.replaceChildren());
+    document.querySelectorAll('.flying-card').forEach(card => card.remove());
+}
+
 window.cleanupMatchState = function() {
     stopTurnTimer();
+    clearBattleTableCards();
     if (window.pvpUnsubscribe) { window.pvpUnsubscribe(); window.pvpUnsubscribe = null; }
     window.currentMatchId = null; window.myRole = null; window.pvpStartData = null;
     window.pvpSelectedCardIndex = null; window.isResolvingTurn = false; window.pvpWaitingForTurnReset = false; window.pvpLocalResolutionComplete = false; window.latestMatchData = null;
@@ -1845,6 +1852,7 @@ async function ensurePlayerGameId(userRef, playerData) {
 
 function startGameFlow() {
     stopTurnTimer();
+    clearBattleTableCards();
     document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
     document.getElementById('end-screen').classList.remove('visible');
     window.isProcessing = false; window.isResolvingTurn = false; window.pvpSelectedCardIndex = null;
@@ -3420,8 +3428,25 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         }
     }
 
+    const abortTurnResolution = (error) => {
+        console.error('Falha durante a resolução do turno:', error);
+        clearBattleTableCards();
+        window.deferMasteryEndCheck = false;
+        window.pendingRestMasteryHeals = [];
+        window.isResolvingTurn = false;
+        window.isProcessing = false;
+        window.turnResolutionLocked = false;
+        window.pvpWaitingForTurnReset = false;
+        updateUI();
+    };
+
+    const runPhase = (phase) => {
+        try { phase(); }
+        catch(error) { abortTurnResolution(error); }
+    };
+
     const phaseReveal = () => {
-        setTimeout(phaseResult, 180);
+        setTimeout(() => runPhase(phaseResult), 180);
     };
 
     const phaseResult = () => {
@@ -3455,12 +3480,14 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         pendingDisarmSteals.forEach(applyDisarmPlaySteal);
         const weightPause = (pDmg >= 4 || mDmg >= 4) ? 220 : 120;
         if(pDmg >= 4 || mDmg >= 4) triggerCritEffect();
-        setTimeout(phaseDamage, weightPause);
+        setTimeout(() => runPhase(phaseDamage), weightPause);
     };
 
     const phaseDamage = () => {
         if(pDmg > 0) {
+            const hpBefore = player.hp;
             player.hp -= pDmg; showFloatingText('p-lvl', `-${pDmg}`, "#ff7675");
+            const fatalDamage = hpBefore > 0 && player.hp <= 0;
             let soundOn = !(clash && mAct === 'BLOQUEIO');
             if(mAct === 'ATAQUE') triggerAttackSlash(true);
             if (!mBlocks) { triggerDamageEffect(true, soundOn, monster.deckType || window.opponentDeck || 'knight'); }
@@ -3470,7 +3497,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
             if(mAct === 'ATAQUE' && !pBlocks) { recordEffectiveAttack(monster); awardAttackRewardGold(monster, pDmg); }
             if(mBlocks && fatalDamage) awardLethalBlockRewardGold(monster);
             if(fatalDamage && pAct === 'DESARMAR' && wouldPlayedActionTriggerMastery(player, 'DESARMAR')) awardMasteryRewardGold(player, 'DESARMAR');
-            if(fatalDamage) triggerClusterExplosion(true, false);
+            if(fatalDamage) triggerClusterExplosion(true, true);
         }
         if(mDmg > 0) {
             const hpBefore = monster.hp;
@@ -3487,7 +3514,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         }
 
         updateUI();
-        setTimeout(phaseRecovery, (pDmg >= 4 || mDmg >= 4) ? 180 : 80);
+        setTimeout(() => runPhase(phaseRecovery), (pDmg >= 4 || mDmg >= 4) ? 180 : 80);
     };
 
     const phaseRecovery = () => {
@@ -3519,7 +3546,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         player.lastAction = pAct;
         monster.lastAction = mAct;
 
-        setTimeout(() => phaseXP(pDead, mDead), 520);
+        setTimeout(() => runPhase(() => phaseXP(pDead, mDead)), 520);
     };
 
     const phaseXP = (pDead, mDead) => {
@@ -3568,7 +3595,7 @@ function resolveTurn(pAct, mAct, pDisarmChoice, mDisarmTarget, onComplete = null
         document.getElementById('p-slot').innerHTML = ''; document.getElementById('m-slot').innerHTML = '';
     };
 
-    phaseReveal();
+    runPhase(phaseReveal);
 }
 
 function checkLevelUp(u, doneCb) {
