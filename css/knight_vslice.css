@@ -1,64 +1,84 @@
-/* Vertical slice premium: Cavaleiro. Isolada para poder ser portada por classe. */
-:root { --knight-parallax-x: 0px; --knight-parallax-y: 0px; --knight-tension: 0; }
+/* Vertical slice premium de batalha para todas as classes. Apenas CSS/partículas leves. */
+:root {
+    --class-parallax-x: 0px;
+    --class-parallax-y: 0px;
+    --impact-primary: #ffc83d;
+    --impact-secondary: #58b9ff;
+    --impact-spark: #fff7d1;
+}
 
-#knight-cinema { position: fixed; inset: 0; z-index: 640; pointer-events: none; overflow: hidden; opacity: 0; transition: opacity .7s ease; }
-body.theme-cavaleiro #game-screen.active ~ #knight-cinema,
-body.theme-cavaleiro #knight-cinema { opacity: 1; }
-#knight-cinema .knight-grade { position: absolute; inset: -7%; background: radial-gradient(ellipse at 50% 44%, transparent 20%, rgba(13,6,2,.12) 58%, rgba(3,1,0,.72) 100%), linear-gradient(115deg, rgba(16,70,150,.09), transparent 36%, rgba(255,174,36,.11) 68%, transparent); mix-blend-mode: multiply; transform: translate3d(calc(var(--knight-parallax-x) * -.12),calc(var(--knight-parallax-y) * -.12),0); }
-#knight-cinema .knight-caustic { position: absolute; inset: -25%; opacity: .42; background: conic-gradient(from 205deg at 49% 48%, transparent 0 18%, rgba(255,226,139,.16) 20%, transparent 24% 54%, rgba(83,151,255,.12) 57%, transparent 61%); filter: blur(22px); animation: knightCaustic 12s ease-in-out infinite alternate; }
-#knight-cinema .knight-dust { position: absolute; inset: 0; }
-.knight-dust-mote { position: absolute; width: var(--size); height: var(--size); border-radius: 50%; background: #ffe6a3; box-shadow: 0 0 9px #ffc247,0 0 18px rgba(255,145,28,.5); opacity: 0; animation: knightDustRise var(--duration) linear var(--delay) infinite; }
-#knight-edge-light { position: fixed; inset: 0; z-index: 12940; pointer-events:none; opacity:0; box-shadow: inset 0 0 80px 20px rgba(255,197,56,.7), inset 0 0 18px 5px #fff2c0; }
-#knight-edge-light.active { animation: knightEdgeFlash .5s ease-out both; }
-.knight-spark { position:fixed; left:var(--x); top:var(--y); z-index:13020; width:var(--w); height:2px; border-radius:100%; pointer-events:none; background:linear-gradient(90deg,transparent,#fff7d1 35%,#ffc83d); box-shadow:0 0 8px #ffad21; transform:rotate(var(--r)) translateX(-20px); animation:knightSparkFly var(--t) cubic-bezier(.15,.7,.25,1) both; }
+body.theme-cavaleiro { --class-primary:#ffc83d; --class-secondary:#58b9ff; --class-core:#fff3bd; --class-shadow:rgba(25,8,1,.72); --class-grade-a:rgba(16,70,150,.09); --class-grade-b:rgba(255,174,36,.11); --class-saturation:1.08; --class-contrast:1.04; --class-hp-a:#1476d4; --class-hp-b:#43baff; --class-hp-c:#bfe8ff; }
+body.theme-mago { --class-primary:#a88bff; --class-secondary:#39f2e1; --class-core:#f1eaff; --class-shadow:rgba(10,3,30,.72); --class-grade-a:rgba(117,72,255,.15); --class-grade-b:rgba(35,238,220,.10); --class-saturation:1.12; --class-contrast:1.055; --class-hp-a:#5634ba; --class-hp-b:#9b70ff; --class-hp-c:#67f6e4; }
+body.theme-arqueiro { --class-primary:#74e879; --class-secondary:#f4cf63; --class-core:#edffd8; --class-shadow:rgba(2,22,8,.72); --class-grade-a:rgba(50,158,70,.13); --class-grade-b:rgba(246,207,84,.09); --class-saturation:1.11; --class-contrast:1.045; --class-hp-a:#277d3e; --class-hp-b:#65d775; --class-hp-c:#e6e878; }
+body.theme-ladino { --class-primary:#f6cf4d; --class-secondary:#ff6557; --class-core:#fff0a8; --class-shadow:rgba(25,4,2,.76); --class-grade-a:rgba(160,26,18,.12); --class-grade-b:rgba(255,211,63,.10); --class-saturation:1.09; --class-contrast:1.075; --class-hp-a:#9e2c27; --class-hp-b:#e75b3f; --class-hp-c:#ffd457; }
+body.theme-oraculo { --class-primary:#c066ff; --class-secondary:#6bcfff; --class-core:#faeaff; --class-shadow:rgba(14,2,31,.74); --class-grade-a:rgba(159,52,255,.16); --class-grade-b:rgba(87,195,255,.10); --class-saturation:1.13; --class-contrast:1.05; --class-hp-a:#7130a6; --class-hp-b:#bf62ed; --class-hp-c:#78d8ff; }
 
-body.theme-cavaleiro #game-background { transform: scale(1.025) translate3d(var(--knight-parallax-x),var(--knight-parallax-y),0); transition: filter .5s ease, background-image .5s ease-in-out, transform .35s ease-out; filter: saturate(1.08) contrast(1.04); }
-body.theme-cavaleiro #game-background::before { content:""; position:fixed; inset:0; pointer-events:none; background: radial-gradient(circle at 31% 32%,rgba(255,235,161,.18),transparent 16%), radial-gradient(circle at 67% 47%,rgba(255,152,47,.12),transparent 22%), linear-gradient(101deg,transparent 30%,rgba(255,244,190,.10) 47%,transparent 61%); mix-blend-mode:screen; animation:knightLivingMetal 6.8s ease-in-out infinite; }
-body.theme-cavaleiro.knight-danger #game-background { filter:saturate(.78) contrast(1.14) brightness(.76) sepia(.15); }
-body.theme-cavaleiro.knight-danger #knight-cinema .knight-grade { background:radial-gradient(ellipse at 50% 44%,transparent 16%,rgba(82,0,0,.18) 60%,rgba(14,0,0,.82) 100%); animation:knightDangerBreath 1.3s ease-in-out infinite; }
+#class-cinema { position:fixed; inset:0; z-index:640; pointer-events:none; overflow:hidden; opacity:0; transition:opacity .7s ease; }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) #class-cinema { opacity:1; }
+#class-cinema .class-grade { position:absolute; inset:-7%; background:radial-gradient(ellipse at 50% 44%,transparent 22%,rgba(4,2,3,.10) 60%,var(--class-shadow) 100%),linear-gradient(115deg,var(--class-grade-a),transparent 36%,var(--class-grade-b) 68%,transparent); mix-blend-mode:multiply; transform:translate3d(calc(var(--class-parallax-x) * -.12),calc(var(--class-parallax-y) * -.12),0); }
+#class-cinema .class-caustic { position:absolute; inset:-25%; opacity:.38; background:conic-gradient(from 205deg at 49% 48%,transparent 0 18%,color-mix(in srgb,var(--class-primary) 22%,transparent) 20%,transparent 24% 54%,color-mix(in srgb,var(--class-secondary) 18%,transparent) 57%,transparent 61%); filter:blur(22px); animation:classCaustic 12s ease-in-out infinite alternate; }
+#class-cinema .class-particles { position:absolute; inset:0; }
+.class-mote { position:absolute; width:var(--size); height:var(--size); border-radius:50%; background:var(--class-core); box-shadow:0 0 9px var(--class-primary),0 0 18px color-mix(in srgb,var(--class-secondary) 50%,transparent); opacity:0; animation:classMoteRise var(--duration) linear var(--delay) infinite; }
 
-/* O golpe letal precisa vencer a color grade do tema, que é carregada depois de game.css. */
-body.theme-cavaleiro.tension-active #game-background { filter:blur(3px) grayscale(.3) brightness(.62) contrast(1.06)!important; transform:scale(1.025); transition:filter .28s ease,transform .55s ease; }
-body.theme-cavaleiro.tension-active .middle-area,
-body.theme-cavaleiro.tension-active .avatar-cluster,
-body.theme-cavaleiro.tension-active .deck-area,
-body.theme-cavaleiro.tension-active #p-deck-container,
-body.theme-cavaleiro.tension-active .xp-area { filter:blur(3px) grayscale(.35) brightness(.58)!important; opacity:.82; transition:filter .28s ease,opacity .28s ease; }
-body.theme-cavaleiro.tension-active #knight-cinema .knight-caustic,
-body.theme-cavaleiro.tension-active #knight-cinema .knight-dust { opacity:.08; transition:opacity .25s ease; }
-body.theme-cavaleiro.tension-active #knight-cinema .knight-grade { background:radial-gradient(circle at 50% 76%,transparent 0 16%,rgba(0,0,0,.16) 42%,rgba(0,0,0,.46) 100%); mix-blend-mode:multiply; }
-body.theme-cavaleiro.tension-active .hand-card.lethal-card { filter:brightness(1.12) saturate(1.14)!important; box-shadow:0 0 0 2px rgba(255,244,190,.92),0 0 34px rgba(255,190,37,.85),0 52px 90px #000!important; }
+#class-edge-light { position:fixed; inset:0; z-index:12940; pointer-events:none; opacity:0; box-shadow:inset 0 0 58px 12px color-mix(in srgb,var(--impact-primary) 55%,transparent),inset 0 0 14px 3px color-mix(in srgb,var(--impact-spark) 72%,transparent); }
+#class-edge-light.active { animation:classEdgeFlash .5s ease-out both; }
+.class-spark { position:fixed; left:var(--x); top:var(--y); z-index:13020; width:var(--w); height:2px; border-radius:100%; pointer-events:none; background:linear-gradient(90deg,transparent,var(--spark-core) 35%,var(--spark-primary)); box-shadow:0 0 8px var(--spark-secondary); transform:rotate(var(--r)) translateX(-20px); animation:classSparkFly var(--t) cubic-bezier(.15,.7,.25,1) both; }
+.class-spark-mage,.class-spark-oracle { height:3px; border-radius:50%; filter:blur(.15px); }
+.class-spark-archer { height:1px; }
+.class-spark-rogue { height:2px; opacity:.9; }
 
-body.theme-cavaleiro .card { --knight-card-glow: rgba(255,199,56,.68); backface-visibility:hidden; }
-body.theme-cavaleiro .hand-card:not(.disabled-card) { box-shadow:0 12px 24px rgba(12,5,0,.74),0 2px 0 rgba(255,220,123,.28); }
-body.theme-cavaleiro .hand-card:not(.disabled-card):hover { box-shadow:0 0 0 1px rgba(255,244,192,.7),0 0 26px var(--knight-card-glow),0 45px 78px rgba(0,0,0,.9)!important; }
-body.theme-cavaleiro .card::after { background:linear-gradient(112deg,transparent 20%,rgba(65,132,255,.14) 34%,rgba(255,244,185,.75) 46%,rgba(255,182,37,.20) 54%,transparent 69%); background-size:260% 100%; background-position:calc(50% + (var(--rx) * -190%)) center; mix-blend-mode:screen; }
-body.theme-cavaleiro .hand-card:hover::after { opacity:.92; }
-body.theme-cavaleiro .card .card-art { filter:saturate(1.06) contrast(1.035); transition:background-position .09s linear,filter .2s ease; }
-body.theme-cavaleiro .slot { filter:drop-shadow(0 18px 16px rgba(19,6,0,.48)); }
-body.theme-cavaleiro .slot::after { content:""; position:absolute; width:128%; height:30%; bottom:-8%; border-radius:50%; background:radial-gradient(ellipse,rgba(255,187,54,.19),transparent 68%); filter:blur(7px); opacity:.65; transform:rotateX(65deg); }
-body.theme-cavaleiro .card-slam-anim { animation:knightCardSlam .48s cubic-bezier(.12,.78,.18,1) forwards!important; }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) #game-background { transform:scale(1.025) translate3d(var(--class-parallax-x),var(--class-parallax-y),0); transition:filter .5s ease,background-image .5s ease-in-out,transform .35s ease-out; filter:saturate(var(--class-saturation)) contrast(var(--class-contrast)); }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) #game-background::before { content:""; position:fixed; inset:0; pointer-events:none; background:radial-gradient(circle at 31% 32%,color-mix(in srgb,var(--class-primary) 18%,transparent),transparent 16%),radial-gradient(circle at 67% 47%,color-mix(in srgb,var(--class-secondary) 13%,transparent),transparent 22%),linear-gradient(101deg,transparent 30%,color-mix(in srgb,var(--class-core) 10%,transparent) 47%,transparent 61%); mix-blend-mode:screen; animation:classLivingLight 6.8s ease-in-out infinite; }
+body.theme-mago #game-background::before,body.theme-oraculo #game-background::before { animation-duration:8.5s; }
+body.theme-arqueiro #game-background::before { animation-duration:10s; }
+body.theme-ladino #game-background::before { animation-duration:5.7s; }
 
-body.theme-cavaleiro #p-stats-cluster,body.theme-cavaleiro #m-stats-cluster { transition:filter .35s ease,transform .35s ease; }
-body.theme-cavaleiro #p-stats-cluster::after,body.theme-cavaleiro #m-stats-cluster::after { content:""; position:absolute; inset:4% 1% 2%; pointer-events:none; z-index:3; background:linear-gradient(105deg,transparent 24%,rgba(255,249,213,.7) 43%,transparent 58%); background-size:230% 100%; mix-blend-mode:screen; opacity:.24; animation:knightHudSheen 5.2s ease-in-out infinite; clip-path:polygon(0 12%,100% 0,100% 84%,20% 100%); }
-body.theme-cavaleiro #p-hp-fill { background:linear-gradient(90deg,#1476d4,#43baff 60%,#bfe8ff)!important; box-shadow:inset 0 2px 3px rgba(255,255,255,.55),0 0 14px rgba(38,148,255,.65); }
-body.theme-cavaleiro #m-hp-fill { box-shadow:inset 0 2px 3px rgba(255,255,255,.4),0 0 12px rgba(255,72,50,.5); }
-body.theme-cavaleiro.knight-impacting #game-background { animation:knightTableRecoil .46s cubic-bezier(.2,.8,.2,1); }
-body.theme-cavaleiro.knight-blocking #game-background::before { animation:knightBlockWash .72s ease-out; }
-body.theme-cavaleiro.knight-healing #p-stats-cluster { filter:drop-shadow(0 10px 0 rgba(0,0,0,.5)) drop-shadow(0 0 26px rgba(80,211,255,.8)); }
+body.class-danger #game-background { filter:saturate(.8) contrast(1.14) brightness(.78) sepia(.12); }
+body.class-danger #class-cinema .class-grade { background:radial-gradient(ellipse at 50% 44%,transparent 18%,rgba(82,0,0,.15) 61%,rgba(14,0,0,.70) 100%); animation:classDangerBreath 1.3s ease-in-out infinite; }
 
-body.theme-cavaleiro.end-win-active #end-screen { background:radial-gradient(circle at 50% 42%,rgba(27,72,145,.40),rgba(1,3,10,.94) 68%); }
-body.theme-cavaleiro.end-win-active #end-title { filter:drop-shadow(0 0 18px #fff0b0) drop-shadow(0 0 42px #e6a71b); }
+/* A tensão escurece a arena, nunca os clusters de informação. */
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo).tension-active #game-background { filter:blur(3px) grayscale(.3) brightness(.62) contrast(1.06)!important; transform:scale(1.025); transition:filter .28s ease,transform .55s ease; }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo).tension-active .middle-area,
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo).tension-active .deck-area,
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo).tension-active #p-deck-container,
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo).tension-active .xp-area { filter:blur(3px) grayscale(.35) brightness(.58)!important; opacity:.82; transition:filter .28s ease,opacity .28s ease; }
+body.tension-active #class-cinema .class-caustic,body.tension-active #class-cinema .class-particles { opacity:.08; transition:opacity .25s ease; }
+body.tension-active #class-cinema .class-grade { background:radial-gradient(circle at 50% 76%,transparent 0 17%,rgba(0,0,0,.14) 44%,rgba(0,0,0,.42) 100%); mix-blend-mode:multiply; }
+body.tension-active .hand-card.lethal-card { filter:brightness(1.12) saturate(1.14)!important; box-shadow:0 0 0 2px color-mix(in srgb,var(--class-core) 92%,transparent),0 0 34px color-mix(in srgb,var(--class-primary) 85%,transparent),0 52px 90px #000!important; }
 
-@keyframes knightDustRise { 0%{opacity:0;transform:translate3d(0,12vh,0) scale(.4)} 12%{opacity:.65} 75%{opacity:.35} 100%{opacity:0;transform:translate3d(var(--drift),-105vh,0) scale(1.4)} }
-@keyframes knightCaustic { to{transform:translate3d(4%,-3%,0) rotate(3deg) scale(1.05)} }
-@keyframes knightLivingMetal { 0%,100%{opacity:.55;transform:translateX(-2%)} 50%{opacity:1;transform:translateX(2%)} }
-@keyframes knightEdgeFlash { 0%{opacity:0} 16%{opacity:1} 100%{opacity:0} }
-@keyframes knightSparkFly { 0%{opacity:0;transform:rotate(var(--r)) translateX(-12px) scaleX(.2)} 16%{opacity:1} 100%{opacity:0;transform:rotate(var(--r)) translateX(var(--d)) scaleX(1)} }
-@keyframes knightCardSlam { 0%{transform:translateY(-28px) scale(1.16) rotateX(5deg);filter:brightness(1.8)} 42%{transform:translateY(6px) scale(.96);filter:brightness(1.1)} 68%{transform:translateY(-3px) scale(1.025)} 100%{transform:translateY(0) scale(1);filter:brightness(1)} }
-@keyframes knightHudSheen { 0%,68%,100%{background-position:140% 0;opacity:.12} 78%{opacity:.52} 90%{background-position:-80% 0;opacity:.16} }
-@keyframes knightTableRecoil { 0%,100%{transform:scale(1.025) translate3d(var(--knight-parallax-x),var(--knight-parallax-y),0)} 18%{transform:scale(1.045) translate3d(calc(var(--knight-parallax-x) + 7px),calc(var(--knight-parallax-y) - 4px),0)} 38%{transform:scale(1.015) translate3d(calc(var(--knight-parallax-x) - 5px),calc(var(--knight-parallax-y) + 3px),0)} }
-@keyframes knightBlockWash { 0%{opacity:.3;filter:hue-rotate(0)} 18%{opacity:1;filter:hue-rotate(18deg) brightness(1.8)} 100%{opacity:.55;filter:none} }
-@keyframes knightDangerBreath { 50%{opacity:.88} }
-@media (max-width:980px){ #knight-cinema .knight-caustic{filter:blur(14px)} .knight-dust-mote:nth-child(2n){display:none} }
-@media (prefers-reduced-motion:reduce){ #knight-cinema .knight-caustic,.knight-dust-mote,body.theme-cavaleiro #p-stats-cluster::after,body.theme-cavaleiro #m-stats-cluster::after{animation:none!important} body.theme-cavaleiro #game-background{transform:none} }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) .card { --class-card-glow:color-mix(in srgb,var(--class-primary) 68%,transparent); backface-visibility:hidden; }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) .hand-card:not(.disabled-card) { box-shadow:0 12px 24px color-mix(in srgb,var(--class-shadow) 78%,transparent),0 2px 0 color-mix(in srgb,var(--class-core) 25%,transparent); }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) .hand-card:not(.disabled-card):hover { box-shadow:0 0 0 1px color-mix(in srgb,var(--class-core) 70%,transparent),0 0 26px var(--class-card-glow),0 45px 78px rgba(0,0,0,.9)!important; }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) .card::after { background:linear-gradient(112deg,transparent 20%,color-mix(in srgb,var(--class-secondary) 18%,transparent) 34%,color-mix(in srgb,var(--class-core) 72%,transparent) 46%,color-mix(in srgb,var(--class-primary) 20%,transparent) 54%,transparent 69%); background-size:260% 100%; background-position:calc(50% + (var(--rx) * -190%)) center; mix-blend-mode:screen; }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) .hand-card:hover::after { opacity:.92; }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) .card .card-art { filter:saturate(1.06) contrast(1.035); transition:background-position .09s linear,filter .2s ease; }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) .slot { filter:drop-shadow(0 18px 16px color-mix(in srgb,var(--class-shadow) 58%,transparent)); }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) .slot::after { content:""; position:absolute; width:128%; height:30%; bottom:-8%; border-radius:50%; background:radial-gradient(ellipse,color-mix(in srgb,var(--class-primary) 19%,transparent),transparent 68%); filter:blur(7px); opacity:.65; transform:rotateX(65deg); }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) .card-slam-anim { animation:classCardSlam .48s cubic-bezier(.12,.78,.18,1) forwards!important; }
+
+/* HUD sempre acima da vinheta. O brilho usa o alpha da arte, sem polígonos/losangos. */
+#p-stats-cluster,#m-stats-cluster { z-index:700!important; isolation:isolate; transition:filter .35s ease,transform .35s ease; }
+#p-stats-cluster::after,#m-stats-cluster::after { content:""; position:absolute; left:0; top:var(--cluster-art-top); width:100%; height:var(--cluster-art-height); pointer-events:none; z-index:3; background:linear-gradient(105deg,transparent 28%,rgba(255,255,255,.72) 45%,transparent 61%); background-size:245% 100%; background-position:145% 0; mix-blend-mode:screen; opacity:.20; -webkit-mask-image:var(--cluster-art-url); mask-image:var(--cluster-art-url); -webkit-mask-size:var(--cluster-bg-size); mask-size:var(--cluster-bg-size); -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; -webkit-mask-position:var(--cluster-bg-position); mask-position:var(--cluster-bg-position); animation:classHudSheen 5.8s ease-in-out infinite; }
+#m-stats-cluster::after { transform:scaleX(-1); transform-origin:center; }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) #p-hp-fill { background:linear-gradient(90deg,var(--class-hp-a),var(--class-hp-b) 60%,var(--class-hp-c))!important; box-shadow:inset 0 2px 3px rgba(255,255,255,.5),0 0 14px color-mix(in srgb,var(--class-secondary) 55%,transparent); }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) #m-hp-fill { box-shadow:inset 0 2px 3px rgba(255,255,255,.4),0 0 12px rgba(255,72,50,.5); }
+
+body.class-impacting #game-background { animation:classTableRecoil .46s cubic-bezier(.2,.8,.2,1); }
+body.class-blocking #game-background::before { animation:classBlockWash .72s ease-out; }
+body.class-healing #p-stats-cluster { filter:drop-shadow(0 10px 0 rgba(0,0,0,.5)) drop-shadow(0 0 26px color-mix(in srgb,var(--impact-secondary) 80%,transparent)); }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo).end-win-active #end-screen { background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--class-secondary) 32%,transparent),rgba(1,3,10,.94) 68%); }
+body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo).end-win-active #end-title { filter:drop-shadow(0 0 18px var(--class-core)) drop-shadow(0 0 42px var(--class-primary)); }
+
+@keyframes classMoteRise { 0%{opacity:0;transform:translate3d(0,12vh,0) scale(.4)} 12%{opacity:.62} 75%{opacity:.32} 100%{opacity:0;transform:translate3d(var(--drift),-105vh,0) scale(1.4)} }
+@keyframes classCaustic { to{transform:translate3d(4%,-3%,0) rotate(3deg) scale(1.05)} }
+@keyframes classLivingLight { 0%,100%{opacity:.52;transform:translateX(-2%)} 50%{opacity:.95;transform:translateX(2%)} }
+@keyframes classEdgeFlash { 0%{opacity:0} 16%{opacity:1} 100%{opacity:0} }
+@keyframes classSparkFly { 0%{opacity:0;transform:rotate(var(--r)) translateX(-12px) scaleX(.2)} 16%{opacity:1} 100%{opacity:0;transform:rotate(var(--r)) translateX(var(--d)) scaleX(1)} }
+@keyframes classCardSlam { 0%{transform:translateY(-28px) scale(1.16) rotateX(5deg);filter:brightness(1.8)} 42%{transform:translateY(6px) scale(.96);filter:brightness(1.1)} 68%{transform:translateY(-3px) scale(1.025)} 100%{transform:translateY(0) scale(1);filter:brightness(1)} }
+@keyframes classHudSheen { 0%,68%,100%{background-position:145% 0;opacity:.08} 78%{opacity:.38} 90%{background-position:-95% 0;opacity:.12} }
+@keyframes classTableRecoil { 0%,100%{transform:scale(1.025) translate3d(var(--class-parallax-x),var(--class-parallax-y),0)} 18%{transform:scale(1.045) translate3d(calc(var(--class-parallax-x) + 7px),calc(var(--class-parallax-y) - 4px),0)} 38%{transform:scale(1.015) translate3d(calc(var(--class-parallax-x) - 5px),calc(var(--class-parallax-y) + 3px),0)} }
+@keyframes classBlockWash { 0%{opacity:.3} 18%{opacity:1;filter:brightness(1.65)} 100%{opacity:.52;filter:none} }
+@keyframes classDangerBreath { 50%{opacity:.84} }
+
+@media (max-width:980px) { #class-cinema .class-caustic{filter:blur(14px)} .class-mote:nth-child(2n){display:none} }
+@media (prefers-reduced-motion:reduce) { #class-cinema .class-caustic,.class-mote,#p-stats-cluster::after,#m-stats-cluster::after{animation:none!important} body:is(.theme-cavaleiro,.theme-mago,.theme-arqueiro,.theme-ladino,.theme-oraculo) #game-background{transform:none} }

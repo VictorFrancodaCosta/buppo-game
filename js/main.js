@@ -8,8 +8,8 @@ import { doc, setDoc, getDoc, updateDoc, collection, query, where, orderBy, limi
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // IMPORTANDO OS NOVOS MODULOS
-import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.07.10.3.rev3';
-import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.07.10.3.rev2';
+import { audios, MusicController, playSound, startCinematicLoop } from './audio_controller.js?v=2026.07.10.3.rev4';
+import { showCenterText, showFloatingText, triggerDamageEffect, triggerCritEffect, triggerHealEffect, triggerBlockEffect, triggerXPGlow, triggerLevelUpVisuals, triggerAttackSlash, triggerBlockShield, triggerRestAura, triggerTrainDeckGlow, triggerDisarmSeal, triggerHpImpact, triggerHealPulse, triggerDeckDrawGlow, showCombatCue, showMasteryBanner, highlightMasteryXP, triggerCriticalDamagePop, triggerClusterExplosion, apply3DTilt, animateFly, renderTable, MAGE_ASSETS, getCardArt, initGlobalHoverLogic, createLobbyFlares } from './ui_controller.js?v=2026.07.10.3.rev4';
 import { initiateMatchmaking } from './matchmaking.js?v=2026.07.10.3';
 
 // --- VARIAVEIS GLOBAIS DE ESTADO ---
@@ -2797,7 +2797,7 @@ function showEndPoints(points, goldReward = null) {
 function triggerEndScreenFx(result) {
     document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
     document.body.classList.add(`end-${result}-active`);
-    if(result === 'win') window.KnightVisuals?.victory();
+    if(result === 'win') window.ClassVisuals?.victory();
     if(result !== 'win') return;
     for(let i = 0; i < 46; i++) {
         const conf = document.createElement('span');
@@ -2826,9 +2826,11 @@ onAuthStateChanged(auth, (user) => {
         // FORCA A REMOCAO DOS TEMAS AO DESLOGAR
         document.body.classList.remove(...DECK_THEME_CLASSES);
         
-        window.musicEnabled = false;
-        window.sfxEnabled = false;
-        MusicController.stopCurrent();
+        // O menu e o modo local continuam sonoros sem autenticação.
+        window.musicEnabled = typeof window.musicEnabled === 'boolean' ? window.musicEnabled : true;
+        window.sfxEnabled = typeof window.sfxEnabled === 'boolean' ? window.sfxEnabled : true;
+        window.applyAudioSettings?.({ persist: false });
+        MusicController.play('bgm-menu');
     }
 });
 

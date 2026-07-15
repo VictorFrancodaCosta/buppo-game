@@ -4,9 +4,9 @@ export const audios = {};
 window.audios = audios;
 window.__buppoAudioNodes = window.__buppoAudioNodes || [];
 
-window.masterVol = 0.5;
-window.musicEnabled = false;
-window.sfxEnabled = false;
+window.masterVol = Number.isFinite(window.masterVol) ? window.masterVol : 0.5;
+window.musicEnabled = typeof window.musicEnabled === 'boolean' ? window.musicEnabled : true;
+window.sfxEnabled = typeof window.sfxEnabled === 'boolean' ? window.sfxEnabled : true;
 
 const CORE_AUDIO_ASSETS = [
     { id: 'bgm-menu', src: 'assets/audio/musica_menu.mp3', loop: true },
@@ -360,6 +360,13 @@ window.unlockGameAudio = function() {
             }
         } catch(e) {}
     });
+    // Uma tentativa de autoplay pode ser bloqueada antes da primeira interação.
+    // Retome a faixa oficial dentro do gesto autorizado pelo navegador.
+    if(window.musicEnabled) {
+        const preferred = preferredMusicTrack();
+        const music = audios[preferred];
+        if(music?.paused || MusicController.currentTrackId !== preferred) MusicController.play(preferred);
+    }
 };
 
 window.playNavSound = function() {

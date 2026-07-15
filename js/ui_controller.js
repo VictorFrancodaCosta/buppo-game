@@ -1,6 +1,6 @@
 // ARQUIVO: js/ui_controller.js
 import { CARDS_DB } from './data.js?v=2026.07.10.3';
-import { playSound } from './audio_controller.js?v=2026.07.10.3';
+import { playSound } from './audio_controller.js?v=2026.07.10.3.rev4';
 
 export const MAGE_ASSETS = {
     'ATAQUE': 'assets/img/carta_ataque_mago.webp',
@@ -213,7 +213,7 @@ export function triggerDamageEffect(isPlayer, playAudio = true, attackerDeckType
     try {
         const deckType = attackerDeckType || 'knight';
         if(playAudio) playSound(getDamageSfxForDeck(deckType));
-        window.KnightVisuals?.impact('attack', isPlayer, deckType);
+        window.ClassVisuals?.impact('attack', isPlayer, deckType);
         let elId = isPlayer ? 'p-slot' : 'm-slot'; let slot = document.getElementById(elId);
         if(slot) { let r = slot.getBoundingClientRect(); if(r.width>0) spawnParticles(r.left+r.width/2, r.top+r.height/2, '#ff4757'); }
         if (isPlayer) {
@@ -230,7 +230,7 @@ export function triggerCritEffect() { let ov = document.getElementById('crit-ove
 export function triggerHealEffect(isPlayer) {
     try {
         triggerRestAura(isPlayer);
-        if(isPlayer) window.KnightVisuals?.impact('heal', false, window.currentDeck || 'knight');
+        if(isPlayer) window.ClassVisuals?.impact('heal', false, window.currentDeck || 'knight');
     } catch(e) {}
 }
 
@@ -238,7 +238,7 @@ export function triggerBlockEffect(isPlayer, blockerDeckType = null) {
     try {
         const deckType = blockerDeckType || 'knight';
         applyBlockEffectPalette(deckType);
-        window.KnightVisuals?.impact('block', isPlayer, deckType);
+        window.ClassVisuals?.impact('block', isPlayer, deckType);
         playSound(getBlockSfxForDeck(deckType));
         if(window.triggerBlockEffect) window.triggerBlockEffect();
         let ov = document.getElementById('block-overlay');

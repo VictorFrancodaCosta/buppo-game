@@ -393,10 +393,10 @@ body.player-card-border-oracle { --player-card-border-inset: -7% -7% -6.7% -7%; 
 .intro-anim { animation: introBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; pointer-events: none; }
 
 /* CINEMATIC FOCUS STATES */
-body.cinematic-active #game-background, body.cinematic-active .middle-area, body.cinematic-active .avatar-cluster, body.cinematic-active .deck-area, body.cinematic-active #p-deck-container, body.cinematic-active .xp-area { filter: blur(8px); }
-body.tension-active #game-background, body.tension-active .middle-area, body.tension-active .avatar-cluster, body.tension-active .deck-area, body.tension-active #p-deck-container, body.tension-active .xp-area { filter: blur(8px) grayscale(100%) brightness(0.2); }
+body.cinematic-active #game-background, body.cinematic-active .middle-area, body.cinematic-active .deck-area, body.cinematic-active #p-deck-container, body.cinematic-active .xp-area { filter: blur(8px); }
+body.tension-active #game-background, body.tension-active .middle-area, body.tension-active .deck-area, body.tension-active #p-deck-container, body.tension-active .xp-area { filter: blur(8px) grayscale(100%) brightness(0.2); }
 body.focus-hand .hand-wrapper .card:not(:hover) { transform: scale(0.95); filter: brightness(0.8); }
-body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-area, body.focus-xp #p-deck-container, body.focus-xp .hand-wrapper { filter: blur(5px) brightness(0.5); opacity: 0.6; }
+body.focus-xp .middle-area, body.focus-xp .deck-area, body.focus-xp #p-deck-container, body.focus-xp .hand-wrapper { filter: blur(5px) brightness(0.5); opacity: 0.6; }
 
 /* ANIMACAO DE IMPACTO NA MESA (SLAM) */
 @keyframes cardSlam {
@@ -596,18 +596,15 @@ body.focus-xp .middle-area, body.focus-xp .avatar-cluster, body.focus-xp .deck-a
 
     body.cinematic-active #game-background,
     body.cinematic-active .middle-area,
-    body.cinematic-active .avatar-cluster,
     body.cinematic-active .deck-area,
     body.cinematic-active #p-deck-container,
     body.cinematic-active .xp-area,
     body.tension-active #game-background,
     body.tension-active .middle-area,
-    body.tension-active .avatar-cluster,
     body.tension-active .deck-area,
     body.tension-active #p-deck-container,
     body.tension-active .xp-area,
     body.focus-xp .middle-area,
-    body.focus-xp .avatar-cluster,
     body.focus-xp .deck-area,
     body.focus-xp #p-deck-container,
     body.focus-xp .hand-wrapper {

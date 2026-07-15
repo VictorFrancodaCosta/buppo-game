@@ -1,6 +1,6 @@
 import { CARDS_DB, ACTION_KEYS } from './data.js?v=2026.07.10.3';
 import { resetUnit, drawCardLogic, getBestAIMove, generateShuffledDeck } from './game_logic.js?v=2026.07.10.3';
-import { MusicController, playSound } from './audio_controller.js?v=2026.07.10.3.rev3';
+import { MusicController, playSound } from './audio_controller.js?v=2026.07.10.3.rev4';
 
 const MOBILE_ART = {
     ATAQUE: 'assets/img/mobile/card_attack.png',
@@ -193,15 +193,15 @@ function applyCombat(pCard, mCard, pDisarm, mDisarm) {
     const pAttacks = pCard === 'ATAQUE';
     const mAttacks = mCard === 'ATAQUE';
 
-    if (pAttacks && !mBlocks) { monster.hp -= player.lvl + player.bonusAtk; window.KnightVisuals?.impact('attack', false, 'knight'); playSound('sfx-hit'); }
-    if (mAttacks && !pBlocks) { player.hp -= monster.lvl + monster.bonusAtk; window.KnightVisuals?.impact('attack', true, 'knight'); playSound('sfx-hit'); }
+    if (pAttacks && !mBlocks) { monster.hp -= player.lvl + player.bonusAtk; window.ClassVisuals?.impact('attack', false, 'knight'); playSound('sfx-hit'); }
+    if (mAttacks && !pBlocks) { player.hp -= monster.lvl + monster.bonusAtk; window.ClassVisuals?.impact('attack', true, 'knight'); playSound('sfx-hit'); }
     if (pBlocks && mAttacks) monster.hp -= 1 + player.bonusBlock;
     if (mBlocks && pAttacks) player.hp -= 1 + monster.bonusBlock;
 
-    if (pBlocks && mAttacks) { window.KnightVisuals?.impact('block', true, 'knight'); playSound('sfx-block'); }
-    if (mBlocks && pAttacks) { window.KnightVisuals?.impact('block', false, 'knight'); playSound('sfx-block'); }
+    if (pBlocks && mAttacks) { window.ClassVisuals?.impact('block', true, 'knight'); playSound('sfx-block'); }
+    if (mBlocks && pAttacks) { window.ClassVisuals?.impact('block', false, 'knight'); playSound('sfx-block'); }
 
-    if (pCard === 'DESCANSAR') { player.hp += pAttacks ? 2 : 3; window.KnightVisuals?.impact('heal', false, 'knight'); playSound('sfx-heal'); }
+    if (pCard === 'DESCANSAR') { player.hp += pAttacks ? 2 : 3; window.ClassVisuals?.impact('heal', false, 'knight'); playSound('sfx-heal'); }
     if (mCard === 'DESCANSAR') monster.hp += mAttacks ? 2 : 3;
     if (pCard === 'DESARMAR') monster.disabled = pDisarm;
     else monster.disabled = null;
@@ -246,7 +246,7 @@ function checkEnd() {
     const result = player.hp <= 0 && monster.hp <= 0 ? 'EMPATE' : (monster.hp <= 0 ? 'VITORIA' : 'DERROTA');
     document.body.classList.remove('end-win-active', 'end-loss-active', 'end-tie-active');
     document.body.classList.add(result === 'VITORIA' ? 'end-win-active' : (result === 'EMPATE' ? 'end-tie-active' : 'end-loss-active'));
-    if(result === 'VITORIA') window.KnightVisuals?.victory();
+    if(result === 'VITORIA') window.ClassVisuals?.victory();
     MusicController.stopCurrent();
     playSound(result === 'VITORIA' ? 'sfx-win' : (result === 'EMPATE' ? 'sfx-tie' : 'sfx-lose'));
     if (title) {
