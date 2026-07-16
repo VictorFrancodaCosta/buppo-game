@@ -12,6 +12,21 @@ input:focus-visible,
     box-shadow: var(--focus-shadow) !important;
 }
 
+/* Botões ilustrados já possuem realce próprio; o foco retangular corta a arte. */
+:where(
+    button:has(> img),
+    .end-image-btn,
+    .lobby-menu-button,
+    .lobby-mode-btn,
+    .lobby-mode-deck,
+    .lobby-mode-history,
+    .deck-option
+):focus-visible {
+    outline: none !important;
+    outline-offset: 0 !important;
+    box-shadow: none !important;
+}
+
 .circle-btn {
     font: inherit;
 }
