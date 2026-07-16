@@ -460,7 +460,7 @@ safeLobbyEnhancement('ajustes visuais estaticos', () => {
 
         #lobby-screen .lobby-player-topbar {
             position: fixed !important;
-            left: 0 !important;
+            left: calc(50% - 50vw) !important;
             top: 0 !important;
             width: 100vw !important;
             min-height: 62px !important;
