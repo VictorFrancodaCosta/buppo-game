@@ -1262,9 +1262,10 @@ function updateLobbyBottomProfileBar() {
     const gameId = window.currentPlayerGameId || '----';
     const score = Math.max(0, Number(window.currentLobbyScore) || 0);
     const elo = getLobbyElo(score);
+    const rank = Number.isFinite(Number(window.currentLobbyRank)) ? Math.max(1, Number(window.currentLobbyRank)) : null;
     if(nameEl) nameEl.innerHTML = `${escapeHTML(name)} <span class="profile-asset-id-inline" id="profile-asset-id">#${escapeHTML(gameId)}</span>`;
     if(ranking) {
-        ranking.textContent = `${elo.label} #${score}`;
+        ranking.textContent = `${elo.label}  |  RANKING #${rank || '-'}`;
         ranking.className = `profile-asset-ranking elo-${elo.key}`;
     }
     if(gold) gold.textContent = window.currentGoldCoins || 0;
