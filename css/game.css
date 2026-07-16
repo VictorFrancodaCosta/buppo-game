@@ -69,6 +69,12 @@ body.pvp-waiting-table #game-background::after { opacity: 0.45; animation-durati
     filter: none !important;
     transition: transform 0.16s cubic-bezier(0.2, 1, 0.3, 1), filter 0.16s ease;
 }
+.end-image-btn:focus,
+.end-image-btn:focus-visible {
+    outline: none !important;
+    outline-offset: 0 !important;
+    box-shadow: none !important;
+}
 .end-restart-btn { width: min(48vw, 520px); }
 .end-lobby-btn { width: min(22vw, 230px); }
 .end-image-btn img {

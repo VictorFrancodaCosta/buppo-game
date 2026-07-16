@@ -13,15 +13,13 @@ input:focus-visible,
 }
 
 /* Botões ilustrados já possuem realce próprio; o foco retangular corta a arte. */
-:where(
-    button:has(> img),
-    .end-image-btn,
-    .lobby-menu-button,
-    .lobby-mode-btn,
-    .lobby-mode-deck,
-    .lobby-mode-history,
-    .deck-option
-):focus-visible {
+button:has(> img):focus-visible,
+.end-image-btn:focus-visible,
+.lobby-menu-button:focus-visible,
+.lobby-mode-btn:focus-visible,
+.lobby-mode-deck:focus-visible,
+.lobby-mode-history:focus-visible,
+.deck-option:focus-visible {
     outline: none !important;
     outline-offset: 0 !important;
     box-shadow: none !important;
