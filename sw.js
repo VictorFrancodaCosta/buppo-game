@@ -1,4 +1,4 @@
-const VERSION = '2026.07.10.3';
+const VERSION = '2026.10.17.1';
 const STATIC_CACHE = `buppo-static-${VERSION}`;
 const RUNTIME_CACHE = `buppo-runtime-${VERSION}`;
 
@@ -75,13 +75,14 @@ async function networkFirst(request, fallback) {
 }
 
 async function staleWhileRevalidate(request) {
+    // Search the precache and runtime cache, ignoring build query strings such as ?v=...
+    const cached = await caches.match(request, { ignoreSearch: true });
     const cache = await caches.open(RUNTIME_CACHE);
-    const cached = await cache.match(request);
     const network = fetch(request)
         .then(async (response) => {
             if (response.ok) await cache.put(request, response.clone());
             return response;
         })
-        .catch(() => cached);
+        .catch(() => cached || Response.error());
     return cached || network;
 }
